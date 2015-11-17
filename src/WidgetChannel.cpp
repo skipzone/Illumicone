@@ -18,7 +18,7 @@ bool WidgetChannel::initChannel(int channelNumber, int initPosition, int initVel
     position = initPosition;
     velocity = initVelocity;
     number = channelNumber;
-    isActive = false;
+    isActive = 0;
 
     return true;
 }

@@ -16,8 +16,8 @@ bool SolidBlackPattern::initPattern(int numStrings, int pixelsPerString)
     pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
     name = "SolidBlackPattern";
 
-    isActive = false;
-
+    isActive = 0;
+    opacity = 100;
     priority = 0;
     return true;
 }
@@ -43,7 +43,7 @@ bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
 bool SolidBlackPattern::update()
 {
     int i;
-    bool hadActivity = false;
+    int hadActivity = 0;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
     for (auto&& widget:widgets) {
@@ -53,7 +53,7 @@ bool SolidBlackPattern::update()
         for (auto&& channel:widget->channels) {
 //            cout << "Updating widget's channel!" << endl;
             if (channel.isActive) {
-                hadActivity = true;
+                hadActivity = 1;
                 switch (channel.number) {
                     case 0:
                         // set entire pixelArray black (off)

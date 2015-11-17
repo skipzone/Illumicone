@@ -16,8 +16,9 @@ class Pattern
         std::vector<Widget*> widgets;
 
         int priority;
+        int opacity;
         std::string name;
-        bool isActive;
+        int isActive;
 
         virtual bool initPattern(int numStrings, int pixelsPerString) = 0;
         virtual bool initWidgets(int numWidgets, int channelsPerWidget) = 0;

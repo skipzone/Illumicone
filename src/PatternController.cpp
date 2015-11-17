@@ -27,7 +27,7 @@ bool setupConnection()
     server.sin_port = htons(7890);
 
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-        printf("Couldn't connect.\n");
+        cout << "SOMETHING'S FUCKY: couldn't connect to opc-server!\n";
         while (1);
     }
 
@@ -85,7 +85,7 @@ void printInit(Pattern *pattern)
  * Call this in reverse priority for best results, i.e. call with priority 3 pattern, then with
  * 2, then 1, then 0.
  */
-int buildFrame(
+bool buildFrame(
         std::vector<std::vector<opc_pixel_t>> &finalFrame,
         std::vector<std::vector<opc_pixel_t>> &pixelArray,
         int priority)
@@ -116,6 +116,8 @@ int buildFrame(
         default:
             cout << "SOMETHING'S FUCKY : no case for priority " << priority << endl;
     }
+
+    return true;
 }
 
 int sendFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
@@ -124,8 +126,6 @@ int sendFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
 
     int col;
     int row;
-
-    cout << "sentPacket!" << endl;
 
     opcArray[0] = 0;
     opcArray[1] = 0;
@@ -160,7 +160,6 @@ int main(void)
     // to be filled in from a config file somewhere
     int numChannels[2] = {3, 1};
     int numBytes;
-    bool choose = true;
 
     finalFrame1.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
     finalFrame2.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
@@ -208,8 +207,7 @@ int main(void)
         }
 
         numBytes = sendFrame(finalFrame1);
-        //cout << numBytes << " sent!" << endl;
 
-        usleep(500000);
+        usleep(50000);
     }
 }

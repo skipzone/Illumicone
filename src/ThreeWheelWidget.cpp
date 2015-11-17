@@ -33,7 +33,7 @@ bool ThreeWheelWidget::moveData()
                 break;
             case 1:
                 channel.prevPosition = channel.position;
-                channel.isActive = false;
+                channel.isActive = true;
                 if (channel.position == NUM_STRINGS-1) {
                     channel.position = 0;
                 } else {

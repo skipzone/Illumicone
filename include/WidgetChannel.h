@@ -7,7 +7,7 @@ class WidgetChannel
         int     prevPosition;
         int     position;
         int     velocity;
-        bool    isActive;
+        int     isActive;
         int     number;
 
         bool initChannel(int channelNumber, int initPosition, int initVelocity);

@@ -12,8 +12,9 @@ bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString)
 //    cout << "Init RGB Vertical Pattern!" << endl;
     numStrings = numStrings;
     pixelsPerString = pixelsPerString;
-    isActive = false;
+    isActive = 0;
     name = "Rgb Vertical Stripe Pattern";
+    opacity = 90;
 
     pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
     priority = 1;
@@ -42,7 +43,7 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 bool RgbVerticalPattern::update()
 {
 //    cout << "Update pattern!" << endl;
-    bool hadActivity = false;
+    int hadActivity = 0;
 
     for (auto&& widget:widgets) {
         // update active, position, velocity for each channel in widget
@@ -50,7 +51,7 @@ bool RgbVerticalPattern::update()
         for (auto&& channel:widget->channels) {
             // check if the channel updated
             if (channel.isActive) {
-                hadActivity = true;
+                hadActivity = 1;
                 switch (channel.number) {
                     case 0:
 //                        cout << "Update channel 0" << endl;

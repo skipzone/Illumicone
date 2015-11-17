@@ -15,9 +15,9 @@ bool EyeWidget::moveData()
                 channel.velocity = 0;
                 channel.prevPosition = channel.position;
                 if (channel.isActive) {
-                    channel.isActive = false;
+                    channel.isActive = 0;
                 } else {
-                    channel.isActive = true;
+                    channel.isActive = 1;
                 }
 
                 if (channel.position) {
