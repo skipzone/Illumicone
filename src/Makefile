@@ -1,4 +1,6 @@
 
+# we can use some sort of wildcard to get a list of all cpp sources
+# and convert them to .o
 PROGS=hello
 OBJS=hello.o
 LIBS=
@@ -18,7 +20,7 @@ all: $(PROGS)
 # dependencies of all the object files
 $(OBJS) : $(INCLUDE)/illumiconeTypes.h
 
-hello: hello.o
+$(PROGS): $(OBJS)
 
 # can use something like this if the implicit linking rule is not sufficient.
 #	$(CXX) $(LDFLAGS) $(LIBS) -o $@ $< $(LDLIBS)
