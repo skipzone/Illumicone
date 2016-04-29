@@ -10,7 +10,7 @@ CC=g++
 CFLAGS=-Wall -g -I$(INCLUDE)
 CXX=g++
 CXXFLAGS=-Wall -g -std=c++11 -I$(INCLUDE)
-LDFLAGS=-stdlib=libc++
+#LDFLAGS=-stdlib=libc++
 #LDLIBS=-L$(LIBS) -lpthread
 
 all: $(PROGS)

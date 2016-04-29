@@ -2,7 +2,7 @@
 all: bins
 
 bins:
-	cd src; make
+	$(MAKE) -C src/
 
 clean:
-	cd src; make clean
+	$(MAKE) -C src/ clean
