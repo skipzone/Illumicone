@@ -2,7 +2,7 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=Pattern
-OBJS=Pattern.o
+OBJS=Pattern.o Widget.o WidgetChannel.o
 LIBS=
 
 INCLUDE=../include

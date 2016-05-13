@@ -3,19 +3,17 @@
 
 #include "illumiconeTypes.h"
 #include "ledscape.h"
+#include "Widget.h"
+#include "Pattern.h"
 
 using namespace std;
 
-class Pattern {
-    public:
-        Pattern(int, int);
-        int pixelsPerString, numStrings;
-        vector<ledscape_pixel_t> OPCVector;
-};
-
-Pattern::Pattern(int numStrings, int pixelsPerString) : OPCVector(numStrings * pixelsPerString) {
-    this->pixelsPerString = pixelsPerString;
-    this->numStrings = numStrings;
+Pattern::Pattern(int numStrings, int pixelsPerString) :
+    pixelsPerString(pixelsPerString),
+    numStrings(numStrings),
+    opcVector(numStrings, vector<ledscape_pixel_t>(pixelsPerString)),
+    widgets()
+{
 }
 
 int main(void)
@@ -25,17 +23,21 @@ int main(void)
     cout << "Pattern initialization!\n";
     cout << pattern.numStrings << "\n";
     cout << pattern.pixelsPerString << "\n";
-    cout << pattern.OPCVector.size() << "\n";
+    cout << pattern.opcVector.size() << "\n";
 
-    for (auto& i: pattern.OPCVector) {
-        i.a = 5;
-        i.b = 6;
-        i.c = 7;
+    for (auto& column: pattern.opcVector) {
+        for (auto& row : column) {
+            row.a = 5;
+            row.b = 6;
+            row.c = 7;
+        }
     }
 
-    for (auto i: pattern.OPCVector) {
-        cout << "a: " << unsigned(i.a) << endl;
-        cout << "b: " << unsigned(i.b) << endl;
-        cout << "c: " << unsigned(i.c) << endl;
+    for (auto column: pattern.opcVector) {
+        for (auto row : column) {
+            cout << "a: " << unsigned(row.a) << endl;
+            cout << "b: " << unsigned(row.b) << endl;
+            cout << "c: " << unsigned(row.c) << endl;
+        }
     }
 }
