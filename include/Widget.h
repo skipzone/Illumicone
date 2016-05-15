@@ -6,7 +6,7 @@
 class Widget
 {
     public:
-        Widget(int);
+        Widget(int, int, int);
         std::vector<WidgetChannel> channels;
 };
 

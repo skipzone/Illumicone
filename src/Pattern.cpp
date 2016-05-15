@@ -8,17 +8,22 @@
 
 using namespace std;
 
-Pattern::Pattern(int numStrings, int pixelsPerString) :
+Pattern::Pattern(int numStrings, int pixelsPerString, int numWidgets) :
     pixelsPerString(pixelsPerString),
     numStrings(numStrings),
     opcVector(numStrings, vector<ledscape_pixel_t>(pixelsPerString)),
     widgets()
 {
+    int i;
+    for (i = 0; i < numWidgets; i++) {
+        widgets.emplace_back(2, 0, 0);
+        widgets.emplace_back(3, 0, 0);
+    }
 }
 
 int main(void)
 {
-    Pattern pattern(5,5);
+    Pattern pattern(5, 5, 3);
 
     cout << "Pattern initialization!\n";
     cout << pattern.numStrings << "\n";

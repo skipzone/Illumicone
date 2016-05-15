@@ -4,7 +4,7 @@
 class Pattern
 {
     public:
-        Pattern(int, int);
+        Pattern(int, int, int);
         int pixelsPerString;
         int numStrings;
         std::vector<std::vector<ledscape_pixel_t>> opcVector;
