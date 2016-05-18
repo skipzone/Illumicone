@@ -2,11 +2,12 @@
 #define WIDGET_H
 
 #include "WidgetChannel.h"
+#include <vector>
 
 class Widget
 {
     public:
-        Widget(int, int, int);
+        Widget(int);
         std::vector<WidgetChannel> channels;
 };
 

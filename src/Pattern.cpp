@@ -5,44 +5,23 @@
 #include "ledscape.h"
 #include "Widget.h"
 #include "Pattern.h"
+#include "RgbVerticalPattern.h"
 
 using namespace std;
 
-Pattern::Pattern(int numStrings, int pixelsPerString, int numWidgets) :
-    pixelsPerString(pixelsPerString),
-    numStrings(numStrings),
-    opcVector(numStrings, vector<ledscape_pixel_t>(pixelsPerString)),
-    widgets()
-{
-    int i;
-    for (i = 0; i < numWidgets; i++) {
-        widgets.emplace_back(2, 0, 0);
-        widgets.emplace_back(3, 0, 0);
-    }
-}
-
 int main(void)
 {
-    Pattern pattern(5, 5, 3);
+    RgbVerticalPattern rgbPattern;
+    RgbVerticalPattern rgbPattern2;
+    int pattern[2] = {2, 3};
+    int pattern2[3] = {3, 2, 1};
 
     cout << "Pattern initialization!\n";
-    cout << pattern.numStrings << "\n";
-    cout << pattern.pixelsPerString << "\n";
-    cout << pattern.opcVector.size() << "\n";
 
-    for (auto& column: pattern.opcVector) {
-        for (auto& row : column) {
-            row.a = 5;
-            row.b = 6;
-            row.c = 7;
-        }
-    }
+    rgbPattern.initPattern(2, pattern);
+    rgbPattern2.initPattern(3, pattern2);
 
-    for (auto column: pattern.opcVector) {
-        for (auto row : column) {
-            cout << "a: " << unsigned(row.a) << endl;
-            cout << "b: " << unsigned(row.b) << endl;
-            cout << "c: " << unsigned(row.c) << endl;
-        }
-    }
+    cout << "rgbPattern sizes: " << rgbPattern.widgets.size() << " " << rgbPattern.widgets[1].channels.size() << endl;
+
+    cout << "rgbPattern2 sizes: " << rgbPattern2.widgets.size() << " " << rgbPattern2.widgets[2].channels.size() << endl;
 }

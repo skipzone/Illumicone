@@ -6,11 +6,10 @@
 
 using namespace std;
 
-Widget::Widget(int numChannels, int initialPosition, int initialVelocity) :
-    channels()
+Widget::Widget(int numChannels)
 {
     int i;
     for (i = 0; i < numChannels; i++) {
-        channels.emplace_back(initialPosition, initialVelocity);
+        channels.emplace_back(0, 0);
     }
 }
