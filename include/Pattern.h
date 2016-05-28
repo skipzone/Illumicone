@@ -13,7 +13,7 @@ class Pattern
         int pixelsPerString;
         int numStrings;
         std::vector<std::vector<ledscape_pixel_t>> opcVector;
-        std::vector<Widget> widgets;
+        std::vector<Widget*> widgets;
 
         bool init (int numStrings, int pixelsPerString) {
             numStrings = numStrings;
@@ -23,7 +23,7 @@ class Pattern
             return true;
         }
 
-        virtual bool initPattern (int numWidgets, int channelsPerWidget[]) = 0;
+        virtual bool initPattern (int numWidgets, int channelsPerWidget) = 0;
         virtual bool update() = 0;
 
         uint32_t nextUpdateMs;

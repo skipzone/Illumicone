@@ -4,10 +4,16 @@
 class WidgetChannel
 {
     public:
-        WidgetChannel(int, int);
         int     position;
         int     velocity;
         bool    isActive;
+
+        bool init(int initPosition, int initVelocity) {
+            position = initPosition;
+            velocity = initVelocity;
+            isActive = false;
+            return true;
+        }
 };
 
 #endif /* SUB_WIDGET_H */

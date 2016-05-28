@@ -12,16 +12,11 @@ using namespace std;
 int main(void)
 {
     RgbVerticalPattern rgbPattern;
-    RgbVerticalPattern rgbPattern2;
     int pattern[2] = {2, 3};
-    int pattern2[3] = {3, 2, 1};
 
     cout << "Pattern initialization!\n";
 
-    rgbPattern.initPattern(2, pattern);
-    rgbPattern2.initPattern(3, pattern2);
+    rgbPattern.initPattern(2, pattern[0]);
 
-    cout << "rgbPattern sizes: " << rgbPattern.widgets.size() << " " << rgbPattern.widgets[1].channels.size() << endl;
-
-    cout << "rgbPattern2 sizes: " << rgbPattern2.widgets.size() << " " << rgbPattern2.widgets[2].channels.size() << endl;
+    cout << "rgbPattern sizes: " << rgbPattern.widgets.size() << " ";
 }
