@@ -21,6 +21,7 @@ bool ThreeWheelWidget::moveData()
     int i;
     int dummy;
 
+    cout << "Moving data - -" << endl;
     getline(uart_stream, line);
     cout << line << endl;
 

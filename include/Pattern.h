@@ -1,7 +1,7 @@
 #ifndef PATTERN_H
 #define PATTERN_H
 
-#include "ledscape.h"
+#include "illumiconeTypes.h"
 #include <vector>
 #include "Widget.h"
 
@@ -12,18 +12,12 @@ class Pattern
         virtual ~Pattern() {}
         int pixelsPerString;
         int numStrings;
-        std::vector<std::vector<ledscape_pixel_t>> opcVector;
+        std::vector<std::vector<opc_pixel_t>> pixelArray;
         std::vector<Widget*> widgets;
 
-        bool init (int numStrings, int pixelsPerString) {
-            numStrings = numStrings;
-            pixelsPerString = pixelsPerString;
+        virtual bool initPattern(int numStrings, int pixelsPerString) = 0;
+        virtual bool initWidgets(int numWidgets, int channelsPerWidget) = 0;
 
-            opcVector.resize(numStrings, std::vector<ledscape_pixel_t>(pixelsPerString));
-            return true;
-        }
-
-        virtual bool initPattern (int numWidgets, int channelsPerWidget) = 0;
         virtual bool update() = 0;
 
         uint32_t nextUpdateMs;
