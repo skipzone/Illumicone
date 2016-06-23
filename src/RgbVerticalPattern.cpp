@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Widget.h"
+#include "WidgetChannel.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
 #include "PatternFactory.h"
@@ -19,7 +20,7 @@ bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString)
 
 bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
-    int i;
+    int i, ii;
 
     nextUpdateMs = 5;
 
@@ -27,7 +28,14 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 
     for (i = 0; i < numWidgets; i++) {
         widgets.emplace_back(widgetFactory(1));
+        widgets[i]->init(channelsPerWidget);
+        ii = 0;
+        for (auto&& channel:widgets[i]->channels) {
+            channel.initChannel(ii, 0, 0);
+            ii++;
+        }
     }
+
     return true;
 }
 
@@ -35,36 +43,42 @@ bool RgbVerticalPattern::update()
 {
     // channel iterator
     int channel_num = 0;
-    for (auto widget:widgets) {
+
+    cout << "Update pattern!" << endl;
+
+    for (auto&& widget:widgets) {
         // update active, position, velocity for each channel in widget
         widget->moveData();
-        for (auto channel:widget->channels) {
+        for (auto&& channel:widget->channels) {
             // check if the channel updated
             if (channel.isActive) {
-                switch (channel_num) {
+                switch (channel.number) {
                     case 0:
-                        for (auto pixel:pixelArray[channel.position]) {
+                        cout << "Update channel 0" << endl;
+                        for (auto&& pixel:pixelArray[channel.position]) {
                             pixel.r = 255;
                         }
-                        for (auto pixel:pixelArray[channel.prevPosition]) {
+                        for (auto&& pixel:pixelArray[channel.prevPosition]) {
                             pixel.r = 0;
                         }
                         break;
 
                     case 1:
-                        for (auto pixel:pixelArray[channel.position]) {
+                        cout << "Update channel 1" << endl;
+                        for (auto&& pixel:pixelArray[channel.position]) {
                             pixel.g = 255;
                         }
-                        for (auto pixel:pixelArray[channel.prevPosition]) {
+                        for (auto&& pixel:pixelArray[channel.prevPosition]) {
                             pixel.g = 0;
                         }
                         break;
 
                     case 2:
-                        for (auto pixel:pixelArray[channel.position]) {
+                        cout << "Update channel 2" << endl;
+                        for (auto&& pixel:pixelArray[channel.position]) {
                             pixel.b = 255;
                         }
-                        for (auto pixel:pixelArray[channel.prevPosition]) {
+                        for (auto&& pixel:pixelArray[channel.prevPosition]) {
                             pixel.b = 0;
                         }
                         break;
@@ -73,8 +87,6 @@ bool RgbVerticalPattern::update()
                         break;
                 }
             }
-
-            channel_num++;
         }
     }
 

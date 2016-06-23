@@ -18,6 +18,7 @@ class Widget
             channels.resize(numChannels);
             return true;
         }
+
         //
         // use this to read data from widget and store it
         //

@@ -1,9 +1,10 @@
-#include "ThreeWheelWidget.h"
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <string>
 #include <regex>
+
+#include "ThreeWheelWidget.h"
 
 using namespace std;
 
@@ -15,24 +16,30 @@ using namespace std;
 //
 bool ThreeWheelWidget::moveData()
 {
-    std::ifstream uart_stream("/dev/ttyUSB0"); 
-    std::string line;
-    regex re(",");
-    int i;
-    int dummy;
-
-    cout << "Moving data - -" << endl;
-    getline(uart_stream, line);
-    cout << line << endl;
-
-    sregex_token_iterator iter(line.begin(), line.end(), re, -1);
-
-    for (i = 0; i < channels.size(); i++) {
-        dummy = stoi(iter->str());
-        channels[i].isActive = stoi(iter->str());
-        dummy = stoi(iter->str());
-        channels[i].position = stoi(iter->str());
+    for (auto&& channel:channels) {
+        cout << "moveData Channel!" << endl;
+        channel.isActive = true;
+        channel.position = 1;
+        channel.velocity = 0;
     }
-
-    return true;
+//    std::ifstream uart_stream("/dev/ttyUSB0"); 
+//    std::string line;
+//    regex re(",");
+//    int i;
+//    int dummy;
+//
+//    cout << "Moving data - -" << endl;
+//    getline(uart_stream, line);
+//    cout << line << endl;
+//
+//    sregex_token_iterator iter(line.begin(), line.end(), re, -1);
+//
+//    for (i = 0; i < channels.size(); i++) {
+//        dummy = stoi(iter->str());
+//        channels[i].isActive = stoi(iter->str());
+//        dummy = stoi(iter->str());
+//        channels[i].position = stoi(iter->str());
+//    }
+//
+//    return true;
 }

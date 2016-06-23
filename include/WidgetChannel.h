@@ -8,14 +8,9 @@ class WidgetChannel
         int     position;
         int     velocity;
         bool    isActive;
+        int     number;
 
-        bool init(int initPosition, int initVelocity) {
-            prevPosition = initPosition;
-            position = initPosition;
-            velocity = initVelocity;
-            isActive = false;
-            return true;
-        }
+        bool initChannel(int channelNumber, int initPosition, int initVelocity);
 };
 
 #endif /* SUB_WIDGET_H */
