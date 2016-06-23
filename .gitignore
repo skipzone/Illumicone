@@ -1,3 +1,5 @@
 Pattern
 *.o
 .*.swp
+# ignore cscope reference file
+cscope.out
