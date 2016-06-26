@@ -1,8 +1,9 @@
 #pragma once
 #include <cstdint>
 
-#define NUM_STRINGS 4
-#define PIXELS_PER_STRING 16
+#define NUM_STRINGS 12
+#define PIXELS_PER_STRING 20
+#define OPC_SERVER_ADDR "192.168.69.100"
 // type definitions for Illumicone
 
 //

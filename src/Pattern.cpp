@@ -10,6 +10,7 @@
 #include "WidgetChannel.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
+#include "SolidBlackPattern.h"
 
 using namespace std;
 
@@ -21,7 +22,7 @@ static uint8_t opcArray[NUM_STRINGS * PIXELS_PER_STRING * 3 + 4];
 bool setupConnection()
 {
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    server.sin_addr.s_addr = inet_addr("192.168.7.2");
+    server.sin_addr.s_addr = inet_addr(OPC_SERVER_ADDR);
     server.sin_family = AF_INET;
     server.sin_port = htons(7890);
 
@@ -35,7 +36,7 @@ bool setupConnection()
 
 void dumpPacket(uint8_t *opcArray)
 {
-    int i, ii;
+    int i;
     uint8_t *pixels;
 
     cout << "opcArray[0]: " << unsigned(opcArray[0]) << endl;
@@ -68,23 +69,14 @@ int sendPacket(std::vector<std::vector<opc_pixel_t>> &pixelArray)
 
     for (col = 0; col < NUM_STRINGS; col++) {
         for (row = 0; row < PIXELS_PER_STRING; row++) {
-            pixels[col*PIXELS_PER_STRING*3 + row * 3 + 0] = pixelArray[col][row].r;
-            pixels[col*PIXELS_PER_STRING*3 + row * 3 + 1] = pixelArray[col][row].g;
-            pixels[col*PIXELS_PER_STRING*3 + row * 3 + 2] = pixelArray[col][row].b;
+            pixels[col*PIXELS_PER_STRING*3 + row*3 + 0] = pixelArray[col][row].r;
+            pixels[col*PIXELS_PER_STRING*3 + row*3 + 1] = pixelArray[col][row].g;
+            pixels[col*PIXELS_PER_STRING*3 + row*3 + 2] = pixelArray[col][row].b;
         }
     }
-//    pixels[0*PIXELS_PER_STRING + 0 * 3 + 0] = 128;
-//    pixels[0*PIXELS_PER_STRING + 1 * 3 + 1] = 128;
-//    pixels[0*PIXELS_PER_STRING + 2 * 3 + 2] = 128;
-//
-//    pixels[1*PIXELS_PER_STRING * 3 + 13 * 3 + 0] = 128;
-//    pixels[2*PIXELS_PER_STRING * 3 + 14 * 3 + 1] = 128;
-//    pixels[3*PIXELS_PER_STRING * 3 + 15 * 3 + 2] = 128;
-
-
-    // send over network connection
 
 //    dumpPacket(opcArray);
+    // send over network connection
     n = send(sock, opcArray, sizeof(opcArray), 0);
 
     return n;
@@ -93,8 +85,9 @@ int sendPacket(std::vector<std::vector<opc_pixel_t>> &pixelArray)
 int main(void)
 {
     RgbVerticalPattern rgbPattern;
-    int num_channels[2] = {3, 5};
-    int i, num_bytes;
+    SolidBlackPattern solidBlackPattern;
+    int num_channels[2] = {3, 1};
+    int num_bytes;
 
     cout << "Pattern initialization!\n";
 
@@ -104,27 +97,32 @@ int main(void)
     rgbPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING);
     rgbPattern.initWidgets(1, num_channels[0]);
 
-    // initialize channels
-    // NEED emplace_back or something...
-    // put an "init channels" in widget to emplace_back channels
-    for (auto channel:rgbPattern.widgets[0]->channels) {
-        cout << "initialize channel!" << endl;
-        i++;
-    }
+    solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING);
+    solidBlackPattern.initWidgets(1, num_channels[1]);
 
-    cout << "Number of channels: " << rgbPattern.widgets[0]->channels.size() << endl;
+//    for (auto channel:rgbPattern.widgets[0]->channels) {
+//        cout << "initialize channel!" << endl;
+//        i++;
+//    }
 
-    for (auto channel:rgbPattern.widgets[0]->channels) {
-        cout << "Channel: " << channel.number << endl;
-    }
+    cout << "RgbVerticalPattern num channels: " << rgbPattern.widgets[0]->channels.size() << endl;
+    cout << "SolidBlackPattern num channels: " << solidBlackPattern.widgets[0]->channels.size() << endl;
+
+//    for (auto channel:rgbPattern.widgets[0]->channels) {
+//        cout << "Channel: " << channel.number << endl;
+//    }
 
     while (true) {
         rgbPattern.update();
+//        solidBlackPattern.update();
 
         cout << "rgbPattern pixel array size X: " << rgbPattern.pixelArray.size() << endl;
         cout << "rgbPattern pixel array size Y: " << rgbPattern.pixelArray[0].size() << endl;
         cout << "rgbPattern widgets size: " << rgbPattern.widgets.size() << endl;
 
+        cout << "solidBlackPattern pixel array size X: " << solidBlackPattern.pixelArray.size() << endl;
+        cout << "solidBlackPattern pixel array size Y: " << solidBlackPattern.pixelArray[0].size() << endl;
+        cout << "solidBlackPattern widgets size: " << solidBlackPattern.widgets.size() << endl;
     //    cout << "Pixel 0:" << endl;
     //    for (auto pixel:rgbPattern.pixelArray[0]) {
     //        cout << "" << pixel.r << " " << pixel.g << " " << pixel.b << endl;
@@ -138,6 +136,6 @@ int main(void)
         num_bytes = sendPacket(rgbPattern.pixelArray);
         cout << num_bytes << " sent!" << endl;
 
-        usleep(50000);
+        usleep(500000);
     }
 }

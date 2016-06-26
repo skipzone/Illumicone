@@ -5,6 +5,7 @@
 #include <regex>
 
 #include "ThreeWheelWidget.h"
+#include "illumiconeTypes.h"
 
 using namespace std;
 
@@ -17,29 +18,41 @@ using namespace std;
 bool ThreeWheelWidget::moveData()
 {
     for (auto&& channel:channels) {
-        cout << "moveData Channel!" << endl;
-        channel.isActive = true;
-        channel.position = 1;
-        channel.velocity = 0;
+        cout << "moveData Channel " << channel.number << endl;
+        switch (channel.number) {
+            case 0:
+                channel.prevPosition = channel.position;
+                channel.isActive = true;
+                if (channel.position == NUM_STRINGS-1) {
+                    channel.position = 0;
+                } else {
+                    channel.position++;
+                }
+                channel.velocity = 0;
+                break;
+            case 1:
+                channel.prevPosition = channel.position;
+                channel.isActive = false;
+                if (channel.position == NUM_STRINGS-1) {
+                    channel.position = 0;
+                } else {
+                    channel.position++;
+                }
+                channel.velocity = 0;
+                break;
+            case 2:
+                channel.prevPosition = channel.position;
+                channel.isActive = true;
+                if (channel.position == NUM_STRINGS-1) {
+                    channel.position = 0;
+                } else {
+                    channel.position++;
+                }
+                channel.velocity = 0;
+                break;
+            default:
+                return false;
+        }
     }
-//    std::ifstream uart_stream("/dev/ttyUSB0"); 
-//    std::string line;
-//    regex re(",");
-//    int i;
-//    int dummy;
-//
-//    cout << "Moving data - -" << endl;
-//    getline(uart_stream, line);
-//    cout << line << endl;
-//
-//    sregex_token_iterator iter(line.begin(), line.end(), re, -1);
-//
-//    for (i = 0; i < channels.size(); i++) {
-//        dummy = stoi(iter->str());
-//        channels[i].isActive = stoi(iter->str());
-//        dummy = stoi(iter->str());
-//        channels[i].position = stoi(iter->str());
-//    }
-//
-//    return true;
+    return true;
 }

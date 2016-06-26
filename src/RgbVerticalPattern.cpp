@@ -3,7 +3,6 @@
 #include "WidgetChannel.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
-#include "PatternFactory.h"
 #include "WidgetFactory.h"
 
 using namespace std;
@@ -11,12 +10,11 @@ using namespace std;
 bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString)
 {
     cout << "Init RGB Vertical Pattern!" << endl;
-    cout << "initPattern numStrings: " << numStrings << endl;
-    cout << "initPattern pixelsPerString: " << pixelsPerString << endl;
     numStrings = numStrings;
     pixelsPerString = pixelsPerString;
 
     pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
+    priority = 1;
 //    pixelArray.resize(std::vector<opc_pixel_t>(pixelsPerString), numStrings);
     return true;
 }
@@ -24,8 +22,6 @@ bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString)
 bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
     int i, ii;
-
-    nextUpdateMs = 5;
 
     cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
@@ -44,8 +40,6 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 
 bool RgbVerticalPattern::update()
 {
-    // channel iterator
-
     cout << "Update pattern!" << endl;
 
     for (auto&& widget:widgets) {
