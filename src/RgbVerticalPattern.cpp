@@ -11,10 +11,13 @@ using namespace std;
 bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString)
 {
     cout << "Init RGB Vertical Pattern!" << endl;
+    cout << "initPattern numStrings: " << numStrings << endl;
+    cout << "initPattern pixelsPerString: " << pixelsPerString << endl;
     numStrings = numStrings;
     pixelsPerString = pixelsPerString;
 
     pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
+//    pixelArray.resize(std::vector<opc_pixel_t>(pixelsPerString), numStrings);
     return true;
 }
 
@@ -42,7 +45,6 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 bool RgbVerticalPattern::update()
 {
     // channel iterator
-    int channel_num = 0;
 
     cout << "Update pattern!" << endl;
 

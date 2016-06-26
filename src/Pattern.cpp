@@ -1,6 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <unistd.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include "illumiconeTypes.h"
 #include "Widget.h"
@@ -10,15 +13,35 @@
 
 using namespace std;
 
+static struct sockaddr_in server;
+static int sock;
+static int n;
+static uint8_t opcArray[NUM_STRINGS * PIXELS_PER_STRING * 3 + 4];
+
+bool setupConnection()
+{
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    server.sin_addr.s_addr = inet_addr("192.168.7.2");
+    server.sin_family = AF_INET;
+    server.sin_port = htons(7890);
+
+    if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
+        printf("Couldn't connect.\n");
+        while (1);
+    }
+
+    return true;
+}
+
 void dumpPacket(uint8_t *opcArray)
 {
     int i, ii;
     uint8_t *pixels;
 
-    cout << "opcArray[0]: " << opcArray[0] << endl;
-    cout << "opcArray[1]: " << opcArray[1] << endl;
-    cout << "opcArray[2]: " << opcArray[2] << endl;
-    cout << "opcArray[3]: " << opcArray[3] << endl;
+    cout << "opcArray[0]: " << unsigned(opcArray[0]) << endl;
+    cout << "opcArray[1]: " << unsigned(opcArray[1]) << endl;
+    cout << "opcArray[2]: " << unsigned(opcArray[2]) << endl;
+    cout << "opcArray[3]: " << unsigned(opcArray[3]) << endl;
 
     pixels = &opcArray[4];
 
@@ -27,9 +50,8 @@ void dumpPacket(uint8_t *opcArray)
     }
 }
 
-bool sendPacket(std::vector<std::vector<opc_pixel_t>> &pixelArray)
+int sendPacket(std::vector<std::vector<opc_pixel_t>> &pixelArray)
 {
-    uint8_t opcArray[NUM_STRINGS * PIXELS_PER_STRING * 3 + 4];
     uint8_t *pixels;
 
     int col;
@@ -46,27 +68,41 @@ bool sendPacket(std::vector<std::vector<opc_pixel_t>> &pixelArray)
 
     for (col = 0; col < NUM_STRINGS; col++) {
         for (row = 0; row < PIXELS_PER_STRING; row++) {
-            pixels[col*PIXELS_PER_STRING + row * 3 + 0] = pixelArray[col][row].r;
-            pixels[col*PIXELS_PER_STRING + row * 3 + 1] = pixelArray[col][row].g;
-            pixels[col*PIXELS_PER_STRING + row * 3 + 2] = pixelArray[col][row].b;
+            pixels[col*PIXELS_PER_STRING*3 + row * 3 + 0] = pixelArray[col][row].r;
+            pixels[col*PIXELS_PER_STRING*3 + row * 3 + 1] = pixelArray[col][row].g;
+            pixels[col*PIXELS_PER_STRING*3 + row * 3 + 2] = pixelArray[col][row].b;
         }
     }
+//    pixels[0*PIXELS_PER_STRING + 0 * 3 + 0] = 128;
+//    pixels[0*PIXELS_PER_STRING + 1 * 3 + 1] = 128;
+//    pixels[0*PIXELS_PER_STRING + 2 * 3 + 2] = 128;
+//
+//    pixels[1*PIXELS_PER_STRING * 3 + 13 * 3 + 0] = 128;
+//    pixels[2*PIXELS_PER_STRING * 3 + 14 * 3 + 1] = 128;
+//    pixels[3*PIXELS_PER_STRING * 3 + 15 * 3 + 2] = 128;
+
 
     // send over network connection
 
-    dumpPacket(opcArray);
+//    dumpPacket(opcArray);
+    n = send(sock, opcArray, sizeof(opcArray), 0);
+
+    return n;
 }
 
 int main(void)
 {
     RgbVerticalPattern rgbPattern;
-    int pattern[2] = {3, 5};
-    int i;
+    int num_channels[2] = {3, 5};
+    int i, num_bytes;
 
     cout << "Pattern initialization!\n";
 
+    setupConnection();
+    cout << "NUM_STRINGS: " << NUM_STRINGS << endl;
+    cout << "PIXELS_PER_STRING: " << PIXELS_PER_STRING << endl;
     rgbPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING);
-    rgbPattern.initWidgets(1, pattern[0]);
+    rgbPattern.initWidgets(1, num_channels[0]);
 
     // initialize channels
     // NEED emplace_back or something...
@@ -82,21 +118,26 @@ int main(void)
         cout << "Channel: " << channel.number << endl;
     }
 
-    rgbPattern.update();
+    while (true) {
+        rgbPattern.update();
 
-    cout << "rgbPattern pixel array size X: " << rgbPattern.pixelArray.size() << endl;
-    cout << "rgbPattern pixel array size Y: " << rgbPattern.pixelArray[0].size() << endl;
-    cout << "rgbPattern widgets size: " << rgbPattern.widgets.size() << endl;
+        cout << "rgbPattern pixel array size X: " << rgbPattern.pixelArray.size() << endl;
+        cout << "rgbPattern pixel array size Y: " << rgbPattern.pixelArray[0].size() << endl;
+        cout << "rgbPattern widgets size: " << rgbPattern.widgets.size() << endl;
 
-//    cout << "Pixel 0:" << endl;
-//    for (auto pixel:rgbPattern.pixelArray[0]) {
-//        cout << "" << pixel.r << " " << pixel.g << " " << pixel.b << endl;
-//    }
-//
-//    cout << "\n\n\nPixel 1:" << endl;
-//    for (auto pixel:rgbPattern.pixelArray[1]) {
-//        cout << "" << pixel.r << " " << pixel.g << " " << pixel.b << endl;
-//    }
+    //    cout << "Pixel 0:" << endl;
+    //    for (auto pixel:rgbPattern.pixelArray[0]) {
+    //        cout << "" << pixel.r << " " << pixel.g << " " << pixel.b << endl;
+    //    }
+    //
+    //    cout << "\n\n\nPixel 1:" << endl;
+    //    for (auto pixel:rgbPattern.pixelArray[1]) {
+    //        cout << "" << pixel.r << " " << pixel.g << " " << pixel.b << endl;
+    //    }
 
-    sendPacket(rgbPattern.pixelArray);
+        num_bytes = sendPacket(rgbPattern.pixelArray);
+        cout << num_bytes << " sent!" << endl;
+
+        usleep(50000);
+    }
 }

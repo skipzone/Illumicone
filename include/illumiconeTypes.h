@@ -1,8 +1,8 @@
 #pragma once
 #include <cstdint>
 
-#define NUM_STRINGS 36
-#define PIXELS_PER_STRING 100
+#define NUM_STRINGS 4
+#define PIXELS_PER_STRING 16
 // type definitions for Illumicone
 
 //

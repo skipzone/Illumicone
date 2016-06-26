@@ -11,7 +11,7 @@ INCLUDE=../include
 CC=g++
 CFLAGS=-Wall -g -I$(INCLUDE)
 CXX=g++
-CXXFLAGS=-Wall -g -std=c++11 -I$(INCLUDE)
+CXXFLAGS=-Wall -g -std=c++0x -I$(INCLUDE)
 #LDFLAGS=-stdlib=libc++
 #LDLIBS=-L$(LIBS) -lpthread
 
