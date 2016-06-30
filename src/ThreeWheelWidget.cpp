@@ -18,8 +18,9 @@ using namespace std;
 bool ThreeWheelWidget::moveData()
 {
     for (auto&& channel:channels) {
-        cout << "moveData Channel " << channel.number << endl;
+//        cout << "moveData Channel " << channel.number << endl;
         switch (channel.number) {
+            // ROSS: fill in with code to read widget data space
             case 0:
                 channel.prevPosition = channel.position;
                 channel.isActive = true;

@@ -10,19 +10,22 @@ using namespace std;
 
 bool SolidBlackPattern::initPattern(int numStrings, int pixelsPerString)
 {
-    cout << "Init Solid Black Pattern!" << endl;
+//    cout << "Init Solid Black Pattern!" << endl;
     numStrings = numStrings;
     pixelsPerString = pixelsPerString;
-
     pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-    priority = 2;
+    name = "SolidBlackPattern";
+
+    isActive = false;
+
+    priority = 0;
     return true;
 }
 
 bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
     int i, ii;
-    cout << "Init RGB Vertical Pattern Widgets!" << endl;
+//    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
         widgets.emplace_back(widgetFactory(2));
@@ -39,7 +42,41 @@ bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
 
 bool SolidBlackPattern::update()
 {
-    cout << "Updating Solid Black Pattern!" << endl;
+    int i;
+    bool hadActivity = false;
+//    cout << "Updating Solid Black Pattern!" << endl;
 
+    for (auto&& widget:widgets) {
+//        cout << "Updating Solid Black Pattern widget!" << endl;
+        // update active, position, velocity for each channel in widget
+        widget->moveData();
+        for (auto&& channel:widget->channels) {
+//            cout << "Updating widget's channel!" << endl;
+            if (channel.isActive) {
+                hadActivity = true;
+                switch (channel.number) {
+                    case 0:
+                        // set entire pixelArray black (off)
+                        for (i = 0; i < NUM_STRINGS; i++) {
+                            for (auto&& pixel:pixelArray[i]) {
+                                pixel.r = 0;
+                                pixel.g = 0;
+                                pixel.b = 0;
+                            }
+                        }
+
+                        break;
+
+                    default:
+                        // shouldn't get here, solid black uses the eye widget which
+                        // should only have one channel.
+                        cout << "SOMETHING'S FUCKY : channel number for Solid Black Pattern widget" << endl;
+                        break;
+                }
+            }
+        }
+    }
+
+    isActive = hadActivity;
     return true;
 }

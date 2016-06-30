@@ -1,4 +1,4 @@
-Pattern
+PatternController
 *.o
 .*.swp
 # ignore cscope reference file

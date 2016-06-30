@@ -15,12 +15,14 @@ class Pattern
         std::vector<std::vector<opc_pixel_t>> pixelArray;
         std::vector<Widget*> widgets;
 
+        int priority;
+        std::string name;
+        bool isActive;
+
         virtual bool initPattern(int numStrings, int pixelsPerString) = 0;
         virtual bool initWidgets(int numWidgets, int channelsPerWidget) = 0;
 
         virtual bool update() = 0;
-
-        uint32_t nextUpdateMs;
 };
 
 #endif /* PATTERN_H */

@@ -9,13 +9,14 @@ using namespace std;
 
 bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString)
 {
-    cout << "Init RGB Vertical Pattern!" << endl;
+//    cout << "Init RGB Vertical Pattern!" << endl;
     numStrings = numStrings;
     pixelsPerString = pixelsPerString;
+    isActive = false;
+    name = "Rgb Vertical Stripe Pattern";
 
     pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
     priority = 1;
-//    pixelArray.resize(std::vector<opc_pixel_t>(pixelsPerString), numStrings);
     return true;
 }
 
@@ -23,14 +24,14 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
     int i, ii;
 
-    cout << "Init RGB Vertical Pattern Widgets!" << endl;
+//    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
         widgets.emplace_back(widgetFactory(1));
         widgets[i]->init(channelsPerWidget);
         ii = 0;
         for (auto&& channel:widgets[i]->channels) {
-            channel.initChannel(ii, 0, 0);
+            channel.initChannel(ii, ii, ii);
             ii++;
         }
     }
@@ -40,7 +41,8 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 
 bool RgbVerticalPattern::update()
 {
-    cout << "Update pattern!" << endl;
+//    cout << "Update pattern!" << endl;
+    bool hadActivity = false;
 
     for (auto&& widget:widgets) {
         // update active, position, velocity for each channel in widget
@@ -48,9 +50,10 @@ bool RgbVerticalPattern::update()
         for (auto&& channel:widget->channels) {
             // check if the channel updated
             if (channel.isActive) {
+                hadActivity = true;
                 switch (channel.number) {
                     case 0:
-                        cout << "Update channel 0" << endl;
+//                        cout << "Update channel 0" << endl;
                         for (auto&& pixel:pixelArray[channel.position]) {
                             pixel.r = 255;
                         }
@@ -60,7 +63,7 @@ bool RgbVerticalPattern::update()
                         break;
 
                     case 1:
-                        cout << "Update channel 1" << endl;
+//                        cout << "Update channel 1" << endl;
                         for (auto&& pixel:pixelArray[channel.position]) {
                             pixel.g = 255;
                         }
@@ -70,7 +73,7 @@ bool RgbVerticalPattern::update()
                         break;
 
                     case 2:
-                        cout << "Update channel 2" << endl;
+//                        cout << "Update channel 2" << endl;
                         for (auto&& pixel:pixelArray[channel.position]) {
                             pixel.b = 255;
                         }
@@ -80,11 +83,14 @@ bool RgbVerticalPattern::update()
                         break;
 
                     default:
+                        cout << "SOMETHING'S FUCKY : channel number of " << channel.number << endl;
                         break;
                 }
             }
         }
     }
+
+    isActive = hadActivity;
 
     return true;
 }

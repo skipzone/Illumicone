@@ -1,7 +1,7 @@
 
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
-PROGS=Pattern
+PROGS=PatternController
 OBJS=EyeWidget.o ThreeWheelWidget.o SolidBlackPattern.o RgbVerticalPattern.o WidgetChannel.o
 LIBS=
 

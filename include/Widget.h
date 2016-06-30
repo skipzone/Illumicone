@@ -14,7 +14,12 @@ class Widget
         Widget(const Widget&) = delete;
         Widget& operator =(const Widget&) = delete;
 
+        std::string name;
+
+        int numChannels;
+
         bool init(int numChannels) {
+            this->numChannels = numChannels;
             channels.resize(numChannels);
             return true;
         }

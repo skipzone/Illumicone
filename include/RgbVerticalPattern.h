@@ -8,7 +8,6 @@ class RgbVerticalPattern : public Pattern {
         RgbVerticalPattern() {};
         ~RgbVerticalPattern() {};
 
-        int priority;
         bool initPattern(int numStrings, int pixelsPerString);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();       

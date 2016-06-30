@@ -7,7 +7,6 @@ class SolidBlackPattern : public Pattern {
         SolidBlackPattern() {};
         ~SolidBlackPattern() {};
 
-        int priority;
         bool initPattern(int numStrings, int pixelsPerString);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();

@@ -9,7 +9,7 @@ using namespace std;
 bool EyeWidget::moveData()
 {
     for (auto&& channel:channels) {
-        cout << "moveData EyeWidget Channel " << channel.number << endl;
+//        cout << "moveData EyeWidget Channel " << channel.number << endl;
         switch (channel.number) {
             case 0:
                 channel.velocity = 0;
