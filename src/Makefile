@@ -2,7 +2,7 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=PatternController
-OBJS=EyeWidget.o ThreeWheelWidget.o SolidBlackPattern.o RgbVerticalPattern.o WidgetChannel.o
+OBJS=StairWidget.o EyeWidget.o ThreeWheelWidget.o SolidBlackPattern.o RgbVerticalPattern.o QuadSlicePattern.o WidgetChannel.o
 LIBS=
 
 INCLUDE=../include
@@ -25,6 +25,17 @@ $(PROGS): $(OBJS)
 # can use something like this if the implicit linking rule is not sufficient.
 #	$(CXX) $(LDFLAGS) $(LIBS) -o $@ $< $(LDLIBS)
 
+WidgetSimulator: WidgetSimulator.cpp
+	g++ $(CXXFLAGS) -o $@ $^ -lrt
+
+GpioTester: GpioTester.cpp
+	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
+
 clean:
 	rm -f $(OBJS) $(PROGS)
 
+clean-GpioTester:
+	rm -f GpioTester
+
+clean-WidgetSimulator:
+	rm -f WidgetSimulator

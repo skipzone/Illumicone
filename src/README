@@ -1,1 +1,11 @@
-use references in range-based for loops when assigning values!!
+To setup each Pattern, first create an object of the derived pattern class.
+Then call that object's initPattern() and initWidgets() functions to initialize
+the Pattern with its Widgets.
+
+On each loop, call each pattern's update() function.  This function iterates
+through each Pattern's Widgets, and calls each Widget's moveData() function.
+The moveData() function gets the updated position, velocity, etc from each
+of its channels.
+
+After the data has been moved, update() updates its own pixelArray values
+using the channel's position, velocity, etc.

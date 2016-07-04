@@ -1,4 +1,6 @@
 PatternController
+GpioTester
+WidgetSimulator
 *.o
 .*.swp
 # ignore cscope reference file

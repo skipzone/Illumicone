@@ -3,6 +3,7 @@
 
 #include "ThreeWheelWidget.h"
 #include "EyeWidget.h"
+#include "StairWidget.h"
 
 using namespace std;
 
@@ -15,8 +16,11 @@ static Widget* widgetFactory(uint8_t id)
         case 2:
             cout << "Return SolidBlackWidget!" << endl;
             return new EyeWidget;
+        case 3:
+            cout << "Return StairWidget!" << endl;
+            return new StairWidget;
         default:
-            return new ThreeWheelWidget;
+            cout << "SOMETHING'S FUCKY: WidgetFactory id" << endl;
     }
 }
 

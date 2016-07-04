@@ -23,8 +23,8 @@ bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString)
 
 bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
-    int i, ii;
-
+    int i, ii, iii;
+    iii = 2;
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
@@ -32,8 +32,9 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
         widgets[i]->init(channelsPerWidget);
         ii = 0;
         for (auto&& channel:widgets[i]->channels) {
-            channel.initChannel(ii, ii, ii);
+            channel.initChannel(ii, iii, 0);
             ii++;
+            iii--;
         }
     }
 
@@ -54,7 +55,6 @@ bool RgbVerticalPattern::update()
                 hadActivity = 1;
                 switch (channel.number) {
                     case 0:
-//                        cout << "Update channel 0" << endl;
                         for (auto&& pixel:pixelArray[channel.position]) {
                             pixel.r = 255;
                         }
@@ -64,7 +64,6 @@ bool RgbVerticalPattern::update()
                         break;
 
                     case 1:
-//                        cout << "Update channel 1" << endl;
                         for (auto&& pixel:pixelArray[channel.position]) {
                             pixel.g = 255;
                         }
@@ -74,7 +73,6 @@ bool RgbVerticalPattern::update()
                         break;
 
                     case 2:
-//                        cout << "Update channel 2" << endl;
                         for (auto&& pixel:pixelArray[channel.position]) {
                             pixel.b = 255;
                         }

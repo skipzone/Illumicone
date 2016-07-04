@@ -52,6 +52,7 @@ bool ThreeWheelWidget::moveData()
                 channel.velocity = 0;
                 break;
             default:
+                cout << "SOMETHING'S FUCKY: channel number in ThreeWheelWidget moveData()" << endl;
                 return false;
         }
     }

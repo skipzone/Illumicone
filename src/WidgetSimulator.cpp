@@ -3,6 +3,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cstdbool>
+#include <unistd.h>
+#include <sys/types.h>
 
 using namespace std;
 
@@ -10,9 +12,23 @@ int main()
 {
     int threeWheelFd;
     int eyeFd;
+    void *twPtr;
+    void *eyPtr;
 
-    threeWheelFd = shm_open("/threeWheelArea", O_RDWR, 0);
-    eyeFd = shm_open("/eyeArea", O_RDWR, 0);
+    int prevPositionR = 0;
+    int positionR = 0;
+    int velocityR = 0;
+
+    int prevPositionG = 0;
+    int positionG = 0;
+    int velocityG = 0;
+
+    int prevPositionB = 0;
+    int positionB = 0;
+    int velocityB = 0;
+
+    threeWheelFd = shm_open("/threeWheelArea", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    eyeFd = shm_open("/eyeArea", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 
     // index is:
     // Channel 0 [0]    isActive
@@ -46,5 +62,7 @@ int main()
         cout << "SOMETHING'S FUCKY: eyPtr mmap failed" << endl;
     }
 
-    while (1);
+    while (1) {
+        
+    }
 }

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <unistd.h>
-#include <string.h>
+#include <string>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
@@ -11,6 +11,7 @@
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
 #include "SolidBlackPattern.h"
+#include "QuadSlicePattern.h"
 
 using namespace std;
 
@@ -27,7 +28,7 @@ bool setupConnection()
     server.sin_port = htons(7890);
 
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-        cout << "SOMETHING'S FUCKY: couldn't connect to opc-server!\n";
+        cout << "SOMETHING'S FUCKY: couldn't connect to opc-server!" << endl;
         while (1);
     }
 
@@ -95,6 +96,9 @@ bool buildFrame(
 
     switch (priority) {
         case 0:
+            //
+            // SolidBlackPattern
+            //
             for (col = 0; col < NUM_STRINGS; col++) {
                 for (row = 0; row < PIXELS_PER_STRING; row++) {
                     finalFrame[col][row] = pixelArray[col][row];
@@ -103,16 +107,35 @@ bool buildFrame(
             break;
 
         case 1:
-            // for now just set like priority 0
-            // this will change to some way of combining with the other
-            // priorities.
+            //
+            // RgbVerticalPattern
+            //
             for (col = 0; col < NUM_STRINGS; col++) {
                 for (row = 0; row < PIXELS_PER_STRING; row++) {
-                    finalFrame[col][row] = pixelArray[col][row];
+                    // only update the value of the final frame if the pixel
+                    // contains non-zero values (is on)
+                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
+                        finalFrame[col][row] = pixelArray[col][row];
+                    }
                 }
             }
             break;
             
+        case 2:
+            //
+            // QuadSlicePattern
+            //
+            for (col = 0; col < NUM_STRINGS; col++) {
+                for (row = 0; row < PIXELS_PER_STRING; row++) {
+                    // only update the value of the final frame if the pixel
+                    // contains non-zero values (is on)
+                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
+                        finalFrame[col][row] = pixelArray[col][row];
+                    }
+                }
+            }
+            break;
+
         default:
             cout << "SOMETHING'S FUCKY : no case for priority " << priority << endl;
     }
@@ -153,12 +176,13 @@ int main(void)
 {
     RgbVerticalPattern rgbVerticalPattern;
     SolidBlackPattern solidBlackPattern;
+    QuadSlicePattern quadSlicePattern;
 
     vector<vector<opc_pixel_t>> finalFrame1;
     vector<vector<opc_pixel_t>> finalFrame2;
 
     // to be filled in from a config file somewhere
-    int numChannels[2] = {3, 1};
+    int numChannels[3] = {3, 1, 4};
     int numBytes;
 
     finalFrame1.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
@@ -173,31 +197,24 @@ int main(void)
     rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING);
     rgbVerticalPattern.initWidgets(1, numChannels[0]);
     printInit(&rgbVerticalPattern);
-//    cout << "Initialized " << rgbVerticalPattern.name << "!" << endl;
-//    cout << "    priority: " << rgbVerticalPattern.priority << endl;
-//    cout << "    pixelArray size X: " << rgbVerticalPattern.pixelArray.size() << endl;
-//    cout << "    pixelArray size Y: " << rgbVerticalPattern.pixelArray[0].size() << endl;
-//    cout << "    widgets size: " << rgbVerticalPattern.widgets.size() << endl;
-//    for (auto&& widget:rgbVerticalPattern.widgets) {
-//        cout << "        " << widget->numChannels << endl;
-//    }
-//
+
     solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING);
     solidBlackPattern.initWidgets(1, numChannels[1]);
     printInit(&solidBlackPattern);
-//    cout << "Initialized " << solidBlackPattern.name << "!" << endl;
-//    cout << "    priority: " << solidBlackPattern.priority << endl;
-//    cout << "    pixelArray size X: " << solidBlackPattern.pixelArray.size() << endl;
-//    cout << "    pixelArray size Y: " << solidBlackPattern.pixelArray[0].size() << endl;
-//    cout << "    widgets size: " << solidBlackPattern.widgets.size() << endl;
-//    for (auto&& widget:solidBlackPattern.widgets) {
-//        cout << "        " << widget->numChannels << endl;
-//    }
-//
+
+    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING);
+    quadSlicePattern.initWidgets(1, numChannels[2]);
+    printInit(&quadSlicePattern);
+
     while (true) {
         rgbVerticalPattern.update();
         solidBlackPattern.update();
+        quadSlicePattern.update();
 
+        if (quadSlicePattern.isActive) {
+            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
+        }
+        
         if (rgbVerticalPattern.isActive) {
             buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
         }
@@ -208,6 +225,6 @@ int main(void)
 
         numBytes = sendFrame(finalFrame1);
 
-        usleep(50000);
+        usleep(500000);
     }
 }
