@@ -20,7 +20,7 @@ class Pattern
         std::string name;
         int isActive;
 
-        virtual bool initPattern(int numStrings, int pixelsPerString) = 0;
+        virtual bool initPattern(int numStrings, int pixelsPerString, int priority) = 0;
         virtual bool initWidgets(int numWidgets, int channelsPerWidget) = 0;
 
         virtual bool update() = 0;

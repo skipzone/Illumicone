@@ -2,34 +2,32 @@
 #include "Widget.h"
 #include "WidgetChannel.h"
 #include "Pattern.h"
-#include "RgbVerticalPattern.h"
-#include "SolidBlackPattern.h"
 #include "WidgetFactory.h"
+#include "TwistPattern.h"
 
 using namespace std;
 
-bool SolidBlackPattern::initPattern(int numStrings, int pixelsPerString, int priority)
+bool TwistPattern::initPattern(int numStrings, int pixelsPerString, int priority)
 {
 //    cout << "Init Solid Black Pattern!" << endl;
     this->numStrings = numStrings;
     this->pixelsPerString = pixelsPerString;
-    cout << "SolidBlackPattern priority: " << priority << endl;
     this->priority = priority;
     this->pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-    this->name = "SolidBlackPattern";
+    this->name = "TwistPattern";
 
     this->isActive = 0;
     this->opacity = 100;
     return true;
 }
 
-bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
+bool TwistPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
     int i, ii;
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
-        widgets.emplace_back(widgetFactory(2));
+        widgets.emplace_back(widgetFactory(4));
         widgets[i]->init(channelsPerWidget);
         ii = 0;
         for (auto&& channel:widgets[i]->channels) {
@@ -41,7 +39,7 @@ bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
     return true;
 }
 
-bool SolidBlackPattern::update()
+bool TwistPattern::update()
 {
     int i;
     int hadActivity = 0;

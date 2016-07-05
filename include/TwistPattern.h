@@ -1,15 +1,15 @@
-#ifndef QUAD_SLICE_PATTERN_H
-#define QUAD_SLICE_PATTERN_H
+#ifndef TWIST_PATTERN_H
+#define TWIST_PATTERN_H
 #include "Pattern.h"
 
-class QuadSlicePattern : public Pattern {
+class TwistPattern : public Pattern {
     public:
-        QuadSlicePattern() {};
-        ~QuadSlicePattern() {};
+        TwistPattern() {};
+        ~TwistPattern() {};
 
         bool initPattern(int numStrings, int pixelsPerString, int priority);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();
 };
 
-#endif /* QUAD_SLICE_PATTERN_H */
+#endif /* TWIST_PATTERN_H */

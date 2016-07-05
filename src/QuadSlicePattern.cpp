@@ -7,16 +7,17 @@
 
 using namespace std;
 
-bool QuadSlicePattern::initPattern(int numStrings, int pixelsPerString)
+bool QuadSlicePattern::initPattern(int numStrings, int pixelsPerString, int priority)
 {
-    numStrings = numStrings;
-    pixelsPerString = pixelsPerString;
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-    name = "QuadSlicePattern";
+    this->numStrings = numStrings;
+    this->pixelsPerString = pixelsPerString;
+    cout << "QuadSlicePattern priority: " << priority << endl;
+    this->priority = priority;
+    this->pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
+    this->name = "QuadSlicePattern";
 
-    isActive = 0;
-    opacity = 80;
-    priority = 2;
+    this->isActive = 0;
+    this->opacity = 80;
     return true;
 }
 

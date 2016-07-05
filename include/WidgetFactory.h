@@ -4,6 +4,8 @@
 #include "ThreeWheelWidget.h"
 #include "EyeWidget.h"
 #include "StairWidget.h"
+//#include "RainstickWidget.h"
+#include "RotaryWidget.h"
 
 using namespace std;
 
@@ -14,13 +16,17 @@ static Widget* widgetFactory(uint8_t id)
             cout << "Return ThreeWheelWidget!" << endl;
             return new ThreeWheelWidget;
         case 2:
-            cout << "Return SolidBlackWidget!" << endl;
+            cout << "Return EyeWidget!" << endl;
             return new EyeWidget;
         case 3:
             cout << "Return StairWidget!" << endl;
             return new StairWidget;
+        case 4:
+            cout << "Return RotaryWidget!" << endl;
+            return new RotaryWidget;
         default:
             cout << "SOMETHING'S FUCKY: WidgetFactory id" << endl;
+            return NULL;
     }
 }
 

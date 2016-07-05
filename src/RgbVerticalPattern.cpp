@@ -7,17 +7,18 @@
 
 using namespace std;
 
-bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString)
+bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString, int priority)
 {
 //    cout << "Init RGB Vertical Pattern!" << endl;
-    numStrings = numStrings;
-    pixelsPerString = pixelsPerString;
-    isActive = 0;
-    name = "Rgb Vertical Stripe Pattern";
-    opacity = 90;
+    this->numStrings = numStrings;
+    this->pixelsPerString = pixelsPerString;
+    cout << "RgbVerticalPattern priority: " << priority << endl;
+    this->priority = priority;
+    this->isActive = 0;
+    this->name = "Rgb Vertical Stripe Pattern";
+    this->opacity = 90;
 
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-    priority = 1;
+    this->pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
     return true;
 }
 

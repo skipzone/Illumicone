@@ -2,7 +2,7 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=PatternController
-OBJS=StairWidget.o EyeWidget.o ThreeWheelWidget.o SolidBlackPattern.o RgbVerticalPattern.o QuadSlicePattern.o WidgetChannel.o
+OBJS=RotaryWidget.o StairWidget.o EyeWidget.o ThreeWheelWidget.o TwistPattern.o SolidBlackPattern.o RgbVerticalPattern.o QuadSlicePattern.o WidgetChannel.o
 LIBS=
 
 INCLUDE=../include

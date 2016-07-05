@@ -12,6 +12,7 @@
 #include "RgbVerticalPattern.h"
 #include "SolidBlackPattern.h"
 #include "QuadSlicePattern.h"
+#include "TwistPattern.h"
 
 using namespace std;
 
@@ -177,12 +178,15 @@ int main(void)
     RgbVerticalPattern rgbVerticalPattern;
     SolidBlackPattern solidBlackPattern;
     QuadSlicePattern quadSlicePattern;
+//    SparklePattern sparklePattern;
+    TwistPattern twistPattern;
 
     vector<vector<opc_pixel_t>> finalFrame1;
     vector<vector<opc_pixel_t>> finalFrame2;
 
     // to be filled in from a config file somewhere
-    int numChannels[3] = {3, 1, 4};
+    int numChannels[4] = {1, 3, 4, 1};
+    int priorities[4] = {0, 1, 2, 3};
     int numBytes;
 
     finalFrame1.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
@@ -191,20 +195,28 @@ int main(void)
     cout << "Pattern initialization!\n";
 
     // open socket, connect with opc-server
-    setupConnection();
+//    setupConnection();
     cout << "NUM_STRINGS: " << NUM_STRINGS << endl;
     cout << "PIXELS_PER_STRING: " << PIXELS_PER_STRING << endl;
-    rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING);
-    rgbVerticalPattern.initWidgets(1, numChannels[0]);
-    printInit(&rgbVerticalPattern);
-
-    solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING);
-    solidBlackPattern.initWidgets(1, numChannels[1]);
+    solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[0]);
+    solidBlackPattern.initWidgets(1, numChannels[0]);
     printInit(&solidBlackPattern);
 
-    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING);
+    rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
+    rgbVerticalPattern.initWidgets(1, numChannels[1]);
+    printInit(&rgbVerticalPattern);
+
+    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[2]);
     quadSlicePattern.initWidgets(1, numChannels[2]);
     printInit(&quadSlicePattern);
+
+    twistPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
+    twistPattern.initWidgets(1, numChannels[3]);
+    printInit(&twistPattern);
+
+//    sparklePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
+//    sparklePattern.initWidgets(1, numChannels[3]);
+//    printInit(&sparklePattern);
 
     while (true) {
         rgbVerticalPattern.update();

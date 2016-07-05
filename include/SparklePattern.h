@@ -1,15 +1,15 @@
-#ifndef QUAD_SLICE_PATTERN_H
-#define QUAD_SLICE_PATTERN_H
+#ifndef SPARKLE_PATTERN_H
+#define SPARKLE_PATTERN_H
 #include "Pattern.h"
 
-class QuadSlicePattern : public Pattern {
+class SparklePattern : public Pattern {
     public:
-        QuadSlicePattern() {};
-        ~QuadSlicePattern() {};
+        SparklePattern() {};
+        ~SparklePattern() {};
 
         bool initPattern(int numStrings, int pixelsPerString, int priority);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();
 };
 
-#endif /* QUAD_SLICE_PATTERN_H */
+#endif /* SPARKLE_PATTERN_H */
