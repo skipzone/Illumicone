@@ -7,5 +7,34 @@ through each Pattern's Widgets, and calls each Widget's moveData() function.
 The moveData() function gets the updated position, velocity, etc from each
 of its channels.
 
+ROSS: moveData() for each widget will require assigning position/velocity
+based on the values in the shared memory areas.  update() will also need to be
+tweaked to generate the desired patterns, but that's something David will do.
+
 After the data has been moved, update() updates its own pixelArray values
 using the channel's position, velocity, etc.
+
+Finally, to build the final frame to be sent out to the opc-server, call
+buildFrame() with each Pattern's pixelArray and position in REVERSE ORDER.
+Priorities are assigned 0-n, where n is the number of different patterns.
+
+E.g.:
+    buildFrame(finalFrame, <Pattern(n)>.pixelArray, <Pattern(n)>.priority);
+    buildFrame(finalFrame, <Pattern(n-1)>.pixelArray, <Pattern(n-1)>.priority);
+    buildFrame(finalFrame, <Pattern(n-2)>.pixelArray, <Pattern(n-2)>.priority);
+    buildFrame(finalFrame, <Pattern(n-3)>.pixelArray, <Pattern(n-3)>.hriority);
+    ...
+    buildFrame(finalFrame, <Pattern(n-n)>.pixelArray, <Pattern(n-n)>.priority);
+
+Then finally, send the final frame to the opc-server.
+
+
+TODO:
+- Determine how to use the Pattern's opacity when building the frame.
+- Add shared memory allocations for Widget's channel data.
+- Update each Widget's moveData() function.
+- Update the following Pattern's update() functions:
+    1 - QuadSlicePattern
+    2 - SparklePattern
+    3 - TwistPattern
+
