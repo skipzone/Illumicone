@@ -1,16 +1,43 @@
-#ifndef SUB_WIDGET_H
-#define SUB_WIDGET_H
+#pragma once
+
+class Widget;
 
 class WidgetChannel
 {
     public:
-        int     prevPosition;
-        int     position;
-        int     velocity;
-        int     isActive;
-        int     number;
 
-        bool initChannel(int channelNumber, int initPosition, int initVelocity);
+        WidgetChannel(unsigned int channelNumber, Widget* widget);
+        virtual ~WidgetChannel() {}
+
+        WidgetChannel() = delete;
+        WidgetChannel(const WidgetChannel&) = delete;
+        WidgetChannel& operator =(const WidgetChannel&) = delete;
+
+        unsigned int getChannelNumber();
+        bool getIsActive();
+        bool getHasNewMeasurement();
+        int getPosition();
+        int getVelocity();
+        int getPreviousPosition();
+        int getPreviousVelocity();
+
+        void setIsActive(bool isNowActive);
+        void setPosition(int newPosition);
+        void setVelocity(int newVelocity);
+        void setPositionAndVelocity(int newPosition, int newVelocity);
+
+    private:
+
+        const int channelNumber;
+        Widget* widget;             // TODO:  not sure if we really need this
+        bool isActive;
+        bool hasNewMeasurement;
+        int position;
+        int velocity;
+        void positionAndVelocity(int& position, int& velocity);
+        int prevPosition;
+        int prevVelocity;
+
+///        bool initChannel(int channelNumber, int initPosition, int initVelocity);
 };
 
-#endif /* SUB_WIDGET_H */

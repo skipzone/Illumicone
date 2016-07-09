@@ -2,16 +2,17 @@
 #define WIDGET_FACTORY_H
 
 #include "ThreeWheelWidget.h"
-#include "EyeWidget.h"
-#include "StairWidget.h"
+//#include "EyeWidget.h"
+//#include "StairWidget.h"
 //#include "RainstickWidget.h"
-#include "RotaryWidget.h"
+//#include "RotaryWidget.h"
 
 using namespace std;
 
 static Widget* widgetFactory(uint8_t id)
 {
     switch (id) {
+/*
         case 1:
             cout << "Return ThreeWheelWidget!" << endl;
             return new ThreeWheelWidget;
@@ -24,6 +25,11 @@ static Widget* widgetFactory(uint8_t id)
         case 4:
             cout << "Return RotaryWidget!" << endl;
             return new RotaryWidget;
+*/
+        case 6:
+            cout << "Return ThreeWheelWidget!" << endl;
+            return new ThreeWheelWidget;
+
         default:
             cout << "SOMETHING'S FUCKY: WidgetFactory id" << endl;
             return NULL;

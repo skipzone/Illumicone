@@ -9,6 +9,28 @@
 
 using namespace std;
 
+
+void ThreeWheelWidget::init()
+{
+    for (int i = 0; i < 3; ++i) {
+        channels.push_back(make_shared<WidgetChannel>(i, this));
+    }
+}
+
+
+unsigned int ThreeWheelWidget::getId()
+{
+    return ThreeWheelWidget::id;
+}
+
+
+std::string ThreeWheelWidget::getName()
+{
+    //return ThreeWheelWidget::name;
+    return "ThreeWheelWidget";
+}
+
+
 //
 // Usually, this function will call each channel's update() function, then
 // read the position, velocity, and isActive.  But, since the 3-wheel
@@ -17,44 +39,11 @@ using namespace std;
 //
 bool ThreeWheelWidget::moveData()
 {
-    for (auto&& channel:channels) {
-//        cout << "moveData Channel " << channel.number << endl;
-        switch (channel.number) {
-            // ROSS: fill in with code to read widget data space
-            case 0:
-                channel.prevPosition = channel.position;
-                channel.isActive = true;
-                if (channel.position == NUM_STRINGS-1) {
-                    channel.position = 0;
-                } else {
-                    channel.position++;
-                }
-                channel.velocity = 0;
-                break;
-            case 1:
-                channel.prevPosition = channel.position;
-                channel.isActive = true;
-                if (channel.position == NUM_STRINGS-1) {
-                    channel.position = 0;
-                } else {
-                    channel.position++;
-                }
-                channel.velocity = 0;
-                break;
-            case 2:
-                channel.prevPosition = channel.position;
-                channel.isActive = true;
-                if (channel.position == NUM_STRINGS-1) {
-                    channel.position = 0;
-                } else {
-                    channel.position++;
-                }
-                channel.velocity = 0;
-                break;
-            default:
-                cout << "SOMETHING'S FUCKY: channel number in ThreeWheelWidget moveData()" << endl;
-                return false;
-        }
+    for (auto&& channel : channels) {
+        int newPosition = (channel->getPreviousPosition() + channel->getChannelNumber()) % NUM_STRINGS;
+        channel->setPositionAndVelocity(newPosition, 0);
     }
+
     return true;
 }
+

@@ -1,39 +1,40 @@
-#ifndef WIDGET_H
-#define WIDGET_H
+#pragma once
 
-#include "WidgetChannel.h"
+#include <memory>
 #include <vector>
+
+class WidgetChannel;
 
 class Widget
 {
     public:
+        Widget(unsigned int id, const std::string& name);
+
         Widget() {}
         virtual ~Widget() {}
-        std::vector<WidgetChannel> channels;
 
         Widget(const Widget&) = delete;
         Widget& operator =(const Widget&) = delete;
 
-        std::string name;
-
-        int numChannels;
-
-        bool init(int numChannels) {
-            this->numChannels = numChannels;
-            channels.resize(numChannels);
-            return true;
-        }
+        virtual void init() = 0;
 
         //
         // use this to read data from widget and store it
         //
         virtual bool moveData() = 0;
 
-        //
-        // use this to check if the widget is active before
-        // calling Pattern::update
-        //
-//        virtual bool isActive();
+        virtual unsigned int getId() = 0;
+        virtual std::string getName() = 0;
+
+        virtual unsigned int getChannelCount();
+        virtual std::shared_ptr<WidgetChannel> getChannel(unsigned int channelIdx);
+        virtual std::vector<std::shared_ptr<WidgetChannel>> getChannels();
+
+        virtual bool getIsActive();
+        virtual bool getHasNewMeasurement();
+
+    protected:
+
+        std::vector<std::shared_ptr<WidgetChannel>> channels;
 };
 
-#endif /* WIDGET_H */
