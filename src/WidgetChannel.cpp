@@ -99,8 +99,8 @@ void WidgetChannel::setVelocity(int newVelocity)
 void WidgetChannel::setPositionAndVelocity(int newPosition, int newVelocity)
 {
     position = newPosition;
-    hasNewMeasurement = true;
     velocity = newVelocity;
+    hasNewMeasurement = true;
 }
 
 

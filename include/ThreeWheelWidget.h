@@ -6,7 +6,7 @@
 class ThreeWheelWidget : public Widget
 {
     public:
-        ThreeWheelWidget() {};
+        ThreeWheelWidget();
         ~ThreeWheelWidget() {};
 
         ThreeWheelWidget(const ThreeWheelWidget&) = delete;
@@ -24,5 +24,7 @@ class ThreeWheelWidget : public Widget
         constexpr static unsigned int id = 6;
         constexpr static char name[] = "Obelisk";
 
+        unsigned int lastUpdateMs[8];
+        unsigned int updateIntervalMs[8];
 };
 

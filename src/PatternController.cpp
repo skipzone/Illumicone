@@ -221,7 +221,9 @@ int main(void)
 
     rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[2]);
     rgbVerticalPattern.initWidgets(1, numChannels[2]);
+    cout << "back from initWidgets" << endl;
     printInit(&rgbVerticalPattern);
+    cout << "back from printInit" << endl;
 
 //    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
 //    quadSlicePattern.initWidgets(1, numChannels[3]);
