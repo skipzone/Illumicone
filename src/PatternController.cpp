@@ -10,9 +10,9 @@
 #include "WidgetChannel.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
-#include "SolidBlackPattern.h"
-#include "QuadSlicePattern.h"
-#include "TwistPattern.h"
+//#include "SolidBlackPattern.h"
+//#include "QuadSlicePattern.h"
+//#include "TwistPattern.h"
 
 using namespace std;
 
@@ -60,9 +60,9 @@ void printInit(Pattern *pattern)
     cout << "    pixelArray size X: " << pattern->pixelArray.size() << endl;
     cout << "    pixelArray size Y: " << pattern->pixelArray[0].size() << endl;
     cout << "    widgets size: " << pattern->widgets.size() << endl;
-    for (auto&& widget:pattern->widgets) {
-        cout << "        " << widget->numChannels << endl;
-    }
+//    for (auto&& widget:pattern->widgets) {
+//        cout << "        " << widget->numChannels << endl;
+//    }
 }
 
 /*
@@ -188,10 +188,10 @@ int sendFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
 
 int main(void)
 {
-    SolidBlackPattern solidBlackPattern;
-    TwistPattern twistPattern;
+//    SolidBlackPattern solidBlackPattern;
+//    TwistPattern twistPattern;
     RgbVerticalPattern rgbVerticalPattern;
-    QuadSlicePattern quadSlicePattern;
+//    QuadSlicePattern quadSlicePattern;
 //    SparklePattern sparklePattern;
 
     vector<vector<opc_pixel_t>> finalFrame1;
@@ -211,31 +211,31 @@ int main(void)
     setupConnection();
     cout << "NUM_STRINGS: " << NUM_STRINGS << endl;
     cout << "PIXELS_PER_STRING: " << PIXELS_PER_STRING << endl;
-    solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[0]);
-    solidBlackPattern.initWidgets(1, numChannels[0]);
-    printInit(&solidBlackPattern);
+//    solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[0]);
+//    solidBlackPattern.initWidgets(1, numChannels[0]);
+//    printInit(&solidBlackPattern);
 
-    twistPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
-    twistPattern.initWidgets(1, numChannels[1]);
-    printInit(&twistPattern);
+//    twistPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
+//    twistPattern.initWidgets(1, numChannels[1]);
+//    printInit(&twistPattern);
 
     rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[2]);
     rgbVerticalPattern.initWidgets(1, numChannels[2]);
     printInit(&rgbVerticalPattern);
 
-    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
-    quadSlicePattern.initWidgets(1, numChannels[3]);
-    printInit(&quadSlicePattern);
+//    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
+//    quadSlicePattern.initWidgets(1, numChannels[3]);
+//    printInit(&quadSlicePattern);
 
     while (true) {
         rgbVerticalPattern.update();
-        solidBlackPattern.update();
-        quadSlicePattern.update();
+//        solidBlackPattern.update();
+//        quadSlicePattern.update();
 //        twistPattern.update();
 
-        if (quadSlicePattern.isActive) {
-            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
-        }
+//        if (quadSlicePattern.isActive) {
+//            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
+//        }
         
         if (rgbVerticalPattern.isActive) {
             buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
@@ -245,9 +245,9 @@ int main(void)
 //            buildFrame(finalFrame1, twistPattern.pixelArray, twistPattern.priority);
 //        }
 
-        if (solidBlackPattern.isActive) {
-            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
-        }
+//        if (solidBlackPattern.isActive) {
+//            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
+//        }
 
         numBytes = sendFrame(finalFrame1);
 
@@ -257,19 +257,19 @@ int main(void)
     //
     // cleanup
     //
-    for (auto&& widget:quadSlicePattern.widgets) {
-        delete widget;
-    }
+//    for (auto&& widget:quadSlicePattern.widgets) {
+//        delete widget;
+//    }
 
-    for (auto&& widget:solidBlackPattern.widgets) {
-        delete widget;
-    }
+//    for (auto&& widget:solidBlackPattern.widgets) {
+//        delete widget;
+//    }
 
     for (auto&& widget:rgbVerticalPattern.widgets) {
         delete widget;
     }
 
-    for (auto&& widget:twistPattern.widgets) {
-        delete widget;
-    }
+//    for (auto&& widget:twistPattern.widgets) {
+//        delete widget;
+//    }
 }

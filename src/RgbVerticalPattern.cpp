@@ -24,12 +24,14 @@ bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString, int pr
 
 bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
-    int i, ii, iii;
-    iii = 2;
+    int i;  //, ii, iii;
+    //iii = 2;
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
-        widgets.emplace_back(widgetFactory(1));
+        widgets.emplace_back(widgetFactory(6));
+        widgets[i]->init();
+/*
         widgets[i]->init(channelsPerWidget);
         ii = 0;
         for (auto&& channel:widgets[i]->channels) {
@@ -37,6 +39,7 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
             ii++;
             iii--;
         }
+*/
     }
 
     return true;
@@ -50,40 +53,40 @@ bool RgbVerticalPattern::update()
     for (auto&& widget:widgets) {
         // update active, position, velocity for each channel in widget
         widget->moveData();
-        for (auto&& channel:widget->channels) {
+        for (auto&& channel:widget->getChannels()) {
             // check if the channel updated
-            if (channel.isActive) {
+            if (channel->getIsActive()) {
                 hadActivity = 1;
-                switch (channel.number) {
+                switch (channel->getChannelNumber()) {
                     case 0:
-                        for (auto&& pixel:pixelArray[channel.position]) {
+                        for (auto&& pixel:pixelArray[channel->getPosition()]) {
                             pixel.r = 255;
                         }
-                        for (auto&& pixel:pixelArray[channel.prevPosition]) {
+                        for (auto&& pixel:pixelArray[channel->getPreviousPosition()]) {
                             pixel.r = 0;
                         }
                         break;
 
                     case 1:
-                        for (auto&& pixel:pixelArray[channel.position]) {
+                        for (auto&& pixel:pixelArray[channel->getPosition()]) {
                             pixel.g = 255;
                         }
-                        for (auto&& pixel:pixelArray[channel.prevPosition]) {
+                        for (auto&& pixel:pixelArray[channel->getPreviousPosition()]) {
                             pixel.g = 0;
                         }
                         break;
 
                     case 2:
-                        for (auto&& pixel:pixelArray[channel.position]) {
+                        for (auto&& pixel:pixelArray[channel->getPosition()]) {
                             pixel.b = 255;
                         }
-                        for (auto&& pixel:pixelArray[channel.prevPosition]) {
+                        for (auto&& pixel:pixelArray[channel->getPreviousPosition()]) {
                             pixel.b = 0;
                         }
                         break;
 
                     default:
-                        cout << "SOMETHING'S FUCKY : channel number of " << channel.number << endl;
+                        cout << "SOMETHING'S FUCKY : channel number of " << channel->getChannelNumber() << endl;
                         break;
                 }
             }
