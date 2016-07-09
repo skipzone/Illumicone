@@ -31,8 +31,14 @@ WidgetSimulator: WidgetSimulator.cpp
 GpioTester: GpioTester.cpp
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
+widgetRcvr: widgetRcvr.cpp
+	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
+
 clean:
 	rm -f $(OBJS) $(PROGS)
+
+clean-widgetRcvr:
+	rm -f widgetRcvr
 
 clean-GpioTester:
 	rm -f GpioTester
