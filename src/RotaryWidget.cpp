@@ -11,7 +11,7 @@ bool RotaryWidget::moveData()
     for (auto&& channel:channels) {
         switch (channel.number) {
             case 0:
-                channel.velocity = 0;
+                channel.velocity = 2;
                 channel.prevPosition = channel.position;
                 channel.isActive = 1;
                 // position = 1 means stair is being stepped on

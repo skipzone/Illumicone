@@ -61,16 +61,12 @@ bool QuadSlicePattern::update()
                             if (channel.position) {
                                 // get the first quarter of the strings to iterate through
                                 for (i = 0; i < NUM_STRINGS / 4; i++) {
-                                    r = rand() % (255 - 0) + 0;
-                                    g = rand() % (255 - 0) + 0;
-                                    b = rand() % (255 - 0) + 0;
-                                    cout << "Quad Slice Channel 0:" << endl;
-                                    cout << "    R: " << (unsigned)r << endl;
-                                    cout << "    G: " << (unsigned)g << endl;
-                                    cout << "    B: " << (unsigned)b << endl;
-    //                                r = 64;
-    //                                g = 0;
-    //                                b = 64;
+//                                    r = rand() % (255 - 0) + 0;
+//                                    g = rand() % (255 - 0) + 0;
+//                                    b = rand() % (255 - 0) + 0;
+                                    r = 64;
+                                    g = 0;
+                                    b = 64;
                                     for (auto&& pixel:pixelArray[i]) {
                                         pixel.r = r;
                                         pixel.g = g;
@@ -98,16 +94,12 @@ bool QuadSlicePattern::update()
                             if (channel.position) {
                                 // get the second third of the strings to iterate through
                                 for (i = (NUM_STRINGS / 4); i < (NUM_STRINGS / 4) * 2; i++) {
-                                    r = rand() % (255 - 0) + 0;
-                                    g = rand() % (255 - 0) + 0;
-                                    b = rand() % (255 - 0) + 0;
-                                    cout << "Quad Slice Channel 1:" << endl;
-                                    cout << "    R: " << (unsigned)r << endl;
-                                    cout << "    G: " << (unsigned)g << endl;
-                                    cout << "    B: " << (unsigned)b << endl;
-    //                                r = 64;
-    //                                g = 0;
-    //                                b = 64;
+//                                    r = rand() % (255 - 0) + 0;
+//                                    g = rand() % (255 - 0) + 0;
+//                                    b = rand() % (255 - 0) + 0;
+                                    r = 64;
+                                    g = 64;
+                                    b = 0;
                                     for (auto&& pixel:pixelArray[i]) {
                                         pixel.r = r;
                                         pixel.g = g;
@@ -135,16 +127,12 @@ bool QuadSlicePattern::update()
                             if (channel.position) {
                                 // get the third third of the strings to iterate through
                                 for (i = ((NUM_STRINGS / 4) * 2); i < ((NUM_STRINGS / 4) * 3); i++) {
-                                    r = rand() % (255 - 0) + 0;
-                                    g = rand() % (255 - 0) + 0;
-                                    b = rand() % (255 - 0) + 0;
-                                    cout << "Quad Slice Channel 2:" << endl;
-                                    cout << "    R: " << (unsigned)r << endl;
-                                    cout << "    G: " << (unsigned)g << endl;
-                                    cout << "    B: " << (unsigned)b << endl;
-    //                                r = 64;
-    //                                g = 0;
-    //                                b = 64;
+//                                    r = rand() % (255 - 0) + 0;
+//                                    g = rand() % (255 - 0) + 0;
+//                                    b = rand() % (255 - 0) + 0;
+                                    r = 0;
+                                    g = 64;
+                                    b = 64;
                                     for (auto&& pixel:pixelArray[i]) {
                                         pixel.r = r;
                                         pixel.g = g;
@@ -172,16 +160,12 @@ bool QuadSlicePattern::update()
                             if (channel.position) {
                                 // get the third third of the strings to iterate through
                                 for (i = ((NUM_STRINGS / 4) * 3); i < NUM_STRINGS; i++) {
-                                    r = rand() % (255 - 0) + 0;
-                                    g = rand() % (255 - 0) + 0;
-                                    b = rand() % (255 - 0) + 0;
-                                    cout << "Quad Slice Channel 3:" << endl;
-                                    cout << "    R: " << (unsigned)r << endl;
-                                    cout << "    G: " << (unsigned)g << endl;
-                                    cout << "    B: " << (unsigned)b << endl;
-    //                                r = 64;
-    //                                g = 0;
-    //                                b = 64;
+//                                    r = rand() % (255 - 0) + 0;
+//                                    g = rand() % (255 - 0) + 0;
+//                                    b = rand() % (255 - 0) + 0;
+                                    r = 64;
+                                    g = 64;
+                                    b = 64;
                                     for (auto&& pixel:pixelArray[i]) {
                                         pixel.r = r;
                                         pixel.g = g;

@@ -109,6 +109,19 @@ bool buildFrame(
 
         case 1:
             //
+            // Twist pattern
+            //
+            for (col = 0; col < NUM_STRINGS; col++) {
+                for (row = 0; row < PIXELS_PER_STRING; row++) {
+                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
+                        finalFrame[pixelArray[col][row].r][row] = finalFrame[row][col];
+                    }
+                }
+            }
+            break;
+
+        case 2:
+            //
             // RgbVerticalPattern
             //
             for (col = 0; col < NUM_STRINGS; col++) {
@@ -122,7 +135,7 @@ bool buildFrame(
             }
             break;
             
-        case 2:
+        case 3:
             //
             // QuadSlicePattern
             //
@@ -175,17 +188,17 @@ int sendFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
 
 int main(void)
 {
-    RgbVerticalPattern rgbVerticalPattern;
     SolidBlackPattern solidBlackPattern;
+    TwistPattern twistPattern;
+    RgbVerticalPattern rgbVerticalPattern;
     QuadSlicePattern quadSlicePattern;
 //    SparklePattern sparklePattern;
-    TwistPattern twistPattern;
 
     vector<vector<opc_pixel_t>> finalFrame1;
     vector<vector<opc_pixel_t>> finalFrame2;
 
     // to be filled in from a config file somewhere
-    int numChannels[4] = {1, 3, 4, 1};
+    int numChannels[4] = {1, 1, 3, 4};
     int priorities[4] = {0, 1, 2, 3};
     int numBytes;
 
@@ -195,33 +208,30 @@ int main(void)
     cout << "Pattern initialization!\n";
 
     // open socket, connect with opc-server
-//    setupConnection();
+    setupConnection();
     cout << "NUM_STRINGS: " << NUM_STRINGS << endl;
     cout << "PIXELS_PER_STRING: " << PIXELS_PER_STRING << endl;
     solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[0]);
     solidBlackPattern.initWidgets(1, numChannels[0]);
     printInit(&solidBlackPattern);
 
-    rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
-    rgbVerticalPattern.initWidgets(1, numChannels[1]);
-    printInit(&rgbVerticalPattern);
-
-    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[2]);
-    quadSlicePattern.initWidgets(1, numChannels[2]);
-    printInit(&quadSlicePattern);
-
-    twistPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
-    twistPattern.initWidgets(1, numChannels[3]);
+    twistPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
+    twistPattern.initWidgets(1, numChannels[1]);
     printInit(&twistPattern);
 
-//    sparklePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
-//    sparklePattern.initWidgets(1, numChannels[3]);
-//    printInit(&sparklePattern);
+    rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[2]);
+    rgbVerticalPattern.initWidgets(1, numChannels[2]);
+    printInit(&rgbVerticalPattern);
+
+    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
+    quadSlicePattern.initWidgets(1, numChannels[3]);
+    printInit(&quadSlicePattern);
 
     while (true) {
         rgbVerticalPattern.update();
         solidBlackPattern.update();
         quadSlicePattern.update();
+//        twistPattern.update();
 
         if (quadSlicePattern.isActive) {
             buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
@@ -231,12 +241,35 @@ int main(void)
             buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
         }
 
+//        if (twistPattern.isActive) {
+//            buildFrame(finalFrame1, twistPattern.pixelArray, twistPattern.priority);
+//        }
+
         if (solidBlackPattern.isActive) {
             buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
         }
 
         numBytes = sendFrame(finalFrame1);
 
-        usleep(500000);
+        usleep(50000);
+    }
+
+    //
+    // cleanup
+    //
+    for (auto&& widget:quadSlicePattern.widgets) {
+        delete widget;
+    }
+
+    for (auto&& widget:solidBlackPattern.widgets) {
+        delete widget;
+    }
+
+    for (auto&& widget:rgbVerticalPattern.widgets) {
+        delete widget;
+    }
+
+    for (auto&& widget:twistPattern.widgets) {
+        delete widget;
     }
 }
