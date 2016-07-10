@@ -91,13 +91,13 @@ bool RgbVerticalPattern::update()
                     for (auto&& pixel:pixelArray[curPos]) {
                         switch (channel->getChannelNumber()) {
                             case 0:
-                                pixel.r = 255;
+                                pixel.r = 48;
                                 break;
                             case 1:
-                                pixel.g = 255;
+                                pixel.g = 48;
                                 break;
                             case 2:
-                                pixel.b = 255;
+                                pixel.b = 48;
                                 break;
                         }
                     }

@@ -228,9 +228,9 @@ bool QuadSlicePattern::update()
 //                r = (uint8_t)(rand() % 255);
 //                g = (uint8_t)(rand() % 255);
 //                b = (uint8_t)(rand() % 255);
-                r = 64;
+                r = 24;
                 g = 0;
-                b = 64;
+                b = 24;
 
                 if (channel->getChannelNumber() < 4) {
                     for (int i = initIndex; i < lastIndex; i++) {
