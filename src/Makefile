@@ -36,7 +36,7 @@ widgetRcvr: widgetRcvr.cpp
 	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
 
 clean:
-	rm -f $(OBJS) $(PROGS)
+	rm -f *.o $(PROGS)
 
 clean-widgetRcvr:
 	rm -f widgetRcvr
