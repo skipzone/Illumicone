@@ -1,5 +1,5 @@
-#ifndef RGB_VERTICAL_PATTERN_H
-#define RGB_VERTICAL_PATTERN_H
+#pragma once
+
 #include "Pattern.h"
 
 class RgbVerticalPattern : public Pattern {
@@ -12,4 +12,3 @@ class RgbVerticalPattern : public Pattern {
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();       
 };
-#endif /* RGB_VERTICAL_PATTERN_H */

@@ -1,5 +1,5 @@
-#ifndef QUAD_SLICE_PATTERN_H
-#define QUAD_SLICE_PATTERN_H
+#pragma once
+
 #include "Pattern.h"
 
 class QuadSlicePattern : public Pattern {
@@ -11,5 +11,3 @@ class QuadSlicePattern : public Pattern {
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();
 };
-
-#endif /* QUAD_SLICE_PATTERN_H */

@@ -3,7 +3,7 @@
 
 #include "ThreeWheelWidget.h"
 //#include "EyeWidget.h"
-//#include "StairWidget.h"
+#include "StairWidget.h"
 //#include "RainstickWidget.h"
 //#include "RotaryWidget.h"
 
@@ -26,6 +26,9 @@ static Widget* widgetFactory(uint8_t id)
             cout << "Return RotaryWidget!" << endl;
             return new RotaryWidget;
 */
+        case 5:
+            cout << "Return StairWidget!" << endl;
+            return new StairWidget;
         case 6:
             cout << "Return ThreeWheelWidget!" << endl;
             return new ThreeWheelWidget;

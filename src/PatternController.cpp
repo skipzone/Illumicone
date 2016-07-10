@@ -11,7 +11,7 @@
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
 //#include "SolidBlackPattern.h"
-//#include "QuadSlicePattern.h"
+#include "QuadSlicePattern.h"
 //#include "TwistPattern.h"
 
 using namespace std;
@@ -63,6 +63,20 @@ void printInit(Pattern *pattern)
 //    for (auto&& widget:pattern->widgets) {
 //        cout << "        " << widget->numChannels << endl;
 //    }
+}
+
+void zeroFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
+{
+    int col;
+    int row;
+
+    for (col = 0; col < NUM_STRINGS; col++) {
+        for (row = 0; row < PIXELS_PER_STRING; row++) {
+            finalFrame[col][row].r = 0;
+            finalFrame[col][row].g = 0;
+            finalFrame[col][row].b = 0;
+        }
+    }
 }
 
 /*
@@ -121,6 +135,7 @@ bool buildFrame(
             break;
 
         case 2:
+            //cout << "build frame rgb" << endl;
             //
             // RgbVerticalPattern
             //
@@ -136,6 +151,7 @@ bool buildFrame(
             break;
             
         case 3:
+            //cout << "build frame quad" << endl;
             //
             // QuadSlicePattern
             //
@@ -191,7 +207,7 @@ int main(void)
 //    SolidBlackPattern solidBlackPattern;
 //    TwistPattern twistPattern;
     RgbVerticalPattern rgbVerticalPattern;
-//    QuadSlicePattern quadSlicePattern;
+    QuadSlicePattern quadSlicePattern;
 //    SparklePattern sparklePattern;
 
     vector<vector<opc_pixel_t>> finalFrame1;
@@ -225,21 +241,24 @@ int main(void)
     printInit(&rgbVerticalPattern);
     cout << "back from printInit" << endl;
 
-//    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
-//    quadSlicePattern.initWidgets(1, numChannels[3]);
-//    printInit(&quadSlicePattern);
+    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
+    quadSlicePattern.initWidgets(1, numChannels[3]);
+    printInit(&quadSlicePattern);
 
     while (true) {
         rgbVerticalPattern.update();
 //        solidBlackPattern.update();
-//        quadSlicePattern.update();
+        quadSlicePattern.update();
 //        twistPattern.update();
 
-//        if (quadSlicePattern.isActive) {
-//            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
-//        }
+        if (quadSlicePattern.isActive) {
+//            cout << "quad active" << endl;
+            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
+        }
         
+//        zeroFrame(finalFrame1);
         if (rgbVerticalPattern.isActive) {
+//            cout << "rgb active" << endl;
             buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
         }
 
@@ -267,9 +286,9 @@ int main(void)
 //        delete widget;
 //    }
 
-    for (auto&& widget:rgbVerticalPattern.widgets) {
-        delete widget;
-    }
+//    for (auto&& widget:rgbVerticalPattern.widgets) {
+//        delete widget;
+//    }
 
 //    for (auto&& widget:twistPattern.widgets) {
 //        delete widget;
