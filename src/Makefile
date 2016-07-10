@@ -3,7 +3,7 @@
 # and convert them to .o
 PROGS=PatternController
 #OBJS=RotaryWidget.o StairWidget.o EyeWidget.o ThreeWheelWidget.o TwistPattern.o SolidBlackPattern.o RgbVerticalPattern.o QuadSlicePattern.o WidgetChannel.o
-OBJS=Widget.o WidgetChannel.o ThreeWheelWidget.o RotaryWidget.o StairWidget.o EyeWidget.o RgbVerticalPattern.o QuadSlicePattern.o
+OBJS=WidgetId.o Widget.o WidgetChannel.o ThreeWheelWidget.o RotaryWidget.o StairWidget.o EyeWidget.o RgbVerticalPattern.o QuadSlicePattern.o
 LIBS=
 
 INCLUDE=../include
@@ -32,7 +32,7 @@ WidgetSimulator: WidgetSimulator.cpp
 GpioTester: GpioTester.cpp
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
-widgetRcvr: widgetRcvr.cpp
+widgetRcvr: widgetRcvr.cpp WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
 
 widgetTester: widgetTester.cpp

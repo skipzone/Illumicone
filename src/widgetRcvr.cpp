@@ -6,80 +6,31 @@
 #include <thread>
 #include <unistd.h>
 
+
+#include <arpa/inet.h>
+///#include <netdb.h>
+#include <netinet/in.h>
 #include <RF24/RF24.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <time.h>
+
+#include "illumiconeTypes.h"
+#include "WidgetId.h"
+
 
 using namespace std;
 
 
-/* Widget Id Assignment
- *
- *  0:  reserved
- *  1:  Ray's Eye
- *  2:  Reiley's Hypnotyzer (the bike wheel)
- *  3:  Ray's Bells
- *  4:  Kelli's Steps
- *  5:  Naked's Rain Stick
- *  6:  Phyxx's TriObelisk (the triple rotary thing)
- *  7:  Cowboy's Box Theramin
- *  8:  Kayla's Plunger
- *  9:  unassigned
- * 10:  unassigned
- * 11:  unassigned
- * 12:  unassigned
- * 13:  unassigned
- * 14:  unassigned
- * 15:  unassigned
- *
- * For stress tests, widget ids are reused as needed because stress-test
- * payloads are handled separately from all other types of payloads.
- */
+static const std::string patconIpAddress = "192.168.69.101";
+constexpr static unsigned int widgetPortNumberBase = 4200;
 
+static struct sockaddr_in myaddr[16];
+static int sock[16];
 
-/************
- * Payloads *
- ************/
-
-#pragma pack(push)
-#pragma pack(1)
-
-union WidgetHeader {
-  struct {
-    uint8_t id       : 4;
-    bool    isActive : 1;
-    uint8_t channel  : 3;
-  };
-  uint8_t raw;
-};
-
-// pipe 0
-struct StressTestPayload {
-    WidgetHeader widgetHeader;
-    uint32_t     payloadNum;
-    uint32_t     numTxFailures;
-};
-
-// pipe 1
-struct PositionVelocityPayload {
-    WidgetHeader widgetHeader;
-    int16_t      position;
-    int16_t      velocity;
-};
-
-// pipe 2
-struct MeasurementVectorPayload {
-    WidgetHeader widgetHeader;
-    int16_t      measurements[15];
-};
-
-// pipe 5
-struct CustomPayload {
-    WidgetHeader widgetHeader;
-    uint8_t      buf[31];
-};
-
-#pragma pack(pop)
 
 
 /***********************
@@ -141,6 +92,63 @@ const string getTimestamp()
 }
 
 
+/*********************
+ * UDP Communication *
+ *********************/
+
+bool openUdpPort(WidgetId widgetId)
+{
+    unsigned int widgetIdNumber = widgetIdToInt(widgetId);
+
+    //Construct the server sockaddr_ structure
+    memset(&myaddr[widgetIdNumber], 0, sizeof(struct sockaddr_in));
+    myaddr[widgetIdNumber].sin_family=AF_INET;
+    myaddr[widgetIdNumber].sin_addr.s_addr=htonl(INADDR_ANY);
+    myaddr[widgetIdNumber].sin_port=htons(0);
+
+    //Create the socket
+    if ((sock[widgetIdNumber]=socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        perror("Failed to create socket");
+        return false;
+    }
+
+    if (bind(sock[widgetIdNumber],(struct sockaddr *) &myaddr[widgetIdNumber], sizeof(struct sockaddr_in)) < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+ 
+    unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
+
+    cout << "Opening UDP port " << portNumber << endl;
+
+    inet_pton(AF_INET, patconIpAddress.c_str(), &myaddr[widgetIdNumber].sin_addr.s_addr);
+    myaddr[widgetIdNumber].sin_port=htons(portNumber);
+
+    return true;
+}
+
+
+bool sendUdp(const UdpPayload& payload)
+{
+//    char testStr[] = "test from widgetRcvr";
+
+    //ssize_t bytesSentCount = sendto(sock[payload.id], &testStr, sizeof(testStr), 0, (struct sockaddr *)&myaddr[payload.id], sizeof(struct sockaddr_in));
+    ssize_t bytesSentCount = sendto(sock[payload.id], &payload, sizeof(payload), 0, (struct sockaddr *)&myaddr[payload.id], sizeof(struct sockaddr_in));
+
+    if (bytesSentCount != sizeof(payload)) {
+        cerr << getTimestamp()
+            << "UPD payload size is " << sizeof(payload)
+            << " but " << bytesSentCount
+            << " bytes were sent."
+            << endl;
+        return false;
+    }
+    cout << "Sent " << bytesSentCount << " via UDP" << endl;
+
+    return true;
+}
+
+
 /********************
  * Payload Handlers *
  ********************/
@@ -163,6 +171,15 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
         << ", fails = " << payload->numTxFailures
         << " (" << payload->numTxFailures * 100 / payload->payloadNum << "% )"
         << endl;
+
+    UdpPayload udpPayload;
+    udpPayload.id       = payload->widgetHeader.id;
+    udpPayload.channel  = payload->widgetHeader.channel;
+    udpPayload.isActive = payload->widgetHeader.isActive;
+    udpPayload.position = payload->payloadNum;
+    udpPayload.velocity = payload->numTxFailures;
+
+    sendUdp(udpPayload);
 }
 
 
@@ -337,6 +354,15 @@ void runLoop()
 
 int main(int argc, char** argv)
 {
+    openUdpPort(WidgetId::eye);
+    openUdpPort(WidgetId::hypnotyzer);
+    openUdpPort(WidgetId::bells);
+    openUdpPort(WidgetId::steps);
+    openUdpPort(WidgetId::rainstick);
+    openUdpPort(WidgetId::triObelisk);
+    openUdpPort(WidgetId::boxTheramin);
+    openUdpPort(WidgetId::plunger);
+
     configureRadio();
 
     radio.startListening();
