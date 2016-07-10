@@ -2,40 +2,45 @@
 #define WIDGET_FACTORY_H
 
 #include "ThreeWheelWidget.h"
-//#include "EyeWidget.h"
+#include "EyeWidget.h"
 #include "StairWidget.h"
-//#include "RainstickWidget.h"
-//#include "RotaryWidget.h"
+#include "RainstickWidget.h"
+#include "RotaryWidget.h"
 
 using namespace std;
 
-static Widget* widgetFactory(uint8_t id)
+
+enum class WidgetId {
+    reserved = 0,
+    eye,
+    hypnotyzer,
+    bells,
+    steps,
+    rainstick,
+    triObelisk,
+    boxTheramin,
+    plunger
+};
+
+
+static Widget* widgetFactory(WidgetId id)
 {
     switch (id) {
-/*
-        case 1:
-            cout << "Return ThreeWheelWidget!" << endl;
-            return new ThreeWheelWidget;
-        case 2:
+        case WidgetId::eye:
             cout << "Return EyeWidget!" << endl;
             return new EyeWidget;
-        case 3:
-            cout << "Return StairWidget!" << endl;
-            return new StairWidget;
-        case 4:
+        case WidgetId::hypnotyzer:
             cout << "Return RotaryWidget!" << endl;
             return new RotaryWidget;
-*/
-        case 5:
+        case WidgetId::steps:
             cout << "Return StairWidget!" << endl;
             return new StairWidget;
-        case 6:
+        case WidgetId::triObelisk:
             cout << "Return ThreeWheelWidget!" << endl;
             return new ThreeWheelWidget;
-
         default:
             cout << "SOMETHING'S FUCKY: WidgetFactory id" << endl;
-            return NULL;
+            return nullptr;
     }
 }
 

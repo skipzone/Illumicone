@@ -1,35 +1,66 @@
+#include <chrono>
 #include <iostream>
-#include <vector>
+#include <string>
+//#include <thread>
+#include <time.h>
+///#include <vector>
 
 #include "EyeWidget.h"
 #include "illumiconeTypes.h"
 
 using namespace std;
 
+
+EyeWidget::EyeWidget()
+{
+    for (unsigned int i = 0; i < 8; ++i) {
+        updateIntervalMs[i] = 0;
+        lastUpdateMs[i] = 0;
+    }
+
+    updateIntervalMs[0] = 200;
+}
+
+
+void EyeWidget::init()
+{
+    channels.push_back(make_shared<WidgetChannel>(0, this));
+}
+
+
+unsigned int EyeWidget::getId()
+{
+    return EyeWidget::id;
+}
+
+
+std::string EyeWidget::getName()
+{
+    //return EyeWidget::name;
+    return "EyeWidget";
+}
+
+
 bool EyeWidget::moveData()
 {
-    for (auto&& channel:channels) {
-//        cout << "moveData EyeWidget Channel " << channel.number << endl;
-        switch (channel.number) {
-            case 0:
-                channel.velocity = 0;
-                channel.prevPosition = channel.position;
-                if (channel.isActive) {
-                    channel.isActive = 0;
-                } else {
-//                    channel.isActive = 1;
-                }
+    using namespace std::chrono;
 
-                if (channel.position) {
-                    channel.position = 0;
-                } else {
-                    channel.position = 1;
-                }
+    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+    unsigned int nowMs = epochMs.count();
 
-            default:
-                return false;
+    //cout << "---------- nowMs = " << nowMs << endl;
+
+    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+        //cout << "checking channel " << i << endl;
+        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
+            //cout << "updating channel " << i << endl;
+            lastUpdateMs[i] = nowMs;
+            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+            channels[i]->setIsActive(true);
+            //cout << "updated channel " << i << endl;
         }
     }
 
     return true;
 }
+

@@ -27,7 +27,7 @@ bool QuadSlicePattern::initWidgets(int numWidgets, int channelsPerWidget)
     int i;
 
     for (i = 0; i < numWidgets; i++) {
-        Widget* newWidget = widgetFactory(5);
+        Widget* newWidget = widgetFactory(WidgetId::steps);
         widgets.emplace_back(newWidget);
         newWidget->init();
     }
@@ -210,7 +210,7 @@ bool QuadSlicePattern::update()
                 hadActivity = 1;
             }
             if (channel->getHasNewMeasurement()) {
-                int curPos = channel->getPosition();
+//                int curPos = channel->getPosition();
                 int initIndex;
                 int lastIndex;
                 if (channel->getChannelNumber() < 4) {
