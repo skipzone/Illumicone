@@ -28,7 +28,7 @@ bool SparklePattern::initWidgets(int numWidgets, int channelsPerWidget)
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
-        widgets.emplace_back(widgetFactory(3));
+        widgets.emplace_back(widgetFactory(rainStick));
         widgets[i]->init(channelsPerWidget);
         ii = 0;
         for (auto&& channel:widgets[i]->channels) {

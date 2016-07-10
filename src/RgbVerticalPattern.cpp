@@ -29,7 +29,7 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
-        Widget* newWidget = widgetFactory(6);
+        Widget* newWidget = widgetFactory(WidgetId::triObelisk);
         widgets.emplace_back(newWidget);
         newWidget->init();
 /*
@@ -70,7 +70,7 @@ bool RgbVerticalPattern::update()
                 // check if the channel updated
                 if (channel->getHasNewMeasurement() || channel->getIsActive()) {
                     hadActivity = 1;
-                    int prevPos = channel->getPreviousPosition();
+//                    int prevPos = channel->getPreviousPosition();
                     int curPos = channel->getPosition();
                     //cout << "ch " << channel->getChannelNumber() << ": prev=" << prevPos << " cur=" << curPos << endl;
                     //cout << "clearing pixels  in " << prevPos << " for ch " << channel->getChannelNumber() << endl;

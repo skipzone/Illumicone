@@ -216,7 +216,7 @@ int main(void)
     // to be filled in from a config file somewhere
     int numChannels[4] = {1, 1, 3, 4};
     int priorities[4] = {0, 1, 2, 3};
-    int numBytes;
+    //int numBytes;
 
     finalFrame1.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
     finalFrame2.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
@@ -270,7 +270,8 @@ int main(void)
 //            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
 //        }
 
-        numBytes = sendFrame(finalFrame1);
+        //numBytes = sendFrame(finalFrame1);
+        sendFrame(finalFrame1);
 
         usleep(50000);
     }

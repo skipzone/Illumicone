@@ -21,7 +21,7 @@ using namespace std;
  *  3:  Ray's Bells
  *  4:  Kelli's Steps
  *  5:  Naked's Rain Stick
- *  6:  Phyxx's Obelisk (the triple rotary thing)
+ *  6:  Phyxx's TriObelisk (the triple rotary thing)
  *  7:  Cowboy's Box Theramin
  *  8:  Kayla's Plunger
  *  9:  unassigned
