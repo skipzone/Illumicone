@@ -20,9 +20,9 @@ ThreeWheelWidget::ThreeWheelWidget()
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 200;
-    updateIntervalMs[1] = 400;
-    updateIntervalMs[2] = 600;
+    updateIntervalMs[0] = 50;
+    updateIntervalMs[1] = 100;
+    updateIntervalMs[2] = 150;
 }
 
 
