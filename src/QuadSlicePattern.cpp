@@ -29,7 +29,7 @@ bool QuadSlicePattern::initWidgets(int numWidgets, int channelsPerWidget)
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::steps);
         widgets.emplace_back(newWidget);
-        newWidget->init();
+        newWidget->init(false);
     }
 
     return true;
@@ -228,9 +228,9 @@ bool QuadSlicePattern::update()
 //                r = (uint8_t)(rand() % 255);
 //                g = (uint8_t)(rand() % 255);
 //                b = (uint8_t)(rand() % 255);
-                r = 24;
+                r = 48;
                 g = 0;
-                b = 24;
+                b = 48;
 
                 if (channel->getChannelNumber() < 4) {
                     for (int i = initIndex; i < lastIndex; i++) {

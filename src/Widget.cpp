@@ -111,14 +111,14 @@ void Widget::pollForUdpRx()
                                        (struct sockaddr *) &cliaddr,
                                        &len);
 
-        //std::cout << "got UDP payload; "
-        //    << " length = " << rxByteCount
-        //    << ", id = " << (int) payload.id
-        //    << ", channel = " << (int) payload.channel
-        //    << ", isActive = " << (int) payload.isActive
-        //    << ", position = " << payload.position
-        //    << ", velocity = " << payload.velocity
-        //    << std::endl;
+        std::cout << "got UDP payload; "
+            << " length = " << rxByteCount
+            << ", id = " << (int) payload.id
+            << ", channel = " << (int) payload.channel
+            << ", isActive = " << (int) payload.isActive
+            << ", position = " << payload.position
+            << ", velocity = " << payload.velocity
+            << std::endl;
 
         if (payload.channel < channels.size()) {
             channels[payload.channel]->setPositionAndVelocity(payload.position, payload.velocity);
