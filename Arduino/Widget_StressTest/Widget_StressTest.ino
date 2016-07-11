@@ -16,8 +16,9 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 1
-#define TX_INTERVAL_MS 20L
+#define WIDGET_ID 6
+#define NUM_CHANNELS 3
+#define TX_INTERVAL_MS 100L
 #define STATS_PRINT_INTERVAL_MS 1000L
 //#define LED_PIN 2
 
@@ -78,7 +79,11 @@ void loop() {
 
     ++payload.payloadNum;
     ++payload.widgetHeader.channel;
-    payload.widgetHeader.isActive = !payload.widgetHeader.isActive;
+    if (payload.widgetHeader.channel >= NUM_CHANNELS) {
+      payload.widgetHeader.channel = 0;
+    }
+    //payload.widgetHeader.isActive = !payload.widgetHeader.isActive;
+    payload.widgetHeader.isActive = true;
 
     //  Send the time.  This will block until complete.
     if (!radio.write(&payload, sizeof(payload))) {

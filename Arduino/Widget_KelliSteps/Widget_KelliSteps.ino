@@ -23,14 +23,28 @@
 #define MAX_VALID_DISTANCE_CM 100
 //#define LED_PIN 2
 //#define ENABLE_DEBUG_PRINT
-#define NUM_SENSORS 2
-#define TRIGGER_PIN_0  7  // Arduino pin tied to trigger pin on the ultrasonic sensor.
-#define ECHO_PIN_0     8  // Arduino pin tied to echo pin on the ultrasonic sensor.
-#define MAX_DISTANCE_0 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
-#define TRIGGER_PIN_1  A2  // Arduino pin tied to trigger pin on the ultrasonic sensor.
-#define ECHO_PIN_1     A3 // Arduino pin tied to echo pin on the ultrasonic sensor.
-#define MAX_DISTANCE_1 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
+#define NUM_SENSORS 5
+
+#define TRIGGER_PIN_0  A0  // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN_0     A1  // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define MAX_DISTANCE_0 45  // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+
+#define TRIGGER_PIN_1  A2  // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN_1     A3  // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define MAX_DISTANCE_1 50  // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+
+#define TRIGGER_PIN_2  A4  // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN_2     A5  // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define MAX_DISTANCE_2 50  // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+
+#define TRIGGER_PIN_3  2   // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN_3     3   // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define MAX_DISTANCE_3 50  // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+
+#define TRIGGER_PIN_4  4   // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN_4     5   // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define MAX_DISTANCE_4 50  // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
 /***************************************
  * Widget-Specific Radio Configuration *
@@ -58,10 +72,14 @@ RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 1
 
 MeasurementVectorPayload payload;
 
-NewPing sonar[NUM_SENSORS] = {
-  NewPing(TRIGGER_PIN_0, ECHO_PIN_0, MAX_DISTANCE_0),
-  NewPing(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE_1)
-};
+NewPing* sonar[NUM_SENSORS];
+//NewPing sonar[NUM_SENSORS] = {
+//  NewPing(TRIGGER_PIN_0, ECHO_PIN_0, MAX_DISTANCE_0),
+//  NewPing(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE_1),
+//  NewPing(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE_2),
+//  NewPing(TRIGGER_PIN_3, ECHO_PIN_3, MAX_DISTANCE_3),
+//  NewPing(TRIGGER_PIN_4, ECHO_PIN_4, MAX_DISTANCE_4)
+//};
 
 int distance[NUM_SENSORS];
 bool isActive;
@@ -81,7 +99,10 @@ void gatherMeasurements()
   bool currentlyActive = false;
   for (int i = 0; i < NUM_SENSORS; ++i) {
 
-    distance[i] = sonar[i].ping_cm();
+    distance[i] = sonar[i]->ping_cm();
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.println(distance[i]);
     if (distance[i] > MAX_VALID_DISTANCE_CM) {
       distance[i] = 0;
     }
@@ -146,6 +167,19 @@ void setup()
   Serial.begin(57600);
   printf_begin();
 #endif
+
+//  pinMode(A0, OUTPUT);
+//  pinMode(A1, INPUT);
+//  pinMode(A2, OUTPUT);
+//  pinMode(A3, INPUT);
+//  pinMode(A4, OUTPUT);
+//  pinMode(A5, INPUT);
+
+  sonar[0] = new NewPing(TRIGGER_PIN_0, ECHO_PIN_0, MAX_DISTANCE_0);
+  sonar[1] = new NewPing(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE_1);
+  sonar[2] = new NewPing(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE_2);
+  sonar[3] = new NewPing(TRIGGER_PIN_3, ECHO_PIN_3, MAX_DISTANCE_3);
+  sonar[4] = new NewPing(TRIGGER_PIN_4, ECHO_PIN_4, MAX_DISTANCE_4);
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
   
