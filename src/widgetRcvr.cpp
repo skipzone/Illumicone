@@ -25,12 +25,8 @@
 using namespace std;
 
 
-static const std::string patconIpAddress = "192.168.69.101";
-constexpr static unsigned int widgetPortNumberBase = 4200;
-
 static struct sockaddr_in myaddr[16];
 static int sock[16];
-
 
 
 /***********************

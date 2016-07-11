@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #define NUM_STRINGS 12
 #define PIXELS_PER_STRING 20
@@ -17,6 +18,10 @@ typedef struct _opc_pixel_ {
     uint8_t g;
     uint8_t b;
 } opc_pixel_t;
+
+
+static const std::string patconIpAddress = "192.168.69.101";
+constexpr static unsigned int widgetPortNumberBase = 4200;
 
 
 /*******************

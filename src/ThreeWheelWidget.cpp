@@ -9,11 +9,13 @@
 
 #include "ThreeWheelWidget.h"
 #include "illumiconeTypes.h"
+#include "WidgetId.h"
 
 using namespace std;
 
 
 ThreeWheelWidget::ThreeWheelWidget()
+    : Widget(WidgetId::triObelisk, "TriObelisk")
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -26,35 +28,26 @@ ThreeWheelWidget::ThreeWheelWidget()
 }
 
 
-void ThreeWheelWidget::init()
+void ThreeWheelWidget::init(bool generateSimulatedMeasurements)
 {
+    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+
     for (int i = 0; i < 3; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this));
+    }
+
+    if (!generateSimulatedMeasurements) {
+        startUdpRxThread();
     }
 }
 
 
-unsigned int ThreeWheelWidget::getId()
-{
-    return ThreeWheelWidget::id;
-}
-
-
-std::string ThreeWheelWidget::getName()
-{
-    //return ThreeWheelWidget::name;
-    return "ThreeWheelWidget";
-}
-
-
-//
-// Usually, this function will call each channel's update() function, then
-// read the position, velocity, and isActive.  But, since the 3-wheel
-// provides a string from UART that contains information about all 3 wheels, we
-// just parse that instead.
-//
 bool ThreeWheelWidget::moveData()
 {
+    if (!generateSimulatedMeasurements) {
+        return true;
+    }
+
     using namespace std::chrono;
 
     milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());

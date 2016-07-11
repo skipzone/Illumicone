@@ -31,7 +31,7 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::triObelisk);
         widgets.emplace_back(newWidget);
-        newWidget->init();
+        newWidget->init(false);
 /*
         widgets[i]->init(channelsPerWidget);
         ii = 0;
@@ -71,7 +71,7 @@ bool RgbVerticalPattern::update()
                 if (channel->getHasNewMeasurement() || channel->getIsActive()) {
                     hadActivity = 1;
 //                    int prevPos = channel->getPreviousPosition();
-                    int curPos = channel->getPosition();
+                    int curPos = channel->getPosition() % numStrings;
                     //cout << "ch " << channel->getChannelNumber() << ": prev=" << prevPos << " cur=" << curPos << endl;
                     //cout << "clearing pixels  in " << prevPos << " for ch " << channel->getChannelNumber() << endl;
 //                    for (auto&& pixel:pixelArray[prevPos]) {
@@ -91,13 +91,13 @@ bool RgbVerticalPattern::update()
                     for (auto&& pixel:pixelArray[curPos]) {
                         switch (channel->getChannelNumber()) {
                             case 0:
-                                pixel.r = 48;
+                                pixel.r = 96;
                                 break;
                             case 1:
-                                pixel.g = 48;
+                                pixel.g = 96;
                                 break;
                             case 2:
-                                pixel.b = 48;
+                                pixel.b = 96;
                                 break;
                         }
                     }

@@ -12,6 +12,7 @@ using namespace std;
 
 
 StairWidget::StairWidget()
+    : Widget(WidgetId::steps, "Steps")
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -29,24 +30,13 @@ StairWidget::StairWidget()
 }
 
 
-void StairWidget::init()
+void StairWidget::init(bool generateSimulatedMeasurements)
 {
+    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+
     for (int i = 0; i < 5; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this));
     }
-}
-
-
-unsigned int StairWidget::getId()
-{
-    return StairWidget::id;
-}
-
-
-std::string StairWidget::getName()
-{
-    //return ThreeWheelWidget::name;
-    return "StairWidget";
 }
 
 

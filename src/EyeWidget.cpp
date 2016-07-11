@@ -12,6 +12,7 @@ using namespace std;
 
 
 EyeWidget::EyeWidget()
+    : Widget(WidgetId::eye, "Eye")
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -22,22 +23,11 @@ EyeWidget::EyeWidget()
 }
 
 
-void EyeWidget::init()
+void EyeWidget::init(bool generateSimulatedMeasurements)
 {
+    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+
     channels.push_back(make_shared<WidgetChannel>(0, this));
-}
-
-
-unsigned int EyeWidget::getId()
-{
-    return EyeWidget::id;
-}
-
-
-std::string EyeWidget::getName()
-{
-    //return EyeWidget::name;
-    return "EyeWidget";
 }
 
 
