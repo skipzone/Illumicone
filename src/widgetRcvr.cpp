@@ -139,7 +139,7 @@ bool sendUdp(const UdpPayload& payload)
             << endl;
         return false;
     }
-    cout << "Sent " << bytesSentCount << " via UDP" << endl;
+    //cout << "Sent " << bytesSentCount << " byte payload via UDP" << endl;
 
     return true;
 }
@@ -196,6 +196,15 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
         << ", position = " << payload->position
         << ", velocity = " << payload->velocity
         << endl;
+
+    UdpPayload udpPayload;
+    udpPayload.id       = payload->widgetHeader.id;
+    udpPayload.channel  = payload->widgetHeader.channel;
+    udpPayload.isActive = payload->widgetHeader.isActive;
+    udpPayload.position = payload->position;
+    udpPayload.velocity = payload->velocity;
+
+    sendUdp(udpPayload);
 }
 
 
@@ -219,6 +228,22 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
     cout << "Measurements:" << endl;
     for (int i = 0; i < numMeasurements; ++i) {
         cout << setfill(' ') << setw(6) << payload->measurements[i] << endl;
+    }
+
+    // The steps widget sends 5 position measurements.  We'll map them to
+    // channels 0 through 4.
+    if (payload->widgetHeader.id == widgetIdToInt(WidgetId::steps)) {
+        for (unsigned int i = 0; i < 5; ++i) {
+            if (payload->measurements[i] != 0) {
+                UdpPayload udpPayload;
+                udpPayload.id       = payload->widgetHeader.id;
+                udpPayload.channel  = i;
+                udpPayload.isActive = payload->widgetHeader.isActive;
+                udpPayload.position = payload->measurements[i];
+                udpPayload.velocity = 0;
+                sendUdp(udpPayload);
+            }
+        }
     }
 }
 
