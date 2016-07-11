@@ -102,7 +102,7 @@ bool StairWidget::moveData()
 
     for (unsigned int i = 0; i < getChannelCount(); ++i) {
 //        cout << "checking channel " << i << endl;
-        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
+        if (updateIntervalMs[i] > 0 && (nowMs - lastUpdateMs[i] > updateIntervalMs[i])) {
 //            cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
             channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % 3, 0);

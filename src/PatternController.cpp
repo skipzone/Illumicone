@@ -10,9 +10,9 @@
 #include "WidgetChannel.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
-//#include "SolidBlackPattern.h"
+#include "SolidBlackPattern.h"
 #include "QuadSlicePattern.h"
-//#include "TwistPattern.h"
+#include "TwistPattern.h"
 
 using namespace std;
 
@@ -116,7 +116,9 @@ bool buildFrame(
             //
             for (col = 0; col < NUM_STRINGS; col++) {
                 for (row = 0; row < PIXELS_PER_STRING; row++) {
-                    finalFrame[col][row] = pixelArray[col][row];
+                    if (pixelArray[col][row].r == 0 && pixelArray[col][row].g == 0 && pixelArray[col][row].b == 0) {
+                        finalFrame[col][row] = pixelArray[col][row];
+                    }
                 }
             }
             break;
@@ -204,8 +206,8 @@ int sendFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
 
 int main(void)
 {
-//    SolidBlackPattern solidBlackPattern;
-//    TwistPattern twistPattern;
+    SolidBlackPattern solidBlackPattern;
+    TwistPattern twistPattern;
     RgbVerticalPattern rgbVerticalPattern;
     QuadSlicePattern quadSlicePattern;
 //    SparklePattern sparklePattern;
@@ -227,13 +229,13 @@ int main(void)
     setupConnection();
     cout << "NUM_STRINGS: " << NUM_STRINGS << endl;
     cout << "PIXELS_PER_STRING: " << PIXELS_PER_STRING << endl;
-//    solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[0]);
-//    solidBlackPattern.initWidgets(1, numChannels[0]);
-//    printInit(&solidBlackPattern);
+    solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[0]);
+    solidBlackPattern.initWidgets(1, numChannels[0]);
+    printInit(&solidBlackPattern);
 
-//    twistPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
-//    twistPattern.initWidgets(1, numChannels[1]);
-//    printInit(&twistPattern);
+    twistPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
+    twistPattern.initWidgets(1, numChannels[1]);
+    printInit(&twistPattern);
 
     rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[2]);
     rgbVerticalPattern.initWidgets(1, numChannels[2]);
@@ -247,16 +249,16 @@ int main(void)
 
     while (true) {
         rgbVerticalPattern.update();
-//        solidBlackPattern.update();
+        solidBlackPattern.update();
         quadSlicePattern.update();
 //        twistPattern.update();
 
+//        zeroFrame(finalFrame1);
         if (quadSlicePattern.isActive) {
 //            cout << "quad active" << endl;
             buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
         }
         
-//        zeroFrame(finalFrame1);
         if (rgbVerticalPattern.isActive) {
 //            cout << "rgb active" << endl;
             buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
@@ -266,9 +268,9 @@ int main(void)
 //            buildFrame(finalFrame1, twistPattern.pixelArray, twistPattern.priority);
 //        }
 
-//        if (solidBlackPattern.isActive) {
-//            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
-//        }
+        if (solidBlackPattern.isActive) {
+            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
+        }
 
         //numBytes = sendFrame(finalFrame1);
         sendFrame(finalFrame1);
