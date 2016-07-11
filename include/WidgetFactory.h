@@ -1,26 +1,15 @@
 #ifndef WIDGET_FACTORY_H
 #define WIDGET_FACTORY_H
 
-#include "ThreeWheelWidget.h"
 #include "EyeWidget.h"
-#include "StairWidget.h"
 #include "RainstickWidget.h"
 #include "RotaryWidget.h"
+#include "StairWidget.h"
+#include "ThreeWheelWidget.h"
+#include "WidgetId.h"
+
 
 using namespace std;
-
-
-enum class WidgetId {
-    reserved = 0,
-    eye,
-    hypnotyzer,
-    bells,
-    steps,
-    rainstick,
-    triObelisk,
-    boxTheramin,
-    plunger
-};
 
 
 static Widget* widgetFactory(WidgetId id)

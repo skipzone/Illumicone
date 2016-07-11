@@ -13,7 +13,7 @@ class RainstickWidget : public Widget
         RainstickWidget(const RainstickWidget&) = delete;
         RainstickWidget& operator =(const RainstickWidget&) = delete;
 
-        void init();
+        void init(bool generateSimulatedMeasurements);
 
         unsigned int getId();
         std::string getName();

@@ -10,6 +10,7 @@ using namespace std;
 
 
 RainstickWidget::RainstickWidget()
+    : Widget(WidgetId::rainstick, "Rainstick")
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -20,22 +21,11 @@ RainstickWidget::RainstickWidget()
 }
 
 
-void RainstickWidget::init()
+void RainstickWidget::init(bool generateSimulatedMeasurements)
 {
+    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+
     channels.push_back(make_shared<WidgetChannel>(0, this));
-}
-
-
-unsigned int RainstickWidget::getId()
-{
-    return RainstickWidget::id;
-}
-
-
-std::string RainstickWidget::getName()
-{
-    //return RainstickWidget::name;
-    return "RainstickWidget";
 }
 
 

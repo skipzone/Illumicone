@@ -12,6 +12,7 @@ using namespace std;
 
 
 StairWidget::StairWidget()
+    : Widget(WidgetId::steps, "Steps")
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -29,70 +30,26 @@ StairWidget::StairWidget()
 }
 
 
-void StairWidget::init()
+void StairWidget::init(bool generateSimulatedMeasurements)
 {
+    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+
     for (int i = 0; i < 5; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this));
     }
-}
 
-
-unsigned int StairWidget::getId()
-{
-    return StairWidget::id;
-}
-
-
-std::string StairWidget::getName()
-{
-    //return ThreeWheelWidget::name;
-    return "StairWidget";
+    if (!generateSimulatedMeasurements) {
+        startUdpRxThread();
+    }
 }
 
 
 bool StairWidget::moveData()
 {
-//    for (auto&& channel:channels) {
-//        switch (channel.number) {
-//            case 0:
-//                channel.velocity = 0;
-//                channel.prevPosition = channel.position;
-//                channel.isActive = 1;
-//                // position = 1 means stair is being stepped on
-//                channel.position = 1;
-//
-//                break;
-//
-//            case 1:
-//                channel.velocity = 0;
-//                channel.prevPosition = channel.position;
-//                channel.isActive = 1;
-//                // position = 1 means stair is being stepped on
-//                channel.position = 1;
-//
-//                break;
-//
-//            case 2:
-//                channel.velocity = 0;
-//                channel.prevPosition = channel.position;
-//                channel.isActive = 1;
-//                // position = 1 means stair is being stepped on
-//                channel.position = 1;
-//
-//                break;
-//
-//            case 3:
-//                channel.velocity = 0;
-//                channel.prevPosition = channel.position;
-//                channel.isActive = 1;
-//                channel.position = 1;
-//
-//                break;
-//
-//            default:
-//                return false;
-//        }
-//    }
+    if (!generateSimulatedMeasurements) {
+        return true;
+    }
+
     using namespace std::chrono;
 
     milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());

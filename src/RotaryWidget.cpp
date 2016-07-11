@@ -12,6 +12,7 @@ using namespace std;
 
 
 RotaryWidget::RotaryWidget()
+    : Widget(WidgetId::hypnotyzer, "Hypnotyzer")
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -22,31 +23,14 @@ RotaryWidget::RotaryWidget()
 }
 
 
-void RotaryWidget::init()
+void RotaryWidget::init(bool generateSimulatedMeasurements)
 {
+    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+
     channels.push_back(make_shared<WidgetChannel>(0, this));
 }
 
 
-unsigned int RotaryWidget::getId()
-{
-    return RotaryWidget::id;
-}
-
-
-std::string RotaryWidget::getName()
-{
-    //return RotaryWidget::name;
-    return "RotaryWidget";
-}
-
-
-//
-// Usually, this function will call each channel's update() function, then
-// read the position, velocity, and isActive.  But, since the 3-wheel
-// provides a string from UART that contains information about all 3 wheels, we
-// just parse that instead.
-//
 bool RotaryWidget::moveData()
 {
     using namespace std::chrono;
