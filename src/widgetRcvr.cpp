@@ -234,15 +234,13 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
     // channels 0 through 4.
     if (payload->widgetHeader.id == widgetIdToInt(WidgetId::steps)) {
         for (unsigned int i = 0; i < 5; ++i) {
-            if (payload->measurements[i] != 0) {
-                UdpPayload udpPayload;
-                udpPayload.id       = payload->widgetHeader.id;
-                udpPayload.channel  = i;
-                udpPayload.isActive = payload->widgetHeader.isActive;
-                udpPayload.position = payload->measurements[i];
-                udpPayload.velocity = 0;
-                sendUdp(udpPayload);
-            }
+            UdpPayload udpPayload;
+            udpPayload.id       = payload->widgetHeader.id;
+            udpPayload.channel  = i;
+            udpPayload.isActive = payload->widgetHeader.isActive;
+            udpPayload.position = payload->measurements[i];
+            udpPayload.velocity = 0;
+            sendUdp(udpPayload);
         }
     }
 }
