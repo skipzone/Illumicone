@@ -19,7 +19,7 @@ EyeWidget::EyeWidget()
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 200;
+    updateIntervalMs[0] = 5000;
 }
 
 
@@ -44,8 +44,14 @@ bool EyeWidget::moveData()
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             //cout << "updating channel " << i << endl;
+            int prevPos = channels[i]->getPreviousPosition();
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+            cout << "Eye prevPos: " << prevPos << endl;
+            if (prevPos == 0) {
+                channels[i]->setPositionAndVelocity(1, 0);
+            } else {
+                channels[i]->setPositionAndVelocity(0, 0);
+            }
             channels[i]->setIsActive(true);
             //cout << "updated channel " << i << endl;
         }

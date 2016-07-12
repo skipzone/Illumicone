@@ -24,23 +24,13 @@ bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString, int pr
 
 bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
-    int i;  //, ii, iii;
-    //iii = 2;
+    int i;
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::triObelisk);
         widgets.emplace_back(newWidget);
         newWidget->init(false);
-/*
-        widgets[i]->init(channelsPerWidget);
-        ii = 0;
-        for (auto&& channel:widgets[i]->channels) {
-            channel.initChannel(ii, iii, 0);
-            ii++;
-            iii--;
-        }
-*/
     }
 
     return true;
@@ -64,7 +54,6 @@ bool RgbVerticalPattern::update()
         // update active, position, velocity for each channel in widget
         widget->moveData();
         //cout << "back from moveData" << endl;
-        // clear the previous array vals
         if (widget->getIsActive()) {
             for (auto&& channel:widget->getChannels()) {
                 // check if the channel updated
@@ -74,67 +63,20 @@ bool RgbVerticalPattern::update()
                     int curPos = ((unsigned int) channel->getPosition()) % numStrings;
                     //cout << "ch " << channel->getChannelNumber() << ": prev=" << prevPos << " cur=" << curPos << endl;
                     //cout << "clearing pixels  in " << prevPos << " for ch " << channel->getChannelNumber() << endl;
-//                    for (auto&& pixel:pixelArray[prevPos]) {
-//                        switch (channel->getChannelNumber()) {
-//                            case 0:
-//                                pixel.r = 0;
-//                                break;
-//                            case 1:
-//                                pixel.g = 0;
-//                                break;
-//                            case 2:
-//                                pixel.b = 0;
-//                                break;
-//                        }
-//                    }
                     //cout << "setting pixels in " << curPos << " for ch " << channel->getChannelNumber() << endl;
                     for (auto&& pixel:pixelArray[curPos]) {
                         switch (channel->getChannelNumber()) {
                             case 0:
-                                pixel.r = 96;
+                                pixel.r = 255;
                                 break;
                             case 1:
-                                pixel.g = 96;
+                                pixel.g = 255;
                                 break;
                             case 2:
-                                pixel.b = 96;
+                                pixel.b = 255;
                                 break;
                         }
                     }
-    /*****
-                    switch (channel->getChannelNumber()) {
-                        case 0:
-                            for (auto&& pixel:pixelArray[prevPos]) {
-                                pixel.r = 0;
-                            }
-                            for (auto&& pixel:pixelArray[curPos]) {
-                                pixel.r = 255;
-                            }
-                            break;
-
-                        case 1:
-                            for (auto&& pixel:pixelArray[channel->getPreviousPosition()]) {
-                                pixel.g = 0;
-                            }
-                            for (auto&& pixel:pixelArray[channel->getPosition()]) {
-                                pixel.g = 255;
-                            }
-                            break;
-
-                        case 2:
-                            for (auto&& pixel:pixelArray[channel->getPreviousPosition()]) {
-                                pixel.b = 0;
-                            }
-                            for (auto&& pixel:pixelArray[channel->getPosition()]) {
-                                pixel.b = 255;
-                            }
-                            break;
-
-                        default:
-                            cout << "SOMETHING'S FUCKY : channel number of " << channel->getChannelNumber() << endl;
-                            break;
-                    }
-    ******/
                 }
             }
         }

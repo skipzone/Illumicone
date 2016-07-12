@@ -27,13 +27,9 @@ bool TwistPattern::initWidgets(int numWidgets, int channelsPerWidget)
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
-        widgets.emplace_back(widgetFactory(hypnotyzer));
-        widgets[i]->init(channelsPerWidget);
-        ii = 0;
-        for (auto&& channel:widgets[i]->channels) {
-            channel.initChannel(ii, 0, 0);
-            ii++;
-        }
+        Widget* newWidget = widgetFactory(WidgetId::hypnotyzer);
+        widgets.emplace_back(newWidget);
+        newWidget->init();
     }
 
     return true;
@@ -76,47 +72,52 @@ bool TwistPattern::initWidgets(int numWidgets, int channelsPerWidget)
  */
 bool TwistPattern::update()
 {
-    int i, ii;
     int hadActivity = 0;
+    int shiftValues[PIXELS_PER_STRING];
+    int shiftGroup = 0;
+    int pixelToShift = 0;
+    int shiftAmount;
 //    cout << "Updating Solid Black Pattern!" << endl;
+
+    for (auto&& pixels:pixelArray) {
+        for (auto&& pixel:pixels) {
+            pixel.r = 0;
+            pixel.g = 0;
+            pixel.b = 0;
+        }
+    }
 
     for (auto&& widget:widgets) {
 //        cout << "Updating Solid Black Pattern widget!" << endl;
         // update active, position, velocity for each channel in widget
         widget->moveData();
-        for (auto&& channel:widget->channels) {
-//            cout << "Updating widget's channel!" << endl;
-            if (channel.isActive) {
-                hadActivity = 1;
-                switch (channel.number) {
-                    case 0:
-                        for (auto&& pixels:pixelArray) {
-                            for (i = 0; i < channel.velocity; i++) {
-                                for (ii = i * PIXELS_PER_STRING*3/NUM_STRINGS;
-                                        ii < PIXELS_PER_STRING*3/NUM_STRINGS + PIXELS_PER_STRING*3/NUM_STRINGS;
-                                        ii+=3) {
-                                    pixels[ii+0].r = i + 1;
-                                    pixels[ii+0].g = i + 1;
-                                    pixels[ii+0].b = i + 1;
-                         
-                                    pixels[ii+1].r = i + 1;
-                                    pixels[ii+1].g = i + 1;
-                                    pixels[ii+1].b = i + 1;
+        if (widget->getIsActive()) {
+            for (auto&& channel:widget->getChannels()) {
+    //            cout << "Updating widget's channel!" << endl;
+                if (channel->getHasNewMeasurement() || channel->getIsActive()) {
+                    hadActivity = 1;
+                    int curVel = channel->getVelocity();
+                    shiftAmount = curVel;
 
-                                    pixels[ii+2].r = i + 1;
-                                    pixels[ii+2].g = i + 1;
-                                    pixels[ii+2].b = i + 1;
-                                }
-                            } 
+                    for (shiftGroup = 0; shiftGroup < curVel; shiftGroup++) {
+                        for (pixelToShift = (PIXELS_PER_STRING/NUM_STRINGS) * shiftGroup;
+                                pixelToShift < (PIXELS_PER_STRING/NUM_STRINGS) * (shiftGroup + 1);
+                                pixelToShift++) {
+                            shiftValues[pixelToShift] = shiftAmount;
+                            
                         }
+                        shiftAmount--;
+                    }
 
-                        break;
-
-                    default:
-                        // shouldn't get here, solid black uses the eye widget which
-                        // should only have one channel.
-                        cout << "SOMETHING'S FUCKY : channel number for Solid Black Pattern widget" << endl;
-                        break;
+                    for (auto&& pixels:pixelArray) {
+                        int i = 0;
+                        for (auto&& pixel:pixels) {
+                            pixel.r = shiftValues[i];
+                            pixel.g = shiftValues[i];
+                            pixel.b = shiftValues[i];
+                            i++;
+                        }
+                    }
                 }
             }
         }
