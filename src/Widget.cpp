@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/socket.h>	// for UDP
 #include <netinet/in.h>	// for UDP
+#include <unistd.h>
 
 #include "illumiconeTypes.h"
 #include "Widget.h"
