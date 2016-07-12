@@ -124,9 +124,17 @@ bool buildFrame(
             break;
 
         case 1:
+            opc_pixel_t *ringBuffer[NUM_STRINGS];
+            int index;
             //
             // Twist pattern
             //
+            // create a linked list with references to one row that needs to shift
+            // shift head by shift amount
+            // dump list into final frame
+            for (auto&& pixels:pixelArray) {
+                
+            }
             for (col = 0; col < NUM_STRINGS; col++) {
                 for (row = 0; row < PIXELS_PER_STRING; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
@@ -253,7 +261,7 @@ int main(void)
         quadSlicePattern.update();
 //        twistPattern.update();
 
-//        zeroFrame(finalFrame1);
+        zeroFrame(finalFrame1);
         if (quadSlicePattern.isActive) {
 //            cout << "quad active" << endl;
             buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
@@ -268,9 +276,9 @@ int main(void)
 //            buildFrame(finalFrame1, twistPattern.pixelArray, twistPattern.priority);
 //        }
 
-        if (solidBlackPattern.isActive) {
-            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
-        }
+//        if (solidBlackPattern.isActive) {
+//            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
+//        }
 
         //numBytes = sendFrame(finalFrame1);
         sendFrame(finalFrame1);

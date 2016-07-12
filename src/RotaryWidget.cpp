@@ -63,7 +63,7 @@ bool RotaryWidget::moveData()
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
 
-//            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+            channels[i]->setPositionAndVelocity(0, 4);
             channels[i]->setIsActive(true);
             //cout << "updated channel " << i << endl;
         }
