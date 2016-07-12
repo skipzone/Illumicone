@@ -71,7 +71,7 @@ bool RgbVerticalPattern::update()
                 if (channel->getHasNewMeasurement() || channel->getIsActive()) {
                     hadActivity = 1;
 //                    int prevPos = channel->getPreviousPosition();
-                    int curPos = channel->getPosition() % numStrings;
+                    int curPos = ((unsigned int) channel->getPosition()) % numStrings;
                     //cout << "ch " << channel->getChannelNumber() << ": prev=" << prevPos << " cur=" << curPos << endl;
                     //cout << "clearing pixels  in " << prevPos << " for ch " << channel->getChannelNumber() << endl;
 //                    for (auto&& pixel:pixelArray[prevPos]) {
