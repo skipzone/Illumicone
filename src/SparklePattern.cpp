@@ -28,13 +28,9 @@ bool SparklePattern::initWidgets(int numWidgets, int channelsPerWidget)
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
-        widgets.emplace_back(widgetFactory(rainStick));
-        widgets[i]->init(channelsPerWidget);
-        ii = 0;
-        for (auto&& channel:widgets[i]->channels) {
-            channel.initChannel(ii, 0, 0);
-            ii++;
-        }
+        Widget* newWidget = widgetFactory(WidgetId::hypnotyzer);
+        widgets.emplace_back(newWidget);
+        newWidget->init();
     }
 
     return true;
@@ -46,32 +42,40 @@ bool SparklePattern::update()
     int hadActivity = 0;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
+    for (auto&& pixels:pixelArray) {
+        for (auto&& pixel:pixels) {
+            pixel.r = 0;
+            pixel.g = 0;
+            pixel.b = 0;
+        }
+    }
+
     for (auto&& widget:widgets) {
 //        cout << "Updating Solid Black Pattern widget!" << endl;
         // update active, position, velocity for each channel in widget
         widget->moveData();
-        for (auto&& channel:widget->channels) {
-//            cout << "Updating widget's channel!" << endl;
-            if (channel.isActive) {
-                hadActivity = 1;
-                switch (channel.number) {
-                    case 0:
-                        // set entire pixelArray black (off)
-                        for (i = 0; i < NUM_STRINGS; i++) {
-                            for (auto&& pixel:pixelArray[i]) {
-                                pixel.r = 0;
-                                pixel.g = 0;
-                                pixel.b = 0;
-                            }
+        if (widget->getIsActive()) {
+            for (auto&& channel:widget->getChannels()) {
+//                cout << "Updating widget's channel!" << endl;
+                if (channel->getHasNewMeasurement() || channel->getIsActive()) {
+                    hadActivity = 1;
+                    float curVel = (float)(channel->getVelocity());
+                    float velocityPercentage = curVel / 600.0;
+                    // at max velocity, only half of the pixels on each string sparkle
+                    float numPixelsToSparkle = (velocityPercentage * (float)PIXELS_PER_STRING / 2);
+
+                    cout << "curVel: " << curVel << endl;
+                    cout << "velocityPercentage: " << velocityPercentage << endl;
+                    cout << "numPixelsToSparkle: " << numPixelsToSparkle << endl;
+
+                    for (auto&& pixels:pixelArray) {
+                        for (int i = 0; i < (int)numPixelsToSparkle; i++) {
+                            int randPos = rand() % PIXELS_PER_STRING;
+                            pixels[randPos].r = rand() % 255;
+                            pixels[randPos].g = rand() % 255;
+                            pixels[randPos].b = rand() % 255;
                         }
-
-                        break;
-
-                    default:
-                        // shouldn't get here, solid black uses the eye widget which
-                        // should only have one channel.
-                        cout << "SOMETHING'S FUCKY : channel number for Solid Black Pattern widget" << endl;
-                        break;
+                    }
                 }
             }
         }
