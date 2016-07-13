@@ -54,28 +54,26 @@ bool RgbVerticalPattern::update()
         // update active, position, velocity for each channel in widget
         widget->moveData();
         //cout << "back from moveData" << endl;
-        if (widget->getIsActive()) {
-            for (auto&& channel:widget->getChannels()) {
-                // check if the channel updated
-                if (channel->getHasNewMeasurement() || channel->getIsActive()) {
-                    hadActivity = 1;
+        for (auto&& channel:widget->getChannels()) {
+            // check if the channel updated
+            if (channel->getHasNewMeasurement() && channel->getIsActive()) {
+                hadActivity = 1;
 //                    int prevPos = channel->getPreviousPosition();
-                    int curPos = ((unsigned int) channel->getPosition()) % numStrings;
-                    //cout << "ch " << channel->getChannelNumber() << ": prev=" << prevPos << " cur=" << curPos << endl;
-                    //cout << "clearing pixels  in " << prevPos << " for ch " << channel->getChannelNumber() << endl;
-                    //cout << "setting pixels in " << curPos << " for ch " << channel->getChannelNumber() << endl;
-                    for (auto&& pixel:pixelArray[curPos]) {
-                        switch (channel->getChannelNumber()) {
-                            case 0:
-                                pixel.r = 255;
-                                break;
-                            case 1:
-                                pixel.g = 255;
-                                break;
-                            case 2:
-                                pixel.b = 255;
-                                break;
-                        }
+                int curPos = ((unsigned int) channel->getPosition()) % numStrings;
+                //cout << "ch " << channel->getChannelNumber() << ": prev=" << prevPos << " cur=" << curPos << endl;
+                //cout << "clearing pixels  in " << prevPos << " for ch " << channel->getChannelNumber() << endl;
+                //cout << "setting pixels in " << curPos << " for ch " << channel->getChannelNumber() << endl;
+                for (auto&& pixel:pixelArray[curPos]) {
+                    switch (channel->getChannelNumber()) {
+                        case 0:
+                            pixel.r = 255;
+                            break;
+                        case 1:
+                            pixel.g = 255;
+                            break;
+                        case 2:
+                            pixel.b = 255;
+                            break;
                     }
                 }
             }

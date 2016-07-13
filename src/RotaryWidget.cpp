@@ -7,6 +7,7 @@
 
 #include "RotaryWidget.h"
 #include "illumiconeTypes.h"
+#include "WidgetId.h"
 
 using namespace std;
 
@@ -28,11 +29,19 @@ void RotaryWidget::init(bool generateSimulatedMeasurements)
     this->generateSimulatedMeasurements = generateSimulatedMeasurements;
 
     channels.push_back(make_shared<WidgetChannel>(0, this));
+
+    if (!generateSimulatedMeasurements) {
+        startUdpRxThread();
+    }
 }
 
 
 bool RotaryWidget::moveData()
 {
+    if (!generateSimulatedMeasurements) {
+        return true;
+    }
+
     using namespace std::chrono;
 
     milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
