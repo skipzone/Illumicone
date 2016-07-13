@@ -116,7 +116,7 @@ bool buildFrame(
             //
             for (col = 0; col < NUM_STRINGS; col++) {
                 for (row = 0; row < PIXELS_PER_STRING; row++) {
-                    if (pixelArray[col][row].r == 0 && pixelArray[col][row].g == 0 && pixelArray[col][row].b == 0) {
+                    if (pixelArray[col][row].r != 0 && pixelArray[col][row].g != 0 && pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
                 }

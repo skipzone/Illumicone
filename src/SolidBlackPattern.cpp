@@ -61,7 +61,8 @@ bool SolidBlackPattern::update()
     //            cout << "Updating widget's channel!" << endl;
                 if (channel->getHasNewMeasurement() || channel->getIsActive()) {
                     hadActivity = 1;
-                    if (channel->getPosition()) {
+                    if (channel->getPosition() <= 300) {     // 300 is a basic LED flashlight from a few feet away
+                        cout << "making black pattern transparent" << endl;
                         for (auto&& pixels:pixelArray) {
                             for (auto&& pixel:pixels) {
                                 pixel.r = 0;
@@ -70,6 +71,7 @@ bool SolidBlackPattern::update()
                             }
                         }
                     } else {
+                        cout << "making black pattern dark" << endl;
                         for (auto&& pixels:pixelArray) {
                             for (auto&& pixel:pixels) {
                                 pixel.r = 1;

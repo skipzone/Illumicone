@@ -30,7 +30,7 @@ bool SparklePattern::initWidgets(int numWidgets, int channelsPerWidget)
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::hypnotyzer);
         widgets.emplace_back(newWidget);
-        newWidget->init();
+        newWidget->init(false);
     }
 
     return true;
