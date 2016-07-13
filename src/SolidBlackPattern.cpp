@@ -31,7 +31,7 @@ bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::eye);
         widgets.emplace_back(newWidget);
-        newWidget->init();
+        newWidget->init(false);
 
 //        widgets.emplace_back(widgetFactory(eye));
 //        widgets[i]->init(channelsPerWidget);

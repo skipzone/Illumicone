@@ -275,7 +275,7 @@ int main(void)
         //numBytes = sendFrame(finalFrame1);
         sendFrame(finalFrame1);
 
-        usleep(500000);
+        usleep(50000);
     }
 
     //
