@@ -1,10 +1,10 @@
 /*****************************************************************
  *                                                               *
- * nRF24 Stress Test Widget                                      *
+ * TriObelisk Widget                                             *
  *                                                               *
  * Platform:  Arduino Uno, Pro, Pro Mini                         *
  *                                                               *
- * by Ross Butler, June 2016                                 )'( *
+ * by Ross Butler, July 2016                                 )'( *
  *                                                               *
  *****************************************************************/
 

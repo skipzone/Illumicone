@@ -1,37 +1,78 @@
 /*****************************************************************
  *                                                               *
- * Reiley's Wheel Widget                                         *
+ * Reiley's Hypnotyzer Widget                                    *
  *                                                               *
  * Platform:  Arduino Uno, Pro, Pro Mini                         *
  *                                                               *
- * by Ross Butler, June 2016                                 )'( *
+ * by Ross Butler, July 2016                                 )'( *
  *                                                               *
  *****************************************************************/
 
-#define ENCODER_0_A_PIN A0
-#define ENCODER_0_B_PIN A1
-#define ENCODER_1_A_PIN A2
-#define ENCODER_1_B_PIN A3
-#define ENCODER_2_A_PIN A4
-#define ENCODER_2_B_PIN A5
-#define ENCODERS_VDD_PIN 8
-#define ENCODER_ACTIVE_PIN 7
+#include "illumiconeWidget.h"
+#include "printf.h"
 
-#define GREEN_LED_PIN 4
-#define ORANGE_LED_PIN 5
 
-#define SPIN_ACTIVITY_DETECT_MS 50L
-#define SPIN_INACTIVITY_TIMEOUT_MS 500L
-#define XMIT_INTERVAL_MS 1000L
+/************************
+ * Widget Configuration *
+ ************************/
+
+#define WIDGET_ID 6
+#define NUM_CHANNELS 1
+#define ACTIVE_TX_INTERVAL_MS 10L
+#define INACTIVE_TX_INTERVAL_MS 1000L
+//#define TX_FAILURE_LED_PIN 2
+#define ENCODER_0_A_PIN 2
+#define ENCODER_0_B_PIN 3
+//#define ENCODERS_VDD_PIN 8
+//#define ENCODER_ACTIVE_PIN 8
+
+//#define GREEN_LED_PIN 4
+//#define ORANGE_LED_PIN 5
+
+#define SPIN_ACTIVITY_DETECT_MS 50
+#define SPIN_INACTIVITY_TIMEOUT_MS 500
 
 #define NUM_ENCODERS 3
-#define NUM_STEPS_PER_REV 18
+#define NUM_STEPS_PER_REV 24
 
+//#define ENABLE_DEBUG_PRINT
+
+
+/***************************************
+ * Widget-Specific Radio Configuration *
+ ***************************************/
+
+// Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
+// 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
+#define TX_PIPE_ADDRESS "1wdgt"
+
+// Delay between retries is 250 us multiplied by the delay multiplier.  To help
+// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
+#define TX_RETRY_DELAY_MULTIPLIER 2
+
+// Max. retries can be 0 to 15.
+#define TX_MAX_RETRIES 15
+
+// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
+#define RF_POWER_LEVEL RF24_PA_MAX
+
+
+/***********
+ * Globals *
+ ***********/
+
+RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
+
+PositionVelocityPayload payload;
+
+bool g_anyEncoderActive;
+bool g_encoderActive[NUM_ENCODERS];
 volatile uint8_t g_lastEncoderStates = 0;
 volatile int g_encoderValues[] = {0, 0, 0};
+uint32_t g_encoderRpms[NUM_ENCODERS];
+
 const int8_t g_greyCodeToEncoderStepMap[] = {
        // last this
-/*
    0,  //  00   00
   -1,  //  00   01
    1,  //  00   10
@@ -48,26 +89,12 @@ const int8_t g_greyCodeToEncoderStepMap[] = {
    1,  //  11   01
   -1,  //  11   10
    0,  //  11   11
-*/
-       // this is not really a Grey code
-   0,  //  00   00
-   1,  //  00   01
-   1,  //  00   10
-   1,  //  00   11
-   1,  //  01   00
-   0,  //  01   01
-   1,  //  01   10
-   1,  //  01   11
-   1,  //  10   00
-   1,  //  10   01
-   0,  //  10   10
-   1,  //  10   11
-   1,  //  11   00
-   1,  //  11   01
-   1,  //  11   10
-   0,  //  11   11
 };
 
+
+/******************
+ * Implementation *
+ ******************/
 
 void setUpPinChangeInterrupt(uint8_t pin) 
 {
@@ -78,17 +105,20 @@ void setUpPinChangeInterrupt(uint8_t pin)
 
 
 // Service pin change interrupt for A0 - A5.
-ISR (PCINT1_vect)
+//ISR (PCINT1_vect)
+// Service pin change interrupt for D0 - D7.
+ISR (PCINT2_vect)
 {
-  uint8_t encoderStates = PINC;
+//  uint8_t encoderStates = PINC;
+  uint8_t encoderStates = PIND >> 2;
   uint8_t curStates = encoderStates;
   uint8_t lastStates = g_lastEncoderStates;
 
 #ifdef GREEN_LED_PIN
-//  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b101010);
-//  digitalWrite(ORANGE_LED_PIN, encoderStates & 0b010101);
-  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b000001);
-  digitalWrite(ORANGE_LED_PIN, encoderStates & 0b000010);
+  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b101010);
+  digitalWrite(ORANGE_LED_PIN, encoderStates & 0b010101);
+//  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b000001);
+//  digitalWrite(ORANGE_LED_PIN, encoderStates & 0b000010);
 //  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b000100);
 //  digitalWrite(ORANGE_LED_PIN, encoderStates & 0b001000);
 //  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b010000);
@@ -108,7 +138,10 @@ ISR (PCINT1_vect)
 
 void setup()
 {
-  Serial.begin(115200);
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.begin(57600);
+  printf_begin();
+#endif
 
   pinMode(ENCODER_0_A_PIN, INPUT); 
   pinMode(ENCODER_0_B_PIN, INPUT);
@@ -116,11 +149,12 @@ void setup()
   pinMode(ENCODER_1_B_PIN, INPUT);
   pinMode(ENCODER_2_A_PIN, INPUT); 
   pinMode(ENCODER_2_B_PIN, INPUT);
+#ifdef ENCODERS_VDD_PIN
   pinMode(ENCODERS_VDD_PIN, OUTPUT);
+#endif
+#ifdef ENCODER_ACTIVE_PIN
   pinMode(ENCODER_ACTIVE_PIN, OUTPUT);
-
-  pinMode(GREEN_LED_PIN, OUTPUT);
-  pinMode(ORANGE_LED_PIN, OUTPUT);
+#endif
 
   // Turn on pullups.
   digitalWrite(ENCODER_0_A_PIN, HIGH);
@@ -131,9 +165,24 @@ void setup()
   digitalWrite(ENCODER_2_B_PIN, HIGH);
   
   // Initially, turn on power to the encoders and set the active indicator low.
+#ifdef ENCODERS_VDD_PIN
   digitalWrite(ENCODERS_VDD_PIN, HIGH);
+#endif
+#ifdef ENCODER_ACTIVE_PIN
   digitalWrite(ENCODER_ACTIVE_PIN, LOW);
+#endif
 
+  configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
+  
+  payload.widgetHeader.id = WIDGET_ID;
+  payload.widgetHeader.isActive = false;
+
+  g_anyEncoderActive = false;
+  for (uint8_t i = 0; i < NUM_ENCODERS; ++i) {
+    g_encoderActive[i] = false;
+  }
+
+  // Set up and turn on the pin-change interrupts last.
   setUpPinChangeInterrupt(ENCODER_0_A_PIN);
   setUpPinChangeInterrupt(ENCODER_0_B_PIN);
   setUpPinChangeInterrupt(ENCODER_1_A_PIN);
@@ -143,14 +192,11 @@ void setup()
 }
 
 
-void loop()
+void gatherMeasurements()
 {
   static int32_t lastEncoderValues[3] = {0, 0, 0};
-  static int32_t encoderValueDeltas[3] = {0, 0, 0};
-  static bool encoderActive[3] = {false, false, false};
   static uint32_t lastEncoderInactiveMs[3] = {0, 0, 0};
   static uint32_t lastEncoderChangeMs[3] = {0, 0, 0};
-  static uint32_t nextXmitMs = 0;
 
   unsigned long now = millis();
 
@@ -159,18 +205,28 @@ void loop()
     int thisEncoderValue = g_encoderValues[i];
     if (thisEncoderValue != lastEncoderValues[i]) {
       encoderChanged = true;
-      lastEncoderChangeMs[i] = now;
-      encoderValueDeltas[i] += (thisEncoderValue - lastEncoderValues[i]);
+
+      uint32_t actualIntervalMs = lastEncoderChangeMs[i] != 0 ? now - lastEncoderChangeMs[i] : 0;
+      uint32_t delta = thisEncoderValue - lastEncoderValues[i];
+
+      int32_t encoderStepsPerSecond = 0;
+      int32_t encoderRpm = 0;
+      if (delta != 0 && actualIntervalMs != 0) {
+        encoderStepsPerSecond = delta * 1000L / actualIntervalMs;
+        g_encoderRpms[i] = encoderStepsPerSecond * 60L / NUM_STEPS_PER_REV;
+      }
+
       lastEncoderValues[i] = thisEncoderValue;
+      lastEncoderChangeMs[i] = now;
     }
 
-    if (!encoderActive[i]) {
+    if (!g_encoderActive[i]) {
       if (!encoderChanged && now - lastEncoderChangeMs[i] > SPIN_INACTIVITY_TIMEOUT_MS) {
         lastEncoderInactiveMs[i] = now;
       }
       else {
         if (now - lastEncoderInactiveMs[i] > SPIN_ACTIVITY_DETECT_MS) {
-          encoderActive[i] = true;
+          g_encoderActive[i] = true;
           for (uint8_t i = 0; i < NUM_ENCODERS; ++i) {
             lastEncoderValues[i] = g_encoderValues[i];
           }
@@ -180,43 +236,68 @@ void loop()
     else {
       if (!encoderChanged) {
         if (now - lastEncoderChangeMs[i] > SPIN_INACTIVITY_TIMEOUT_MS) {
-          encoderActive[i] = false;
+          g_encoderActive[i] = false;
+          lastEncoderChangeMs[i] = 0;
         }
       }
     }
   }
 
-  bool anyEncoderActive = false;
-  for (int i = 0; i < NUM_ENCODERS; anyEncoderActive |= encoderActive[i++]);
-  digitalWrite(ENCODER_ACTIVE_PIN, anyEncoderActive);
+  g_anyEncoderActive = false;
+  for (int i = 0; i < NUM_ENCODERS; g_anyEncoderActive |= g_encoderActive[i++]);
+#ifdef ENCODER_ACTIVE_PIN
+  digitalWrite(ENCODER_ACTIVE_PIN, g_anyEncoderActive);
+#endif
 
-  if (now >= nextXmitMs) {
-    long actualIntervalMs = now - nextXmitMs + XMIT_INTERVAL_MS;
-    nextXmitMs = now + XMIT_INTERVAL_MS;
-    for (int i = 0; i < NUM_ENCODERS; ++i) {
-      int32_t encoderStepsPerSecond = 0;
-      int32_t encoderRpm = 0;
-      if (encoderValueDeltas[i] != 0) {
-        encoderStepsPerSecond = encoderValueDeltas[i] * 1000L / actualIntervalMs;
-        encoderRpm = encoderStepsPerSecond * 60L / NUM_STEPS_PER_REV;
-      }
-      Serial.print(i);
-      Serial.print(",");
-      Serial.print(encoderActive[i]);
-      Serial.print(",");
-      Serial.print(actualIntervalMs);
-      Serial.print(",");
-      Serial.print(g_encoderValues[i]);
-      Serial.print(",");
-      Serial.print(encoderValueDeltas[i]);
-      Serial.print(",");
-      Serial.print(encoderStepsPerSecond);
-      Serial.print(",");
-      Serial.println(encoderRpm);
-      encoderValueDeltas[i] = 0;
+#ifdef ENABLE_DEBUG_PRINT
+  for (int i = 0; i < NUM_ENCODERS; ++i) {
+    Serial.print(i);
+    Serial.print(",");
+    Serial.print(g_encoderActive[i]);
+    Serial.print(",");
+    Serial.print(g_encoderValues[i]);
+    Serial.print(",");
+    Serial.println(g_encoderRpms[i]);
+  }
+#endif
+    
+}
+
+
+void sendMeasurements()
+{
+  for (int i = 0; i < NUM_ENCODERS; ++i) {
+    
+    payload.widgetHeader.channel = i;
+    payload.widgetHeader.isActive = g_encoderActive[i];
+    payload.position = g_encoderValues[i];
+    payload.velocity = g_encoderRpms[i];
+    
+    if (!radio.write(&payload, sizeof(payload))) {
+#ifdef TX_FAILURE_LED_PIN      
+      digitalWrite(TX_FAILURE_LED_PIN, HIGH);
+#endif
     }
+    else {
+#ifdef TX_FAILURE_LED_PIN
+      digitalWrite(TX_FAILURE_LED_PIN, LOW);
+#endif
+    }
+  }
+}
+
+
+void loop() {
+
+  static int32_t lastTxMs;
+
+  gatherMeasurements();
+
+  uint32_t now = millis();
+  if (now - lastTxMs >= (g_anyEncoderActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
+    sendMeasurements();
+    lastTxMs = now;
   }
 
 }
-
 
