@@ -1,0 +1,2 @@
+#!/bin/bash
+/home/illumicone/devl/illumicone/Illumicone/src/PatternController >> /home/illumicone/PatternController.out 2>&1

@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <string>
 
-#define NUM_STRINGS 12
-#define PIXELS_PER_STRING 20
+#define NUM_STRINGS 36
+#define PIXELS_PER_STRING 100
 #define OPC_SERVER_ADDR "192.168.69.100"
 // david's home addr for the sever
 //#define OPC_SERVER_ADDR "192.168.0.10"

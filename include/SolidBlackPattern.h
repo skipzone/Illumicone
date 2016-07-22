@@ -10,6 +10,9 @@ class SolidBlackPattern : public Pattern {
         bool initPattern(int numStrings, int pixelsPerString, int prioirty);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();
+
+    private:
+        time_t timeExceededThreshold;
 };
 
 #endif /* SOLID_BLACK_PATTERN_H */

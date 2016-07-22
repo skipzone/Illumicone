@@ -24,7 +24,7 @@ bool SparklePattern::initPattern(int numStrings, int pixelsPerString, int priori
 
 bool SparklePattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
-    int i, ii;
+    int i;
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
@@ -62,7 +62,7 @@ bool SparklePattern::update()
                     float curVel = (float)(channel->getVelocity());
                     float velocityPercentage = curVel / 600.0;
                     // at max velocity, only half of the pixels on each string sparkle
-                    float numPixelsToSparkle = (velocityPercentage * (float)PIXELS_PER_STRING / 2);
+                    float numPixelsToSparkle = (velocityPercentage * (float)PIXELS_PER_STRING / 2.0);
 
 //                    cout << "curVel: " << curVel << endl;
 //                    cout << "velocityPercentage: " << velocityPercentage << endl;

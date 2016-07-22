@@ -1,4 +1,5 @@
 #include <iostream>
+#include <time.h>
 #include "Widget.h"
 #include "WidgetChannel.h"
 #include "Pattern.h"
@@ -25,7 +26,7 @@ bool SolidBlackPattern::initPattern(int numStrings, int pixelsPerString, int pri
 
 bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
-    int i, ii;
+    int i;
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
@@ -47,7 +48,6 @@ bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
 
 bool SolidBlackPattern::update()
 {
-    int i;
     int hadActivity = 0;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
@@ -60,9 +60,9 @@ bool SolidBlackPattern::update()
             for (auto&& channel:widget->getChannels()) {
     //            cout << "Updating widget's channel!" << endl;
                 if (channel->getHasNewMeasurement() || channel->getIsActive()) {
-                    hadActivity = 1;
-                    if (channel->getPosition() <= 300) {     // 300 is a basic LED flashlight from a few feet away
+                    if (channel->getPosition() <= 200) {     // 300 is a basic LED flashlight from a few feet away
                         cout << "making black pattern transparent" << endl;
+                        timeExceededThreshold = 0;
                         for (auto&& pixels:pixelArray) {
                             for (auto&& pixel:pixels) {
                                 pixel.r = 0;
@@ -71,12 +71,42 @@ bool SolidBlackPattern::update()
                             }
                         }
                     } else {
-                        cout << "making black pattern dark" << endl;
+                        // TODO:  move this back to below the has new measmt check after the widget is fixed to go inactive instead of always active
+                        cout << "making black pattern dark or something" << endl;
+                        hadActivity = 1;
+                        // I'm sitting out here at Illumiconw at 06:03 Saturday morning.  Just met Kameron, Mark,
+                        // and Savannah.  Gave techical tour of Illumicone.  Need to make it go black now that sun
+                        // is coming up but then go back to multicolor pattern for Eye widget when darkness returns.
+                        // Kameron (Utah regional rep.), Mark Hammond, and Savannah--see Mark play 7:00 PM center camp
+                        bool turnOff = false;
+                        if (timeExceededThreshold == 0) {
+                            time(&timeExceededThreshold);
+                        }
+                        else {
+                            time_t now;
+                            time(&now);
+                            if (now - timeExceededThreshold > 10) {
+                                turnOff = true;
+                            }
+                        }
+                        uint8_t redVal;
+                        uint8_t greenVal;
+                        uint8_t blueVal;
+                        if (turnOff) {
+                            redVal = 1;
+                            greenVal = 1;
+                            blueVal = 1;
+                        }
+                        else {
+                            redVal = rand() % 255;
+                            greenVal = rand() % 255;
+                            blueVal = rand() % 255;
+                        }
                         for (auto&& pixels:pixelArray) {
                             for (auto&& pixel:pixels) {
-                                pixel.r = 1;
-                                pixel.g = 1;
-                                pixel.b = 1;
+                                pixel.r = redVal;  // TODO ross:  this is really blue!
+                                pixel.g = greenVal;
+                                pixel.b = blueVal;  // TODO ross:  this is really red!
                             }
                         }
                     }

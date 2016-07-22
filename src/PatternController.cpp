@@ -1,9 +1,20 @@
-#include <iostream>
-#include <vector>
-#include <unistd.h>
-#include <string>
-#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
+//#include <netinet/in.h>
+#include <sstream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string>
+#include <string.h>
+#include <sys/file.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <thread>
+#include <time.h>
+#include <unistd.h>
+#include <vector>
 
 #include "illumiconeTypes.h"
 #include "Widget.h"
@@ -20,6 +31,31 @@ static struct sockaddr_in server;
 static int sock;
 static int n;
 static uint8_t opcArray[NUM_STRINGS * PIXELS_PER_STRING * 3 + 4];
+static bool doIdlePattern;
+time_t timeWentIdle;
+
+constexpr char lockFilePath[] = "/tmp/PatternController.lock";
+
+
+const string getTimestamp()
+{
+    using namespace std::chrono;
+
+    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+    int ms = epochMs.count() % 1000;
+    time_t now = epochMs.count() / 1000;
+
+    struct tm tmStruct = *localtime(&now);
+    char buf[20];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmStruct);
+
+    stringstream sstr;
+    sstr << buf << "." << setfill('0') << setw(3) << ms << ":  ";
+
+    string str = sstr.str();
+    return str;
+}
+
 
 bool setupConnection()
 {
@@ -204,10 +240,43 @@ int sendFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
     return n;
 }
 
+
+int acquireProcessLock()
+{
+    int fd = open(lockFilePath, O_CREAT);
+    if (fd >= 0) {
+        if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
+            return fd;
+        }
+        else {
+            if (errno == EWOULDBLOCK) {
+                // Another process has the file locked.
+                return -1;
+            }
+            else {
+                fprintf(stderr, "Unable to lock %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
+                return -1;
+            }
+        }
+    }
+    else {
+        fprintf(stderr, "Unable to create or open %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
+        return -1;
+    }
+}
+
+
 int main(void)
 {
+    if (acquireProcessLock() < 0) {
+        exit(EXIT_FAILURE);
+    }
+    cout << getTimestamp() << "---------- PatternController  starting ----------" << endl;
+
+    doIdlePattern = true;
+    time(&timeWentIdle);
+
     SolidBlackPattern solidBlackPattern;
-//    TwistPattern twistPattern;
     RgbVerticalPattern rgbVerticalPattern;
     QuadSlicePattern quadSlicePattern;
     SparklePattern sparklePattern;
@@ -218,7 +287,6 @@ int main(void)
     // to be filled in from a config file somewhere
     int numChannels[4] = {1, 1, 3, 4};
     int priorities[4] = {0, 1, 2, 3};
-    //int numBytes;
 
     finalFrame1.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
     finalFrame2.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
@@ -253,27 +321,54 @@ int main(void)
         quadSlicePattern.update();
         sparklePattern.update();
 
+        bool anyPatternIsActive = false;
+
         zeroFrame(finalFrame1);
         if (quadSlicePattern.isActive) {
+            anyPatternIsActive = true;
 //            cout << "quad active" << endl;
             buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
         }
         
         if (rgbVerticalPattern.isActive) {
+            anyPatternIsActive = true;
 //            cout << "rgb active" << endl;
             buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
         }
 
         if (sparklePattern.isActive) {
+            anyPatternIsActive = true;
+//            cout << "sparkle active" << endl;
             buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
         }
 
         if (solidBlackPattern.isActive) {
+            anyPatternIsActive = true;
+//            cout << "solid active" << endl;
             buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
         }
 
-        //numBytes = sendFrame(finalFrame1);
-        sendFrame(finalFrame1);
+        if (!anyPatternIsActive) {
+            if (timeWentIdle == 0) {
+                time(&timeWentIdle);
+            }
+            else {
+                time_t now;
+                time(&now);
+                if (!doIdlePattern && now - timeWentIdle > 3) {
+                    doIdlePattern = true;
+                }
+            }
+        }
+        else {
+            doIdlePattern = false;
+            timeWentIdle = 0;
+        }
+
+        if (!doIdlePattern) {
+            //numBytes = sendFrame(finalFrame1);
+            sendFrame(finalFrame1);
+        }
 
         usleep(50000);
     }
