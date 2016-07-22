@@ -4,5 +4,6 @@ WidgetSimulator
 widgetRcvr
 *.o
 .*.swp
+*~
 # ignore cscope reference file
 cscope.out

@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo /home/illumicone/devl/Illumicone/src/widgetRcvr >> /home/illumicone/widgetRcvr.out 2>&1

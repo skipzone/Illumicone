@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <time.h>
@@ -27,6 +28,8 @@ using namespace std;
 
 static struct sockaddr_in myaddr[16];
 static int sock[16];
+
+constexpr char lockFilePath[] = "/tmp/widgetRcvr.lock";
 
 
 /***********************
@@ -275,6 +278,31 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
  * Initialization, Run Loop, and Entry Point *
  *********************************************/
 
+int acquireProcessLock()
+{
+    int fd = open(lockFilePath, O_CREAT);
+    if (fd >= 0) {
+        if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
+            return fd;
+        }
+        else {
+            if (errno == EWOULDBLOCK) {
+                // Another process has the file locked.
+                return -1;
+            }
+            else {
+                fprintf(stderr, "Unable to lock %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
+                return -1;
+            }
+        }
+    }
+    else {
+        fprintf(stderr, "Unable to create or open %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
+        return -1;
+    }
+}
+
+
 void configureRadio()
 {
     radio.begin();
@@ -373,6 +401,11 @@ void runLoop()
 
 int main(int argc, char** argv)
 {
+    if (acquireProcessLock() < 0) {
+        exit(EXIT_FAILURE);
+    }
+    cout << getTimestamp() << "---------- widgetRcvr starting ----------" << endl;
+
     openUdpPort(WidgetId::eye);
     openUdpPort(WidgetId::hypnotyzer);
     openUdpPort(WidgetId::bells);
