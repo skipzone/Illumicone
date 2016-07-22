@@ -22,7 +22,8 @@
 #define GOOD_MEASUREMENT_SUSTAIN_MS 500L
 #define MAX_VALID_DISTANCE_CM 100
 //#define LED_PIN 2
-//#define ENABLE_DEBUG_PRINT
+// for some fucked up reason, if we don't enable debug print, lots of bad packets are received by widgetRcvr.  dafuque.
+#define ENABLE_DEBUG_PRINT
 
 #define NUM_SENSORS 5
 

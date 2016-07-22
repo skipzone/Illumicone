@@ -16,9 +16,9 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 6
+#define WIDGET_ID 2
 #define NUM_CHANNELS 1
-#define ACTIVE_TX_INTERVAL_MS 10L
+#define ACTIVE_TX_INTERVAL_MS 200L
 #define INACTIVE_TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 2
 #define ENCODER_0_A_PIN 2
@@ -26,16 +26,13 @@
 //#define ENCODERS_VDD_PIN 8
 //#define ENCODER_ACTIVE_PIN 8
 
-//#define GREEN_LED_PIN 4
-//#define ORANGE_LED_PIN 5
-
 #define SPIN_ACTIVITY_DETECT_MS 50
 #define SPIN_INACTIVITY_TIMEOUT_MS 500
 
-#define NUM_ENCODERS 3
-#define NUM_STEPS_PER_REV 24
+#define NUM_ENCODERS 1
+#define NUM_STEPS_PER_REV 18
 
-//#define ENABLE_DEBUG_PRINT
+#define ENABLE_DEBUG_PRINT
 
 
 /***************************************
@@ -48,7 +45,7 @@
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 2
+#define TX_RETRY_DELAY_MULTIPLIER 3
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
@@ -68,26 +65,27 @@ PositionVelocityPayload payload;
 bool g_anyEncoderActive;
 bool g_encoderActive[NUM_ENCODERS];
 volatile uint8_t g_lastEncoderStates = 0;
-volatile int g_encoderValues[] = {0, 0, 0};
+volatile int g_encoderValues[] = {0};
 uint32_t g_encoderRpms[NUM_ENCODERS];
 
 const int8_t g_greyCodeToEncoderStepMap[] = {
+       // this is not really a Grey code
        // last this
    0,  //  00   00
-  -1,  //  00   01
+   1,  //  00   01
    1,  //  00   10
-   0,  //  00   11
+   1,  //  00   11
    1,  //  01   00
    0,  //  01   01
-   0,  //  01   10
-  -1,  //  01   11
-  -1,  //  10   00
-   0,  //  10   01
+   1,  //  01   10
+   1,  //  01   11
+   1,  //  10   00
+   1,  //  10   01
    0,  //  10   10
    1,  //  10   11
-   0,  //  11   00
+   1,  //  11   00
    1,  //  11   01
-  -1,  //  11   10
+   1,  //  11   10
    0,  //  11   11
 };
 
@@ -114,17 +112,6 @@ ISR (PCINT2_vect)
   uint8_t curStates = encoderStates;
   uint8_t lastStates = g_lastEncoderStates;
 
-#ifdef GREEN_LED_PIN
-  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b101010);
-  digitalWrite(ORANGE_LED_PIN, encoderStates & 0b010101);
-//  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b000001);
-//  digitalWrite(ORANGE_LED_PIN, encoderStates & 0b000010);
-//  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b000100);
-//  digitalWrite(ORANGE_LED_PIN, encoderStates & 0b001000);
-//  digitalWrite(GREEN_LED_PIN,  encoderStates & 0b010000);
-//  digitalWrite(ORANGE_LED_PIN, encoderStates & 0b100000);
-#endif
-
   for (uint8_t i = 0; i < NUM_ENCODERS; ++i) {
     uint8_t idx = ((lastStates & 0b11) << 2) | (curStates & 0b11);
     g_encoderValues[i] += g_greyCodeToEncoderStepMap[idx];
@@ -145,10 +132,6 @@ void setup()
 
   pinMode(ENCODER_0_A_PIN, INPUT); 
   pinMode(ENCODER_0_B_PIN, INPUT);
-  pinMode(ENCODER_1_A_PIN, INPUT); 
-  pinMode(ENCODER_1_B_PIN, INPUT);
-  pinMode(ENCODER_2_A_PIN, INPUT); 
-  pinMode(ENCODER_2_B_PIN, INPUT);
 #ifdef ENCODERS_VDD_PIN
   pinMode(ENCODERS_VDD_PIN, OUTPUT);
 #endif
@@ -159,10 +142,6 @@ void setup()
   // Turn on pullups.
   digitalWrite(ENCODER_0_A_PIN, HIGH);
   digitalWrite(ENCODER_0_B_PIN, HIGH);
-  digitalWrite(ENCODER_1_A_PIN, HIGH);
-  digitalWrite(ENCODER_1_B_PIN, HIGH);
-  digitalWrite(ENCODER_2_A_PIN, HIGH);
-  digitalWrite(ENCODER_2_B_PIN, HIGH);
   
   // Initially, turn on power to the encoders and set the active indicator low.
 #ifdef ENCODERS_VDD_PIN
@@ -185,18 +164,14 @@ void setup()
   // Set up and turn on the pin-change interrupts last.
   setUpPinChangeInterrupt(ENCODER_0_A_PIN);
   setUpPinChangeInterrupt(ENCODER_0_B_PIN);
-  setUpPinChangeInterrupt(ENCODER_1_A_PIN);
-  setUpPinChangeInterrupt(ENCODER_1_B_PIN);
-  setUpPinChangeInterrupt(ENCODER_2_A_PIN);
-  setUpPinChangeInterrupt(ENCODER_2_B_PIN);
 }
 
 
 void gatherMeasurements()
 {
-  static int32_t lastEncoderValues[3] = {0, 0, 0};
-  static uint32_t lastEncoderInactiveMs[3] = {0, 0, 0};
-  static uint32_t lastEncoderChangeMs[3] = {0, 0, 0};
+  static int32_t lastEncoderValues[NUM_ENCODERS] = {0};
+  static uint32_t lastEncoderInactiveMs[NUM_ENCODERS] = {0};
+  static uint32_t lastEncoderChangeMs[NUM_ENCODERS] = {0};
 
   unsigned long now = millis();
 
@@ -218,6 +193,17 @@ void gatherMeasurements()
 
       lastEncoderValues[i] = thisEncoderValue;
       lastEncoderChangeMs[i] = now;
+#ifdef ENABLE_DEBUG_PRINT
+      for (int i = 0; i < NUM_ENCODERS; ++i) {
+        Serial.print(i);
+        Serial.print(",");
+        Serial.print(g_encoderActive[i]);
+        Serial.print(",");
+        Serial.print(g_encoderValues[i]);
+        Serial.print(",");
+        Serial.println(g_encoderRpms[i]);
+      }
+#endif
     }
 
     if (!g_encoderActive[i]) {
@@ -247,18 +233,6 @@ void gatherMeasurements()
   for (int i = 0; i < NUM_ENCODERS; g_anyEncoderActive |= g_encoderActive[i++]);
 #ifdef ENCODER_ACTIVE_PIN
   digitalWrite(ENCODER_ACTIVE_PIN, g_anyEncoderActive);
-#endif
-
-#ifdef ENABLE_DEBUG_PRINT
-  for (int i = 0; i < NUM_ENCODERS; ++i) {
-    Serial.print(i);
-    Serial.print(",");
-    Serial.print(g_encoderActive[i]);
-    Serial.print(",");
-    Serial.print(g_encoderValues[i]);
-    Serial.print(",");
-    Serial.println(g_encoderRpms[i]);
-  }
 #endif
     
 }
