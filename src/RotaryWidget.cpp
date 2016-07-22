@@ -7,6 +7,7 @@
 
 #include "RotaryWidget.h"
 #include "illumiconeTypes.h"
+#include "WidgetId.h"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ RotaryWidget::RotaryWidget()
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 100;
+    updateIntervalMs[0] = 1000;
 }
 
 
@@ -28,11 +29,19 @@ void RotaryWidget::init(bool generateSimulatedMeasurements)
     this->generateSimulatedMeasurements = generateSimulatedMeasurements;
 
     channels.push_back(make_shared<WidgetChannel>(0, this));
+
+    if (!generateSimulatedMeasurements) {
+        startUdpRxThread();
+    }
 }
 
 
 bool RotaryWidget::moveData()
 {
+    if (!generateSimulatedMeasurements) {
+        return true;
+    }
+
     using namespace std::chrono;
 
     milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
@@ -43,9 +52,11 @@ bool RotaryWidget::moveData()
     for (unsigned int i = 0; i < getChannelCount(); ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
+            int prevPos = channels[i]->getPreviousPosition();
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+
+            channels[i]->setPositionAndVelocity(0, 400);
             channels[i]->setIsActive(true);
             //cout << "updated channel " << i << endl;
         }

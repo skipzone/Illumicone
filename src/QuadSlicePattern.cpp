@@ -37,221 +37,93 @@ bool QuadSlicePattern::initWidgets(int numWidgets, int channelsPerWidget)
 
 bool QuadSlicePattern::update()
 {
-//    int i;
-//    int hadActivity = 0;
-//    uint8_t r;
-//    uint8_t g;
-//    uint8_t b;
-//
-//    for (auto&& widget:widgets) {
-//        // update active, position, velocity for each channel in widget
-//        widget->moveData();
-//        for (auto&& channel:widget->channels) {
-//            if (channel.isActive) {
-//                hadActivity = 1;
-//                switch (channel.number) {
-//                    case 0:
-//                        //
-//                        // First Stair, Right Side
-//                        //
-//                        if (channel.position != channel.prevPosition) {
-//                            if (channel.position) {
-//                                // get the first quarter of the strings to iterate through
-//                                for (i = 0; i < NUM_STRINGS / 4; i++) {
-////                                    r = rand() % (255 - 0) + 0;
-////                                    g = rand() % (255 - 0) + 0;
-////                                    b = rand() % (255 - 0) + 0;
-//                                    r = 64;
-//                                    g = 0;
-//                                    b = 64;
-//                                    for (auto&& pixel:pixelArray[i]) {
-//                                        pixel.r = r;
-//                                        pixel.g = g;
-//                                        pixel.b = b;
-//                                    }
-//                                }
-//                            } else {
-//                                for (i = 0; i < NUM_STRINGS / 4; i++) {
-//                                    for (auto&& pixel:pixelArray[i]) {
-//                                        pixel.r = 0;
-//                                        pixel.g = 0;
-//                                        pixel.b = 0;
-//                                    }
-//                                }
-//                            }
-//                        }
-//
-//                        break;
-//
-//                    case 1:
-//                        //
-//                        // Second Stair, Right Side
-//                        //
-//                        if (channel.position != channel.prevPosition) {
-//                            if (channel.position) {
-//                                // get the second third of the strings to iterate through
-//                                for (i = (NUM_STRINGS / 4); i < (NUM_STRINGS / 4) * 2; i++) {
-////                                    r = rand() % (255 - 0) + 0;
-////                                    g = rand() % (255 - 0) + 0;
-////                                    b = rand() % (255 - 0) + 0;
-//                                    r = 64;
-//                                    g = 64;
-//                                    b = 0;
-//                                    for (auto&& pixel:pixelArray[i]) {
-//                                        pixel.r = r;
-//                                        pixel.g = g;
-//                                        pixel.b = b;
-//                                    }
-//                                }
-//                            } else {
-//                                for (i = (NUM_STRINGS / 4); i < (NUM_STRINGS / 4) * 2; i++) {
-//                                    for (auto&& pixel:pixelArray[i]) {
-//                                        pixel.r = 0;
-//                                        pixel.g = 0;
-//                                        pixel.b = 0;
-//                                    }
-//                                }
-//                            }
-//                        }
-//
-//                        break;
-//
-//                    case 2:
-//                        //
-//                        // First Stair, Left Side
-//                        //
-//                        if (channel.position != channel.prevPosition) {
-//                            if (channel.position) {
-//                                // get the third third of the strings to iterate through
-//                                for (i = ((NUM_STRINGS / 4) * 2); i < ((NUM_STRINGS / 4) * 3); i++) {
-////                                    r = rand() % (255 - 0) + 0;
-////                                    g = rand() % (255 - 0) + 0;
-////                                    b = rand() % (255 - 0) + 0;
-//                                    r = 0;
-//                                    g = 64;
-//                                    b = 64;
-//                                    for (auto&& pixel:pixelArray[i]) {
-//                                        pixel.r = r;
-//                                        pixel.g = g;
-//                                        pixel.b = b;
-//                                    }
-//                                }
-//                            } else {
-//                                for (i = ((NUM_STRINGS / 4) * 2); i < ((NUM_STRINGS / 4) * 3); i++) {
-//                                    for (auto&& pixel:pixelArray[i]) {
-//                                        pixel.r = 0;
-//                                        pixel.g = 0;
-//                                        pixel.b = 0;
-//                                    }
-//                                }
-//                            }
-//                        }
-//
-//                        break;
-//
-//                    case 3:
-//                        //
-//                        // Second Stair, Left Side
-//                        //
-//                        if (channel.position != channel.prevPosition) {
-//                            if (channel.position) {
-//                                // get the third third of the strings to iterate through
-//                                for (i = ((NUM_STRINGS / 4) * 3); i < NUM_STRINGS; i++) {
-////                                    r = rand() % (255 - 0) + 0;
-////                                    g = rand() % (255 - 0) + 0;
-////                                    b = rand() % (255 - 0) + 0;
-//                                    r = 64;
-//                                    g = 64;
-//                                    b = 64;
-//                                    for (auto&& pixel:pixelArray[i]) {
-//                                        pixel.r = r;
-//                                        pixel.g = g;
-//                                        pixel.b = b;
-//                                    }
-//                                }
-//                            } else {
-//                                for (i = ((NUM_STRINGS / 4) * 3); i < NUM_STRINGS; i++) {
-//                                    for (auto&& pixel:pixelArray[i]) {
-//                                        pixel.r = 0;
-//                                        pixel.g = 0;
-//                                        pixel.b = 0;
-//                                    }
-//                                }
-//                            }
-//                        }
-//
-//                        break;
-//
-//                    default:
-//                        // shouldn't get here, solid black uses the eye widget which
-//                        // should only have one channel.
-//                        cout << "SOMETHING'S FUCKY : channel number for Solid Black Pattern widget" << endl;
-//                        break;
-//                }
-//            }
-//        }
-//    }
-//
-//    //
-//    // set pattern activity flag
-//    //
-//    isActive = hadActivity;
-
     uint8_t r;
     uint8_t g;
     uint8_t b;
     int hadActivity = 0;
 
-    for (auto&& widget:widgets) {
-        widget->moveData();
+    // TODO:  change class to have just one widget
+    auto widget = widgets[0];
 
-        for (auto&& channel:widget->getChannels()) {
-            if (channel->getIsActive()) {
-                hadActivity = 1;
-            }
+    widget->moveData();
+
+    for (auto&& channel : widget->getChannels()) {
+
+        int firstStringIdx;
+        int lastStringIdx;
+        int firstPixelIdx = 0;
+        int lastPixelIdx = 0;
+        switch (channel->getChannelNumber()) {
+            case 0:
+            case 1:
+                firstStringIdx = (NUM_STRINGS / 4) * channel->getChannelNumber();
+                lastStringIdx = firstStringIdx + (NUM_STRINGS / 4) - 1;
+                firstPixelIdx = pixelsPerString / 3 + 1;
+                lastPixelIdx = pixelsPerString - 1;
+                break;
+
+            case 2:     // top platform
+                firstStringIdx = 0;
+                lastStringIdx = NUM_STRINGS - 1;
+                firstPixelIdx = 0;
+                lastPixelIdx = pixelsPerString / 3;
+                break;
+
+            case 3:
+            case 4:
+                firstStringIdx = (NUM_STRINGS / 4) * (channel->getChannelNumber() - 1);
+                lastStringIdx = firstStringIdx + (NUM_STRINGS / 4) - 1;
+                firstPixelIdx = pixelsPerString / 3 + 1;
+                lastPixelIdx = pixelsPerString - 1;
+                break;
+        }
+        //cout << "pixelArray.size() = " << pixelArray.size() << ", pixelArray[0].size() = " << pixelArray[0].size() << endl;
+        //cout << "pixelsPerString = " << pixelsPerString << endl;
+        //cout << "firstStringIdx: " << firstStringIdx << endl;
+        //cout << "lastStringIdx: " << lastStringIdx << endl;
+        //cout << "firstPixelIdx: " << firstPixelIdx << endl;
+        //cout << "lastPixelIdx: " << lastPixelIdx << endl;
+
+        if (channel->getIsActive()) {
+            hadActivity = 1;
+
             if (channel->getHasNewMeasurement()) {
-//                int curPos = channel->getPosition();
-                int initIndex;
-                int lastIndex;
-                if (channel->getChannelNumber() < 4) {
-                    initIndex = (NUM_STRINGS / 4) * channel->getChannelNumber();
-                    lastIndex = (NUM_STRINGS / 4) * (channel->getChannelNumber() + 1);
-                } else {
-                    initIndex = 0;
-                    lastIndex = NUM_STRINGS;
+
+                int curPos = channel->getPosition();
+
+                cout << "Channel: " << channel->getChannelNumber() << endl;
+                cout << "curPos: " << curPos << endl;
+
+                if (curPos > 0) {
+                    // TODO:  set the color depending on the measurement (where the footfall is on the step)
+                    r = (uint8_t) (rand() % 128);
+                    g = (uint8_t) (rand() % 128);
+                    b = (uint8_t) (rand() % 128);
                 }
-//                cout << "Channel: " << channel->getChannelNumber() << endl;
-//                cout << "curPos: " << curPos << endl;
-//                cout << "initIndex: " << initIndex << endl;
-//                cout << "lastIndex: " << lastIndex << endl;
-
-//                r = (uint8_t)(rand() % 255);
-//                g = (uint8_t)(rand() % 255);
-//                b = (uint8_t)(rand() % 255);
-                r = 48;
-                g = 0;
-                b = 48;
-
-                if (channel->getChannelNumber() < 4) {
-                    for (int i = initIndex; i < lastIndex; i++) {
-                        for (auto&& pixel:pixelArray[i]) {
-                            pixel.r = r;
-                            pixel.g = g;
-                            pixel.b = b;
-                        }
+                else {
+                    r = 1;
+                    g = 1;
+                    b = 1;
+                }
+            
+                for (int i = firstStringIdx; i <= lastStringIdx; i++) {
+                    for (int j = firstPixelIdx; j <= lastPixelIdx; ++j) {
+                        pixelArray[i][j].r = r;
+                        pixelArray[i][j].g = g;
+                        pixelArray[i][j].b = b;
                     }
                 }
-
-//                else {
-//                    for (auto&& pixels:pixelArray) {
-//                        for (auto&& pixel:pixels) {
-//                            pixel.r = 0;
-//                            pixel.g = 0;
-//                            pixel.b = 0;
-//                        }
-//                    }
-//                }
-
+            }
+        }
+        else if (isActive) {
+            // The channel is inactive now, so turn off that part of the pattern.
+            cout << "Turning off for channel " << channel->getChannelNumber() << endl;
+            for (int i = firstStringIdx; i <= lastStringIdx; i++) {
+                for (int j = firstPixelIdx; j <= lastPixelIdx; ++j) {
+                    pixelArray[i][j].r = 1;
+                    pixelArray[i][j].g = 1;
+                    pixelArray[i][j].b = 1;
+                }
             }
         }
     }

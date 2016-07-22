@@ -29,13 +29,17 @@ bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
-        widgets.emplace_back(widgetFactory(eye));
-        widgets[i]->init(channelsPerWidget);
-        ii = 0;
-        for (auto&& channel:widgets[i]->channels) {
-            channel.initChannel(ii, 0, 0);
-            ii++;
-        }
+        Widget* newWidget = widgetFactory(WidgetId::eye);
+        widgets.emplace_back(newWidget);
+        newWidget->init(false);
+
+//        widgets.emplace_back(widgetFactory(eye));
+//        widgets[i]->init(channelsPerWidget);
+//        ii = 0;
+//        for (auto&& channel:widgets[i]->channels) {
+//            channel.initChannel(ii, 0, 0);
+//            ii++;
+//        }
     }
 
     return true;
@@ -51,28 +55,51 @@ bool SolidBlackPattern::update()
 //        cout << "Updating Solid Black Pattern widget!" << endl;
         // update active, position, velocity for each channel in widget
         widget->moveData();
-        for (auto&& channel:widget->channels) {
-//            cout << "Updating widget's channel!" << endl;
-            if (channel.isActive) {
-                hadActivity = 1;
-                switch (channel.number) {
-                    case 0:
-                        // set entire pixelArray black (off)
-                        for (i = 0; i < NUM_STRINGS; i++) {
-                            for (auto&& pixel:pixelArray[i]) {
+
+        if (widget->getIsActive()) {
+            for (auto&& channel:widget->getChannels()) {
+    //            cout << "Updating widget's channel!" << endl;
+                if (channel->getHasNewMeasurement() || channel->getIsActive()) {
+                    hadActivity = 1;
+                    if (channel->getPosition() <= 300) {     // 300 is a basic LED flashlight from a few feet away
+                        cout << "making black pattern transparent" << endl;
+                        for (auto&& pixels:pixelArray) {
+                            for (auto&& pixel:pixels) {
                                 pixel.r = 0;
                                 pixel.g = 0;
                                 pixel.b = 0;
                             }
                         }
+                    } else {
+                        cout << "making black pattern dark" << endl;
+                        for (auto&& pixels:pixelArray) {
+                            for (auto&& pixel:pixels) {
+                                pixel.r = 1;
+                                pixel.g = 1;
+                                pixel.b = 1;
+                            }
+                        }
+                    }
 
-                        break;
-
-                    default:
-                        // shouldn't get here, solid black uses the eye widget which
-                        // should only have one channel.
-                        cout << "SOMETHING'S FUCKY : channel number for Solid Black Pattern widget" << endl;
-                        break;
+//                    switch (channel.number) {
+//                        case 0:
+//                            // set entire pixelArray black (off)
+//                            for (i = 0; i < NUM_STRINGS; i++) {
+//                                for (auto&& pixel:pixelArray[i]) {
+//                                    pixel.r = 0;
+//                                    pixel.g = 0;
+//                                    pixel.b = 0;
+//                                }
+//                            }
+//
+//                            break;
+//
+//                        default:
+//                            // shouldn't get here, solid black uses the eye widget which
+//                            // should only have one channel.
+//                            cout << "SOMETHING'S FUCKY : channel number for Solid Black Pattern widget" << endl;
+//                            break;
+//                    }
                 }
             }
         }

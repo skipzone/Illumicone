@@ -1,6 +1,6 @@
 /*****************************************************************
  *                                                               *
- * Reiley's Hypnotyzer Widget                                    *
+ * TriObelisk Widget                                             *
  *                                                               *
  * Platform:  Arduino Uno, Pro, Pro Mini                         *
  *                                                               *
@@ -17,12 +17,16 @@
  ************************/
 
 #define WIDGET_ID 6
-#define NUM_CHANNELS 1
+#define NUM_CHANNELS 3
 #define ACTIVE_TX_INTERVAL_MS 10L
 #define INACTIVE_TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 2
 #define ENCODER_0_A_PIN 2
 #define ENCODER_0_B_PIN 3
+#define ENCODER_1_A_PIN 4
+#define ENCODER_1_B_PIN 5
+#define ENCODER_2_A_PIN 6
+#define ENCODER_2_B_PIN 7
 //#define ENCODERS_VDD_PIN 8
 //#define ENCODER_ACTIVE_PIN 8
 
