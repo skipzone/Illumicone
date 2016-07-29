@@ -31,6 +31,8 @@ class WidgetChannel
         const int channelNumber;
         Widget* widget;             // TODO:  not sure if we really need this
         bool isActive;
+        unsigned int autoInactiveMs;
+        unsigned int lastActiveMs;
         bool hasNewMeasurement;
         int position;
         int velocity;

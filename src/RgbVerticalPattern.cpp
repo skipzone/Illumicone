@@ -56,7 +56,8 @@ bool RgbVerticalPattern::update()
         //cout << "back from moveData" << endl;
         for (auto&& channel:widget->getChannels()) {
             // check if the channel updated
-            if (channel->getHasNewMeasurement() && channel->getIsActive()) {
+//            if (channel->getHasNewMeasurement() && channel->getIsActive()) {
+            if (channel->getIsActive()) {
                 hadActivity = 1;
 //                    int prevPos = channel->getPreviousPosition();
                 int curPos = ((unsigned int) channel->getPosition()) % numStrings;
