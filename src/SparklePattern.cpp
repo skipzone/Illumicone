@@ -38,7 +38,6 @@ bool SparklePattern::initWidgets(int numWidgets, int channelsPerWidget)
 
 bool SparklePattern::update()
 {
-    int i;
     int hadActivity = 0;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
