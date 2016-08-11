@@ -22,6 +22,8 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
             return WidgetId::boxTheramin;
         case 8:
             return WidgetId::plunger;
+        case 9:
+            return WidgetId::fourPlay;
         default:
             return WidgetId::invalid;
     }
@@ -50,6 +52,8 @@ unsigned int  widgetIdToInt(WidgetId widgetId)
             return 7;
         case WidgetId::plunger:
             return 8;
+        case WidgetId::fourPlay:
+            return 9;
         case WidgetId::invalid:
             return 255;
     }

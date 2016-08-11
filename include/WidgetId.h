@@ -33,6 +33,7 @@ enum class WidgetId {
     triObelisk,
     boxTheramin,
     plunger,
+    fourPlay,
     invalid = 255
 };
 
