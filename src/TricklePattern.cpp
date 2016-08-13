@@ -1,11 +1,18 @@
 #include <iostream>
+#include <unistd.h>
 #include "Widget.h"
 #include "WidgetChannel.h"
 #include "Pattern.h"
 #include "WidgetFactory.h"
+#include "WidgetId.h"
 #include "TricklePattern.h"
 
 using namespace std;
+
+//
+// keep track of the position of the trickle for each string
+//
+static int tricklePositions[NUM_STRINGS];
 
 bool TricklePattern::initPattern(int numStrings, int pixelsPerString, int priority)
 {
@@ -18,6 +25,10 @@ bool TricklePattern::initPattern(int numStrings, int pixelsPerString, int priori
 
     this->isActive = 0;
     this->opacity = 100;
+    for (auto&& pos:tricklePositions) {
+        pos = 0;
+    }
+
     return true;
 }
 
@@ -39,6 +50,9 @@ bool TricklePattern::initWidgets(int numWidgets, int channelsPerWidget)
 bool TricklePattern::update()
 {
     int hadActivity = 0;
+    int stringNum = 0;
+    int pixelsToLight = 0;
+    int curPos = 190;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
     for (auto&& pixels:pixelArray) {
@@ -49,19 +63,47 @@ bool TricklePattern::update()
         }
     }
 
-    for (auto&& widget:widgets) {
-//        cout << "Updating Solid Black Pattern widget!" << endl;
-        // update active, position, velocity for each channel in widget
-        widget->moveData();
-        if (widget->getIsActive()) {
-            for (auto&& channel:widget->getChannels()) {
-//                cout << "Updating widget's channel!" << endl;
-                if (channel->getHasNewMeasurement() || channel->getIsActive()) {
-                    // TODO: Do stuff
-                }
-            }
-        }
-    }
+//    for (auto&& widget:widgets) {
+////        cout << "Updating Solid Black Pattern widget!" << endl;
+//        // update active, position, velocity for each channel in widget
+//        widget->moveData();
+//        if (widget->getIsActive()) {
+//            for (auto&& channel:widget->getChannels()) {
+////                cout << "Updating widget's channel!" << endl;
+//                if (channel->getHasNewMeasurement() || channel->getIsActive()) {
+//                    // TODO: Do stuff
+//                    hadActivity = 1;
+//                    float curPos = (float)(channel->getPosition());
+
+                    //
+                    // accelerometer was flipped 180 degrees...not sure if this
+                    // value will be what comes from the widget
+                    //
+                    // Need some way to track the LED position.  Maybe we could
+                    // just do shifts on the previous array?
+                    //
+                    if (curPos >= 180) {
+                        for (auto&& pos:tricklePositions) {
+                            if (pos < PIXELS_PER_STRING) {
+                                pos += rand() % 2;
+                            }
+                        }
+                    }
+
+                    for (auto&& col:pixelArray) {
+                        cout << "Updating string " << stringNum << "with position  " << tricklePositions[stringNum] << endl;
+                        for (int i = 0; i < tricklePositions[stringNum]; i++) {
+                            col[i].r = 51;
+                            col[i].g = 204;
+                            col[i].b = 255;
+                        }
+                        stringNum++;
+                    }
+
+//                }
+//            }
+//        }
+//    }
 
     isActive = hadActivity;
     return true;
