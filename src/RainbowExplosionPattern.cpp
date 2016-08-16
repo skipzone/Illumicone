@@ -18,6 +18,15 @@ bool RainbowExplosionPattern::initPattern(int numStrings, int pixelsPerString, i
 
     this->isActive = 0;
     this->opacity = 100;
+
+    for (auto&& pixels:pixelArray) {
+        for (auto&& pixel:pixels) {
+            pixel.r = 0;
+            pixel.g = 0;
+            pixel.b = 0;
+        }
+    }
+
     return true;
 }
 
@@ -38,16 +47,8 @@ bool RainbowExplosionPattern::initWidgets(int numWidgets, int channelsPerWidget)
 
 bool RainbowExplosionPattern::update()
 {
-    int hadActivity = 0;
+    bool hadActivity = false;
 //    cout << "Updating Solid Black Pattern!" << endl;
-
-    for (auto&& pixels:pixelArray) {
-        for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
-        }
-    }
 
     for (auto&& widget:widgets) {
 //        cout << "Updating Solid Black Pattern widget!" << endl;
@@ -57,6 +58,7 @@ bool RainbowExplosionPattern::update()
             for (auto&& channel:widget->getChannels()) {
 //                cout << "Updating widget's channel!" << endl;
                 if (channel->getHasNewMeasurement() || channel->getIsActive()) {
+                    hadActivity = true;
                     // TODO: Do stuff
                 }
             }
