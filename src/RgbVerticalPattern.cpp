@@ -21,8 +21,17 @@
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
 #include "WidgetFactory.h"
+#include "WidgetId.h"
 
 using namespace std;
+
+static int rPos;
+static int gPos;
+static int bPos;
+
+static bool rIsActive;
+static bool gIsActive;
+static bool bIsActive;
 
 bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString, int priority)
 {
@@ -36,6 +45,14 @@ bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString, int pr
     this->opacity = 90;
 
     this->pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
+    rPos = 0;
+    gPos = 0;
+    bPos = 0;
+
+    rIsActive = false;
+    gIsActive = false;
+    bIsActive = false;
+
     return true;
 }
 
@@ -44,11 +61,15 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
     int i;
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
-    for (i = 0; i < numWidgets; i++) {
+//    for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::triObelisk);
         widgets.emplace_back(newWidget);
-        newWidget->init(false);
-    }
+        newWidget->init(true);
+
+        newWidget = widgetFactory(WidgetId::bells);
+        widgets.emplace_back(newWidget);
+        newWidget->init(true);
+//    }
 
     return true;
 }
@@ -56,7 +77,10 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 bool RgbVerticalPattern::update()
 {
     //cout << "Update pattern!" << endl;
-    int hadActivity = 0;
+    int hadActivity = false;
+    rIsActive = false;
+    gIsActive = false;
+    bIsActive = false;
 
     // clear pixel data
     for (auto&& pixels:pixelArray) {
@@ -71,30 +95,208 @@ bool RgbVerticalPattern::update()
         // update active, position, velocity for each channel in widget
         widget->moveData();
         //cout << "back from moveData" << endl;
-        for (auto&& channel:widget->getChannels()) {
-            // check if the channel updated
-//            if (channel->getHasNewMeasurement() && channel->getIsActive()) {
-            if (channel->getIsActive()) {
-                hadActivity = 1;
-//                    int prevPos = channel->getPreviousPosition();
-                int curPos = ((unsigned int) channel->getPosition()) % numStrings;
-                //cout << "ch " << channel->getChannelNumber() << ": prev=" << prevPos << " cur=" << curPos << endl;
-                //cout << "clearing pixels  in " << prevPos << " for ch " << channel->getChannelNumber() << endl;
-                //cout << "setting pixels in " << curPos << " for ch " << channel->getChannelNumber() << endl;
-                for (auto&& pixel:pixelArray[curPos]) {
-                    switch (channel->getChannelNumber()) {
-                        case 0:
-                            pixel.r = 255;
-                            break;
-                        case 1:
-                            pixel.g = 255;
-                            break;
-                        case 2:
-                            pixel.b = 255;
-                            break;
+        switch (widget->getId()) {
+            // triObelisk
+            case WidgetId::triObelisk:
+                for (auto&& channel:widget->getChannels()) {
+                    // check if the channel updated
+        //            if (channel->getHasNewMeasurement() && channel->getIsActive()) {
+                    if (channel->getIsActive()) {
+                        hadActivity = true;
+        //                    int prevPos = channel->getPreviousPosition();
+                        int curPos = ((unsigned int) channel->getPosition()) % numStrings;
+                        //cout << "ch " << channel->getChannelNumber() << ": prev=" << prevPos << " cur=" << curPos << endl;
+                        //cout << "clearing pixels  in " << prevPos << " for ch " << channel->getChannelNumber() << endl;
+                        //cout << "setting pixels in " << curPos << " for ch " << channel->getChannelNumber() << endl;
+                        for (auto&& pixel:pixelArray[curPos]) {
+                            switch (channel->getChannelNumber()) {
+                                case 0:
+                                    rPos = curPos;
+                                    rIsActive = true;
+                                    pixel.r = 255;
+                                    break;
+                                case 1:
+                                    gPos = curPos;
+                                    gIsActive = true;
+                                    pixel.g = 255;
+                                    break;
+                                case 2:
+                                    bPos = curPos;
+                                    bIsActive = true;
+                                    pixel.b = 255;
+                                    break;
+                            }
+                        }
                     }
                 }
-            }
+                break;
+
+            // bells
+            case WidgetId::bells:
+//                cout << "updating from bells" << endl;
+                for (auto&& channel:widget->getChannels()) {
+                    if (channel->getIsActive()) {
+                        int rWidthLowIndex;
+                        int rWidthHighIndex;
+                        int gWidthLowIndex;
+                        int gWidthHighIndex;
+                        int bWidthLowIndex;
+                        int bWidthHighIndex;
+                        int bellsPos;
+                        int rWrapOffset = 0;
+                        int gWrapOffset = 0;
+                        int bWrapOffset = 0;
+                        int stringIndex;
+                        hadActivity = true;
+
+                        bellsPos = channel->getPosition();
+//                        cout << "bellsPos: " << bellsPos << endl;
+
+                        rWidthLowIndex = rPos - (bellsPos / 2);
+                        rWidthHighIndex = rPos + (bellsPos / 2);
+
+                        gWidthLowIndex = gPos - (bellsPos / 2);
+                        gWidthHighIndex = gPos + (bellsPos / 2);
+
+                        bWidthLowIndex = bPos - (bellsPos / 2);
+                        bWidthHighIndex = bPos + (bellsPos / 2);
+
+                        if (rIsActive) {
+                            if (rWidthLowIndex < 0) {
+                                rWrapOffset = abs(rWidthLowIndex);
+                                rWidthLowIndex = 0;
+                            } else if (rWidthHighIndex > (NUM_STRINGS - 1)) {
+                                rWrapOffset = rWidthHighIndex - (NUM_STRINGS - 1);
+                                rWidthHighIndex = NUM_STRINGS - 1;
+                            }
+
+                            for  (stringIndex = rWidthLowIndex;
+                                    stringIndex < rWidthHighIndex;
+                                    stringIndex++) {
+                                for (auto&& pixel:pixelArray[stringIndex]) {
+                                    pixel.r = 255;
+                                }
+                            }
+
+                            //
+                            // account for wrap
+                            //
+                            if (rWrapOffset != 0) {
+                                if (rWidthLowIndex == 0) {
+                                    for (stringIndex = 0;
+                                            stringIndex < rWrapOffset;
+                                            stringIndex++) {
+                                        for (auto&& pixel:pixelArray[stringIndex]) {
+                                            pixel.r = 255;
+                                        }
+                                    }
+                                }
+
+                                if (rWidthHighIndex == (NUM_STRINGS - 1)) {
+                                    for (stringIndex = (NUM_STRINGS - 1);
+                                            stringIndex >= (NUM_STRINGS - 1) - rWrapOffset;
+                                            stringIndex--) {
+                                        for (auto&& pixel:pixelArray[stringIndex]) {
+                                            pixel.r = 255;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+
+                        if (gIsActive) {
+                            if (gWidthLowIndex < 0) {
+                                gWrapOffset = abs(gWidthLowIndex);
+                                gWidthLowIndex = 0;
+                            } else if (gWidthHighIndex > (NUM_STRINGS - 1)) {
+                                gWrapOffset = gWidthHighIndex - (NUM_STRINGS - 1);
+                                gWidthHighIndex = NUM_STRINGS - 1;
+                            }
+
+                            for  (stringIndex = gWidthLowIndex;
+                                    stringIndex < gWidthHighIndex;
+                                    stringIndex++) {
+                                for (auto&& pixel:pixelArray[stringIndex]) {
+                                    pixel.g = 255;
+                                }
+                            }
+
+                            //
+                            // account for wrap
+                            //
+                            if (gWrapOffset != 0) {
+                                if (gWidthLowIndex == 0) {
+                                    for (stringIndex = 0;
+                                            stringIndex < gWrapOffset;
+                                            stringIndex++) {
+                                        for (auto&& pixel:pixelArray[stringIndex]) {
+                                            pixel.g = 255;
+                                        }
+                                    }
+                                }
+
+                                if (gWidthHighIndex == (NUM_STRINGS - 1)) {
+                                    for (stringIndex = (NUM_STRINGS - 1);
+                                            stringIndex >= (NUM_STRINGS - 1) - gWrapOffset;
+                                            stringIndex--) {
+                                        for (auto&& pixel:pixelArray[stringIndex]) {
+                                            pixel.g = 255;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+
+                        if (bIsActive) {
+                            if (bWidthLowIndex < 0) {
+                                bWrapOffset = abs(bWidthLowIndex);
+                                bWidthLowIndex = 0;
+                            } else if (bWidthHighIndex > (NUM_STRINGS - 1)) {
+                                bWrapOffset = bWidthHighIndex - (NUM_STRINGS - 1);
+                                bWidthHighIndex = NUM_STRINGS - 1;
+                            }
+
+                            for  (stringIndex = bWidthLowIndex;
+                                    stringIndex < bWidthHighIndex;
+                                    stringIndex++) {
+                                for (auto&& pixel:pixelArray[stringIndex]) {
+                                    pixel.b = 255;
+                                }
+                            }
+
+                            //
+                            // account for wrap
+                            //
+                            if (bWrapOffset != 0) {
+                                if (bWidthLowIndex == 0) {
+                                    for (stringIndex = 0;
+                                            stringIndex < rWrapOffset;
+                                            stringIndex++) {
+                                        for (auto&& pixel:pixelArray[stringIndex]) {
+                                            pixel.b = 255;
+                                        }
+                                    }
+                                }
+
+                                if (bWidthHighIndex == (NUM_STRINGS - 1)) {
+                                    for (stringIndex = (NUM_STRINGS - 1);
+                                            stringIndex >= (NUM_STRINGS - 1) - bWrapOffset;
+                                            stringIndex--) {
+                                        for (auto&& pixel:pixelArray[stringIndex]) {
+                                            pixel.b = 255;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+                
+            default:
+                cout << "SOMETHING'S FUCKY: Widget name in RgbVerticalPattern.cpp" << endl;
         }
     }
 
