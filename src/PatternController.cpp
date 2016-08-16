@@ -41,6 +41,7 @@
 #include "SolidBlackPattern.h"
 #include "QuadSlicePattern.h"
 #include "SparklePattern.h"
+#include "HorizontalStripePattern.h"
 //#include "TricklePattern.h"
 
 using namespace std;
@@ -231,6 +232,14 @@ bool buildFrame(
             }
             break;
 
+        case 5:
+            for (col = 0; col < NUM_STRINGS; col++) {
+                for (row = 0; row < PIXELS_PER_STRING; row++) {
+                    finalFrame[col][row] = pixelArray[col][row];
+                }
+            }
+            break;
+
         default:
             cout << "SOMETHING'S FUCKY : no case for priority " << priority << endl;
     }
@@ -307,14 +316,15 @@ int main(void)
     RgbVerticalPattern rgbVerticalPattern;
     QuadSlicePattern quadSlicePattern;
     SparklePattern sparklePattern;
+    HorizontalStripePattern horizontalStripePattern;
 //    TricklePattern tricklePattern;
 
     vector<vector<opc_pixel_t>> finalFrame1;
     vector<vector<opc_pixel_t>> finalFrame2;
 
     // to be filled in from a config file somewhere
-    int numChannels[5] = {1, 1, 3, 4, 1};
-    int priorities[5] = {0, 1, 2, 3, 4};
+    int numChannels[6] = {1, 1, 3, 4, 4};
+    int priorities[6] = {0, 1, 2, 3, 5};
 
     finalFrame1.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
     finalFrame2.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
@@ -341,16 +351,20 @@ int main(void)
     quadSlicePattern.initWidgets(1, numChannels[3]);
     printInit(&quadSlicePattern);
 
+    horizontalStripePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[4]);
+    horizontalStripePattern.initWidgets(1, numChannels[4]);
+    printInit(&horizontalStripePattern);
 //    tricklePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[4]);
 //    tricklePattern.initWidgets(1, numChannels[4]);
 //    printInit(&tricklePattern);
 
     cout << "Pattern initialization done.  Start moving shit!" << endl;
     while (true) {
-        rgbVerticalPattern.update();
+//        rgbVerticalPattern.update();
 //        solidBlackPattern.update();
 //        quadSlicePattern.update();
 //        sparklePattern.update();
+        horizontalStripePattern.update();
 //        tricklePattern.update();
 
         bool anyPatternIsActive = false;
@@ -380,7 +394,10 @@ int main(void)
 //            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
 //        }
 
-//        buildFrame(finalFrame1, tricklePattern.pixelArray, tricklePattern.priority);
+        if (horizontalStripePattern.isActive) {
+            anyPatternIsActive = true;
+            buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
+        }
 
         if (!anyPatternIsActive) {
             if (timeWentIdle == 0) {

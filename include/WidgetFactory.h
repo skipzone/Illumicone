@@ -25,15 +25,14 @@
 #include "ThreeWheelWidget.h"
 #include "PlungerWidget.h"
 #include "BellsWidget.h"
+#include "FourPlayWidget.h"
 #include "WidgetId.h"
 
 
 using namespace std;
 
 
-static Widget* widgetFactory(WidgetId id)
-{
-    switch (id) {
+static Widget* widgetFactory(WidgetId id) { switch (id) {
         case WidgetId::eye:
             cout << "Return EyeWidget!" << endl;
             return new EyeWidget;
@@ -53,6 +52,9 @@ static Widget* widgetFactory(WidgetId id)
         case WidgetId::plunger:
             cout << "Return PlungerWidget!" << endl;
             return new PlungerWidget;
+        case WidgetId::fourPlay:
+            cout << "Return FourPlayWidget!" << endl;
+            return new FourPlayWidget;
         case WidgetId::bells:
             cout << "Return BellsWidget!" << endl;
             return new BellsWidget;

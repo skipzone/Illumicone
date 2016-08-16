@@ -296,7 +296,7 @@ bool RgbVerticalPattern::update()
                 break;
                 
             default:
-                cout << "SOMETHING'S FUCKY: Widget name in RgbVerticalPattern.cpp" << endl;
+                cout << "SOMETHING'S FUCKY: WidgetId in RgbVerticalPattern.cpp" << endl;
         }
     }
 

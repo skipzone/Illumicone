@@ -46,7 +46,7 @@ bool HorizontalStripePattern::initWidgets(int numWidgets, int channelsPerWidget)
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::fourPlay);
         widgets.emplace_back(newWidget);
-        newWidget->init(false);
+        newWidget->init(true);
     }
 
     return true;
@@ -55,7 +55,7 @@ bool HorizontalStripePattern::initWidgets(int numWidgets, int channelsPerWidget)
 
 bool HorizontalStripePattern::update()
 {
-    int hadActivity = 0;
+    bool hadActivity = false;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
     for (auto&& pixels:pixelArray) {
@@ -73,8 +73,14 @@ bool HorizontalStripePattern::update()
         if (widget->getIsActive()) {
             for (auto&& channel:widget->getChannels()) {
 //                cout << "Updating widget's channel!" << endl;
-                if (channel->getHasNewMeasurement() || channel->getIsActive()) {
-                    // TODO: Do stuff
+                if (channel->getIsActive()) {
+                    hadActivity = true;
+                    int curPos = ((unsigned int) channel->getPosition());
+                    for (auto&& pixels:pixelArray) {
+                        pixels[curPos].r = 255;
+                        pixels[curPos].g = 0;
+                        pixels[curPos].b = 255;
+                    }
                 }
             }
         }
