@@ -23,6 +23,7 @@
 #include "RotaryWidget.h"
 #include "StairWidget.h"
 #include "ThreeWheelWidget.h"
+#include "PlungerWidget.h"
 #include "WidgetId.h"
 
 
@@ -44,6 +45,13 @@ static Widget* widgetFactory(WidgetId id)
         case WidgetId::triObelisk:
             cout << "Return ThreeWheelWidget!" << endl;
             return new ThreeWheelWidget;
+            // TODO: CHANGE THIS TO RAINSTICK WHEN WIDGET FILE IS READY!
+        case WidgetId::rainstick:
+            cout << "Return RainstickWidget!" << endl;
+            return new PlungerWidget;
+        case WidgetId::plunger:
+            cout << "Return PlungerWidget!" << endl;
+            return new PlungerWidget;
         default:
             cout << "SOMETHING'S FUCKY: WidgetFactory id" << endl;
             return nullptr;
