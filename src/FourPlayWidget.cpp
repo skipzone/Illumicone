@@ -40,8 +40,9 @@ FourPlayWidget::FourPlayWidget()
     }
 
     updateIntervalMs[0] = 200;
-    updateIntervalMs[1] = 0;
-    updateIntervalMs[2] = 0;
+    updateIntervalMs[1] = 300;
+    updateIntervalMs[2] = 400;
+    updateIntervalMs[3] = 100;
 }
 
 
@@ -78,11 +79,7 @@ bool FourPlayWidget::moveData()
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
             channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % PIXELS_PER_STRING, 0);
-            if (i == 0) {
-                channels[i]->setIsActive(true);
-            } else {
-                channels[i]->setIsActive(false);
-            }
+            channels[i]->setIsActive(true);
             //cout << "updated channel " << i << endl;
         }
     }

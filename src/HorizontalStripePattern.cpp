@@ -76,10 +76,42 @@ bool HorizontalStripePattern::update()
                 if (channel->getIsActive()) {
                     hadActivity = true;
                     int curPos = ((unsigned int) channel->getPosition());
-                    for (auto&& pixels:pixelArray) {
-                        pixels[curPos].r = 255;
-                        pixels[curPos].g = 0;
-                        pixels[curPos].b = 255;
+                    switch (channel->getChannelNumber()) {
+                        case 0:
+                            for (auto&& pixels:pixelArray) {
+                                pixels[curPos].r = 255;
+                                pixels[curPos].g = 0;
+                                pixels[curPos].b = 255;
+                            }
+                            break;
+
+                        case 1:
+                            for (auto&& pixels:pixelArray) {
+                                pixels[curPos].r = 0;
+                                pixels[curPos].g = 255;
+                                pixels[curPos].b = 255;
+                            }
+                            break;
+
+                        case 2:
+                            for (auto&& pixels:pixelArray) {
+                                pixels[curPos].r = 255;
+                                pixels[curPos].g = 255;
+                                pixels[curPos].b = 0;
+                            }
+                            break;
+
+                        case 3:
+                            for (auto&& pixels:pixelArray) {
+                                pixels[curPos].r = 128;
+                                pixels[curPos].g = 0;
+                                pixels[curPos].b = 255;
+                            }
+                            break;
+
+                        default:
+                            cout << "SOMETHING'S FUCKY: Horizontal pattern getting invalid channel number." << endl;
+                            break;
                     }
                 }
             }
