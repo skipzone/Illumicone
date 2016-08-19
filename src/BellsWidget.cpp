@@ -38,9 +38,9 @@ BellsWidget::BellsWidget()
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 500;
-    updateIntervalMs[1] = 0;
-    updateIntervalMs[2] = 0;
+    updateIntervalMs[0] = 1000;
+    updateIntervalMs[1] = 1000;
+    updateIntervalMs[2] = 1000;
     updateIntervalMs[3] = 0;
     updateIntervalMs[4] = 0;
     updateIntervalMs[5] = 0;
@@ -84,7 +84,7 @@ bool BellsWidget::moveData()
             lastUpdateMs[i] = nowMs;
 
             if (simWidth == 0) {
-                simWidth = NUM_STRINGS - 2;
+                simWidth = 4;
             }
 
             channels[i]->setPositionAndVelocity(simWidth, 0);

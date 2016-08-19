@@ -40,8 +40,8 @@ ThreeWheelWidget::ThreeWheelWidget()
     }
 
     updateIntervalMs[0] = 200;
-    updateIntervalMs[1] = 0;
-    updateIntervalMs[2] = 0;
+    updateIntervalMs[1] = 400;
+    updateIntervalMs[2] = 500;
 }
 
 
@@ -78,11 +78,7 @@ bool ThreeWheelWidget::moveData()
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
             channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
-            if (i == 0) {
-                channels[i]->setIsActive(true);
-            } else {
-                channels[i]->setIsActive(false);
-            }
+            channels[i]->setIsActive(true);
             //cout << "updated channel " << i << endl;
         }
     }

@@ -161,134 +161,24 @@ bool RgbVerticalPattern::update()
                         bWidthLowIndex = bPos - (bellsPos / 2);
                         bWidthHighIndex = bPos + (bellsPos / 2);
 
-                        if (rIsActive) {
-                            if (rWidthLowIndex < 0) {
-                                rWrapOffset = abs(rWidthLowIndex);
-                                rWidthLowIndex = 0;
-                            } else if (rWidthHighIndex > (NUM_STRINGS - 1)) {
-                                rWrapOffset = rWidthHighIndex - (NUM_STRINGS - 1);
-                                rWidthHighIndex = NUM_STRINGS - 1;
-                            }
-
-                            for  (stringIndex = rWidthLowIndex;
-                                    stringIndex < rWidthHighIndex;
-                                    stringIndex++) {
-                                for (auto&& pixel:pixelArray[stringIndex]) {
-                                    pixel.r = 255;
-                                }
-                            }
-
-                            //
-                            // account for wrap
-                            //
-                            if (rWrapOffset != 0) {
-                                if (rWidthLowIndex == 0) {
-                                    for (stringIndex = 0;
-                                            stringIndex < rWrapOffset;
-                                            stringIndex++) {
-                                        for (auto&& pixel:pixelArray[stringIndex]) {
-                                            pixel.r = 255;
-                                        }
-                                    }
-                                }
-
-                                if (rWidthHighIndex == (NUM_STRINGS - 1)) {
-                                    for (stringIndex = (NUM_STRINGS - 1);
-                                            stringIndex >= (NUM_STRINGS - 1) - rWrapOffset;
-                                            stringIndex--) {
-                                        for (auto&& pixel:pixelArray[stringIndex]) {
-                                            pixel.r = 255;
-                                        }
-                                    }
-                                }
+                        for (int i = rWidthLowIndex; i < rWidthHighIndex; ++i) {
+                            stringIndex = (i % NUM_STRINGS + NUM_STRINGS) % NUM_STRINGS;
+                            for (auto&& pixels:pixelArray[stringIndex]) {
+                                pixels.r = 255;
                             }
                         }
 
-
-                        if (gIsActive) {
-                            if (gWidthLowIndex < 0) {
-                                gWrapOffset = abs(gWidthLowIndex);
-                                gWidthLowIndex = 0;
-                            } else if (gWidthHighIndex > (NUM_STRINGS - 1)) {
-                                gWrapOffset = gWidthHighIndex - (NUM_STRINGS - 1);
-                                gWidthHighIndex = NUM_STRINGS - 1;
-                            }
-
-                            for  (stringIndex = gWidthLowIndex;
-                                    stringIndex < gWidthHighIndex;
-                                    stringIndex++) {
-                                for (auto&& pixel:pixelArray[stringIndex]) {
-                                    pixel.g = 255;
-                                }
-                            }
-
-                            //
-                            // account for wrap
-                            //
-                            if (gWrapOffset != 0) {
-                                if (gWidthLowIndex == 0) {
-                                    for (stringIndex = 0;
-                                            stringIndex < gWrapOffset;
-                                            stringIndex++) {
-                                        for (auto&& pixel:pixelArray[stringIndex]) {
-                                            pixel.g = 255;
-                                        }
-                                    }
-                                }
-
-                                if (gWidthHighIndex == (NUM_STRINGS - 1)) {
-                                    for (stringIndex = (NUM_STRINGS - 1);
-                                            stringIndex >= (NUM_STRINGS - 1) - gWrapOffset;
-                                            stringIndex--) {
-                                        for (auto&& pixel:pixelArray[stringIndex]) {
-                                            pixel.g = 255;
-                                        }
-                                    }
-                                }
+                        for (int i = gWidthLowIndex; i < gWidthHighIndex; ++i) {
+                            stringIndex = (i % NUM_STRINGS + NUM_STRINGS) % NUM_STRINGS;
+                            for (auto&& pixels:pixelArray[stringIndex]) {
+                                pixels.g = 255;
                             }
                         }
 
-
-                        if (bIsActive) {
-                            if (bWidthLowIndex < 0) {
-                                bWrapOffset = abs(bWidthLowIndex);
-                                bWidthLowIndex = 0;
-                            } else if (bWidthHighIndex > (NUM_STRINGS - 1)) {
-                                bWrapOffset = bWidthHighIndex - (NUM_STRINGS - 1);
-                                bWidthHighIndex = NUM_STRINGS - 1;
-                            }
-
-                            for  (stringIndex = bWidthLowIndex;
-                                    stringIndex < bWidthHighIndex;
-                                    stringIndex++) {
-                                for (auto&& pixel:pixelArray[stringIndex]) {
-                                    pixel.b = 255;
-                                }
-                            }
-
-                            //
-                            // account for wrap
-                            //
-                            if (bWrapOffset != 0) {
-                                if (bWidthLowIndex == 0) {
-                                    for (stringIndex = 0;
-                                            stringIndex < rWrapOffset;
-                                            stringIndex++) {
-                                        for (auto&& pixel:pixelArray[stringIndex]) {
-                                            pixel.b = 255;
-                                        }
-                                    }
-                                }
-
-                                if (bWidthHighIndex == (NUM_STRINGS - 1)) {
-                                    for (stringIndex = (NUM_STRINGS - 1);
-                                            stringIndex >= (NUM_STRINGS - 1) - bWrapOffset;
-                                            stringIndex--) {
-                                        for (auto&& pixel:pixelArray[stringIndex]) {
-                                            pixel.b = 255;
-                                        }
-                                    }
-                                }
+                        for (int i = bWidthLowIndex; i < bWidthHighIndex; ++i) {
+                            stringIndex = (i % NUM_STRINGS + NUM_STRINGS) % NUM_STRINGS;
+                            for (auto&& pixels:pixelArray[stringIndex]) {
+                                pixels.b = 255;
                             }
                         }
                     }
