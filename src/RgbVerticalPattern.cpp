@@ -68,7 +68,7 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 
         newWidget = widgetFactory(WidgetId::bells);
         widgets.emplace_back(newWidget);
-        newWidget->init(true);
+        newWidget->init(false);
 //    }
 
     return true;
@@ -143,9 +143,6 @@ bool RgbVerticalPattern::update()
                         int bWidthLowIndex;
                         int bWidthHighIndex;
                         int bellsPos;
-                        int rWrapOffset = 0;
-                        int gWrapOffset = 0;
-                        int bWrapOffset = 0;
                         int stringIndex;
                         hadActivity = true;
 

@@ -84,7 +84,7 @@ bool BellsWidget::moveData()
             lastUpdateMs[i] = nowMs;
 
             if (simWidth == 0) {
-                simWidth = 4;
+                simWidth = NUM_STRINGS / 3;
             }
 
             channels[i]->setPositionAndVelocity(simWidth, 0);

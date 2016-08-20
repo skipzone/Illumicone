@@ -42,7 +42,7 @@
 #include "QuadSlicePattern.h"
 #include "SparklePattern.h"
 #include "HorizontalStripePattern.h"
-//#include "TricklePattern.h"
+#include "RainbowExplosionPattern.h"
 
 using namespace std;
 
@@ -225,6 +225,9 @@ bool buildFrame(
 
         case 4:
             //cout << "build frame plunger" << endl;
+            //
+            // RainbowExplosionPattern
+            //
             for (col = 0; col < NUM_STRINGS; col++) {
                 for (row = 0; row < PIXELS_PER_STRING; row++) {
                     finalFrame[col][row] = pixelArray[col][row]; 
@@ -233,6 +236,10 @@ bool buildFrame(
             break;
 
         case 5:
+            //cout << "build frame fourplay" << endl;
+            //
+            // HorizontalStripePattern
+            //
             for (col = 0; col < NUM_STRINGS; col++) {
                 for (row = 0; row < PIXELS_PER_STRING; row++) {
                     finalFrame[col][row] = pixelArray[col][row];
@@ -245,6 +252,18 @@ bool buildFrame(
     }
 
     return true;
+}
+
+//
+// light each string at the bottom for visibility
+//
+void finalizeFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
+{
+    for (auto&& pixels:finalFrame) {
+        pixels[PIXELS_PER_STRING-1].r = 255;
+        pixels[PIXELS_PER_STRING-1].g = 0;
+        pixels[PIXELS_PER_STRING-1].b = 255;
+    }
 }
 
 int sendFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
@@ -317,14 +336,14 @@ int main(void)
     QuadSlicePattern quadSlicePattern;
     SparklePattern sparklePattern;
     HorizontalStripePattern horizontalStripePattern;
-//    TricklePattern tricklePattern;
+    RainbowExplosionPattern rainbowExplosionPattern;
 
     vector<vector<opc_pixel_t>> finalFrame1;
     vector<vector<opc_pixel_t>> finalFrame2;
 
     // to be filled in from a config file somewhere
-    int numChannels[6] = {1, 1, 3, 4, 4};
-    int priorities[6] = {0, 1, 2, 3, 5};
+    int numChannels[6] = {1, 1, 3, 4, 1, 1};
+    int priorities[6] = {0, 1, 2, 3, 4, 5};
 
     finalFrame1.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
     finalFrame2.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
@@ -354,18 +373,19 @@ int main(void)
     horizontalStripePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[4]);
     horizontalStripePattern.initWidgets(1, numChannels[4]);
     printInit(&horizontalStripePattern);
-//    tricklePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[4]);
-//    tricklePattern.initWidgets(1, numChannels[4]);
-//    printInit(&tricklePattern);
+
+    rainbowExplosionPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[5]);
+    rainbowExplosionPattern.initWidgets(1, numChannels[5]);
+    printInit(&rainbowExplosionPattern);
 
     cout << "Pattern initialization done.  Start moving shit!" << endl;
     while (true) {
-//        rgbVerticalPattern.update();
+        rgbVerticalPattern.update();
 //        solidBlackPattern.update();
 //        quadSlicePattern.update();
 //        sparklePattern.update();
-        horizontalStripePattern.update();
-//        tricklePattern.update();
+//        horizontalStripePattern.update();
+//        rainbowExplosionPattern.update();
 
         bool anyPatternIsActive = false;
 
@@ -375,29 +395,36 @@ int main(void)
 ////            cout << "quad active" << endl;
 //            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
 //        }
-//        
+        
         if (rgbVerticalPattern.isActive) {
             anyPatternIsActive = true;
 //            cout << "rgb active" << endl;
             buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
         }
-//
+
 //        if (sparklePattern.isActive) {
 //            anyPatternIsActive = true;
 ////            cout << "sparkle active" << endl;
 //            buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
 //        }
-//
+
 //        if (solidBlackPattern.isActive) {
 //            anyPatternIsActive = true;
 ////            cout << "solid active" << endl;
 //            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
 //        }
 
-        if (horizontalStripePattern.isActive) {
-            anyPatternIsActive = true;
-            buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
-        }
+//        if (horizontalStripePattern.isActive) {
+//            anyPatternIsActive = true;
+//            buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
+//        }
+
+//        if (rainbowExplosionPattern.isActive) {
+//            anyPatternIsActive = true;
+//            buildFrame(finalFrame1, rainbowExplosionPattern.pixelArray, rainbowExplosionPattern.priority);
+//        }
+
+        finalizeFrame(finalFrame1);
 
         if (!anyPatternIsActive) {
             if (timeWentIdle == 0) {

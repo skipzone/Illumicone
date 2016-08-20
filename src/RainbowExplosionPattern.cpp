@@ -24,6 +24,20 @@
 
 using namespace std;
 
+enum patternState {
+    STATE_FIZZLE = 0,
+    STATE_R,
+    STATE_O,
+    STATE_Y,
+    STATE_G,
+    STATE_B,
+    STATE_I,
+    STATE_V,
+};
+
+static patternState state;
+static int colorPosition;
+
 bool RainbowExplosionPattern::initPattern(int numStrings, int pixelsPerString, int priority)
 {
     this->numStrings = numStrings;
@@ -36,6 +50,8 @@ bool RainbowExplosionPattern::initPattern(int numStrings, int pixelsPerString, i
     this->isActive = 0;
     this->opacity = 100;
 
+    state = STATE_FIZZLE;
+
     for (auto&& pixels:pixelArray) {
         for (auto&& pixel:pixels) {
             pixel.r = 0;
@@ -43,6 +59,8 @@ bool RainbowExplosionPattern::initPattern(int numStrings, int pixelsPerString, i
             pixel.b = 0;
         }
     }
+
+    colorPosition = PIXELS_PER_STRING;
 
     return true;
 }
@@ -55,7 +73,7 @@ bool RainbowExplosionPattern::initWidgets(int numWidgets, int channelsPerWidget)
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::plunger);
         widgets.emplace_back(newWidget);
-        newWidget->init(false);
+        newWidget->init(true);
     }
 
     return true;
@@ -67,6 +85,14 @@ bool RainbowExplosionPattern::update()
     bool hadActivity = false;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
+    for (auto&& pixels:pixelArray) {
+        for (auto&& pixel:pixels) {
+            pixel.r = 0;
+            pixel.g = 0;
+            pixel.b = 0;
+        }
+    }
+
     for (auto&& widget:widgets) {
 //        cout << "Updating Solid Black Pattern widget!" << endl;
         // update active, position, velocity for each channel in widget
@@ -77,6 +103,141 @@ bool RainbowExplosionPattern::update()
                 if (channel->getHasNewMeasurement() || channel->getIsActive()) {
                     hadActivity = true;
                     // TODO: Do stuff
+                    int curPos = channel->getPosition();
+                    int randNum = rand() % 16;
+
+                    if (curPos) {
+                        switch (state) {
+                            case STATE_FIZZLE:
+                                if (randNum == 4) {
+                                    state = STATE_R;
+                                }
+
+                                for (auto&& pixels:pixelArray) {
+                                    for (int i = PIXELS_PER_STRING - 4; i < PIXELS_PER_STRING; i++) {
+                                        pixels[i].r = 128;
+                                        pixels[i].g = 0;
+                                        pixels[i].b = 0;
+                                    }
+                                }
+                                break;
+
+                            case STATE_R:
+                                for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                                    for (auto&& pixels:pixelArray) {
+                                        pixels[i].r = 255;
+                                        pixels[i].g = 0;
+                                        pixels[i].b = 0;
+                                    }
+                                }
+                                if (colorPosition == 0) {
+                                    colorPosition = PIXELS_PER_STRING;
+                                    state = STATE_O;
+                                }
+                                colorPosition -= 4;
+
+                                break;
+
+                            case STATE_O:
+                                for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                                    for (auto&& pixels:pixelArray) {
+                                        pixels[i].r = 0;
+                                        pixels[i].g = 255;
+                                        pixels[i].b = 0;
+                                    }
+                                }
+                                if (colorPosition == 0) {
+                                    colorPosition = PIXELS_PER_STRING;
+                                    state = STATE_Y;
+                                }
+                                colorPosition -= 4;
+
+                                break;
+
+                            case STATE_Y:
+                                for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                                    for (auto&& pixels:pixelArray) {
+                                        pixels[i].r = 0;
+                                        pixels[i].g = 0;
+                                        pixels[i].b = 255;
+                                    }
+                                }
+                                if (colorPosition == 0) {
+                                    colorPosition = PIXELS_PER_STRING;
+                                    state = STATE_G;
+                                }
+                                colorPosition -= 4;
+
+                                break;
+
+                            case STATE_G:
+                                for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                                    for (auto&& pixels:pixelArray) {
+                                        pixels[i].r = 255;
+                                        pixels[i].g = 0;
+                                        pixels[i].b = 255;
+                                    }
+                                }
+                                if (colorPosition == 0) {
+                                    colorPosition = PIXELS_PER_STRING;
+                                    state = STATE_B;
+                                }
+                                colorPosition -= 4;
+
+                                break;
+
+                            case STATE_B:
+                                for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                                    for (auto&& pixels:pixelArray) {
+                                        pixels[i].r = 255;
+                                        pixels[i].g = 255;
+                                        pixels[i].b = 0;
+                                    }
+                                }
+                                if (colorPosition == 0) {
+                                    colorPosition = PIXELS_PER_STRING;
+                                    state = STATE_I;
+                                }
+                                colorPosition -= 4;
+
+                                break;
+
+                            case STATE_I:
+                                for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                                    for (auto&& pixels:pixelArray) {
+                                        pixels[i].r = 0;
+                                        pixels[i].g = 255;
+                                        pixels[i].b = 255;
+                                    }
+                                }
+                                if (colorPosition == 0) {
+                                    colorPosition = PIXELS_PER_STRING;
+                                    state = STATE_V;
+                                }
+                                colorPosition -= 4;
+
+                                break;
+
+                            case STATE_V:
+                                for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                                    for (auto&& pixels:pixelArray) {
+                                        pixels[i].r = 255;
+                                        pixels[i].g = 255;
+                                        pixels[i].b = 255;
+                                    }
+                                }
+                                if (colorPosition == 0) {
+                                    colorPosition = PIXELS_PER_STRING;
+                                    state = STATE_FIZZLE;
+                                }
+                                colorPosition -= 4;
+
+                                break;
+
+                            default:
+                                cout << "SOMETHING'S FUCKY: state in RainbowExplosionPattern" << endl;
+                        }
+                    }
                 }
             }
         }
