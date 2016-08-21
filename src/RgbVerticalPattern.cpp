@@ -64,7 +64,7 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 //    for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::triObelisk);
         widgets.emplace_back(newWidget);
-        newWidget->init(true);
+        newWidget->init(false);
 
         newWidget = widgetFactory(WidgetId::bells);
         widgets.emplace_back(newWidget);
@@ -144,10 +144,11 @@ bool RgbVerticalPattern::update()
                         int bWidthHighIndex;
                         int bellsPos;
                         int stringIndex;
+                        float scaleValue = (1024.0 / ((float)NUM_STRINGS / 3.0));
                         hadActivity = true;
 
                         bellsPos = channel->getPosition();
-//                        cout << "bellsPos: " << bellsPos << endl;
+                        bellsPos = (int)((float)bellsPos / scaleValue);
 
                         rWidthLowIndex = rPos - (bellsPos / 2);
                         rWidthHighIndex = rPos + (bellsPos / 2);

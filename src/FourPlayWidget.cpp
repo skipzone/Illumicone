@@ -43,6 +43,10 @@ FourPlayWidget::FourPlayWidget()
     updateIntervalMs[1] = 300;
     updateIntervalMs[2] = 400;
     updateIntervalMs[3] = 100;
+    updateIntervalMs[4] = 0;
+    updateIntervalMs[5] = 0;
+    updateIntervalMs[6] = 0;
+    updateIntervalMs[7] = 0;
 }
 
 

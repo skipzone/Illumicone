@@ -46,7 +46,7 @@ bool HorizontalStripePattern::initWidgets(int numWidgets, int channelsPerWidget)
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::fourPlay);
         widgets.emplace_back(newWidget);
-        newWidget->init(true);
+        newWidget->init(false);
     }
 
     return true;
@@ -80,33 +80,23 @@ bool HorizontalStripePattern::update()
                         case 0:
                             for (auto&& pixels:pixelArray) {
                                 pixels[curPos].r = 255;
-                                pixels[curPos].g = 0;
-                                pixels[curPos].b = 255;
                             }
                             break;
 
                         case 1:
                             for (auto&& pixels:pixelArray) {
-                                pixels[curPos].r = 0;
                                 pixels[curPos].g = 255;
-                                pixels[curPos].b = 255;
                             }
                             break;
 
                         case 2:
                             for (auto&& pixels:pixelArray) {
-                                pixels[curPos].r = 255;
-                                pixels[curPos].g = 255;
-                                pixels[curPos].b = 0;
+                                pixels[curPos].b = 255;
                             }
                             break;
 
                         case 3:
-                            for (auto&& pixels:pixelArray) {
-                                pixels[curPos].r = 128;
-                                pixels[curPos].g = 0;
-                                pixels[curPos].b = 255;
-                            }
+                            cout << "FourPlay wheel 4 active" << endl;
                             break;
 
                         default:

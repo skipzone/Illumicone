@@ -15,7 +15,7 @@ using namespace std;
 
 
 PlungerWidget::PlungerWidget()
-    : Widget(WidgetId::triObelisk, "TriObelisk")
+    : Widget(WidgetId::plunger, "plunger")
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
