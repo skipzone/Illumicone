@@ -1,10 +1,10 @@
 /*****************************************************************
  *                                                               *
- * Ray's Eye Widget                                              *
+ * Kayla's Plunger Widget                                        *
  *                                                               *
  * Platform:  Arduino Uno, Pro, Pro Mini                         *
  *                                                               *
- * by Ross Butler, July 2016                                 )'( *
+ * by Ross Butler, August 2016                               )'( *
  *                                                               *
  *****************************************************************/
 
@@ -33,11 +33,10 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 1
+#define WIDGET_ID 8
 #define NUM_CHANNELS 1
-#define TX_INTERVAL_MS 250L
-#define PHOTOSENSOR_POWER_PIN 2
-#define PHOTOSENSOR_SIGNAL_PIN A3
+#define TX_INTERVAL_MS 100L
+#define MIC_SIGNAL_PIN A3
 //#define TX_FAILURE_LED_PIN 8
 //#define ENABLE_DEBUG_PRINT
 
@@ -52,7 +51,7 @@
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 15
+#define TX_RETRY_DELAY_MULTIPLIER 7
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
@@ -81,9 +80,6 @@ void setup()
   printf_begin();
 #endif
 
-  pinMode(PHOTOSENSOR_POWER_PIN, OUTPUT);
-  digitalWrite(PHOTOSENSOR_POWER_PIN , LOW); 
-
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
   
   payload.widgetHeader.id = WIDGET_ID;
@@ -94,17 +90,17 @@ void setup()
 
 void loop() {
 
+  static uint16_t minSoundSample = UINT16_MAX;
+  static uint16_t maxSoundSample;
+//  static uint16_t numSamples;
   static int32_t lastTxMs;
 
   uint32_t now = millis();
   if (now - lastTxMs >= TX_INTERVAL_MS) {
 
-    digitalWrite(PHOTOSENSOR_POWER_PIN, HIGH); 
-    delay(1);
-    unsigned int photosensorValue = analogRead(PHOTOSENSOR_SIGNAL_PIN);
-    //digitalWrite(PHOTOSENSOR_POWER_PIN, LOW); 
+    uint16_t pp = maxSoundSample - minSoundSample;
 
-    payload.position = photosensorValue;
+    payload.position = pp;
     payload.velocity = 0;
 
     if (!radio.write(&payload, sizeof(payload))) {
@@ -118,7 +114,19 @@ void loop() {
 #endif
     }
     
+    minSoundSample = UINT16_MAX;
+    maxSoundSample = 0;
+//    numSamples = 0;
     lastTxMs = now;
+  }
+
+//  ++numSamples;
+  unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
+  if (soundSample < minSoundSample) {
+    minSoundSample = soundSample;
+  }
+  if (soundSample > maxSoundSample) {
+    maxSoundSample = soundSample;
   }
 
 }
