@@ -46,7 +46,7 @@ bool HorizontalStripePattern::initWidgets(int numWidgets, int channelsPerWidget)
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::fourPlay);
         widgets.emplace_back(newWidget);
-        newWidget->init(false);
+        newWidget->init(true);
     }
 
     return true;

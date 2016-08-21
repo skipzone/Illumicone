@@ -388,7 +388,7 @@ int main(void)
 //        quadSlicePattern.update();
 //        sparklePattern.update();
 // ROSS UNCOMMENT TO TEST FOURPLAY
-//        horizontalStripePattern.update();
+        horizontalStripePattern.update();
         rainbowExplosionPattern.update();
 
         bool anyPatternIsActive = false;
@@ -400,12 +400,6 @@ int main(void)
             buildFrame(finalFrame1, rainbowExplosionPattern.pixelArray, rainbowExplosionPattern.priority);
         }
 
-// ROSS UNCOMMENT TO TEST FOURPLAY
-//        if (horizontalStripePattern.isActive) {
-//            anyPatternIsActive = true;
-//            buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
-//        }
-
 
 //        if (quadSlicePattern.isActive) {
 //            anyPatternIsActive = true;
@@ -413,6 +407,11 @@ int main(void)
 //            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
 //        }
         
+// ROSS UNCOMMENT TO TEST FOURPLAY
+        if (horizontalStripePattern.isActive) {
+            anyPatternIsActive = true;
+            buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
+        }
 
         if (rgbVerticalPattern.isActive) {
             anyPatternIsActive = true;
