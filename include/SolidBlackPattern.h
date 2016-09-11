@@ -17,11 +17,13 @@
 
 #ifndef SOLID_BLACK_PATTERN_H
 #define SOLID_BLACK_PATTERN_H
+
+#include <time.h>
 #include "Pattern.h"
 
 class SolidBlackPattern : public Pattern {
     public:
-        SolidBlackPattern() {};
+        SolidBlackPattern();
         ~SolidBlackPattern() {};
 
         bool initPattern(int numStrings, int pixelsPerString, int prioirty);
@@ -29,7 +31,17 @@ class SolidBlackPattern : public Pattern {
         bool update();
 
     private:
-        time_t timeExceededThreshold;
+//        time_t lastDayimeCheckTime;   // when the not-dark threshold was exceeded
+//        constexpr static unsigned time_t daytimeCheckIntervalSeconds = 60;
+        bool loggedShutoffMessage;
+        // The times below must be MDT because ic-patcon is in that time zone.
+        constexpr static int turnoffStartHour = 7;
+        constexpr static int turnoffStartMinute = 30;
+        constexpr static int turnoffEndHour = 20;
+        constexpr static int turnoffEndMinute = 30;
+
+        constexpr static time_t flashingTimeoutSeconds = 2;
+        time_t timeExceededThreshold; // when the not-dark threshold was exceeded
 };
 
 #endif /* SOLID_BLACK_PATTERN_H */

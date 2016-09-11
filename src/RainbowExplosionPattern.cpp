@@ -87,21 +87,20 @@ bool RainbowExplosionPattern::update()
     bool hadActivity = false;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
-    cout << "Updating rainbowExplosion" << endl;
+//    cout << "Updating rainbowExplosion" << endl;
     for (auto&& widget:widgets) {
 //        cout << "Updating Solid Black Pattern widget!" << endl;
         // update active, position, velocity for each channel in widget
         widget->moveData();
         if (widget->getIsActive()) {
-            cout << "Plunger is active!" << endl;
+//            cout << "Plunger is active!" << endl;
             for (auto&& channel:widget->getChannels()) {
-                cout << "Got a channel" << endl;
+//                cout << "Got a channel" << endl;
 //                cout << "Updating widget's channel!" << endl;
                 if (channel->getHasNewMeasurement() || channel->getIsActive()) {
-                    hadActivity = true;
                     // TODO: Do stuff
                     int curPos = channel->getPosition();
-                    cout << "Plunger position: " << curPos << endl;
+//                    cout << "Plunger position: " << curPos << endl;
 
                     switch (state) {
                         case STATE_FIZZLE:
@@ -118,7 +117,8 @@ bool RainbowExplosionPattern::update()
                             // accumulator is set rand() mod 5 to get more of a "random"
                             // explosion response
                             //                               
-                            if (curPos >= 800) {
+                            if (curPos >= 700) {
+                                hadActivity = true;
                                 if (accumulator > 20) {
                                     accumulator = rand() % 8;
                                     state = STATE_R;
@@ -127,7 +127,7 @@ bool RainbowExplosionPattern::update()
                                 }
 
                                 for (auto&& pixels:pixelArray) {
-                                    int randPixel = rand() % 8;
+                                    int randPixel = rand() % 30;
                                     for (int i = PIXELS_PER_STRING - randPixel; i < PIXELS_PER_STRING; i++) {
                                         pixels[i].r = 127;
                                         pixels[i].g = 0;
@@ -138,6 +138,7 @@ bool RainbowExplosionPattern::update()
                             break;
 
                         case STATE_R:
+                            hadActivity = true;
                             for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 255;
@@ -145,15 +146,16 @@ bool RainbowExplosionPattern::update()
                                     pixels[i].b = 0;
                                 }
                             }
-                            if (colorPosition == 0) {
+                            if (colorPosition <= 0) {
                                 colorPosition = PIXELS_PER_STRING;
                                 state = STATE_O;
                             }
-                            colorPosition -= 4;
+                            colorPosition -= 8;
 
                             break;
 
                         case STATE_O:
+                            hadActivity = true;
                             for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 255;
@@ -161,15 +163,16 @@ bool RainbowExplosionPattern::update()
                                     pixels[i].b = 0;
                                 }
                             }
-                            if (colorPosition == 0) {
+                            if (colorPosition <= 0) {
                                 colorPosition = PIXELS_PER_STRING;
                                 state = STATE_Y;
                             }
-                            colorPosition -= 4;
+                            colorPosition -= 8;
 
                             break;
 
                         case STATE_Y:
+                            hadActivity = true;
                             for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 255;
@@ -177,15 +180,16 @@ bool RainbowExplosionPattern::update()
                                     pixels[i].b = 0;
                                 }
                             }
-                            if (colorPosition == 0) {
+                            if (colorPosition <= 0) {
                                 colorPosition = PIXELS_PER_STRING;
                                 state = STATE_G;
                             }
-                            colorPosition -= 4;
+                            colorPosition -= 8;
 
                             break;
 
                         case STATE_G:
+                            hadActivity = true;
                             for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 0;
@@ -193,15 +197,16 @@ bool RainbowExplosionPattern::update()
                                     pixels[i].b = 0;
                                 }
                             }
-                            if (colorPosition == 0) {
+                            if (colorPosition <= 0) {
                                 colorPosition = PIXELS_PER_STRING;
                                 state = STATE_B;
                             }
-                            colorPosition -= 4;
+                            colorPosition -= 8;
 
                             break;
 
                         case STATE_B:
+                            hadActivity = true;
                             for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 0;
@@ -209,15 +214,16 @@ bool RainbowExplosionPattern::update()
                                     pixels[i].b = 255;
                                 }
                             }
-                            if (colorPosition == 0) {
+                            if (colorPosition <= 0) {
                                 colorPosition = PIXELS_PER_STRING;
                                 state = STATE_I;
                             }
-                            colorPosition -= 4;
+                            colorPosition -= 8;
 
                             break;
 
                         case STATE_I:
+                            hadActivity = true;
                             for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 75;
@@ -225,15 +231,16 @@ bool RainbowExplosionPattern::update()
                                     pixels[i].b = 130;
                                 }
                             }
-                            if (colorPosition == 0) {
+                            if (colorPosition <= 0) {
                                 colorPosition = PIXELS_PER_STRING;
                                 state = STATE_V;
                             }
-                            colorPosition -= 4;
+                            colorPosition -= 8;
 
                             break;
 
                         case STATE_V:
+                            hadActivity = true;
                             for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 148;
@@ -241,11 +248,11 @@ bool RainbowExplosionPattern::update()
                                     pixels[i].b = 211;
                                 }
                             }
-                            if (colorPosition == 0) {
+                            if (colorPosition <= 0) {
                                 colorPosition = PIXELS_PER_STRING;
                                 state = STATE_FIZZLE;
                             }
-                            colorPosition -= 4;
+                            colorPosition -= 8;
 
                             break;
 

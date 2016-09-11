@@ -179,13 +179,14 @@ bool buildFrame(
             break;
 
         case 1:
+            //cout << "build frame plunger" << endl;
             //
-            // SparklePattern
+            // RainbowExplosionPattern
             //
             for (col = 0; col < NUM_STRINGS; col++) {
                 for (row = 0; row < PIXELS_PER_STRING; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row];
+                        finalFrame[col][row] = pixelArray[col][row]; 
                     }
                 }
             }
@@ -206,8 +207,36 @@ bool buildFrame(
                 }
             }
             break;
-            
+ 
         case 3:
+            //cout << "build frame fourplay" << endl;
+            //
+            // HorizontalStripePattern
+            //
+            for (col = 0; col < NUM_STRINGS; col++) {
+                for (row = 0; row < PIXELS_PER_STRING; row++) {
+                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
+                        finalFrame[col][row] = pixelArray[col][row];
+                    }
+                }
+            }
+            break;
+
+         case 4:
+            //
+            // SparklePattern
+            //
+            for (col = 0; col < NUM_STRINGS; col++) {
+                for (row = 0; row < PIXELS_PER_STRING; row++) {
+                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
+                        finalFrame[col][row] = pixelArray[col][row];
+                    }
+                }
+            }
+            break;
+
+          
+        case 5:
             //cout << "build frame quad" << endl;
             //
             // QuadSlicePattern
@@ -222,33 +251,6 @@ bool buildFrame(
                 }
             }
             break;
-
-        case 4:
-            //cout << "build frame fourplay" << endl;
-            //
-            // HorizontalStripePattern
-            //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
-                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row];
-                    }
-                }
-            }
-            break;
-
-        case 5:
-            //cout << "build frame plunger" << endl;
-            //
-            // RainbowExplosionPattern
-            //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
-                    finalFrame[col][row] = pixelArray[col][row]; 
-                }
-            }
-            break;
-
 
         default:
             cout << "SOMETHING'S FUCKY : no case for priority " << priority << endl;
@@ -361,33 +363,32 @@ int main(void)
     solidBlackPattern.initWidgets(1, numChannels[0]);
     printInit(&solidBlackPattern);
 
-    sparklePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
-    sparklePattern.initWidgets(1, numChannels[1]);
-    printInit(&sparklePattern);
+    rainbowExplosionPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
+    rainbowExplosionPattern.initWidgets(1, numChannels[1]);
+    printInit(&rainbowExplosionPattern);
 
     rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[2]);
     rgbVerticalPattern.initWidgets(1, numChannels[2]);
     printInit(&rgbVerticalPattern);
 
-    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
-    quadSlicePattern.initWidgets(1, numChannels[3]);
-    printInit(&quadSlicePattern);
-
-    horizontalStripePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[4]);
-    horizontalStripePattern.initWidgets(1, numChannels[4]);
+    horizontalStripePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
+    horizontalStripePattern.initWidgets(1, numChannels[3]);
     printInit(&horizontalStripePattern);
 
-    rainbowExplosionPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[5]);
-    rainbowExplosionPattern.initWidgets(1, numChannels[5]);
-    printInit(&rainbowExplosionPattern);
+    sparklePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[4]);
+    sparklePattern.initWidgets(1, numChannels[4]);
+    printInit(&sparklePattern);
+
+    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[5]);
+    quadSlicePattern.initWidgets(1, numChannels[5]);
+    printInit(&quadSlicePattern);
 
     cout << "Pattern initialization done.  Start moving shit!" << endl;
     while (true) {
         rgbVerticalPattern.update();
-//        solidBlackPattern.update();
-//        quadSlicePattern.update();
-//        sparklePattern.update();
-// ROSS UNCOMMENT TO TEST FOURPLAY
+        solidBlackPattern.update();
+        quadSlicePattern.update();
+        sparklePattern.update();
         horizontalStripePattern.update();
         rainbowExplosionPattern.update();
 
@@ -395,19 +396,18 @@ int main(void)
 
         zeroFrame(finalFrame1);
 
-        if (rainbowExplosionPattern.isActive) {
+        if (quadSlicePattern.isActive) {
             anyPatternIsActive = true;
-            buildFrame(finalFrame1, rainbowExplosionPattern.pixelArray, rainbowExplosionPattern.priority);
+//            cout << "quad active" << endl;
+            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
         }
 
-
-//        if (quadSlicePattern.isActive) {
-//            anyPatternIsActive = true;
-////            cout << "quad active" << endl;
-//            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
-//        }
-        
-// ROSS UNCOMMENT TO TEST FOURPLAY
+        if (sparklePattern.isActive) {
+            anyPatternIsActive = true;
+//            cout << "sparkle active" << endl;
+            buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
+        }
+       
         if (horizontalStripePattern.isActive) {
             anyPatternIsActive = true;
             buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
@@ -419,19 +419,20 @@ int main(void)
             buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
         }
 
-//        if (sparklePattern.isActive) {
-//            anyPatternIsActive = true;
-////            cout << "sparkle active" << endl;
-//            buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
-//        }
+        if (rainbowExplosionPattern.isActive) {
+            anyPatternIsActive = true;
+            buildFrame(finalFrame1, rainbowExplosionPattern.pixelArray, rainbowExplosionPattern.priority);
+        }
 
-//        if (solidBlackPattern.isActive) {
-//            anyPatternIsActive = true;
-////            cout << "solid active" << endl;
-//            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
-//        }
+        if (solidBlackPattern.isActive) {
+            anyPatternIsActive = true;
+//            cout << "solid active" << endl;
+            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
+        }
 
-        finalizeFrame(finalFrame1);
+        if (!anyPatternIsActive) {
+            finalizeFrame(finalFrame1);
+        }
 
         if (!anyPatternIsActive) {
             if (timeWentIdle == 0) {

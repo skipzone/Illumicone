@@ -55,7 +55,7 @@ bool SparklePattern::initWidgets(int numWidgets, int channelsPerWidget)
 
 bool SparklePattern::update()
 {
-    int hadActivity = 0;
+    bool hadActivity = false;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
     for (auto&& pixels:pixelArray) {
@@ -74,22 +74,25 @@ bool SparklePattern::update()
             for (auto&& channel:widget->getChannels()) {
 //                cout << "Updating widget's channel!" << endl;
                 if (channel->getHasNewMeasurement() || channel->getIsActive()) {
-                    hadActivity = 1;
                     float curVel = (float)(channel->getVelocity());
-                    float velocityPercentage = curVel / 600.0;
-                    // at max velocity, only half of the pixels on each string sparkle
-                    float numPixelsToSparkle = (velocityPercentage * (float)PIXELS_PER_STRING / 2.0);
 
-//                    cout << "curVel: " << curVel << endl;
-//                    cout << "velocityPercentage: " << velocityPercentage << endl;
-//                    cout << "numPixelsToSparkle: " << numPixelsToSparkle << endl;
+                    if (curVel > 20) {
+                        hadActivity = true;
+                        float velocityPercentage = curVel / 600.0;
+                        // at max velocity, only half of the pixels on each string sparkle
+                        float numPixelsToSparkle = (velocityPercentage * (float)PIXELS_PER_STRING);
 
-                    for (auto&& pixels:pixelArray) {
-                        for (int i = 0; i < (int)numPixelsToSparkle; i++) {
-                            int randPos = rand() % PIXELS_PER_STRING;
-                            pixels[randPos].r = rand() % 255;
-                            pixels[randPos].g = rand() % 255;
-                            pixels[randPos].b = rand() % 255;
+    //                    cout << "curVel: " << curVel << endl;
+    //                    cout << "velocityPercentage: " << velocityPercentage << endl;
+    //                    cout << "numPixelsToSparkle: " << numPixelsToSparkle << endl;
+
+                        for (auto&& pixels:pixelArray) {
+                            for (int i = 0; i < (int)numPixelsToSparkle; i++) {
+                                int randPos = rand() % PIXELS_PER_STRING;
+                                pixels[randPos].r = rand() % 255;
+                                pixels[randPos].g = rand() % 255;
+                                pixels[randPos].b = rand() % 255;
+                            }
                         }
                     }
                 }

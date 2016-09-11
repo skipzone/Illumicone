@@ -16,7 +16,6 @@
 */
 
 #include <iostream>
-#include <time.h>
 #include "Widget.h"
 #include "WidgetChannel.h"
 #include "Pattern.h"
@@ -25,6 +24,14 @@
 #include "WidgetFactory.h"
 
 using namespace std;
+
+
+SolidBlackPattern::SolidBlackPattern()
+    : loggedShutoffMessage(false)
+    , timeExceededThreshold(0)
+{
+};
+
 
 bool SolidBlackPattern::initPattern(int numStrings, int pixelsPerString, int priority)
 {
@@ -66,8 +73,45 @@ bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
 bool SolidBlackPattern::update()
 {
     int hadActivity = 0;
+    time_t now;
+
 //    cout << "Updating Solid Black Pattern!" << endl;
 
+    time(&now);
+
+    // Shut off the cone during the daytime even if the Eye widget isn't present.
+    struct tm tmStruct = *localtime(&now);
+    if ( ( (tmStruct.tm_hour == turnoffStartHour && tmStruct.tm_min >= turnoffStartMinute)
+           || tmStruct.tm_hour > turnoffStartHour )
+         && ( (tmStruct.tm_hour == turnoffEndHour && tmStruct.tm_min < turnoffEndMinute)
+              || tmStruct.tm_hour < turnoffEndHour ) )
+    {
+        if (!loggedShutoffMessage) {
+            loggedShutoffMessage = true;
+            cout << "Shutting off cone because hour=" << tmStruct.tm_hour
+                << ", minute=" << tmStruct.tm_min
+                << endl;
+        }
+        for (auto&& pixels:pixelArray) {
+            for (auto&& pixel:pixels) {
+                pixel.r = 1;
+                pixel.g = 1;
+                pixel.b = 1;
+            }
+        }
+        isActive = true;
+        return true;
+    }
+    else
+    {
+        if (loggedShutoffMessage) {
+            loggedShutoffMessage = false;
+            cout << "Turning on cone because hour=" << tmStruct.tm_hour
+                << ", minute=" << tmStruct.tm_min
+                << endl;
+        }
+    }
+    
     for (auto&& widget:widgets) {
 //        cout << "Updating Solid Black Pattern widget!" << endl;
         // update active, position, velocity for each channel in widget
@@ -100,9 +144,7 @@ bool SolidBlackPattern::update()
                             time(&timeExceededThreshold);
                         }
                         else {
-                            time_t now;
-                            time(&now);
-                            if (now - timeExceededThreshold > 10) {
+                            if (now - timeExceededThreshold > flashingTimeoutSeconds) {
                                 turnOff = true;
                             }
                         }
@@ -127,26 +169,6 @@ bool SolidBlackPattern::update()
                             }
                         }
                     }
-
-//                    switch (channel.number) {
-//                        case 0:
-//                            // set entire pixelArray black (off)
-//                            for (i = 0; i < NUM_STRINGS; i++) {
-//                                for (auto&& pixel:pixelArray[i]) {
-//                                    pixel.r = 0;
-//                                    pixel.g = 0;
-//                                    pixel.b = 0;
-//                                }
-//                            }
-//
-//                            break;
-//
-//                        default:
-//                            // shouldn't get here, solid black uses the eye widget which
-//                            // should only have one channel.
-//                            cout << "SOMETHING'S FUCKY : channel number for Solid Black Pattern widget" << endl;
-//                            break;
-//                    }
                 }
             }
         }

@@ -41,12 +41,12 @@ bool HorizontalStripePattern::initPattern(int numStrings, int pixelsPerString, i
 bool HorizontalStripePattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
     int i;
-//    cout << "Init RGB Vertical Pattern Widgets!" << endl;
+//    cout << "Init HorizontalStripePattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::fourPlay);
         widgets.emplace_back(newWidget);
-        newWidget->init(true);
+        newWidget->init(false);
     }
 
     return true;
@@ -67,15 +67,15 @@ bool HorizontalStripePattern::update()
     }
 
     for (auto&& widget:widgets) {
-//        cout << "Updating Solid Black Pattern widget!" << endl;
+        //cout << "Updating HorizontalStripPatttern" << endl;
         // update active, position, velocity for each channel in widget
         widget->moveData();
         if (widget->getIsActive()) {
             for (auto&& channel:widget->getChannels()) {
-//                cout << "Updating widget's channel!" << endl;
+                //cout << "Updating widget's channel " << channel->getChannelNumber() << endl;
                 if (channel->getIsActive()) {
                     hadActivity = true;
-                    int curPos = ((unsigned int) channel->getPosition());
+                    int curPos = ((unsigned int) channel->getPosition() % pixelsPerString);
                     switch (channel->getChannelNumber()) {
                         case 0:
                             for (auto&& pixels:pixelArray) {
@@ -96,7 +96,7 @@ bool HorizontalStripePattern::update()
                             break;
 
                         case 3:
-                            cout << "FourPlay wheel 4 active" << endl;
+                            //cout << "FourPlay wheel 4 active" << endl;
                             break;
 
                         default:

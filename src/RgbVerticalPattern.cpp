@@ -145,10 +145,12 @@ bool RgbVerticalPattern::update()
                         int bellsPos;
                         int stringIndex;
                         float scaleValue = (1024.0 / ((float)NUM_STRINGS / 3.0));
-                        hadActivity = true;
 
                         bellsPos = channel->getPosition();
                         bellsPos = (int)((float)bellsPos / scaleValue);
+                        if (bellsPos >= 2) {
+                            hadActivity = true;
+                        }
 
                         rWidthLowIndex = rPos - (bellsPos / 2);
                         rWidthHighIndex = rPos + (bellsPos / 2);
