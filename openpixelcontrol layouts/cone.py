@@ -20,11 +20,12 @@ PIXEL_DISTANCE = 1 / PIXELS_PER_STRING
 
 result = ['[']
 theta = 0
-for p in range(PIXELS_PER_STRING):
-    z = .707 - .007 * p #TODO: explain this magic number
-    for s in range(NUM_STRINGS):
-        theta = 2 * math.pi * s /(NUM_STRINGS - 1)
-        radius = .007 * p + .03 #TODO: those magic numbers again
+for s in range(NUM_STRINGS):
+    theta = 2 * math.pi * s / (NUM_STRINGS - 1)
+
+    for p in range(PIXELS_PER_STRING):
+        z = .707 - .007 * p #TODO: explain these magic numbers
+        radius = .007 * p + .03
         x = math.sin(theta) * radius
         y = math.cos(theta) * radius
 
