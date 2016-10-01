@@ -10,13 +10,16 @@ import sys
 
 NUM_STRINGS = 36
 PIXELS_PER_STRING = 100
-PIXEL_DISTANCE = 1 / PIXELS_PER_STRING
-
+SCALE = 10 # You can also think of this as the length of the strands.
+print  "scale: " + str(SCALE)
+PIXEL_DISTANCE = SCALE / PIXELS_PER_STRING
+print "\npixel distance: " + str(PIXEL_DISTANCE)
+HEIGHT = math.sqrt(SCALE * SCALE / 2)
+print "\ncone height: " + str(HEIGHT)
+MIN_RADIUS = HEIGHT * 9 / 210 # i.e. the radius of the little circle on top
+print "\nmin radius: " + str(MIN_RADIUS)
 
 #-------------------------------------------------------------------------------
-# make the cone: assume each strand has length of 1, and that the height and radius are equal
-# i.e. h = r = ~.707
-# if there are 100 pixels, they are .01 apart
 
 result = ['[']
 theta = 0
@@ -24,8 +27,8 @@ for s in range(NUM_STRINGS):
     theta = 2 * math.pi * s / (NUM_STRINGS - 1)
 
     for p in range(PIXELS_PER_STRING):
-        z = .707 - .007 * p #TODO: explain these magic numbers
-        radius = .007 * p + .03
+        z = HEIGHT - PIXEL_DISTANCE * p
+        radius = PIXEL_DISTANCE * p + MIN_RADIUS
         x = math.sin(theta) * radius
         y = math.cos(theta) * radius
 
