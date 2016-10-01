@@ -16,7 +16,7 @@ PIXEL_DISTANCE = SCALE / PIXELS_PER_STRING
 print "\npixel distance: " + str(PIXEL_DISTANCE)
 HEIGHT = math.sqrt(SCALE * SCALE / 2)
 print "\ncone height: " + str(HEIGHT)
-MIN_RADIUS = HEIGHT * 9 / 210 # i.e. the radius of the little circle on top
+MIN_RADIUS = HEIGHT * .1 # i.e. the radius of the little circle on top
 print "\nmin radius: " + str(MIN_RADIUS)
 
 #-------------------------------------------------------------------------------
