@@ -268,9 +268,9 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
 
     cout << "Contents:" << endl;
     for (int i = 0; i < bufLen; ++i) {
-        cerr << hex << (int) payload->buf[i] << " ";
+        cout << hex << (int) payload->buf[i] << " ";
     }
-    cerr << endl;
+    cout << endl;
 }
 
 
