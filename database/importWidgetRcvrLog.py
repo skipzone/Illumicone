@@ -16,6 +16,15 @@ dbConnectionInfo = {
 
 dbConn = None
 
+payloadTypeTable = {}
+
+sqlInsertWidgetPacketRow = """
+    INSERT widget_packet (rcvr_timestamp, widget_id, is_active, channel, payload_type_id)
+    VALUES (%(timestamp)s, %(widgetId)s, %(isActive)s, %(channel)s, %(payloadTypeId)s)
+"""
+
+lineCount = 0
+
 
 class LogState(Enum):
     search = 1
@@ -23,9 +32,6 @@ class LogState(Enum):
     inMeasurementVector = 3
     startCustomContents = 4
     inCustomContents = 5
-
-
-payloadTypeTable = {}
 
 
 def openDbConnection(connInfo):
@@ -77,14 +83,39 @@ def loadPayloadTypeTable():
     return True
 
 
+def importStressTest(widgetData):
+
+    global payloadTypeTable
+    global sqlInsertWidgetPacketRow
+    global lineCount
+
+    sqlInsertStressTestPayloadRow = """
+        INSERT stress_test_payload (widget_packet_id, payload_count, tx_failure_count)
+        VALUES (%(widgetPacketId)s, %(payloadCount)s, %(txFailureCount)s)
+    """
+
+    try:
+        cursor = dbConn.cursor()
+        widgetData['payloadTypeId'] = payloadTypeTable['stress test']
+        cursor.execute(sqlInsertWidgetPacketRow, widgetData)
+        widgetData['widgetPacketId'] = cursor.lastrowid
+        cursor.execute(sqlInsertStressTestPayloadRow, widgetData)
+        dbConn.commit()
+        cursor.close()
+
+    except mysql.connector.errors.Error as e:
+        dbConn.rollback()
+        sys.stderr.write('importStressTest for line {0}:  {1}\n'.format(lineCount, e))
+        return False
+
+    return True
+
+
 def importPositionVelocity(widgetData):
 
     global payloadTypeTable
-
-    sqlInsertWidgetPacketRow = """
-        INSERT widget_packet (rcvr_timestamp, widget_id, is_active, channel, payload_type_id)
-        VALUES (%(timestamp)s, %(widgetId)s, %(isActive)s, %(channel)s, %(payloadTypeId)s)
-    """
+    global sqlInsertWidgetPacketRow
+    global lineCount
 
     sqlInsertPositionVelocityPayloadRow = """
         INSERT position_velocity_payload (widget_packet_id, position, velocity)
@@ -102,7 +133,37 @@ def importPositionVelocity(widgetData):
 
     except mysql.connector.errors.Error as e:
         dbConn.rollback()
-        sys.stderr.write('importPositionVelocity:  {0}\n'.format(e))
+        sys.stderr.write('importPositionVelocity for line {0}:  {1}\n'.format(lineCount, e))
+        return False
+
+    return True
+
+
+def importMeasurementVector(widgetData, measurements):
+
+    global payloadTypeTable
+    global sqlInsertWidgetPacketRow
+    global lineCount
+
+    sqlInsertMeasurementVectorPayloadRow = """
+        INSERT measurement_vector_payload (widget_packet_id, measurement_idx, measurement)
+        VALUES (%s, %s, %s)
+    """
+
+    try:
+        cursor = dbConn.cursor()
+        widgetData['payloadTypeId'] = payloadTypeTable['measurement vector']
+        cursor.execute(sqlInsertWidgetPacketRow, widgetData)
+        widgetPacketId = cursor.lastrowid
+        for i, measurement in enumerate(measurements):
+            #print("i={0} measurement={1}".format(i, measurement))
+            cursor.execute(sqlInsertMeasurementVectorPayloadRow, (widgetPacketId, i, measurement))
+        dbConn.commit()
+        cursor.close()
+
+    except mysql.connector.errors.Error as e:
+        dbConn.rollback()
+        sys.stderr.write('importMeasurementVector for line {0}:  {1}\n'.format(lineCount, e))
         return False
 
     return True
@@ -110,6 +171,8 @@ def importPositionVelocity(widgetData):
 
 
 def processLogFile(logFileName):
+
+    global lineCount
 
     # 2016-09-01 23:58:31.124:  
     timestampPattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}):  '
@@ -128,8 +191,6 @@ def processLogFile(logFileName):
 
     lineCount = 0
     currentState = LogState.search
-    numMeasurements = None
-    measurements = []
 
     try:
         with open(logFileName, 'r') as f:
@@ -140,6 +201,19 @@ def processLogFile(logFileName):
 
                 if currentState is LogState.search:
 
+                    m = re.search(timestampPattern + stressTestPayloadPattern, line)
+                    if m is not None:
+                        widgetData = {
+                            'timestamp' : m.group(1),
+                            'widgetId' : m.group(2),
+                            'isActive' : m.group(3) == 'active',
+                            'channel' : m.group(4),
+                            'payloadCount' : m.group(5),
+                            'txFailureCount' : m.group(6) }
+                        print('Got data:  {0}'.format(widgetData))
+                        importStressTest(widgetData)
+                        next
+
                     m = re.search(timestampPattern + positionVelocityPayloadPattern, line)
                     if m is not None:
                         widgetData = {
@@ -149,32 +223,20 @@ def processLogFile(logFileName):
                             'channel' : m.group(4),
                             'position' : m.group(5),
                             'velocity' : m.group(6) }
-                        print('Got data:  {0}'.format(widgetData))
+                        #print('Got data:  {0}'.format(widgetData))
                         importPositionVelocity(widgetData)
                         next
 
                     m = re.search(timestampPattern + measurementVectorPayloadPattern, line)
                     if m is not None:
-                        timestamp = m.group(1)
-                        widgetId = m.group(2)
-                        isActive = m.group(3) == 'active'
-                        channel = m.group(4)
-                        numMeasurements = int(m.group(5))
+                        widgetData = {
+                            'timestamp' : m.group(1),
+                            'widgetId' : m.group(2),
+                            'isActive' : m.group(3) == 'active',
+                            'channel' : m.group(4),
+                            'numMeasurements' : int(m.group(5)) }
                         measurements = []
                         currentState = LogState.startMeasurementVector
-                        next
-
-                    m = re.search(timestampPattern + stressTestPayloadPattern, line)
-                    if m is not None:
-                        timestamp = m.group(1)
-                        widgetId = m.group(2)
-                        isActive = m.group(3) == 'active'
-                        channel = m.group(4)
-                        payloadCount = m.group(5)
-                        txFailureCount = m.group(6)
-                        print('Got data:  timestamp={0} id={1} isActive={2} channel={3} payloadCount={4} txFailureCount={5}'.format(
-                            timestamp, widgetId, isActive, channel, payloadCount, txFailureCount))
-                        # TODO: insert row
                         next
 
                     m = re.search(timestampPattern + customPayloadPattern, line)
@@ -200,14 +262,13 @@ def processLogFile(logFileName):
                     next
 
                 elif currentState is LogState.inMeasurementVector:
+
                     m = re.search(r'\s*(-?\d+)$', line)
                     if m is not None:
                         measurements.append(int(m.group(1)))
-                        if len(measurements) == numMeasurements:
-                            print('Got data:  timestamp={0} id={1} isActive={2} channel={3}'
-                                  ' numMeasurements={4} measurements={5}'.format(
-                                      timestamp, widgetId, isActive, channel, numMeasurements, measurements))
-                            # TODO: insert row
+                        if len(measurements) == widgetData['numMeasurements']:
+                            #print('Got data:  {0}'.format(widgetData))
+                            importMeasurementVector(widgetData, measurements)
                             currentState = LogState.search
                     else:
                         sys.stderr.write('Missing or unrecognized measurement line at line {0}.\n'.format(lineCount))
@@ -224,6 +285,7 @@ def processLogFile(logFileName):
                     next
 
                 elif currentState is LogState.inCustomContents:
+
                     # The contents are a hex number repeated bufline times.
                     if re.search(r'^(?:\s*0[xX][0-9a-fA-F]{{2}}){{{0}}}$'.format(buflen), line):
                         contentBytes = line.split(' ')
