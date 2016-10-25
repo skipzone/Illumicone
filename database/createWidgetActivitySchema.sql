@@ -55,6 +55,7 @@ DEFAULT CHARACTER SET = latin1;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `widget_activity`.`custom_payload` (
   `widget_packet_id` BIGINT(20) UNSIGNED NOT NULL,
+  `payload_length` TINYINT(3) UNSIGNED NOT NULL,
   `data_bytes` BINARY(31) NULL DEFAULT NULL,
   PRIMARY KEY (`widget_packet_id`),
   CONSTRAINT `fk_custom_payload_widget_packet`

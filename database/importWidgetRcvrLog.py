@@ -79,7 +79,8 @@ def loadPayloadTypeTable():
 
     cursor.close()
 
-    print("payloadTypeTable = {0}".format(payloadTypeTable))
+    #print("payloadTypeTable = {0}".format(payloadTypeTable))
+
     return True
 
 
@@ -169,6 +170,33 @@ def importMeasurementVector(widgetData, measurements):
     return True
 
 
+def importCustom(widgetData):
+
+    global payloadTypeTable
+    global sqlInsertWidgetPacketRow
+    global lineCount
+
+    sqlInsertCustomPayloadRow = """
+        INSERT custom_payload (widget_packet_id, payload_length, data_bytes)
+        VALUES (%(widgetPacketId)s, %(payloadLength)s, %(dataBytes)s)
+    """
+
+    try:
+        cursor = dbConn.cursor()
+        widgetData['payloadTypeId'] = payloadTypeTable['custom']
+        cursor.execute(sqlInsertWidgetPacketRow, widgetData)
+        widgetData['widgetPacketId'] = cursor.lastrowid
+        cursor.execute(sqlInsertCustomPayloadRow, widgetData)
+        dbConn.commit()
+        cursor.close()
+
+    except mysql.connector.errors.Error as e:
+        dbConn.rollback()
+        sys.stderr.write('importCustom for line {0}:  {1}\n'.format(lineCount, e))
+        return False
+
+    return True
+
 
 def processLogFile(logFileName):
 
@@ -185,9 +213,8 @@ def processLogFile(logFileName):
     # Got stress test payload; Id = 6, active  , ch = 1, seq = 1, fails = 0 (0% )
     stressTestPayloadPattern = r'Got stress test payload; Id = (\d+),\s*(\w+)\s*, ch = (\d+), seq = (-?\d+), fails = (-?\d+) \(\d+%\s*\)$'
 
-    # Got custom payload; Id = 4, active  , ch = 0, buflen = 32
-    # TODO:  untested
-    customPayloadPattern = r'Got custom payload; Id = (\d+),\s*(\w+)\s*, ch = (\d+), buflen = (\d+)$'
+    # Got custom payload; Id = 4, active  , ch = 0, bufLen = 31
+    customPayloadPattern = r'Got custom payload; Id = (\d+),\s*(\w+)\s*, ch = (\d+), bufLen = (\d+)$'
 
     lineCount = 0
     currentState = LogState.search
@@ -210,7 +237,7 @@ def processLogFile(logFileName):
                             'channel' : m.group(4),
                             'payloadCount' : m.group(5),
                             'txFailureCount' : m.group(6) }
-                        print('Got data:  {0}'.format(widgetData))
+                        #print('Got data:  {0}'.format(widgetData))
                         importStressTest(widgetData)
                         next
 
@@ -241,11 +268,12 @@ def processLogFile(logFileName):
 
                     m = re.search(timestampPattern + customPayloadPattern, line)
                     if m is not None:
-                        timestamp = m.group(1)
-                        widgetId = m.group(2)
-                        isActive = m.group(3) == 'active'
-                        channel = m.group(4)
-                        buflen = int(m.group(5))
+                        widgetData = {
+                            'timestamp' : m.group(1),
+                            'widgetId' : m.group(2),
+                            'isActive' : m.group(3) == 'active',
+                            'channel' : m.group(4),
+                            'payloadLength' : int(m.group(5)) }
                         currentState = LogState.startCustomContents
                         next
 
@@ -267,7 +295,7 @@ def processLogFile(logFileName):
                     if m is not None:
                         measurements.append(int(m.group(1)))
                         if len(measurements) == widgetData['numMeasurements']:
-                            #print('Got data:  {0}'.format(widgetData))
+                            #print('Got data:  {0}  {1}'.format(widgetData, measurements))
                             importMeasurementVector(widgetData, measurements)
                             currentState = LogState.search
                     else:
@@ -287,12 +315,10 @@ def processLogFile(logFileName):
                 elif currentState is LogState.inCustomContents:
 
                     # The contents are a hex number repeated bufline times.
-                    if re.search(r'^(?:\s*0[xX][0-9a-fA-F]{{2}}){{{0}}}$'.format(buflen), line):
-                        contentBytes = line.split(' ')
-                        print('Got data:  timestamp={0} id={1} isActive={2} channel={3}'
-                              ' buflen={4} contentBytes={5}'.format(
-                                  timestamp, widgetId, isActive, channel, buflen, contentBytes))
-                        # TODO: insert row
+                    if re.search(r'^(?:\s*0[xX][0-9a-fA-F]{{2}}){{{0}}}$'.format(widgetData['payloadLength']), line):
+                        widgetData['dataBytes'] = ''.join([chr(int(h, 16)) for h in line.split(' ')])
+                        #print('Got data:  {0}'.format(widgetData))
+                        importCustom(widgetData)
                         currentState = LogState.search
                     else:
                         sys.stderr.write('Missing or unrecognized contents line at line {0}.\n'.format(lineCount))
