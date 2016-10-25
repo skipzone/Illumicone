@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `widget_activity`.`widget_packet` (
   `widget_packet_id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `rcvr_timestamp` DATETIME(3) NOT NULL,
   `widget_id` TINYINT(3) UNSIGNED NOT NULL,
-  `isActive` TINYINT(1) NOT NULL,
+  `is_active` TINYINT(1) NOT NULL,
   `channel` TINYINT(3) UNSIGNED NOT NULL,
   `payload_type_id` TINYINT(3) UNSIGNED NOT NULL,
   PRIMARY KEY (`widget_packet_id`),

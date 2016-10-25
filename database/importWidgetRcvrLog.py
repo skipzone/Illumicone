@@ -14,6 +14,8 @@ dbConnectionInfo = {
     'password'  : 'woof'
 }
 
+dbConn = None
+
 
 class LogState(Enum):
     search = 1
@@ -21,6 +23,9 @@ class LogState(Enum):
     inMeasurementVector = 3
     startCustomContents = 4
     inCustomContents = 5
+
+
+payloadTypeTable = {}
 
 
 def openDbConnection(connInfo):
@@ -46,32 +51,62 @@ def closeDbConnection(conn):
     return
 
 
-def doTestQuery(conn):
+def loadPayloadTypeTable():
 
-    try:
-        cursor = conn.cursor()
-    except mysql.connector.errors.Error as e:
-        sys.stderr.write('Unable to get cursor.  {0}\n'.format(e))
-        return
+    global payloadTypeTable
 
     query = ("SELECT payload_type_id, payload_type_desc FROM payload_type")
 
     try:
+        cursor = dbConn.cursor()
         cursor.execute(query)
     except mysql.connector.errors.Error as e:
         sys.stderr.write('An error occurred while executing "{0}".  {1}\n'.format(query, e))
-        cursor.close()
-        return
+        return False
 
+    payloadTypeTable = {}
     try:
         for (payloadTypeId, payloadTypeDesc) in cursor:
-            print("{0}, {1}".format(payloadTypeId, payloadTypeDesc))
+            payloadTypeTable[payloadTypeDesc] = payloadTypeId
     except mysql.connector.errors.Error as e:
         sys.stderr.write('An error occurred while processing results from "{0}".  {1}\n'.format(query, e))
 
     cursor.close()
 
-    return
+    print("payloadTypeTable = {0}".format(payloadTypeTable))
+    return True
+
+
+def importPositionVelocity(widgetData):
+
+    global payloadTypeTable
+
+    sqlInsertWidgetPacketRow = """
+        INSERT widget_packet (rcvr_timestamp, widget_id, is_active, channel, payload_type_id)
+        VALUES (%(timestamp)s, %(widgetId)s, %(isActive)s, %(channel)s, %(payloadTypeId)s)
+    """
+
+    sqlInsertPositionVelocityPayloadRow = """
+        INSERT position_velocity_payload (widget_packet_id, position, velocity)
+        VALUES (%(widgetPacketId)s, %(position)s, %(velocity)s)
+    """
+
+    try:
+        cursor = dbConn.cursor()
+        widgetData['payloadTypeId'] = payloadTypeTable['position/velocity']
+        cursor.execute(sqlInsertWidgetPacketRow, widgetData)
+        widgetData['widgetPacketId'] = cursor.lastrowid
+        cursor.execute(sqlInsertPositionVelocityPayloadRow, widgetData)
+        dbConn.commit()
+        cursor.close()
+
+    except mysql.connector.errors.Error as e:
+        dbConn.rollback()
+        sys.stderr.write('importPositionVelocity:  {0}\n'.format(e))
+        return False
+
+    return True
+
 
 
 def processLogFile(logFileName):
@@ -103,22 +138,19 @@ def processLogFile(logFileName):
                 line = line.rstrip()
                 #print(line)
 
-##    startCustomContents = 4
-##    inCustomContents = 5
-
                 if currentState is LogState.search:
 
                     m = re.search(timestampPattern + positionVelocityPayloadPattern, line)
                     if m is not None:
-                        timestamp = m.group(1)
-                        widgetId = m.group(2)
-                        isActive = m.group(3) == 'active'
-                        channel = m.group(4)
-                        position = m.group(5)
-                        velocity = m.group(6)
-                        print('Got data:  timestamp={0} id={1} isActive={2} channel={3} position={4} velocity={5}'.format(
-                            timestamp, widgetId, isActive, channel, position, velocity))
-                        # TODO: insert row
+                        widgetData = {
+                            'timestamp' : m.group(1),
+                            'widgetId' : m.group(2),
+                            'isActive' : m.group(3) == 'active',
+                            'channel' : m.group(4),
+                            'position' : m.group(5),
+                            'velocity' : m.group(6) }
+                        print('Got data:  {0}'.format(widgetData))
+                        importPositionVelocity(widgetData)
                         next
 
                     m = re.search(timestampPattern + measurementVectorPayloadPattern, line)
@@ -223,29 +255,31 @@ def usage():
 
 def main(argv):
 
+    global dbConn
+
     if len(argv) <> 2:
         usage()
-        sys.exit(2)
+        return 2
 
     inputFileName = argv[1]
     if not os.path.exists(inputFileName):
         sys.stderr.write('File {0} does not exist.\n'.format(inputFileName))
-        sys.exit(1)
-
+        return 1
 
     dbConn = openDbConnection(dbConnectionInfo)
     if dbConn is None:
-        sys.exit(1)
+        return 1
 
-    #doTestQuery(dbConn)
+    if not loadPayloadTypeTable():
+        return 1
 
     processLogFile(inputFileName)
 
     closeDbConnection(dbConn)
 
-    sys.exit(0)
+    return 0
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    sys.exit(main(sys.argv))
 
