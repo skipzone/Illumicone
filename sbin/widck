@@ -1,2 +1,2 @@
 #! /bin/bash
-tail -6000 ~/widgetRcvr.out | egrep "id=$1" | tail
+tail -10000 ~/logs/patternController_data.log | egrep " id=$1 " | tail
