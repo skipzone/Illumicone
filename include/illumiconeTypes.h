@@ -23,6 +23,8 @@
 #define NUM_STRINGS 36
 #define PIXELS_PER_STRING 100
 #define OPC_SERVER_ADDR "192.168.69.100"
+// david's VM (14), ross's mac (12)
+//#define OPC_SERVER_ADDR "192.168.69.13"
 // david's home addr for the sever
 //#define OPC_SERVER_ADDR "192.168.0.10"
 // type definitions for Illumicone
