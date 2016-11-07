@@ -36,6 +36,34 @@ USE `widget_activity` ;
 
 
 -- -----------------------------------------------------
+-- Table `widget_activity`.`widget`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `widget_activity`.`widget` (
+  `widget_id` TINYINT(3) UNSIGNED NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`widget_id`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = latin1;
+
+INSERT widget VALUES (0, 'reserved');
+INSERT widget VALUES (1, 'Eye');
+INSERT widget VALUES (2, 'Shirleys Web');
+INSERT widget VALUES (3, 'Bells');
+INSERT widget VALUES (4, 'Steps');
+INSERT widget VALUES (5, 'Rain Stick');
+INSERT widget VALUES (6, 'TriObelisk');
+INSERT widget VALUES (7, 'Box Theramin');
+INSERT widget VALUES (8, 'Plunger');
+INSERT widget VALUES (9, 'FourPlay');
+INSERT widget VALUES (10, 'unassigned');
+INSERT widget VALUES (11, 'unassigned');
+INSERT widget VALUES (12, 'unassigned');
+INSERT widget VALUES (13, 'unassigned');
+INSERT widget VALUES (14, 'unassigned');
+INSERT widget VALUES (15, 'unassigned');
+
+
+-- -----------------------------------------------------
 -- Table `widget_activity`.`payload_type`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `widget_activity`.`payload_type` (
