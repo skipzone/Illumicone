@@ -1,3 +1,27 @@
+/*
+    ----------------------------------------------------------------------------
+    This script creates the widget_activity relational database.
+
+    Ross Butler  October 2016
+    ----------------------------------------------------------------------------
+
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
 -- MySQL Workbench Forward Engineering
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
@@ -39,6 +63,7 @@ CREATE TABLE IF NOT EXISTS `widget_activity`.`widget_packet` (
   `is_active` TINYINT(1) NOT NULL,
   `channel` TINYINT(3) UNSIGNED NOT NULL,
   `payload_type_id` TINYINT(3) UNSIGNED NOT NULL,
+  `considered_active_by_pattern` TINYINT(1) NOT NULL,
   PRIMARY KEY (`widget_packet_id`),
   INDEX `time_id` (`rcvr_timestamp` ASC, `widget_id` ASC),
   INDEX `id_time` (`widget_id` ASC, `rcvr_timestamp` ASC),
@@ -87,21 +112,23 @@ DEFAULT CHARACTER SET = latin1;
 -- -----------------------------------------------------
 -- Table `widget_activity`.`pattern_controller_packet`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `widget_activity`.`pattern_controller_packet` (
-  `widget_packet_id` BIGINT(20) UNSIGNED NOT NULL,
-  `sequence` TINYINT(3) UNSIGNED NOT NULL,
-  `channel` TINYINT(3) UNSIGNED NOT NULL,
-  `considered_active_by_pattern` TINYINT(1) NOT NULL,
-  `position` MEDIUMINT(5) NOT NULL,
-  `velocity` MEDIUMINT(5) NOT NULL,
-  PRIMARY KEY (`widget_packet_id`, `sequence`),
-  CONSTRAINT `pattern_controller_packet_widget_packet`
-    FOREIGN KEY (`widget_packet_id`)
-    REFERENCES `widget_activity`.`widget_packet` (`widget_packet_id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = latin1;
+-- We really don't need this table.  Instead, considered_active_by_pattern
+-- should be in widget_packet.
+-- CREATE TABLE IF NOT EXISTS `widget_activity`.`pattern_controller_packet` (
+--   `widget_packet_id` BIGINT(20) UNSIGNED NOT NULL,
+--   `sequence` TINYINT(3) UNSIGNED NOT NULL,
+--   `channel` TINYINT(3) UNSIGNED NOT NULL,
+--   `considered_active_by_pattern` TINYINT(1) NOT NULL,
+--   `position` MEDIUMINT(5) NOT NULL,
+--   `velocity` MEDIUMINT(5) NOT NULL,
+--   PRIMARY KEY (`widget_packet_id`, `sequence`),
+--   CONSTRAINT `pattern_controller_packet_widget_packet`
+--     FOREIGN KEY (`widget_packet_id`)
+--     REFERENCES `widget_activity`.`widget_packet` (`widget_packet_id`)
+--     ON DELETE CASCADE
+--     ON UPDATE CASCADE)
+-- ENGINE = InnoDB
+-- DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------

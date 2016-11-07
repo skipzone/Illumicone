@@ -1,5 +1,30 @@
 #! /usr/bin/python
 
+'''
+    ----------------------------------------------------------------------------
+    This program imports widgetRcvr logs (output from widgetRcvr written to
+    stdout) into the widget_activity relational database.
+
+    Ross Butler  October 2016
+    ----------------------------------------------------------------------------
+
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+
 from enum import Enum
 import mysql.connector
 import os
@@ -222,6 +247,8 @@ def processLogFile(logFileName):
     try:
         with open(logFileName, 'r') as f:
             for line in f:
+                if lineCount % 50000 == 0:
+                    print('Processed {0} lines.'.format(lineCount))
                 lineCount += 1
                 line = line.rstrip()
                 #print(line)
@@ -314,8 +341,8 @@ def processLogFile(logFileName):
 
                 elif currentState is LogState.inCustomContents:
 
-                    # The contents are a hex number repeated bufline times.
-                    if re.search(r'^(?:\s*0[xX][0-9a-fA-F]{{2}}){{{0}}}$'.format(widgetData['payloadLength']), line):
+                    # The contents are two-digit hex numbers repeated bufline times.
+                    if re.search(r'^(?:\s*[0-9a-fA-F]{{2}}){{{0}}}$'.format(widgetData['payloadLength']), line):
                         widgetData['dataBytes'] = ''.join([chr(int(h, 16)) for h in line.split(' ')])
                         #print('Got data:  {0}'.format(widgetData))
                         importCustom(widgetData)
