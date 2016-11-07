@@ -28,6 +28,7 @@ using namespace std;
 
 SolidBlackPattern::SolidBlackPattern()
     : loggedShutoffMessage(false)
+    , loggedQuiescentModeMessage(false)
     , timeExceededThreshold(0)
 {
 };
@@ -70,6 +71,7 @@ bool SolidBlackPattern::initWidgets(int numWidgets, int channelsPerWidget)
     return true;
 }
 
+
 bool SolidBlackPattern::update()
 {
     int hadActivity = 0;
@@ -79,8 +81,9 @@ bool SolidBlackPattern::update()
 
     time(&now);
 
-    // Shut off the cone during the daytime even if the Eye widget isn't present.
     struct tm tmStruct = *localtime(&now);
+
+    // Shut off the cone during the daytime even if the Eye widget isn't present.
     if ( ( (tmStruct.tm_hour == turnoffStartHour && tmStruct.tm_min >= turnoffStartMinute)
            || tmStruct.tm_hour > turnoffStartHour )
          && ( (tmStruct.tm_hour == turnoffEndHour && tmStruct.tm_min < turnoffEndMinute)
@@ -107,6 +110,38 @@ bool SolidBlackPattern::update()
         if (loggedShutoffMessage) {
             loggedShutoffMessage = false;
             cout << "Turning on cone because hour=" << tmStruct.tm_hour
+                << ", minute=" << tmStruct.tm_min
+                << endl;
+        }
+    }
+    
+    // Go into quiescent mode while something special is happening.
+    if ( ( (tmStruct.tm_hour == quiescentModeStartHour && tmStruct.tm_min >= quiescentModeStartMinute)
+           || tmStruct.tm_hour > quiescentModeStartHour )
+         && ( (tmStruct.tm_hour == quiescentModeEndHour && tmStruct.tm_min < quiescentModeEndMinute)
+              || tmStruct.tm_hour < quiescentModeEndHour ) )
+    {
+        if (!loggedQuiescentModeMessage) {
+            loggedQuiescentModeMessage = true;
+            cout << "Going into quiescent mode because hour=" << tmStruct.tm_hour
+                << ", minute=" << tmStruct.tm_min
+                << endl;
+        }
+        for (auto&& pixels:pixelArray) {
+            for (auto&& pixel:pixels) {
+                pixel.r = 1;
+                pixel.g = 1;
+                pixel.b = 64;
+            }
+        }
+        isActive = true;
+        return true;
+    }
+    else
+    {
+        if (loggedQuiescentModeMessage) {
+            loggedQuiescentModeMessage = false;
+            cout << "Coming out of quiescent mode because hour=" << tmStruct.tm_hour
                 << ", minute=" << tmStruct.tm_min
                 << endl;
         }
