@@ -1,38 +1,52 @@
+%% Initialization and configuration
+
 clear;
+
 format long;
 
+plotConfig = {'Burning Man 2016', ...   % description for plot title
+              '2016-08-25 01:00', ...   % start date and time
+              '2016-09-04 23:59:59' ... % end date and time
+              -1                        % event timezone hour offset from data timezone
+             };
 
+              
 %% Get the widget minute-by-minute activity data from the database.
 
-conn = database('widget_activity','ross','woof','Vendor','MySQL','Server','localhost');
+sql = [ ...
+    'SELECT widget_id, minute_active' ...
+    ' FROM widget_minute_active' ...
+    ' WHERE minute_active BETWEEN ''', cell2mat(plotConfig(2)), ''' AND ''', cell2mat(plotConfig(3)), ''''];
+
 %sql = 'SELECT widget_id, minute_active, UNIX_TIMESTAMP(minute_active) FROM widget_minute_active';
 %sql = 'SELECT widget_id, minute_active, UNIX_TIMESTAMP(minute_active) FROM widget_minute_active WHERE minute_active BETWEEN ''2016-08-26 18:00:00'' AND ''2016-09-04 18:00:00''';
 %sql = 'SELECT widget_id, minute_active, UNIX_TIMESTAMP(minute_active) FROM widget_minute_active WHERE minute_active BETWEEN ''2016-07-13 12:00:00'' AND ''2016-07-17 12:00:00''';
-sql = 'SELECT widget_id, minute_active, UNIX_TIMESTAMP(minute_active) FROM widget_minute_active WHERE minute_active BETWEEN ''2016-10-06 12:00:00'' AND ''2016-10-09 12:00:00''';
+%sql = 'SELECT widget_id, minute_active, UNIX_TIMESTAMP(minute_active) FROM widget_minute_active WHERE minute_active BETWEEN ''2016-10-06 12:00:00'' AND ''2016-10-09 12:00:00''';
+
+conn = database('widget_activity','ross','woof','Vendor','MySQL','Server','localhost');
 curs = exec(conn, sql);
 curs = fetch(curs);
 results = curs.Data;
 
 widgetIds = uint64(cell2mat(results(:,1)));
 widgetMinutes = datenum(cell2mat(results(:,2)));
-%widgetMinutesUnixTime = int32(cell2mat(results(:,3)));
 
 
 %% Create a time vector for the x-axis.
 
 % The time vector t will contain the datenum value for each minute over the
-% complete time span of the data.
+% complete time span of the data and the plots.
 
-%startDateVec = datevec(min(widgetMinutes));
-[yr, mon, day, hr, mn, sec] = datevec(min(widgetMinutes));
+% Get the start of the time span.
+[yr, mon, day, hr, mn, sec] = datevec(cell2mat(plotConfig(2)));
 
-% +1 is fudge factor needed because of accumulated fractional day error.
+% The time span will be in full-day increments in order to facilitate
+% full-day plots.
+spanMinutes = ceil(datenum(cell2mat(plotConfig(3))) - datenum(cell2mat(plotConfig(2)))) * 24 * 60;
+
 t = datenum(yr, mon, day, hr, ...
-            mn : mn + (max(widgetMinutes) - min(widgetMinutes)) * 24 * 60 + 1, ...
+            mn : mn + spanMinutes, ...
             0);
-
-% Subtract 6/24 because t is MDT, not UTC.
-%tUnixTime = int32(86400 * (t - (datenum('01-Jan-1970') - 6 / 24)));
 
 
 %% Create a matrix representing when each widget was active.
@@ -62,38 +76,35 @@ end
 y(y == 0) = NaN;
 
 
-%% Create the plots.
+%% Create and save the plots.
 
 %figure(fignum);
 
-p = plot(t, y);
+set(gcf, 'units', 'points', 'position', [10, 10, 1280, 480]);
 
-set(gca, 'XLim', [t(1) t(end)]);
-set(gca, 'XTick', [t(1) : 12/24 : t(end)]);
+% adjust the x-axis values by the event's timezone offset
+tAdj = t + cell2mat(plotConfig(4)) / 24;
+p = plot(tAdj, y);
+
+set(gca, 'XLim', [tAdj(1) tAdj(end)]);
+set(gca, 'XTick', tAdj(1) : 24 / 24 : tAdj(end));
 
 datetick('x', 'ddd mm/dd HH:MM', 'keeplimits', 'keepticks');
 
 set(gca, 'YLim', [0 10]);
-set(gca, 'YTick', [0 : 10]);
+set(gca, 'YTick', 0 : 10);
 set(gca, 'YTickLabel', {' '; 'Eye'; 'Shirleys Web'; 'Bells'; 'Steps'; ' '; 'TriObelisk'; ' '; 'Plunger'; 'FourPlay'; ' '});
 
-xlabel('Date and Time', 'Color', 'black', 'FontSize', 16);
+xlabel('Time (24-hour notation:  00:00 = midnight, 12:00 = noon)', 'Color', 'black', 'FontSize', 16);
 ylabel('Widget', 'Color', 'black', 'FontSize', 16);
-title('Widget Minute-By-Minute Activity')
+title(['Widget Minute-By-Minute Activity at ', cell2mat(plotConfig(1))], 'FontSize', 18)
 
 set(p, 'LineWidth', 1.25);
 
 grid(gca, 'on');
 
+exportOptions.Format = 'epsc';
+hgexport(gcf, ['widget activity - ', cell2mat(plotConfig(1))], exportOptions);
 
-%% 
-
-% Validate conversion of datenum values to Unix time values.
-% Subtract 6/24 because widgetMinutes is MDT, not UTC.
-%unixTimeFromDatenum = int32(86400 * (widgetMinutes - (datenum('01-Jan-1970') - 6 / 24)));
-%unixTimeDiff = widgetMinutesUnixTime - unixTimeFromDatenum;
-
-% Two ways to convert unix time to datenum:
-% datenum([1970 1 1 0 0 unix_time])
-% unix_time/86400 + datenum(1970,1,1)
+%close;
 
