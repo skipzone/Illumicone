@@ -34,11 +34,16 @@ class SolidBlackPattern : public Pattern {
 //        time_t lastDayimeCheckTime;   // when the not-dark threshold was exceeded
 //        constexpr static unsigned time_t daytimeCheckIntervalSeconds = 60;
         bool loggedShutoffMessage;
+        bool loggedQuiescentModeMessage;
         // The times below must be MDT because ic-patcon is in that time zone.
         constexpr static int turnoffStartHour = 7;
         constexpr static int turnoffStartMinute = 30;
-        constexpr static int turnoffEndHour = 20;
+        constexpr static int turnoffEndHour = 18;
         constexpr static int turnoffEndMinute = 30;
+        constexpr static int quiescentModeStartHour = 23;
+        constexpr static int quiescentModeStartMinute = 40;
+        constexpr static int quiescentModeEndHour = 23;
+        constexpr static int quiescentModeEndMinute = 59;
 
         constexpr static time_t flashingTimeoutSeconds = 2;
         time_t timeExceededThreshold; // when the not-dark threshold was exceeded

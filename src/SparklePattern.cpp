@@ -80,7 +80,7 @@ bool SparklePattern::update()
                         hadActivity = true;
                         float velocityPercentage = curVel / 600.0;
                         // at max velocity, only half of the pixels on each string sparkle
-                        float numPixelsToSparkle = (velocityPercentage * (float)PIXELS_PER_STRING);
+                        float numPixelsToSparkle = (velocityPercentage * (float)(PIXELS_PER_STRING /2 ));
 
     //                    cout << "curVel: " << curVel << endl;
     //                    cout << "velocityPercentage: " << velocityPercentage << endl;

@@ -119,7 +119,7 @@ bool RainbowExplosionPattern::update()
                             //                               
                             if (curPos >= 700) {
                                 hadActivity = true;
-                                if (accumulator > 20) {
+                                if (accumulator > 40) {
                                     accumulator = rand() % 8;
                                     state = STATE_R;
                                 } else {
