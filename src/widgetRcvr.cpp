@@ -26,8 +26,8 @@
 using namespace std;
 
 
-static struct sockaddr_in myaddr[16];
-static int sock[16];
+static struct sockaddr_in widgetSockAddr[16];
+static int widgetSock[16];
 
 constexpr char lockFilePath[] = "/tmp/widgetRcvr.lock";
 
@@ -98,30 +98,30 @@ const string getTimestamp()
 bool openUdpPort(WidgetId widgetId)
 {
     unsigned int widgetIdNumber = widgetIdToInt(widgetId);
+    unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
 
-    //Construct the server sockaddr_ structure
-    memset(&myaddr[widgetIdNumber], 0, sizeof(struct sockaddr_in));
-    myaddr[widgetIdNumber].sin_family=AF_INET;
-    myaddr[widgetIdNumber].sin_addr.s_addr=htonl(INADDR_ANY);
-    myaddr[widgetIdNumber].sin_port=htons(0);
+    cout << "Creating and binding socket for widget " << widgetIdNumber << endl;
 
-    //Create the socket
-    if ((sock[widgetIdNumber]=socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    memset(&widgetSockAddr[widgetIdNumber], 0, sizeof(struct sockaddr_in));
+
+    widgetSockAddr[widgetIdNumber].sin_family = AF_INET;
+    widgetSockAddr[widgetIdNumber].sin_addr.s_addr = htonl(INADDR_ANY);
+    widgetSockAddr[widgetIdNumber].sin_port = htons(0);
+
+    if ((widgetSock[widgetIdNumber] = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("Failed to create socket");
         return false;
     }
 
-    if (bind(sock[widgetIdNumber],(struct sockaddr *) &myaddr[widgetIdNumber], sizeof(struct sockaddr_in)) < 0) {
+    if (bind(widgetSock[widgetIdNumber], (struct sockaddr *) &widgetSockAddr[widgetIdNumber], sizeof(struct sockaddr_in)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
- 
-    unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
 
-    cout << "Opening UDP port " << portNumber << endl;
+    cout << "Setting address to " << patconIpAddress << ":" << portNumber << endl;
 
-    inet_pton(AF_INET, patconIpAddress.c_str(), &myaddr[widgetIdNumber].sin_addr.s_addr);
-    myaddr[widgetIdNumber].sin_port=htons(portNumber);
+    inet_pton(AF_INET, patconIpAddress.c_str(), &widgetSockAddr[widgetIdNumber].sin_addr.s_addr);
+    widgetSockAddr[widgetIdNumber].sin_port = htons(portNumber);
 
     return true;
 }
@@ -129,10 +129,12 @@ bool openUdpPort(WidgetId widgetId)
 
 bool sendUdp(const UdpPayload& payload)
 {
-//    char testStr[] = "test from widgetRcvr";
-
-    //ssize_t bytesSentCount = sendto(sock[payload.id], &testStr, sizeof(testStr), 0, (struct sockaddr *)&myaddr[payload.id], sizeof(struct sockaddr_in));
-    ssize_t bytesSentCount = sendto(sock[payload.id], &payload, sizeof(payload), 0, (struct sockaddr *)&myaddr[payload.id], sizeof(struct sockaddr_in));
+    ssize_t bytesSentCount = sendto(widgetSock[payload.id],
+                                    &payload,
+                                    sizeof(payload),
+                                    0,
+                                    (struct sockaddr *) &widgetSockAddr[payload.id],
+                                    sizeof(struct sockaddr_in));
 
     if (bytesSentCount != sizeof(payload)) {
         cerr << getTimestamp()
@@ -268,9 +270,9 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
 
     cout << "Contents:" << endl;
     for (int i = 0; i < bufLen; ++i) {
-        cerr << hex << (int) payload->buf[i] << " ";
+        cout << hex << (int) payload->buf[i] << " ";
     }
-    cerr << endl;
+    cout << endl;
 }
 
 
