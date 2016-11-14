@@ -86,7 +86,6 @@ widgetNames = {
                ' '              % 10 (unassigned; for blank tick label at top of plot)
 };
 
-%%
 widgetColors = [
     rgbDarkBlue
     rgbDarkGreen
@@ -179,7 +178,12 @@ for plotConfig = plotConfigs
     p = plot(tAdj, y);
 
     for lineSeriesIdx = 1 : length(p)
-        set(p(lineSeriesIdx), 'LineWidth', 1.25, 'Color', widgetColors(lineSeriesIdx, :));
+        set(p(lineSeriesIdx), ...
+            'Color', widgetColors(lineSeriesIdx, :), ...
+            'LineStyle', 'none', ...
+            'Marker', '+', ...
+            'MarkerSize', 24 ...
+        );
     end
 
     set(gca, 'XLim', [tAdj(1) tAdj(end)]);
@@ -221,7 +225,12 @@ for plotConfig = plotConfigs
         p = plot(tDay, yDay);
 
         for lineSeriesIdx = 1 : length(p)
-            set(p(lineSeriesIdx), 'LineWidth', 1.25, 'Color', widgetColors(lineSeriesIdx, :));
+            set(p(lineSeriesIdx), ...
+                'Color', widgetColors(lineSeriesIdx, :), ...
+                'LineStyle', 'none', ...
+                'Marker', '+', ...
+                'MarkerSize', 24 ...
+            );
         end
 
         set(gca, 'XLim', [tDay(1) tDay(end)]);
