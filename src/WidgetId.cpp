@@ -36,11 +36,15 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
         case 6:
             return WidgetId::triObelisk;
         case 7:
-            return WidgetId::boxTheramin;
+            return WidgetId::xylophone;
         case 8:
             return WidgetId::plunger;
         case 9:
             return WidgetId::fourPlay;
+        case 10:
+            return WidgetId::twister;
+        case 11:
+            return WidgetId::chairs;
         default:
             return WidgetId::invalid;
     }
@@ -65,12 +69,16 @@ unsigned int  widgetIdToInt(WidgetId widgetId)
             return 5;
         case WidgetId::triObelisk:
             return 6;
-        case WidgetId::boxTheramin:
+        case WidgetId::xylophone:
             return 7;
         case WidgetId::plunger:
             return 8;
         case WidgetId::fourPlay:
             return 9;
+        case WidgetId::twister:
+            return 10;
+        case WidgetId::chairs:
+            return 11;
         case WidgetId::invalid:
             return 255;
     }
