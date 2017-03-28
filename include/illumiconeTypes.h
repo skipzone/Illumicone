@@ -22,12 +22,22 @@
 
 #define NUM_STRINGS 36
 #define PIXELS_PER_STRING 100
-#define OPC_SERVER_ADDR "192.168.69.100"
+
+// ic-strdrv
+//#define OPC_SERVER_ADDR "192.168.69.100"
+// Xanadu shop computer
+#define OPC_SERVER_ADDR "192.168.0.17"
 // david's VM (14), ross's mac (12)
 //#define OPC_SERVER_ADDR "192.168.69.13"
 // david's home addr for the sever
 //#define OPC_SERVER_ADDR "192.168.0.10"
-// type definitions for Illumicone
+
+// ic-patcon
+//static const std::string patconIpAddress = "192.168.69.101";
+// Xanadu shop computer
+static const std::string patconIpAddress = "192.168.0.17";
+constexpr static unsigned int widgetPortNumberBase = 4200;
+
 
 //
 // structure to hold Open Pixel Control pixel data
@@ -38,9 +48,6 @@ typedef struct _opc_pixel_ {
     uint8_t b;
 } opc_pixel_t;
 
-
-static const std::string patconIpAddress = "192.168.69.101";
-constexpr static unsigned int widgetPortNumberBase = 4200;
 
 
 /*******************
