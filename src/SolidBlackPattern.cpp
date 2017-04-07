@@ -83,6 +83,7 @@ bool SolidBlackPattern::update()
 
     struct tm tmStruct = *localtime(&now);
 
+#ifndef DISABLE_AUTO_SHUTOFF
     // Shut off the cone during the daytime even if the Eye widget isn't present.
     if ( ( (tmStruct.tm_hour == turnoffStartHour && tmStruct.tm_min >= turnoffStartMinute)
            || tmStruct.tm_hour > turnoffStartHour )
@@ -114,7 +115,9 @@ bool SolidBlackPattern::update()
                 << endl;
         }
     }
-    
+#endif	// #ifndef DISABLE_AUTO_SHUTOFF
+
+#ifndef DISABLE_QUIESCENT_MODE
     // Go into quiescent mode while something special is happening.
     if ( ( (tmStruct.tm_hour == quiescentModeStartHour && tmStruct.tm_min >= quiescentModeStartMinute)
            || tmStruct.tm_hour > quiescentModeStartHour )
@@ -146,6 +149,7 @@ bool SolidBlackPattern::update()
                 << endl;
         }
     }
+#endif	// #ifndef DISABLE_QUIESCENT_MODE
     
     for (auto&& widget:widgets) {
 //        cout << "Updating Solid Black Pattern widget!" << endl;

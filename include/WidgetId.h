@@ -26,13 +26,13 @@
  *  4:  Kelli's Steps
  *  5:  Naked's Rain Stick
  *  6:  Phyxx's TriObelisk (the triple rotary thing)
- *  7:  Cowboy's Box Theramin
+ *  7:  Charlie's Xylophone
  *  8:  Kayla's Plunger
  *  9:  Ross's FourPlay
- * 10:  unassigned
- * 11:  unassigned
- * 12:  unassigned
- * 13:  unassigned
+ * 10:  Ray's and Mishi's Twister
+ * 11:  Nick's Chairs
+ * 12:  FourPlay-4-2
+ * 13:  FourPlay-4-3
  * 14:  unassigned
  * 15:  unassigned
  *
@@ -48,9 +48,13 @@ enum class WidgetId {
     steps,
     rainstick,
     triObelisk,
-    boxTheramin,
+    xylophone,
     plunger,
     fourPlay,
+    twister,
+    chairs,
+    fourPlay42,
+    fourPlay43,
     invalid = 255
 };
 
