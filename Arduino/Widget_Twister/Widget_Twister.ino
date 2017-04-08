@@ -44,11 +44,11 @@
 
 constexpr uint32_t gatherMeasurementsIntervalMs = 333;
 
-constexpr uint8_t numCapSensePins = 1;
-constexpr uint8_t capSensePins[numCapSensePins] = {A2};
+constexpr uint8_t numCapSensePins = 2;
+constexpr uint8_t capSensePins[numCapSensePins] = {A2, A3};
 constexpr int capSenseNumSamplesForRef = 500;
 constexpr int capSenseNumSamples = 10;
-constexpr int capSenseThresholds[numCapSensePins] = {660};
+constexpr int capSenseThresholds[numCapSensePins] = {750, 750};
 
 constexpr uint8_t greenLedPin = 3;
 constexpr uint8_t greenLedStateOff = 1;
@@ -63,7 +63,7 @@ constexpr uint8_t greenLedStateOn = 0;
 #define LCD_NUM_COLS 20
 #define LCD_NUM_ROWS 2
 
-#define NUM_VALUES_TO_SEND 1
+#define NUM_VALUES_TO_SEND 2
 
 #define ENABLE_DEBUG_PRINT
 #define ENABLE_LCD
