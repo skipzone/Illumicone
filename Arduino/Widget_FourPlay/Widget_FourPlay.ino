@@ -34,8 +34,8 @@
  ************************/
 
 //#define FOURPLAY
-#define FOURPLAY_4_2
-//#define FOURPLAY_4_3
+//#define FOURPLAY_4_2
+#define FOURPLAY_4_3
 
 
 //#define ENABLE_DEBUG_PRINT
@@ -91,6 +91,14 @@
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
 #define TX_RETRY_DELAY_MULTIPLIER 5
+
+#if defined(FOURPLAY)
+#define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(FOURPLAY_4_2)
+#define TX_RETRY_DELAY_MULTIPLIER 3
+#elif defined(FOURPLAY_4_3)
+#define TX_RETRY_DELAY_MULTIPLIER 11
+#endif
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
