@@ -414,9 +414,13 @@ int main(int argc, char** argv)
     openUdpPort(WidgetId::steps);
     openUdpPort(WidgetId::rainstick);
     openUdpPort(WidgetId::triObelisk);
-    openUdpPort(WidgetId::boxTheramin);
+    openUdpPort(WidgetId::xylophone);
     openUdpPort(WidgetId::plunger);
     openUdpPort(WidgetId::fourPlay);
+    openUdpPort(WidgetId::twister);
+    openUdpPort(WidgetId::chairs);
+    openUdpPort(WidgetId::fourPlay42);
+    openUdpPort(WidgetId::fourPlay43);
 
     configureRadio();
 
