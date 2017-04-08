@@ -212,6 +212,7 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
                 << endl;
             widgetId = widgetIdToInt(WidgetId::hypnotyzer);
             widgetChannel = 0;
+            velocity = abs(velocity);
         }
         //if (payload->widgetHeader.channel == 3) {
         //    cout << getTimestamp() << "Remapping fourPlay:3 to fourPlay:0"
@@ -240,11 +241,11 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
     }
 
     UdpPayload udpPayload;
-    udpPayload.id       = payload->widgetHeader.id;
-    udpPayload.channel  = payload->widgetHeader.channel;
+    udpPayload.id       = widgetId;
+    udpPayload.channel  = widgetChannel;
     udpPayload.isActive = payload->widgetHeader.isActive;
     udpPayload.position = payload->position;
-    udpPayload.velocity = payload->velocity;
+    udpPayload.velocity = velocity;
 
     sendUdp(udpPayload);
 }
