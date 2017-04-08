@@ -49,7 +49,7 @@
 #endif
 
 #define NUM_CHANNELS 4
-#define ACTIVE_TX_INTERVAL_MS 25L
+#define ACTIVE_TX_INTERVAL_MS 10L
 #define INACTIVE_TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 2
 #define ENCODER_0_A_PIN 2
@@ -109,7 +109,8 @@ PositionVelocityPayload payload;
 
 bool g_anyEncoderActive;
 bool g_encoderActive[NUM_ENCODERS];
-volatile uint8_t g_lastEncoderStates = 0;
+volatile uint8_t g_lastPortCEncoderStates = 0;
+volatile uint8_t g_lastPortDEncoderStates = 0;
 volatile int g_encoderValues[NUM_ENCODERS] = {0, 0, 0, 0};
 uint32_t g_encoderRpms[NUM_ENCODERS];
 
@@ -153,7 +154,7 @@ ISR (PCINT2_vect)
 {
   uint8_t encoderStates = PIND >> 2;
   uint8_t curStates = encoderStates;
-  uint8_t lastStates = g_lastEncoderStates;
+  uint8_t lastStates = g_lastPortDEncoderStates;
 
   for (uint8_t i = 0; i < 3; ++i) {  // TODO: replace magic number 3
     uint8_t idx = ((lastStates & 0b11) << 2) | (curStates & 0b11);
@@ -162,7 +163,7 @@ ISR (PCINT2_vect)
     lastStates >>= 2;
   }
 
-  g_lastEncoderStates = encoderStates;
+  g_lastPortDEncoderStates = encoderStates;
 }
 
 
@@ -171,7 +172,7 @@ ISR (PCINT1_vect)
 {
   uint8_t encoderStates = PINC;
   uint8_t curStates = encoderStates;
-  uint8_t lastStates = g_lastEncoderStates;
+  uint8_t lastStates = g_lastPortCEncoderStates;
 
 #ifdef ENABLE_DEBUG_PRINT
   g_pincEncoderStates = encoderStates;
@@ -184,7 +185,7 @@ ISR (PCINT1_vect)
     lastStates >>= 2;
   }
 
-  g_lastEncoderStates = encoderStates;
+  g_lastPortCEncoderStates = encoderStates;
 }
 
 
@@ -309,7 +310,7 @@ void gatherMeasurements()
 }
 
 
-void sendMeasurements(uint32_t intervalMs)
+void sendMeasurements()
 {
   static int32_t lastEncoderValues[NUM_ENCODERS];
   static uint32_t lastRpmUpdateMs[NUM_ENCODERS];
@@ -351,6 +352,10 @@ void sendMeasurements(uint32_t intervalMs)
     payload.position = g_encoderValues[i];
     payload.velocity = encoderRpms[i];
     
+#ifdef ENABLE_DEBUG_PRINT
+  if (i == 2 && g_encoderActive[0]) printf("%d:  payload.position=%d, payload.velocity=%d\n", i, payload.position, payload.velocity);
+#endif
+  
     if (!radio.write(&payload, sizeof(payload))) {
 #ifdef TX_FAILURE_LED_PIN      
       digitalWrite(TX_FAILURE_LED_PIN, HIGH);
@@ -378,7 +383,7 @@ void loop() {
 //    printf("g_pincEncoderStates=%x\n", g_pincEncoderStates);
 #endif
     
-    sendMeasurements(now - lastTxMs);
+    sendMeasurements();
     lastTxMs = now;
   }
 
