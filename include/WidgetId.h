@@ -31,8 +31,8 @@
  *  9:  Ross's FourPlay
  * 10:  Ray's and Mishi's Twister
  * 11:  Nick's Chairs
- * 12:  unassigned
- * 13:  unassigned
+ * 12:  FourPlay-4-2
+ * 13:  FourPlay-4-3
  * 14:  unassigned
  * 15:  unassigned
  *
@@ -53,6 +53,8 @@ enum class WidgetId {
     fourPlay,
     twister,
     chairs,
+    fourPlay42,
+    fourPlay43,
     invalid = 255
 };
 

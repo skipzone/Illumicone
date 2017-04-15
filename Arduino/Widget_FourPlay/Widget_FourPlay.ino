@@ -33,7 +33,21 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 9
+//#define FOURPLAY
+//#define FOURPLAY_4_2
+#define FOURPLAY_4_3
+
+
+//#define ENABLE_DEBUG_PRINT
+
+#if defined(FOURPLAY)
+  #define WIDGET_ID 9
+#elif defined(FOURPLAY_4_2)
+  #define WIDGET_ID 12
+#elif defined(FOURPLAY_4_3)
+  #define WIDGET_ID 13
+#endif
+
 #define NUM_CHANNELS 4
 #define ACTIVE_TX_INTERVAL_MS 10L
 #define INACTIVE_TX_INTERVAL_MS 1000L
@@ -55,10 +69,15 @@
 #define SPIN_ACTIVITY_DETECT_MS 50
 #define SPIN_INACTIVITY_TIMEOUT_MS 500
 
-#define NUM_ENCODERS 4
-#define NUM_STEPS_PER_REV 36
+#define RPM_UPDATE_INTERVAL_MS 250L
 
-//#define ENABLE_DEBUG_PRINT
+#define NUM_ENCODERS 4
+
+#ifdef FOURPLAY
+  #define NUM_STEPS_PER_REV 36
+#elif defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
+  #define NUM_STEPS_PER_REV 20
+#endif
 
 
 /***************************************
@@ -72,6 +91,14 @@
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
 #define TX_RETRY_DELAY_MULTIPLIER 5
+
+#if defined(FOURPLAY)
+#define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(FOURPLAY_4_2)
+#define TX_RETRY_DELAY_MULTIPLIER 3
+#elif defined(FOURPLAY_4_3)
+#define TX_RETRY_DELAY_MULTIPLIER 11
+#endif
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
@@ -90,7 +117,8 @@ PositionVelocityPayload payload;
 
 bool g_anyEncoderActive;
 bool g_encoderActive[NUM_ENCODERS];
-volatile uint8_t g_lastEncoderStates = 0;
+volatile uint8_t g_lastPortCEncoderStates = 0;
+volatile uint8_t g_lastPortDEncoderStates = 0;
 volatile int g_encoderValues[NUM_ENCODERS] = {0, 0, 0, 0};
 uint32_t g_encoderRpms[NUM_ENCODERS];
 
@@ -114,6 +142,8 @@ const int8_t g_greyCodeToEncoderStepMap[] = {
    0,  //  11   11
 };
 
+volatile uint8_t g_pincEncoderStates;
+
 
 /******************
  * Implementation *
@@ -132,7 +162,7 @@ ISR (PCINT2_vect)
 {
   uint8_t encoderStates = PIND >> 2;
   uint8_t curStates = encoderStates;
-  uint8_t lastStates = g_lastEncoderStates;
+  uint8_t lastStates = g_lastPortDEncoderStates;
 
   for (uint8_t i = 0; i < 3; ++i) {  // TODO: replace magic number 3
     uint8_t idx = ((lastStates & 0b11) << 2) | (curStates & 0b11);
@@ -141,7 +171,7 @@ ISR (PCINT2_vect)
     lastStates >>= 2;
   }
 
-  g_lastEncoderStates = encoderStates;
+  g_lastPortDEncoderStates = encoderStates;
 }
 
 
@@ -150,7 +180,11 @@ ISR (PCINT1_vect)
 {
   uint8_t encoderStates = PINC;
   uint8_t curStates = encoderStates;
-  uint8_t lastStates = g_lastEncoderStates;
+  uint8_t lastStates = g_lastPortCEncoderStates;
+
+#ifdef ENABLE_DEBUG_PRINT
+  g_pincEncoderStates = encoderStates;
+#endif
 
   for (uint8_t i = 3; i < 4; ++i) {  // TODO: replace magic number for range
     uint8_t idx = ((lastStates & 0b11) << 2) | (curStates & 0b11);
@@ -159,7 +193,7 @@ ISR (PCINT1_vect)
     lastStates >>= 2;
   }
 
-  g_lastEncoderStates = encoderStates;
+  g_lastPortCEncoderStates = encoderStates;
 }
 
 
@@ -238,17 +272,6 @@ void gatherMeasurements()
     int thisEncoderValue = g_encoderValues[i];
     if (thisEncoderValue != lastEncoderValues[i]) {
       encoderChanged = true;
-
-      uint32_t actualIntervalMs = lastEncoderChangeMs[i] != 0 ? now - lastEncoderChangeMs[i] : 0;
-      uint32_t delta = thisEncoderValue - lastEncoderValues[i];
-
-      int32_t encoderStepsPerSecond = 0;
-      int32_t encoderRpm = 0;
-      if (delta != 0 && actualIntervalMs != 0) {
-        encoderStepsPerSecond = delta * 1000L / actualIntervalMs;
-        g_encoderRpms[i] = encoderStepsPerSecond * 60L / NUM_STEPS_PER_REV;
-      }
-
       lastEncoderValues[i] = thisEncoderValue;
       lastEncoderChangeMs[i] = now;
     }
@@ -260,9 +283,7 @@ void gatherMeasurements()
       else {
         if (now - lastEncoderInactiveMs[i] > SPIN_ACTIVITY_DETECT_MS) {
           g_encoderActive[i] = true;
-          for (uint8_t i = 0; i < NUM_ENCODERS; ++i) {
-            lastEncoderValues[i] = g_encoderValues[i];
-          }
+          lastEncoderValues[i] = g_encoderValues[i];
         }
       }
     }
@@ -283,15 +304,15 @@ void gatherMeasurements()
 #endif
 
 #ifdef ENABLE_DEBUG_PRINT
-  for (int i = 0; i < NUM_ENCODERS; ++i) {
-    Serial.print(i);
-    Serial.print(",");
-    Serial.print(g_encoderActive[i]);
-    Serial.print(",");
-    Serial.print(g_encoderValues[i]);
-    Serial.print(",");
-    Serial.println(g_encoderRpms[i]);
-  }
+//  for (int i = 0; i < NUM_ENCODERS; ++i) {
+//    Serial.print(i);
+//    Serial.print(",");
+//    Serial.print(g_encoderActive[i]);
+//    Serial.print(",");
+//    Serial.print(g_encoderValues[i]);
+//    Serial.print(",");
+//    Serial.println(g_encoderRpms[i]);
+//  }
 #endif
     
 }
@@ -299,13 +320,50 @@ void gatherMeasurements()
 
 void sendMeasurements()
 {
+  static int32_t lastEncoderValues[NUM_ENCODERS];
+  static uint32_t lastRpmUpdateMs[NUM_ENCODERS];
+  static int32_t encoderSteps[NUM_ENCODERS];
+  static int16_t encoderRpms[NUM_ENCODERS];
+  uint32_t now = millis();
+
   for (int i = 0; i < NUM_ENCODERS; ++i) {
-    
+
+    // TODO:  change this crap to use a moving average
+    if (g_encoderActive[i]) {
+      encoderSteps[i] += (g_encoderValues[i] - lastEncoderValues[i]);
+      int32_t rpmIntervalMs = now - lastRpmUpdateMs[i];
+      if (rpmIntervalMs >= RPM_UPDATE_INTERVAL_MS) {
+        lastRpmUpdateMs[i] = now;
+        if (encoderSteps[i] != 0) {
+          int32_t encoderStepsPerMinute = (encoderSteps[i] * 60000L) / rpmIntervalMs;
+          encoderRpms[i] = encoderStepsPerMinute / NUM_STEPS_PER_REV;
+#ifdef ENABLE_DEBUG_PRINT
+          printf("%d: encoderSteps[i]=%ld, encoderStepsPerMinute=%ld, rpmIntervalMs=%ld, encoderRpms[i]=%d\n",
+                 i, encoderSteps[i], encoderStepsPerMinute, rpmIntervalMs, encoderRpms[i]);
+#endif
+          encoderSteps[i] = 0;
+        }
+        else {
+          encoderRpms[i] = 0;
+        }
+      }
+    }
+    else {
+      lastRpmUpdateMs[i] = now;
+      encoderSteps[i] = 0;
+      encoderRpms[i] = 0;
+    }
+    lastEncoderValues[i] = g_encoderValues[i];
+
     payload.widgetHeader.channel = i;
     payload.widgetHeader.isActive = g_encoderActive[i];
     payload.position = g_encoderValues[i];
-    payload.velocity = g_encoderRpms[i];
+    payload.velocity = encoderRpms[i];
     
+#ifdef ENABLE_DEBUG_PRINT
+  if (i == 2 && g_encoderActive[0]) printf("%d:  payload.position=%d, payload.velocity=%d\n", i, payload.position, payload.velocity);
+#endif
+  
     if (!radio.write(&payload, sizeof(payload))) {
 #ifdef TX_FAILURE_LED_PIN      
       digitalWrite(TX_FAILURE_LED_PIN, HIGH);
@@ -328,6 +386,11 @@ void loop() {
 
   uint32_t now = millis();
   if (now - lastTxMs >= (g_anyEncoderActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
+
+#ifdef ENABLE_DEBUG_PRINT
+//    printf("g_pincEncoderStates=%x\n", g_pincEncoderStates);
+#endif
+    
     sendMeasurements();
     lastTxMs = now;
   }

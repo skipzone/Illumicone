@@ -45,6 +45,10 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
             return WidgetId::twister;
         case 11:
             return WidgetId::chairs;
+        case 12:
+            return WidgetId::fourPlay42;
+        case 13:
+            return WidgetId::fourPlay43;
         default:
             return WidgetId::invalid;
     }
@@ -79,6 +83,10 @@ unsigned int  widgetIdToInt(WidgetId widgetId)
             return 10;
         case WidgetId::chairs:
             return 11;
+        case WidgetId::fourPlay42:
+            return 12;
+        case WidgetId::fourPlay43:
+            return 13;
         case WidgetId::invalid:
             return 255;
     }

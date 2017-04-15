@@ -202,12 +202,50 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
         << ", velocity = " << payload->velocity
         << endl;
 
+    // 4/7/2017 ross:  This is a hack that makes fourPlay42's fourth wheel look like Reiley's wheel (Shirley's Web).
+    int widgetId = payload->widgetHeader.id;
+    int widgetChannel = payload->widgetHeader.channel;
+    int velocity = payload->velocity;
+    if (payload->widgetHeader.id == widgetIdToInt(WidgetId::fourPlay42)) {
+        if (payload->widgetHeader.channel == 3) {
+            cout << getTimestamp() << "Remapping fourPlay:3 to hypnotyzer:0"
+                << endl;
+            widgetId = widgetIdToInt(WidgetId::hypnotyzer);
+            widgetChannel = 0;
+            velocity = abs(velocity);
+        }
+        //if (payload->widgetHeader.channel == 3) {
+        //    cout << getTimestamp() << "Remapping fourPlay:3 to fourPlay:0"
+        //        << endl;
+        //    widgetChannel = 0;
+        //}
+        //else if (payload->widgetHeader.channel == 0) {
+        //    cout << getTimestamp() << "Remapping fourPlay:0 to hypnotyzer:0"
+        //        << endl;
+        //    widgetId = widgetIdToInt(WidgetId::hypnotyzer);
+        //}
+        //if (payload->widgetHeader.channel == 3) {
+        //    cout << getTimestamp() << "Remapping fourPlay:3 to fourPlay:1"
+        //        << endl;
+        //    widgetChannel = 1;
+        //}
+        //else if (payload->widgetHeader.channel == 1) {
+        //    cout << getTimestamp() << "Remapping fourPlay:1 to hypnotyzer:0"
+        //        << endl;
+        //    widgetId = widgetIdToInt(WidgetId::hypnotyzer);
+        //    widgetChannel = 0;
+        //    if (velocity > 200 || velocity < 0) {
+        //        velocity = 0;
+        //    }
+        //}
+    }
+
     UdpPayload udpPayload;
-    udpPayload.id       = payload->widgetHeader.id;
-    udpPayload.channel  = payload->widgetHeader.channel;
+    udpPayload.id       = widgetId;
+    udpPayload.channel  = widgetChannel;
     udpPayload.isActive = payload->widgetHeader.isActive;
     udpPayload.position = payload->position;
-    udpPayload.velocity = payload->velocity;
+    udpPayload.velocity = velocity;
 
     sendUdp(udpPayload);
 }
@@ -414,9 +452,13 @@ int main(int argc, char** argv)
     openUdpPort(WidgetId::steps);
     openUdpPort(WidgetId::rainstick);
     openUdpPort(WidgetId::triObelisk);
-    openUdpPort(WidgetId::boxTheramin);
+    openUdpPort(WidgetId::xylophone);
     openUdpPort(WidgetId::plunger);
     openUdpPort(WidgetId::fourPlay);
+    openUdpPort(WidgetId::twister);
+    openUdpPort(WidgetId::chairs);
+    openUdpPort(WidgetId::fourPlay42);
+    openUdpPort(WidgetId::fourPlay43);
 
     configureRadio();
 

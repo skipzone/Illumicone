@@ -44,7 +44,7 @@ bool HorizontalStripePattern::initWidgets(int numWidgets, int channelsPerWidget)
 //    cout << "Init HorizontalStripePattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
-        Widget* newWidget = widgetFactory(WidgetId::fourPlay);
+        Widget* newWidget = widgetFactory(WidgetId::fourPlay42);
         widgets.emplace_back(newWidget);
         newWidget->init(false);
     }
@@ -96,7 +96,7 @@ bool HorizontalStripePattern::update()
                             break;
 
                         case 3:
-                            //cout << "FourPlay wheel 4 active" << endl;
+                            //cout << "FourPlay-4-2 wheel 4 active" << endl;
                             break;
 
                         default:

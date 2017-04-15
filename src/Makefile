@@ -17,7 +17,7 @@
 # and convert them to .o
 PROGS=PatternController
 #OBJS=RotaryWidget.o StairWidget.o EyeWidget.o ThreeWheelWidget.o TwistPattern.o SolidBlackPattern.o RgbVerticalPattern.o QuadSlicePattern.o WidgetChannel.o
-OBJS=WidgetId.o Widget.o WidgetChannel.o ThreeWheelWidget.o RotaryWidget.o StairWidget.o EyeWidget.o PlungerWidget.o BellsWidget.o FourPlayWidget.o RgbVerticalPattern.o QuadSlicePattern.o SolidBlackPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o
+OBJS=WidgetId.o Widget.o WidgetChannel.o ThreeWheelWidget.o RotaryWidget.o StairWidget.o EyeWidget.o PlungerWidget.o BellsWidget.o FourPlayWidget.o FourPlay42Widget.o FourPlay43Widget.o RgbVerticalPattern.o QuadSlicePattern.o SolidBlackPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o
 LIBS=
 
 INCLUDE=../include

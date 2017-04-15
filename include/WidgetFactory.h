@@ -26,6 +26,8 @@
 #include "PlungerWidget.h"
 #include "BellsWidget.h"
 #include "FourPlayWidget.h"
+#include "FourPlay42Widget.h"
+#include "FourPlay43Widget.h"
 #include "WidgetId.h"
 
 
@@ -55,6 +57,12 @@ static Widget* widgetFactory(WidgetId id) { switch (id) {
         case WidgetId::fourPlay:
             cout << "Return FourPlayWidget!" << endl;
             return new FourPlayWidget;
+        case WidgetId::fourPlay42:
+            cout << "Return FourPlay42Widget!" << endl;
+            return new FourPlay42Widget;
+        case WidgetId::fourPlay43:
+            cout << "Return FourPlay43Widget!" << endl;
+            return new FourPlay43Widget;
         case WidgetId::bells:
             cout << "Return BellsWidget!" << endl;
             return new BellsWidget;

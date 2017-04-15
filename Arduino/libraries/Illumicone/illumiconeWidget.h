@@ -36,18 +36,18 @@
  *
  *  0:  reserved
  *  1:  Ray's Eye
- *  2:  Hypnotyzer (Reiley's bike wheel)
+ *  2:  Reiley's Hypnotyzer (the bike wheel)
  *  3:  Ray's Bells
  *  4:  Kelli's Steps
  *  5:  Naked's Rain Stick
- *  6:  Phyxx's Obelisk
- *  7:  Cowboy's Box Theramin
+ *  6:  Phyxx's TriObelisk (the triple rotary thing)
+ *  7:  Charlie's Xylophone
  *  8:  Kayla's Plunger
  *  9:  Ross's FourPlay
- * 10:  unassigned
- * 11:  unassigned
- * 12:  unassigned
- * 13:  unassigned
+ * 10:  Ray's and Mishi's Twister
+ * 11:  Nick's Chairs
+ * 12:  FourPlay-4-2
+ * 13:  FourPlay-4-3
  * 14:  unassigned
  * 15:  unassigned
  *
