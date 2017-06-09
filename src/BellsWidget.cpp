@@ -31,7 +31,7 @@ using namespace std;
 static int simWidth;
 
 BellsWidget::BellsWidget()
-    : Widget(WidgetId::bells, "Bells")
+    : Widget(WidgetId::bells)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;

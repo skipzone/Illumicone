@@ -30,7 +30,7 @@ using namespace std;
 
 
 EyeWidget::EyeWidget()
-    : Widget(WidgetId::eye, "Eye")
+    : Widget(WidgetId::eye)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;

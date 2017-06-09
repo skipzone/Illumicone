@@ -17,46 +17,35 @@
 
 #include <chrono>
 #include <iostream>
-///#include <fstream>
-///#include <regex>
 #include <string>
 //#include <thread>
 #include <time.h>
 ///#include <vector>
 
-#include "FourPlayWidget.h"
+#include "ShirleysWebWidget.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
 using namespace std;
 
 
-FourPlayWidget::FourPlayWidget()
-    : Widget(WidgetId::fourPlay, "FourPlay")
+ShirleysWebWidget::ShirleysWebWidget()
+    : Widget(WidgetId::shirleysWeb)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 200;
-    updateIntervalMs[1] = 300;
-    updateIntervalMs[2] = 400;
-    updateIntervalMs[3] = 100;
-    updateIntervalMs[4] = 0;
-    updateIntervalMs[5] = 0;
-    updateIntervalMs[6] = 0;
-    updateIntervalMs[7] = 0;
+    updateIntervalMs[0] = 1000;
 }
 
 
-void FourPlayWidget::init(bool generateSimulatedMeasurements)
+void ShirleysWebWidget::init(bool generateSimulatedMeasurements)
 {
     this->generateSimulatedMeasurements = generateSimulatedMeasurements;
 
-    for (int i = 0; i < 4; ++i) {
-        channels.push_back(make_shared<WidgetChannel>(i, this));
-    }
+    channels.push_back(make_shared<WidgetChannel>(0, this));
 
     if (!generateSimulatedMeasurements) {
         startUdpRxThread();
@@ -64,7 +53,7 @@ void FourPlayWidget::init(bool generateSimulatedMeasurements)
 }
 
 
-bool FourPlayWidget::moveData()
+bool ShirleysWebWidget::moveData()
 {
     if (!generateSimulatedMeasurements) {
         return true;
@@ -80,9 +69,11 @@ bool FourPlayWidget::moveData()
     for (unsigned int i = 0; i < getChannelCount(); ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
+            int prevPos = channels[i]->getPreviousPosition();
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % PIXELS_PER_STRING, 0);
+
+            channels[i]->setPositionAndVelocity(0, 400);
             channels[i]->setIsActive(true);
             //cout << "updated channel " << i << endl;
         }

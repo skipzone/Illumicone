@@ -39,7 +39,6 @@
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
 #include "SolidBlackPattern.h"
-#include "QuadSlicePattern.h"
 #include "SparklePattern.h"
 #include "HorizontalStripePattern.h"
 #include "RainbowExplosionPattern.h"
@@ -338,7 +337,6 @@ int main(void)
 
     SolidBlackPattern solidBlackPattern;
     RgbVerticalPattern rgbVerticalPattern;
-    QuadSlicePattern quadSlicePattern;
     SparklePattern sparklePattern;
     HorizontalStripePattern horizontalStripePattern;
     RainbowExplosionPattern rainbowExplosionPattern;
@@ -379,15 +377,10 @@ int main(void)
     sparklePattern.initWidgets(1, numChannels[4]);
     printInit(&sparklePattern);
 
-    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[5]);
-    quadSlicePattern.initWidgets(1, numChannels[5]);
-    printInit(&quadSlicePattern);
-
     cout << "Pattern initialization done.  Start moving shit!" << endl;
     while (true) {
         rgbVerticalPattern.update();
         solidBlackPattern.update();
-        quadSlicePattern.update();
         sparklePattern.update();
         horizontalStripePattern.update();
         rainbowExplosionPattern.update();
@@ -395,12 +388,6 @@ int main(void)
         bool anyPatternIsActive = false;
 
         zeroFrame(finalFrame1);
-
-        if (quadSlicePattern.isActive) {
-            anyPatternIsActive = true;
-//            cout << "quad active" << endl;
-            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
-        }
 
         if (sparklePattern.isActive) {
             anyPatternIsActive = true;
@@ -462,9 +449,6 @@ int main(void)
     //
     // cleanup
     //
-//    for (auto&& widget:quadSlicePattern.widgets) {
-//        delete widget;
-//    }
 
 //    for (auto&& widget:solidBlackPattern.widgets) {
 //        delete widget;

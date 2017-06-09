@@ -208,9 +208,9 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
     int velocity = payload->velocity;
     if (payload->widgetHeader.id == widgetIdToInt(WidgetId::fourPlay42)) {
         if (payload->widgetHeader.channel == 3) {
-            cout << getTimestamp() << "Remapping fourPlay:3 to hypnotyzer:0"
+            cout << getTimestamp() << "Remapping fourPlay:3 to shirleysWeb:0"
                 << endl;
-            widgetId = widgetIdToInt(WidgetId::hypnotyzer);
+            widgetId = widgetIdToInt(WidgetId::shirleysWeb);
             widgetChannel = 0;
             velocity = abs(velocity);
         }
@@ -220,9 +220,9 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
         //    widgetChannel = 0;
         //}
         //else if (payload->widgetHeader.channel == 0) {
-        //    cout << getTimestamp() << "Remapping fourPlay:0 to hypnotyzer:0"
+        //    cout << getTimestamp() << "Remapping fourPlay:0 to shirleysWeb:0"
         //        << endl;
-        //    widgetId = widgetIdToInt(WidgetId::hypnotyzer);
+        //    widgetId = widgetIdToInt(WidgetId::shirleysWeb);
         //}
         //if (payload->widgetHeader.channel == 3) {
         //    cout << getTimestamp() << "Remapping fourPlay:3 to fourPlay:1"
@@ -230,9 +230,9 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
         //    widgetChannel = 1;
         //}
         //else if (payload->widgetHeader.channel == 1) {
-        //    cout << getTimestamp() << "Remapping fourPlay:1 to hypnotyzer:0"
+        //    cout << getTimestamp() << "Remapping fourPlay:1 to shirleysWeb:0"
         //        << endl;
-        //    widgetId = widgetIdToInt(WidgetId::hypnotyzer);
+        //    widgetId = widgetIdToInt(WidgetId::shirleysWeb);
         //    widgetChannel = 0;
         //    if (velocity > 200 || velocity < 0) {
         //        velocity = 0;
@@ -447,18 +447,17 @@ int main(int argc, char** argv)
     cout << getTimestamp() << "---------- widgetRcvr starting ----------" << endl;
 
     openUdpPort(WidgetId::eye);
-    openUdpPort(WidgetId::hypnotyzer);
+    openUdpPort(WidgetId::shirleysWeb);
     openUdpPort(WidgetId::bells);
-    openUdpPort(WidgetId::steps);
     openUdpPort(WidgetId::rainstick);
+    openUdpPort(WidgetId::schroedersPlaything);
     openUdpPort(WidgetId::triObelisk);
-    openUdpPort(WidgetId::xylophone);
+    openUdpPort(WidgetId::squawkBox);
     openUdpPort(WidgetId::plunger);
-    openUdpPort(WidgetId::fourPlay);
     openUdpPort(WidgetId::twister);
-    openUdpPort(WidgetId::chairs);
     openUdpPort(WidgetId::fourPlay42);
     openUdpPort(WidgetId::fourPlay43);
+    openUdpPort(WidgetId::buckNorris);
 
     configureRadio();
 

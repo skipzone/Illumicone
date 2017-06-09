@@ -28,9 +28,8 @@
 #include "WidgetChannel.h"
 #include "WidgetId.h"
 
-Widget::Widget(WidgetId id, std::string name)
+Widget::Widget(WidgetId id)
     : id(id)
-    , name(name)
 {
 }
 
@@ -44,12 +43,6 @@ Widget::~Widget()
 WidgetId Widget::getId()
 {
     return id;
-}
-
-
-std::string Widget::getName()
-{
-    return name;
 }
 
 
@@ -96,8 +89,8 @@ bool Widget::getHasNewMeasurement()
 void Widget::startUdpRxThread()
 {
 	// TODO 7/10/2016 ross:  determine if we really need to do this
-    pthread_t thisThread = pthread_self();
-	pthread_setschedprio(thisThread, SCHED_FIFO);
+    //pthread_t thisThread = pthread_self();
+	//pthread_setschedprio(thisThread, SCHED_FIFO);
 
 	// udp initialization
 	sockfd=socket(AF_INET,SOCK_DGRAM,0);

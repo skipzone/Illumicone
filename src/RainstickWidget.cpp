@@ -27,7 +27,7 @@ using namespace std;
 
 
 RainstickWidget::RainstickWidget()
-    : Widget(WidgetId::rainstick, "Rainstick")
+    : Widget(WidgetId::rainstick)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;

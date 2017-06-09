@@ -18,16 +18,18 @@
 #ifndef WIDGET_FACTORY_H
 #define WIDGET_FACTORY_H
 
-#include "EyeWidget.h"
-#include "RainstickWidget.h"
-#include "RotaryWidget.h"
-#include "StairWidget.h"
-#include "ThreeWheelWidget.h"
-#include "PlungerWidget.h"
 #include "BellsWidget.h"
-#include "FourPlayWidget.h"
+//#include "BuckNorrisWidget.h"
+#include "EyeWidget.h"
 #include "FourPlay42Widget.h"
 #include "FourPlay43Widget.h"
+#include "PlungerWidget.h"
+#include "RainstickWidget.h"
+//#include "SchroedersPlaythingWidget.h"
+#include "ShirleysWebWidget.h"
+//#include "SquawkBoxWidget.h"
+#include "TriObeliskWidget.h"
+//#include "TwisterWidget.h"
 #include "WidgetId.h"
 
 
@@ -36,38 +38,31 @@ using namespace std;
 
 static Widget* widgetFactory(WidgetId id) { switch (id) {
         case WidgetId::eye:
-            cout << "Return EyeWidget!" << endl;
             return new EyeWidget;
-        case WidgetId::hypnotyzer:
-            cout << "Return RotaryWidget!" << endl;
-            return new RotaryWidget;
-        case WidgetId::steps:
-            cout << "Return StairWidget!" << endl;
-            return new StairWidget;
+        case WidgetId::shirleysWeb:
+            return new ShirleysWebWidget;
+        case WidgetId::bells:
+            return new BellsWidget;
+        case WidgetId::rainstick:
+            return new RainstickWidget;
+//        case WidgetId::schroedersPlaything:
+//            return new SchroedersPlaythingWidget;
         case WidgetId::triObelisk:
-            cout << "Return ThreeWheelWidget!" << endl;
-            return new ThreeWheelWidget;
-            // TODO: CHANGE THIS TO RAINSTICK WHEN WIDGET FILE IS READY!
-//        case WidgetId::rainstick:
-//            cout << "Return RainstickWidget!" << endl;
-//            return new PlungerWidget;
+            return new TriObeliskWidget;
+//        case WidgetId::squawkBox:
+//            return new SquawkBoxWidget;
         case WidgetId::plunger:
-            cout << "Return PlungerWidget!" << endl;
             return new PlungerWidget;
-        case WidgetId::fourPlay:
-            cout << "Return FourPlayWidget!" << endl;
-            return new FourPlayWidget;
+//        case WidgetId::twister:
+//            return new TwisterWidget;
         case WidgetId::fourPlay42:
-            cout << "Return FourPlay42Widget!" << endl;
             return new FourPlay42Widget;
         case WidgetId::fourPlay43:
-            cout << "Return FourPlay43Widget!" << endl;
             return new FourPlay43Widget;
-        case WidgetId::bells:
-            cout << "Return BellsWidget!" << endl;
-            return new BellsWidget;
+//        case WidgetId::buckNorris:
+//            return new BuckNorrisWidget;
         default:
-            cout << "SOMETHING'S FUCKY: WidgetFactory id" << endl;
+            cerr << "SOMETHING'S FUCKY: WidgetFactory id" << endl;
             return nullptr;
     }
 }

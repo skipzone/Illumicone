@@ -20,14 +20,14 @@
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-class RotaryWidget : public Widget
+class ShirleysWebWidget : public Widget
 {
     public:
-        RotaryWidget();
-        ~RotaryWidget() {};
+        ShirleysWebWidget();
+        ~ShirleysWebWidget() {};
 
-        RotaryWidget(const RotaryWidget&) = delete;
-        RotaryWidget& operator =(const RotaryWidget&) = delete;
+        ShirleysWebWidget(const ShirleysWebWidget&) = delete;
+        ShirleysWebWidget& operator =(const ShirleysWebWidget&) = delete;
 
         void init(bool generateSimulatedMeasurements);
 
