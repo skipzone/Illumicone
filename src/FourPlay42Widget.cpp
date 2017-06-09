@@ -32,7 +32,7 @@ using namespace std;
 
 
 FourPlay42Widget::FourPlay42Widget()
-    : Widget(WidgetId::fourPlay42, "FourPlay-4-2")
+    : Widget(WidgetId::fourPlay42)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;

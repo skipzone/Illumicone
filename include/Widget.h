@@ -32,9 +32,8 @@ class WidgetChannel;
 class Widget
 {
     public:
-        ///Widget(unsigned int id, const std::string& name);
 
-        Widget(WidgetId id, std::string name);
+        Widget(WidgetId id);
         virtual ~Widget();
 
         Widget() = delete;
@@ -62,7 +61,6 @@ class Widget
         void startUdpRxThread();
 
         const WidgetId id;
-        const std::string name;
         std::vector<std::shared_ptr<WidgetChannel>> channels;
         bool generateSimulatedMeasurements;
 

@@ -98,7 +98,6 @@ bool RgbVerticalPattern::update()
         switch (widget->getId()) {
             // triObelisk
             case WidgetId::triObelisk:
-            case WidgetId::fourPlay:
             case WidgetId::fourPlay42:
             case WidgetId::fourPlay43:
                 for (auto&& channel:widget->getChannels()) {

@@ -20,14 +20,14 @@
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-class StairWidget : public Widget
+class TriObeliskWidget : public Widget
 {
     public:
-        StairWidget();
-        ~StairWidget() {};
+        TriObeliskWidget();
+        ~TriObeliskWidget() {};
 
-        StairWidget(const StairWidget&) = delete;
-        StairWidget& operator = (const StairWidget&) = delete;
+        TriObeliskWidget(const TriObeliskWidget&) = delete;
+        TriObeliskWidget& operator =(const TriObeliskWidget&) = delete;
 
         void init(bool generateSimulatedMeasurements);
 
@@ -38,3 +38,4 @@ class StairWidget : public Widget
         unsigned int lastUpdateMs[8];
         unsigned int updateIntervalMs[8];
 };
+

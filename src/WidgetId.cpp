@@ -26,29 +26,27 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
         case 1:
             return WidgetId::eye;
         case 2:
-            return WidgetId::hypnotyzer;
+            return WidgetId::shirleysWeb;
         case 3:
             return WidgetId::bells;
         case 4:
-            return WidgetId::steps;
-        case 5:
             return WidgetId::rainstick;
+        case 5:
+            return WidgetId::schroedersPlaything;
         case 6:
             return WidgetId::triObelisk;
         case 7:
-            return WidgetId::xylophone;
+            return WidgetId::squawkBox;
         case 8:
             return WidgetId::plunger;
         case 9:
-            return WidgetId::fourPlay;
-        case 10:
             return WidgetId::twister;
-        case 11:
-            return WidgetId::chairs;
-        case 12:
+        case 10:
             return WidgetId::fourPlay42;
-        case 13:
+        case 11:
             return WidgetId::fourPlay43;
+        case 12:
+            return WidgetId::buckNorris;
         default:
             return WidgetId::invalid;
     }
@@ -56,40 +54,86 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
 }
 
 
-unsigned int  widgetIdToInt(WidgetId widgetId)
+unsigned int widgetIdToInt(WidgetId widgetId)
 {
     switch (widgetId) {
         case WidgetId::reserved:
             return 0;
         case WidgetId::eye:
             return 1;
-        case WidgetId::hypnotyzer:
+        case WidgetId::shirleysWeb:
             return 2;
         case WidgetId::bells:
             return 3;
-        case WidgetId::steps:
-            return 4;
         case WidgetId::rainstick:
+            return 4;
+        case WidgetId::schroedersPlaything:
             return 5;
         case WidgetId::triObelisk:
             return 6;
-        case WidgetId::xylophone:
+        case WidgetId::squawkBox:
             return 7;
         case WidgetId::plunger:
             return 8;
-        case WidgetId::fourPlay:
-            return 9;
         case WidgetId::twister:
-            return 10;
-        case WidgetId::chairs:
-            return 11;
+            return 9;
         case WidgetId::fourPlay42:
-            return 12;
+            return 10;
         case WidgetId::fourPlay43:
-            return 13;
+            return 11;
+        case WidgetId::buckNorris:
+            return 12;
         case WidgetId::invalid:
             return 255;
     }
     return 255;
+}
+
+
+std::string widgetIdToString(WidgetId widgetId)
+{
+    switch (widgetId) {
+        case WidgetId::reserved:
+            return "reserved";
+        case WidgetId::eye:
+            return "eye";
+        case WidgetId::shirleysWeb:
+            return "shirleysWeb";
+        case WidgetId::bells:
+            return "bells";
+        case WidgetId::rainstick:
+            return "rainstick";
+        case WidgetId::schroedersPlaything:
+            return "schroedersPlaything";
+        case WidgetId::triObelisk:
+            return "triObelisk";
+        case WidgetId::squawkBox:
+            return "squawkBox";
+        case WidgetId::plunger:
+            return "plunger";
+        case WidgetId::twister:
+            return "twister";
+        case WidgetId::fourPlay42:
+            return "fourPlay42";
+        case WidgetId::fourPlay43:
+            return "fourPlay43";
+        case WidgetId::buckNorris:
+            return "buckNorris";
+        case WidgetId::invalid:
+            return "invalid";
+    }
+    return "invalid";
+}
+
+
+WidgetId stringToWidgetId(const std::string& widgetName)
+{
+    for (unsigned int i = 0; i <= 15; ++i) {
+        WidgetId widgetId = intToWidgetId(i);
+        if (widgetName == widgetIdToString(widgetId)) {
+            return widgetId;
+        }
+    }
+    return WidgetId::invalid;
 }
 

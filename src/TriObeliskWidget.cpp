@@ -15,43 +15,41 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iostream>
-#include <vector>
 #include <chrono>
-
+#include <iostream>
+///#include <fstream>
+///#include <regex>
 #include <string>
+//#include <thread>
 #include <time.h>
+///#include <vector>
 
-#include "StairWidget.h"
+#include "TriObeliskWidget.h"
 #include "illumiconeTypes.h"
+#include "WidgetId.h"
 
 using namespace std;
 
 
-StairWidget::StairWidget()
-    : Widget(WidgetId::steps, "Steps")
+TriObeliskWidget::TriObeliskWidget()
+    : Widget(WidgetId::triObelisk)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 3000;
-    updateIntervalMs[1] = 3000;
-    updateIntervalMs[2] = 3000;
-    updateIntervalMs[3] = 3000;
-    updateIntervalMs[4] = 3000;
-    updateIntervalMs[5] = 0;
-    updateIntervalMs[6] = 0;
-    updateIntervalMs[7] = 0;
+    updateIntervalMs[0] = 200;
+    updateIntervalMs[1] = 400;
+    updateIntervalMs[2] = 500;
 }
 
 
-void StairWidget::init(bool generateSimulatedMeasurements)
+void TriObeliskWidget::init(bool generateSimulatedMeasurements)
 {
     this->generateSimulatedMeasurements = generateSimulatedMeasurements;
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 3; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this));
     }
 
@@ -61,7 +59,7 @@ void StairWidget::init(bool generateSimulatedMeasurements)
 }
 
 
-bool StairWidget::moveData()
+bool TriObeliskWidget::moveData()
 {
     if (!generateSimulatedMeasurements) {
         return true;
@@ -75,16 +73,16 @@ bool StairWidget::moveData()
     //cout << "---------- nowMs = " << nowMs << endl;
 
     for (unsigned int i = 0; i < getChannelCount(); ++i) {
-//        cout << "checking channel " << i << endl;
-        if (updateIntervalMs[i] > 0 && (nowMs - lastUpdateMs[i] > updateIntervalMs[i])) {
-//            cout << "updating channel " << i << endl;
+        //cout << "checking channel " << i << endl;
+        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
+            //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % 3, 0);
+            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
             channels[i]->setIsActive(true);
-//            cout << "updated channel " << i << endl;
+            //cout << "updated channel " << i << endl;
         }
     }
 
-
     return true;
 }
+
