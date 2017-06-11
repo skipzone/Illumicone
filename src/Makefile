@@ -16,7 +16,7 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=PatternController
-OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o RgbVerticalPattern.o SolidBlackPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o
+OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o RgbVerticalPattern.o SolidBlackPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o json11.o
 LIBS=
 
 INCLUDE=../include
@@ -25,7 +25,8 @@ INCLUDE=../include
 CC=g++
 CFLAGS=-Wall -g -I$(INCLUDE)
 CXX=g++
-CXXFLAGS=-Wall -g -std=c++0x -pthread -I$(INCLUDE)
+###CXXFLAGS=-Wall -g -std=c++0x -pthread -I$(INCLUDE)
+CXXFLAGS=-Wall -g -std=c++11 -pthread -I$(INCLUDE)
 #LDFLAGS=-stdlib=libc++
 #LDLIBS=-L$(LIBS) -lpthread
 
@@ -49,6 +50,9 @@ widgetRcvr: widgetRcvr.cpp WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
 
 widgetTester: widgetTester.cpp
+	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
+
+jsonTester: jsonTester.cpp json11.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 clean:
