@@ -23,13 +23,13 @@
  *
  *  0:  reserved
  *  1:  Eye (Ray)
- *  2:  Shirley's Web (Reiley, Monte)
+ *  2:  Shirley's Web (Reiley, Monty)
  *  3:  Bells (Ray)
  *  4:  Rainstick (Dr. Naked)
  *  5:  Schroeder's Plaything (Ross)
  *  6:  TriObelisk (Phyxx and Dr. Naked)
  *  7:  Squawk Box (James)
- *  8:  Plunger (Monte, based on Kayla's original)
+ *  8:  Plunger (Monty, based on Kayla's original)
  *  9:  Twister (Ray and Mishi)
  * 10:  FourPlay-4-2 (Dr. Naked and Ross)
  * 11:  FourPlay-4-3 (Dr. Naked and Ross)

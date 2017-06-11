@@ -27,12 +27,18 @@ using namespace json11;
 
 int main(int argc, char **argv) {
 
-    std::ifstream t("test.json", ios_base::in);
+    if (argc != 2) {
+        cout << "Usage:  jsonTester <fileName>" << endl;
+        return 2;
+    }
+    string jsonFileName(argv[1]);
+
+    ifstream t(jsonFileName, ios_base::in);
     if (!t.is_open()) {
-        cerr << "Can't open test.json." << endl;
+        cerr << "Can't open " << jsonFileName << endl;
         return 1;
     }
-    std::stringstream jsonSstr;
+    stringstream jsonSstr;
     jsonSstr << t.rdbuf();
     t.close();
 
@@ -43,7 +49,44 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    cout << json.dump() << endl;
+    cout << json.dump() << endl << endl;
+
+    cout << "numberOfStrings:  " << json["numberOfStrings"].int_value() << endl;
+    cout << "numberOfPixelsPerString:  " << json["numberOfPixelsPerString"].int_value() << endl;
+    cout << "opcServerIpAddress:  " << json["opcServerIpAddress"].string_value() << endl;
+    cout << "patconIpAddress:  " << json["patconIpAddress"].string_value() << endl;
+    cout << "widgetPortNumberBase:  " << json["widgetPortNumberBase"].int_value() << endl;
+
+    for (auto& autoShutoffPeriod : json["autoShutoffPeriods"].array_items()) {
+        cout << "autoShutoffPeriod:  " << autoShutoffPeriod["description"].string_value() << endl;
+        cout << "    startDate:  " << autoShutoffPeriod["startDate"].string_value() << endl;
+        cout << "    startTime:  " << autoShutoffPeriod["startTime"].string_value() << endl;
+        cout << "      endDate:  " << autoShutoffPeriod["endDate"].string_value() << endl;
+        cout << "      endTime:  " << autoShutoffPeriod["endTime"].string_value() << endl;
+    }
+
+    for (auto& quiescentModePeriod : json["quiescentModePeriods"].array_items()) {
+        cout << "quiescentModePeriod:  " << quiescentModePeriod["description"].string_value() << endl;
+        cout << "      startDate:  " << quiescentModePeriod["startDate"].string_value() << endl;
+        cout << "      startTime:  " << quiescentModePeriod["startTime"].string_value() << endl;
+        cout << "        endDate:  " << quiescentModePeriod["endDate"].string_value() << endl;
+        cout << "        endTime:  " << quiescentModePeriod["endTime"].string_value() << endl;
+        cout << "    idlePattern:  " << quiescentModePeriod["idlePatternName"].string_value() << endl;
+    }
+
+    for (auto& widget : json["widgets"].array_items()) {
+        cout << "widget:  " << widget.string_value() << endl;
+    }
+
+    for (auto& pattern : json["patterns"].array_items()) {
+        cout << "pattern:  " << pattern["patternName"].string_value() << endl;
+        for (auto& input : pattern["inputs"].array_items()) {
+            cout << "    input:  " << input["inputName"].string_value() << endl;
+            cout << "        widget:  " << input["widgetName"].string_value() << endl;
+            cout << "        channel:  " << input["channelNumber"].int_value() << endl;
+            cout << "        measurement:  " << input["measurement"].string_value() << endl;
+        }
+    }
 
     return 0;
 }

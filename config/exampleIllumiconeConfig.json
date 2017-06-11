@@ -1,0 +1,154 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "numberOfStrings" : 36,
+    "numberOfPixelsPerString" : 100,
+
+    "opcServerIpAddress": "127.0.0.1",
+    "patconIpAddress" : "127.0.0.1",
+    "widgetPortNumberBase" : 4200,
+
+    "autoShutoffPeriods" : [
+        {   "description" : "test auto shutoff spanning midnight",
+            "startDate" : "2017-07-11",
+            "startTime" : "23:59",
+            "endDate" : "2017-07-12",
+            "endTime" : "00:01"
+        },
+        {   "description" : "daytime shutoff",
+            "startDate" : "",
+            "startTime" : "06:00",
+            "endDate" : "",
+            "endTime" : "20:00"
+        }
+    ],
+
+    "quiescentModePeriods" : [
+        {   "description" : "Element 11 Temple burn",
+            "startDate" : "2017-07-15",
+            "startTime" : "22:00",
+            "endDate" : "2017-07-15",
+            "endTime" : "23:00",
+            "idlePatternName" : "fire"
+        },
+        {   "description" : "Burning Man Temple burn",
+            "startDate" : "2017-09-03",
+            "startTime" : "20:00",
+            "endDate" : "2017-07-15",
+            "endTime" : "21:00",
+            "idlePatternName" : "fire"
+        }
+    ],
+
+    "widgets" : [
+        "eye",
+        "shirleysWeb",
+        "bells",
+        //"rainstick",
+        //"schroedersPlaything",
+        "triObelisk",
+        //"squawkBox",
+        "plunger",
+        //"twister",
+        "fourPlay42",
+        "fourPlay43"
+        //"buckNorris",
+    ],
+
+    "patterns" : [
+        {   "patternName" : "rgbVertical",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "width",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ]
+        },
+        {   "patternName" : "horizontalStripe",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                }
+                //{   "inputName" : "width",
+                //    "widgetName" : "bells",
+                //    "channelNumber" : 1,
+                //    "measurement" : "position"
+                //}
+            ]
+        },
+        {   "patternName" : "sparkle",
+            "inputs" : [
+                {   "inputName" : "density",
+                    //"widgetName" : "shirleysWeb",
+                    //"channelNumber" : 0,
+                    //"measurement" : "velocity"
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 3,
+                    "measurement" : "velocity"
+                }
+            ]
+        },
+        {   "patternName" : "rainbowExplosion",
+            "inputs" : [
+                {   "inputName" : "soundLevel",
+                    "widgetName" : "plunger",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ]
+        },
+        {   "patternName" : "solidBlack",
+            "inputs" : [
+                {   "inputName" : "intensity",
+                    "widgetName" : "eye",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ]
+        }
+    ]
+
+}
