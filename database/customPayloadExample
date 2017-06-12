@@ -1,0 +1,6 @@
+2016-10-09 02:07:01.810:  Got position+velocity payload; Id = 6, active  , ch = 0, position = -7596, velocity = 25
+2016-10-09 02:07:01.813:  Got custom payload; Id = 6, active  , ch = 7, bufLen = 20
+Contents:
+6f fe be c4 d5 77 5f db fb dd dd 7b ea b5 ed da f6 bd ef df 
+2016-10-09 02:07:01.823:  Got position+velocity payload; Id = 6, active  , ch = 1, position = -405, velocity = 190
+2016-10-09 02:07:01.823:  Got position+velocity payload; Id = 6, active  , ch = 2, position = -15434, velocity = 21822
