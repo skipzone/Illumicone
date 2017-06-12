@@ -77,7 +77,10 @@ bool TriObeliskWidget::moveData()
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+            // TODO:  Widgets should not need to be aware of the cone dimensions (that's the pattern's job).
+            //        For now, use a reasonable constant.  Eventually, replace this with simulation file playback.
+            //channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % 36, 0);
             channels[i]->setIsActive(true);
             //cout << "updated channel " << i << endl;
         }

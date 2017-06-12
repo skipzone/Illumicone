@@ -15,6 +15,19 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* TODO:  move these to the appropriate configuration files
+
+// Xanadu shop computer
+//#define OPC_SERVER_ADDR "192.168.0.17"
+//static const std::string patconIpAddress = "192.168.0.17";
+
+// ic-strdrv
+//#define OPC_SERVER_ADDR "192.168.69.100"
+// ic-patcon
+//static const std::string patconIpAddress = "192.168.69.101";
+
+*/
+
 {
     "numberOfStrings" : 36,
     "numberOfPixelsPerString" : 100,

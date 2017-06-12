@@ -33,7 +33,8 @@ static bool rIsActive;
 static bool gIsActive;
 static bool bIsActive;
 
-bool RgbVerticalPattern::initPattern(int numStrings, int pixelsPerString, int priority)
+
+bool RgbVerticalPattern::initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority)
 {
 //    cout << "Init RGB Vertical Pattern!" << endl;
     this->numStrings = numStrings;
@@ -64,7 +65,7 @@ bool RgbVerticalPattern::initWidgets(int numWidgets, int channelsPerWidget)
 //    for (i = 0; i < numWidgets; i++) {
         Widget* newWidget = widgetFactory(WidgetId::fourPlay43);
         widgets.emplace_back(newWidget);
-        newWidget->init(false);
+        newWidget->init(true);
 
         newWidget = widgetFactory(WidgetId::bells);
         widgets.emplace_back(newWidget);
@@ -146,7 +147,7 @@ bool RgbVerticalPattern::update()
                         int bWidthHighIndex;
                         int bellsPos;
                         int stringIndex;
-                        float scaleValue = (1024.0 / ((float)NUM_STRINGS / 3.0));
+                        float scaleValue = (1024.0 / ((float) numStrings / 3.0));
 
                         bellsPos = channel->getPosition();
                         bellsPos = (int)((float)bellsPos / scaleValue);
@@ -164,21 +165,21 @@ bool RgbVerticalPattern::update()
                         bWidthHighIndex = bPos + (bellsPos / 2);
 
                         for (int i = rWidthLowIndex; i < rWidthHighIndex; ++i) {
-                            stringIndex = (i % NUM_STRINGS + NUM_STRINGS) % NUM_STRINGS;
+                            stringIndex = (i % numStrings + numStrings) % numStrings;
                             for (auto&& pixels:pixelArray[stringIndex]) {
                                 pixels.r = 255;
                             }
                         }
 
                         for (int i = gWidthLowIndex; i < gWidthHighIndex; ++i) {
-                            stringIndex = (i % NUM_STRINGS + NUM_STRINGS) % NUM_STRINGS;
+                            stringIndex = (i % numStrings + numStrings) % numStrings;
                             for (auto&& pixels:pixelArray[stringIndex]) {
                                 pixels.g = 255;
                             }
                         }
 
                         for (int i = bWidthLowIndex; i < bWidthHighIndex; ++i) {
-                            stringIndex = (i % NUM_STRINGS + NUM_STRINGS) % NUM_STRINGS;
+                            stringIndex = (i % numStrings + numStrings) % numStrings;
                             for (auto&& pixels:pixelArray[stringIndex]) {
                                 pixels.b = 255;
                             }

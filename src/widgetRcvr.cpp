@@ -97,6 +97,9 @@ const string getTimestamp()
 
 bool openUdpPort(WidgetId widgetId)
 {
+    // TODO 6/12/2017 ross:  Get this value from config.
+    constexpr static unsigned int widgetPortNumberBase = 4200;
+
     unsigned int widgetIdNumber = widgetIdToInt(widgetId);
     unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
 

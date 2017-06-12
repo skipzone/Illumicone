@@ -24,7 +24,7 @@
 
 using namespace std;
 
-bool HorizontalStripePattern::initPattern(int numStrings, int pixelsPerString, int priority)
+bool HorizontalStripePattern::initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority)
 {
     this->numStrings = numStrings;
     this->pixelsPerString = pixelsPerString;

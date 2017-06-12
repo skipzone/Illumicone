@@ -15,6 +15,10 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// TODO:  auto shutoff and quiescent mode will be based on the json config, at which time these should be removed
+#define DISABLE_AUTO_SHUTOFF
+#define DISABLE_QUIESCENT_MODE
+
 #include <iostream>
 #include "Widget.h"
 #include "WidgetChannel.h"
@@ -34,7 +38,7 @@ SolidBlackPattern::SolidBlackPattern()
 };
 
 
-bool SolidBlackPattern::initPattern(int numStrings, int pixelsPerString, int priority)
+bool SolidBlackPattern::initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority)
 {
 //    cout << "Init Solid Black Pattern!" << endl;
     this->numStrings = numStrings;

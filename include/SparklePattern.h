@@ -24,7 +24,7 @@ class SparklePattern : public Pattern {
         SparklePattern() {};
         ~SparklePattern() {};
 
-        bool initPattern(int numStrings, int pixelsPerString, int priority);
+        bool initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();
 };

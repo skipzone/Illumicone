@@ -84,7 +84,10 @@ bool BellsWidget::moveData()
             lastUpdateMs[i] = nowMs;
 
             if (simWidth == 0) {
-                simWidth = NUM_STRINGS / 3;
+                // TODO:  Widgets should not need to be aware of the cone dimensions (that's the pattern's job).
+                //        For now, use a reasonable constant.  Eventually, replace this with simulation file playback.
+                //simWidth = NUM_STRINGS / 3;
+                simWidth = 36 / 3;
             }
 
             channels[i]->setPositionAndVelocity(simWidth, 0);

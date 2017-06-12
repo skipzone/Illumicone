@@ -20,52 +20,13 @@
 #include <cstdint>
 #include <string>
 
-#define SIMULATION_MODE
-#define DISABLE_AUTO_SHUTOFF
-#define DISABLE_QUIESCENT_MODE
 
-#define NUM_STRINGS 36
-#define PIXELS_PER_STRING 100
-
-
-#ifdef SIMULATION_MODE
-
-// localhost
-#define OPC_SERVER_ADDR "127.0.0.1"
-// Xanadu shop computer
-//#define OPC_SERVER_ADDR "192.168.0.17"
-// david's VM (14), ross's mac (12) at Xanadu
-//#define OPC_SERVER_ADDR "192.168.69.13"
-// david's home addr for the sever
-//#define OPC_SERVER_ADDR "192.168.0.10"
-
-// localhost
-static const std::string patconIpAddress = "127.0.0.1";
-// Xanadu shop computer
-//static const std::string patconIpAddress = "192.168.0.17";
-
-#else
-
-// ic-strdrv
-#define OPC_SERVER_ADDR "192.168.69.100"
-
-// ic-patcon
-static const std::string patconIpAddress = "192.168.69.101";
-
-#endif
-
-
-constexpr static unsigned int widgetPortNumberBase = 4200;
-
-//
 // structure to hold Open Pixel Control pixel data
-//
 typedef struct _opc_pixel_ {
     uint8_t r;
     uint8_t g;
     uint8_t b;
 } opc_pixel_t;
-
 
 
 /*******************

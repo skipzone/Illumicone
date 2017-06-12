@@ -25,7 +25,7 @@ class RgbVerticalPattern : public Pattern {
         RgbVerticalPattern() {};
         ~RgbVerticalPattern() {};
 
-        bool initPattern(int numStrings, int pixelsPerString, int priority);
+        bool initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();       
 };

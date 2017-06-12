@@ -27,6 +27,7 @@ class Pattern
     public:
         Pattern() {}
         virtual ~Pattern() {}
+
         int pixelsPerString;
         int numStrings;
         std::vector<std::vector<opc_pixel_t>> pixelArray;
@@ -37,7 +38,7 @@ class Pattern
         std::string name;
         int isActive;
 
-        virtual bool initPattern(int numStrings, int pixelsPerString, int priority) = 0;
+        virtual bool initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority) = 0;
         virtual bool initWidgets(int numWidgets, int channelsPerWidget) = 0;
 
         virtual bool update() = 0;

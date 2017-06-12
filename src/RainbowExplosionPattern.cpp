@@ -39,7 +39,7 @@ static patternState state;
 static int colorPosition;
 static int accumulator;
 
-bool RainbowExplosionPattern::initPattern(int numStrings, int pixelsPerString, int priority)
+bool RainbowExplosionPattern::initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority)
 {
     this->numStrings = numStrings;
     this->pixelsPerString = pixelsPerString;
@@ -61,11 +61,12 @@ bool RainbowExplosionPattern::initPattern(int numStrings, int pixelsPerString, i
         }
     }
 
-    colorPosition = PIXELS_PER_STRING;
+    colorPosition = pixelsPerString;
     accumulator = 0;
 
     return true;
 }
+
 
 bool RainbowExplosionPattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
@@ -128,7 +129,7 @@ bool RainbowExplosionPattern::update()
 
                                 for (auto&& pixels:pixelArray) {
                                     int randPixel = rand() % 30;
-                                    for (int i = PIXELS_PER_STRING - randPixel; i < PIXELS_PER_STRING; i++) {
+                                    for (int i = pixelsPerString - randPixel; i < pixelsPerString; i++) {
                                         pixels[i].r = 127;
                                         pixels[i].g = 0;
                                         pixels[i].b = 0;
@@ -139,7 +140,7 @@ bool RainbowExplosionPattern::update()
 
                         case STATE_R:
                             hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                            for (int i = colorPosition; i < pixelsPerString; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 255;
                                     pixels[i].g = 0;
@@ -147,7 +148,7 @@ bool RainbowExplosionPattern::update()
                                 }
                             }
                             if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
+                                colorPosition = pixelsPerString;
                                 state = STATE_O;
                             }
                             colorPosition -= 8;
@@ -156,7 +157,7 @@ bool RainbowExplosionPattern::update()
 
                         case STATE_O:
                             hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                            for (int i = colorPosition; i < pixelsPerString; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 255;
                                     pixels[i].g = 127;
@@ -164,7 +165,7 @@ bool RainbowExplosionPattern::update()
                                 }
                             }
                             if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
+                                colorPosition = pixelsPerString;
                                 state = STATE_Y;
                             }
                             colorPosition -= 8;
@@ -173,7 +174,7 @@ bool RainbowExplosionPattern::update()
 
                         case STATE_Y:
                             hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                            for (int i = colorPosition; i < pixelsPerString; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 255;
                                     pixels[i].g = 255;
@@ -181,7 +182,7 @@ bool RainbowExplosionPattern::update()
                                 }
                             }
                             if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
+                                colorPosition = pixelsPerString;
                                 state = STATE_G;
                             }
                             colorPosition -= 8;
@@ -190,7 +191,7 @@ bool RainbowExplosionPattern::update()
 
                         case STATE_G:
                             hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                            for (int i = colorPosition; i < pixelsPerString; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 0;
                                     pixels[i].g = 255;
@@ -198,7 +199,7 @@ bool RainbowExplosionPattern::update()
                                 }
                             }
                             if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
+                                colorPosition = pixelsPerString;
                                 state = STATE_B;
                             }
                             colorPosition -= 8;
@@ -207,7 +208,7 @@ bool RainbowExplosionPattern::update()
 
                         case STATE_B:
                             hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                            for (int i = colorPosition; i < pixelsPerString; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 0;
                                     pixels[i].g = 0;
@@ -215,7 +216,7 @@ bool RainbowExplosionPattern::update()
                                 }
                             }
                             if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
+                                colorPosition = pixelsPerString;
                                 state = STATE_I;
                             }
                             colorPosition -= 8;
@@ -224,7 +225,7 @@ bool RainbowExplosionPattern::update()
 
                         case STATE_I:
                             hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                            for (int i = colorPosition; i < pixelsPerString; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 75;
                                     pixels[i].g = 0;
@@ -232,7 +233,7 @@ bool RainbowExplosionPattern::update()
                                 }
                             }
                             if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
+                                colorPosition = pixelsPerString;
                                 state = STATE_V;
                             }
                             colorPosition -= 8;
@@ -241,7 +242,7 @@ bool RainbowExplosionPattern::update()
 
                         case STATE_V:
                             hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
+                            for (int i = colorPosition; i < pixelsPerString; i++) {
                                 for (auto&& pixels:pixelArray) {
                                     pixels[i].r = 148;
                                     pixels[i].g = 0;
@@ -249,7 +250,7 @@ bool RainbowExplosionPattern::update()
                                 }
                             }
                             if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
+                                colorPosition = pixelsPerString;
                                 state = STATE_FIZZLE;
                             }
                             colorPosition -= 8;

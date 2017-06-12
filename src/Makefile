@@ -16,7 +16,7 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=PatternController
-OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o RgbVerticalPattern.o SolidBlackPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o json11.o
+OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o RgbVerticalPattern.o SolidBlackPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o json11.o ConfigReader.o
 LIBS=
 
 INCLUDE=../include
@@ -43,7 +43,7 @@ $(PROGS): $(OBJS)
 WidgetSimulator: WidgetSimulator.cpp
 	g++ $(CXXFLAGS) -o $@ $^ -lrt
 
-GpioTester: GpioTester.cpp
+GpioTester: GpioTester.cpp json11.o ConfigReader.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 widgetRcvr: widgetRcvr.cpp WidgetId.o
@@ -52,7 +52,7 @@ widgetRcvr: widgetRcvr.cpp WidgetId.o
 widgetTester: widgetTester.cpp
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
-jsonTester: jsonTester.cpp json11.o
+jsonTester: jsonTester.cpp json11.o ConfigReader.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 clean:
@@ -69,3 +69,7 @@ clean-GpioTester:
 
 clean-WidgetSimulator:
 	rm -f WidgetSimulator
+
+clean-jsonTester:
+	rm -f jsonTester
+

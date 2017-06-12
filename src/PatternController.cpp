@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
@@ -47,8 +48,10 @@ using namespace std;
 
 static struct sockaddr_in server;
 static int sock;
-static int n;
-static uint8_t opcArray[NUM_STRINGS * PIXELS_PER_STRING * 3 + 4];
+static unsigned int numberOfStrings;
+static unsigned int numberOfPixelsPerString;
+static uint8_t* opcArray;
+static unsigned int opcArraySize;
 static bool doIdlePattern;
 time_t timeWentIdle;
 
@@ -75,14 +78,14 @@ const string getTimestamp()
 }
 
 
-bool setupConnection()
+bool setupConnection(const string& opcServerIpAddress)
 {
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    server.sin_addr.s_addr = inet_addr(OPC_SERVER_ADDR);
+    server.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
     server.sin_family = AF_INET;
     server.sin_port = htons(7890);
 
-    if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
+    if (connect(sock, (struct sockaddr *) &server, sizeof(server)) < 0) {
         cout << "SOMETHING'S FUCKY: couldn't connect to opc-server!" << endl;
         while (1);
     }
@@ -102,7 +105,7 @@ void dumpPacket(uint8_t *opcArray)
 
     pixels = &opcArray[4];
 
-    for (i = 0; i < 2 * PIXELS_PER_STRING * 3; i++) {
+    for (i = 0; i < 2 * numberOfPixelsPerString * 3; i++) {
         cout << unsigned(pixels[i]) << " " << unsigned(pixels[i+1]) << " " << unsigned(pixels[i+2]) << " " << endl;
     }
 }
@@ -124,8 +127,8 @@ void zeroFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
     int col;
     int row;
 
-    for (col = 0; col < NUM_STRINGS; col++) {
-        for (row = 0; row < PIXELS_PER_STRING; row++) {
+    for (col = 0; col < numberOfStrings; col++) {
+        for (row = 0; row < numberOfPixelsPerString; row++) {
             finalFrame[col][row].r = 0;
             finalFrame[col][row].g = 0;
             finalFrame[col][row].b = 0;
@@ -162,14 +165,15 @@ bool buildFrame(
 {
     int col;
     int row;
+    //bool foundNonZeroValue = false;
 
     switch (priority) {
         case 0:
             //
             // SolidBlackPattern
             //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            for (col = 0; col < numberOfStrings; col++) {
+                for (row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 && pixelArray[col][row].g != 0 && pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
@@ -182,8 +186,8 @@ bool buildFrame(
             //
             // RainbowExplosionPattern
             //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            for (col = 0; col < numberOfStrings; col++) {
+                for (row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row]; 
                     }
@@ -196,15 +200,19 @@ bool buildFrame(
             //
             // RgbVerticalPattern
             //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            for (col = 0; col < numberOfStrings; col++) {
+                for (row = 0; row < numberOfPixelsPerString; row++) {
                     // only update the value of the final frame if the pixel
                     // contains non-zero values (is on)
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
+                        //foundNonZeroValue = true;
                         finalFrame[col][row] = pixelArray[col][row];
                     }
                 }
             }
+            //if (foundNonZeroValue) {
+            //    cout << "found non-zero pixel value for RgbVerticalPattern" << endl;
+            //}
             break;
  
         case 3:
@@ -212,8 +220,8 @@ bool buildFrame(
             //
             // HorizontalStripePattern
             //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            for (col = 0; col < numberOfStrings; col++) {
+                for (row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
@@ -225,8 +233,8 @@ bool buildFrame(
             //
             // SparklePattern
             //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            for (col = 0; col < numberOfStrings; col++) {
+                for (row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
@@ -240,8 +248,8 @@ bool buildFrame(
             //
             // QuadSlicePattern
             //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            for (col = 0; col < numberOfStrings; col++) {
+                for (row = 0; row < numberOfPixelsPerString; row++) {
                     // only update the value of the final frame if the pixel
                     // contains non-zero values (is on)
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
@@ -264,9 +272,9 @@ bool buildFrame(
 void finalizeFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
 {
     for (auto&& pixels:finalFrame) {
-        pixels[PIXELS_PER_STRING-1].r = 255;
-        pixels[PIXELS_PER_STRING-1].g = 0;
-        pixels[PIXELS_PER_STRING-1].b = 255;
+        pixels[numberOfPixelsPerString-1].r = 255;
+        pixels[numberOfPixelsPerString-1].g = 0;
+        pixels[numberOfPixelsPerString-1].b = 255;
     }
 }
 
@@ -279,22 +287,23 @@ int sendFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
 
     opcArray[0] = 0;
     opcArray[1] = 0;
-    opcArray[2] = NUM_STRINGS * PIXELS_PER_STRING * 3 / 256;
-    opcArray[3] = NUM_STRINGS * PIXELS_PER_STRING * 3 % 256;
+    opcArray[2] = numberOfStrings * numberOfPixelsPerString * 3 / 256;
+    opcArray[3] = numberOfStrings * numberOfPixelsPerString * 3 % 256;
 
     pixels = &opcArray[4];
 
-    for (col = 0; col < NUM_STRINGS; col++) {
-        for (row = 0; row < PIXELS_PER_STRING; row++) {
-            pixels[col*PIXELS_PER_STRING*3 + row*3 + 0] = finalFrame[col][row].r;
-            pixels[col*PIXELS_PER_STRING*3 + row*3 + 1] = finalFrame[col][row].g;
-            pixels[col*PIXELS_PER_STRING*3 + row*3 + 2] = finalFrame[col][row].b;
+    for (col = 0; col < numberOfStrings; col++) {
+        for (row = 0; row < numberOfPixelsPerString; row++) {
+            pixels[col*numberOfPixelsPerString*3 + row*3 + 0] = finalFrame[col][row].r;
+            pixels[col*numberOfPixelsPerString*3 + row*3 + 1] = finalFrame[col][row].g;
+            pixels[col*numberOfPixelsPerString*3 + row*3 + 2] = finalFrame[col][row].b;
         }
     }
 
 //    dumpPacket(opcArray);
     // send over network connection
-    n = send(sock, opcArray, sizeof(opcArray), 0);
+    int n = send(sock, opcArray, opcArraySize, 0);
+    //cout << "send returned " << n << endl;
 
     return n;
 }
@@ -325,12 +334,37 @@ int acquireProcessLock()
 }
 
 
-int main(void)
+int main(int argc, char **argv)
 {
+    if (argc != 2) {
+        cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
+        return 2;
+    }
+    string jsonFileName(argv[1]);
+
+    ConfigReader config;
+    if (!config.readConfigurationFile(jsonFileName)) {
+        return(EXIT_FAILURE);
+    }
+
     if (acquireProcessLock() < 0) {
-        exit(EXIT_FAILURE);
+        return(EXIT_FAILURE);
     }
     cout << getTimestamp() << "---------- PatternController  starting ----------" << endl;
+
+
+    numberOfStrings = config.getNumberOfStrings();
+    numberOfPixelsPerString = config.getNumberOfPixelsPerString();
+    cout << "numberOfStrings = " << numberOfStrings << endl;
+    cout << "numberOfPixelsPerString = " << numberOfPixelsPerString << endl;
+
+    opcArraySize = numberOfStrings * numberOfPixelsPerString * 3 + 4;
+    opcArray = new uint8_t[opcArraySize];
+    if (opcArray == nullptr) {
+        cerr << "Unable to allocate opcArray of size " << opcArraySize << endl;
+        return(EXIT_FAILURE);
+    }
+
 
     doIdlePattern = true;
     time(&timeWentIdle);
@@ -348,32 +382,30 @@ int main(void)
     int numChannels[6] = {1, 1, 3, 4, 1, 1};
     int priorities[6] = {0, 1, 2, 3, 4, 5};
 
-    finalFrame1.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
-    finalFrame2.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
+    finalFrame1.resize(numberOfStrings, std::vector<opc_pixel_t>(numberOfPixelsPerString));
+    finalFrame2.resize(numberOfStrings, std::vector<opc_pixel_t>(numberOfPixelsPerString));
 
     cout << "Pattern initialization!\n";
 
     // open socket, connect with opc-server
-    setupConnection();
-    cout << "NUM_STRINGS: " << NUM_STRINGS << endl;
-    cout << "PIXELS_PER_STRING: " << PIXELS_PER_STRING << endl;
-    solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[0]);
+    setupConnection(config.getOpcServerIpAddress());
+    solidBlackPattern.initPattern(numberOfStrings, numberOfPixelsPerString, priorities[0]);
     solidBlackPattern.initWidgets(1, numChannels[0]);
     printInit(&solidBlackPattern);
 
-    rainbowExplosionPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
+    rainbowExplosionPattern.initPattern(numberOfStrings, numberOfPixelsPerString, priorities[1]);
     rainbowExplosionPattern.initWidgets(1, numChannels[1]);
     printInit(&rainbowExplosionPattern);
 
-    rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[2]);
+    rgbVerticalPattern.initPattern(numberOfStrings, numberOfPixelsPerString, priorities[2]);
     rgbVerticalPattern.initWidgets(1, numChannels[2]);
     printInit(&rgbVerticalPattern);
 
-    horizontalStripePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
+    horizontalStripePattern.initPattern(numberOfStrings, numberOfPixelsPerString, priorities[3]);
     horizontalStripePattern.initWidgets(1, numChannels[3]);
     printInit(&horizontalStripePattern);
 
-    sparklePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[4]);
+    sparklePattern.initPattern(numberOfStrings, numberOfPixelsPerString, priorities[4]);
     sparklePattern.initWidgets(1, numChannels[4]);
     printInit(&sparklePattern);
 
@@ -391,7 +423,7 @@ int main(void)
 
         if (sparklePattern.isActive) {
             anyPatternIsActive = true;
-//            cout << "sparkle active" << endl;
+            //cout << "sparkle active" << endl;
             buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
         }
        
@@ -402,7 +434,7 @@ int main(void)
 
         if (rgbVerticalPattern.isActive) {
             anyPatternIsActive = true;
-//            cout << "rgb active" << endl;
+            //cout << "rgb active" << endl;
             buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
         }
 
@@ -413,11 +445,12 @@ int main(void)
 
         if (solidBlackPattern.isActive) {
             anyPatternIsActive = true;
-//            cout << "solid active" << endl;
+            //cout << "solid active" << endl;
             buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
         }
 
         if (!anyPatternIsActive) {
+            //cout << "no patterns are active; finalizing finalFrame1" << endl;
             finalizeFrame(finalFrame1);
         }
 

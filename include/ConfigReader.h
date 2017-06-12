@@ -16,15 +16,36 @@
 */
 
 #pragma once
-#include "Pattern.h"
 
-class RainbowExplosionPattern : public Pattern
+#include "json11.hpp"
+#include <string>
+
+
+class ConfigReader
 {
     public:
-        RainbowExplosionPattern() {};
-        ~RainbowExplosionPattern() {};
 
-        bool initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority);
-        bool initWidgets(int numWidgets, int channelsPerWidget);
-        bool update();
+        ConfigReader();
+        virtual ~ConfigReader();
+
+        ConfigReader(const ConfigReader&) = delete;
+        ConfigReader& operator =(const ConfigReader&) = delete;
+
+        bool readConfigurationFile(std::string fileName);
+
+        std::string dumpToString();
+        json11::Json getJsonObject();
+
+        int getNumberOfStrings();
+        int getNumberOfPixelsPerString();
+        std::string getOpcServerIpAddress();
+        std::string getPatconIpAddress();
+        int getWidgetPortNumberBase();
+
+    private:
+
+        std::string configFileName;
+        json11::Json configObj;
+
 };
+

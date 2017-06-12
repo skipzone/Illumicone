@@ -1,10 +1,18 @@
 PatternController
+PatternController.dSYM
 GpioTester
+GpioTester.dSYM
 WidgetSimulator
+WidgetSimulator.dSYM
 widgetRcvr
+jsonTester
+jsonTester.dSYM
 *.o
 .*.swp
 *~
 *.DS_Store
 # ignore cscope reference file
 cscope.out
+database/log*
+database/*.pdf
+database/sql*.sql

@@ -88,6 +88,9 @@ bool Widget::getHasNewMeasurement()
 
 void Widget::startUdpRxThread()
 {
+    // TODO 6/12/2017 ross:  Get this value from config when calls to widget init are moved to PatternController.
+    constexpr static unsigned int widgetPortNumberBase = 4200;
+
 	// TODO 7/10/2016 ross:  determine if we really need to do this
     //pthread_t thisThread = pthread_self();
 	//pthread_setschedprio(thisThread, SCHED_FIFO);

@@ -26,7 +26,7 @@ class SolidBlackPattern : public Pattern {
         SolidBlackPattern();
         ~SolidBlackPattern() {};
 
-        bool initPattern(int numStrings, int pixelsPerString, int prioirty);
+        bool initPattern(unsigned int numStrings, unsigned int pixelsPerString, int prioirty);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();
 

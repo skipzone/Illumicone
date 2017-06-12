@@ -15,6 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "ConfigReader.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -24,6 +25,7 @@
 #include "illumiconeTypes.h"
 
 using namespace std;
+
 
 int main(int argc, char **argv)
 {
@@ -38,11 +40,27 @@ int main(int argc, char **argv)
     uint8_t g;
     uint8_t b;
 
-    uint8_t opcArray[NUM_STRINGS * PIXELS_PER_STRING * 3 + 4];
+    if (argc != 2) {
+        cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
+        return 2;
+    }
+    string jsonFileName(argv[1]);
+
+    ConfigReader config;
+    if (!config.readConfigurationFile(jsonFileName)) {
+        return(EXIT_FAILURE);
+    }
+
+    unsigned int numberOfStrings = config.getNumberOfStrings();
+    unsigned int numberOfPixelsPerString = config.getNumberOfPixelsPerString();
+    cout << "numberOfStrings = " << numberOfStrings << endl;
+    cout << "numberOfPixelsPerString = " << numberOfPixelsPerString << endl;
+
+    uint8_t opcArray[numberOfStrings * numberOfPixelsPerString * 3 + 4];
     uint8_t *pixels;
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    server.sin_addr.s_addr = inet_addr(OPC_SERVER_ADDR);
+    server.sin_addr.s_addr = inet_addr(config.getOpcServerIpAddress().c_str());
     server.sin_family = AF_INET;
     server.sin_port = htons(7890);
 
@@ -57,28 +75,28 @@ int main(int argc, char **argv)
 
         opcArray[0] = 0;
         opcArray[1] = 0;
-        opcArray[2] = NUM_STRINGS * PIXELS_PER_STRING * 3 / 256;
-        opcArray[3] = NUM_STRINGS * PIXELS_PER_STRING * 3 % 256;
+        opcArray[2] = numberOfStrings * numberOfPixelsPerString * 3 / 256;
+        opcArray[3] = numberOfStrings * numberOfPixelsPerString * 3 % 256;
         pixels = &opcArray[4];
 
     while (1) {
 
-//        for (col = 0; col < NUM_STRINGS; col++) {
+//        for (col = 0; col < numberOfStrings; col++) {
 //            r = rand() % 255;
 //            g = rand() % 255;
 //            b = rand() % 255;
-//            for (row = 0; row < PIXELS_PER_STRING*3; row+=3) {
-//                pixels[col*PIXELS_PER_STRING*3 + row + 0] = r;
-//                pixels[col*PIXELS_PER_STRING*3 + row + 1] = g;
-//                pixels[col*PIXELS_PER_STRING*3 + row + 2] = b;
+//            for (row = 0; row < numberOfPixelsPerString*3; row+=3) {
+//                pixels[col*numberOfPixelsPerString*3 + row + 0] = r;
+//                pixels[col*numberOfPixelsPerString*3 + row + 1] = g;
+//                pixels[col*numberOfPixelsPerString*3 + row + 2] = b;
 //            }
 //        }
 
-//        for (col = 0; col < NUM_STRINGS; col++) {
-//            for (row = 0; row < PIXELS_PER_STRING*3; row+=3) {
-//                pixels[col*PIXELS_PER_STRING*3 + row + 0] = rand() % 255;
-//                pixels[col*PIXELS_PER_STRING*3 + row + 1] = rand() & 255;
-//                pixels[col*PIXELS_PER_STRING*3 + row + 2] = rand() & 255;
+//        for (col = 0; col < numberOfStrings; col++) {
+//            for (row = 0; row < numberOfPixelsPerString*3; row+=3) {
+//                pixels[col*numberOfPixelsPerString*3 + row + 0] = rand() % 255;
+//                pixels[col*numberOfPixelsPerString*3 + row + 1] = rand() & 255;
+//                pixels[col*numberOfPixelsPerString*3 + row + 2] = rand() & 255;
 //            }
 //        }
 
@@ -86,10 +104,10 @@ int main(int argc, char **argv)
         pixels[i] = 0;
     }
 
-    for (i = 0; i < PIXELS_PER_STRING*3; i+=3) {
-        pixels[position * PIXELS_PER_STRING * 3 + i + 0] = 128;
-        pixels[position * PIXELS_PER_STRING * 3 + i + 1] = 128;
-        pixels[position * PIXELS_PER_STRING * 3 + i + 2] = 128;
+    for (i = 0; i < numberOfPixelsPerString*3; i+=3) {
+        pixels[position * numberOfPixelsPerString * 3 + i + 0] = 128;
+        pixels[position * numberOfPixelsPerString * 3 + i + 1] = 128;
+        pixels[position * numberOfPixelsPerString * 3 + i + 2] = 128;
     }
 
         n = send(sock, opcArray, sizeof(opcArray), 0);

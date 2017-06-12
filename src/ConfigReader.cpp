@@ -17,39 +17,94 @@
 
 #include "ConfigReader.h"
 #include <fstream>
-#include "json11.hpp"
+#include "illumiconeTypes.h"
 #include <iostream>
 #include <sstream>
-#include <string>
 
 using namespace std;
 using namespace json11;
 
 
-int main(int argc, char **argv) {
+ConfigReader::ConfigReader()
+{
+}
 
-    if (argc != 2) {
-        cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
-        return 2;
+
+ConfigReader::~ConfigReader()
+{
+}
+
+
+bool ConfigReader::readConfigurationFile(std::string fileName)
+{
+    configFileName = fileName;
+
+    ifstream configFile(configFileName, ios_base::in);
+    if (!configFile.is_open()) {
+        cerr << "Can't open " << configFileName << endl;
+        return false;
     }
-    string jsonFileName(argv[1]);
+    stringstream jsonSstr;
+    jsonSstr << configFile.rdbuf();
+    configFile.close();
 
-    ConfigReader config;
-    if (!config.readConfigurationFile(jsonFileName)) {
-        return(1);
+    string err;
+    configObj = Json::parse(jsonSstr.str(), err, JsonParse::COMMENTS);
+    if (!err.empty()) {
+        cerr << "Parse of " << configFileName << " failed:  " << err << endl;
+        return false;
     }
 
-    cout << config.dumpToString() << endl << endl;
+    return true;
+}
 
-    cout << "numberOfStrings:  " << config.getNumberOfStrings() << endl;
-    cout << "numberOfPixelsPerString:  " << config.getNumberOfPixelsPerString() << endl;
-    cout << "opcServerIpAddress:  " << config.getOpcServerIpAddress() << endl;
-    cout << "patconIpAddress:  " << config.getPatconIpAddress() << endl;
-    cout << "widgetPortNumberBase:  " << config.getWidgetPortNumberBase() << endl;
 
-    Json configJsonObj = config.getJsonObject();
+string ConfigReader::dumpToString()
+{
+    return configObj.dump();
+}
 
-    for (auto& autoShutoffPeriod : configJsonObj["autoShutoffPeriods"].array_items()) {
+
+Json ConfigReader::getJsonObject()
+{
+    return configObj;
+}
+
+
+int ConfigReader::getNumberOfStrings()
+{
+    return configObj["numberOfStrings"].int_value();
+}
+
+
+int ConfigReader::getNumberOfPixelsPerString()
+{
+    return configObj["numberOfPixelsPerString"].int_value();
+}
+
+
+string ConfigReader::getOpcServerIpAddress()
+{
+    return configObj["opcServerIpAddress"].string_value();
+}
+
+
+string ConfigReader::getPatconIpAddress()
+{
+    return configObj["patconIpAddress"].string_value();
+}
+
+
+int ConfigReader::getWidgetPortNumberBase()
+{
+    return configObj["widgetPortNumberBase"].int_value();
+}
+
+
+
+/* =-=-=-=-=-=-=-=-=
+
+    for (auto& autoShutoffPeriod : json["autoShutoffPeriods"].array_items()) {
         cout << "autoShutoffPeriod:  " << autoShutoffPeriod["description"].string_value() << endl;
         cout << "    startDate:  " << autoShutoffPeriod["startDate"].string_value() << endl;
         cout << "    startTime:  " << autoShutoffPeriod["startTime"].string_value() << endl;
@@ -57,7 +112,7 @@ int main(int argc, char **argv) {
         cout << "      endTime:  " << autoShutoffPeriod["endTime"].string_value() << endl;
     }
 
-    for (auto& quiescentModePeriod : configJsonObj["quiescentModePeriods"].array_items()) {
+    for (auto& quiescentModePeriod : json["quiescentModePeriods"].array_items()) {
         cout << "quiescentModePeriod:  " << quiescentModePeriod["description"].string_value() << endl;
         cout << "      startDate:  " << quiescentModePeriod["startDate"].string_value() << endl;
         cout << "      startTime:  " << quiescentModePeriod["startTime"].string_value() << endl;
@@ -66,11 +121,11 @@ int main(int argc, char **argv) {
         cout << "    idlePattern:  " << quiescentModePeriod["idlePatternName"].string_value() << endl;
     }
 
-    for (auto& widget : configJsonObj["widgets"].array_items()) {
+    for (auto& widget : json["widgets"].array_items()) {
         cout << "widget:  " << widget.string_value() << endl;
     }
 
-    for (auto& pattern : configJsonObj["patterns"].array_items()) {
+    for (auto& pattern : json["patterns"].array_items()) {
         cout << "pattern:  " << pattern["patternName"].string_value() << endl;
         for (auto& input : pattern["inputs"].array_items()) {
             cout << "    input:  " << input["inputName"].string_value() << endl;
@@ -80,5 +135,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    return 0;
-}
+*/
+
+

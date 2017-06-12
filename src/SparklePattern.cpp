@@ -24,7 +24,7 @@
 
 using namespace std;
 
-bool SparklePattern::initPattern(int numStrings, int pixelsPerString, int priority)
+bool SparklePattern::initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority)
 {
 //    cout << "Init Solid Black Pattern!" << endl;
     this->numStrings = numStrings;
@@ -80,7 +80,7 @@ bool SparklePattern::update()
                         hadActivity = true;
                         float velocityPercentage = curVel / 600.0;
                         // at max velocity, only half of the pixels on each string sparkle
-                        float numPixelsToSparkle = (velocityPercentage * (float)(PIXELS_PER_STRING /2 ));
+                        float numPixelsToSparkle = (velocityPercentage * (float)(pixelsPerString / 2 ));
 
     //                    cout << "curVel: " << curVel << endl;
     //                    cout << "velocityPercentage: " << velocityPercentage << endl;
@@ -88,7 +88,7 @@ bool SparklePattern::update()
 
                         for (auto&& pixels:pixelArray) {
                             for (int i = 0; i < (int)numPixelsToSparkle; i++) {
-                                int randPos = rand() % PIXELS_PER_STRING;
+                                int randPos = rand() % pixelsPerString;
                                 pixels[randPos].r = rand() % 255;
                                 pixels[randPos].g = rand() % 255;
                                 pixels[randPos].b = rand() % 255;
