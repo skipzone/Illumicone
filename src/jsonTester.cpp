@@ -67,7 +67,9 @@ int main(int argc, char **argv) {
     }
 
     for (auto& widget : configJsonObj["widgets"].array_items()) {
-        cout << "widget:  " << widget.string_value() << endl;
+        cout << "widget:  " << widget["name"].string_value() << endl;
+        cout << "    enabled:  " << widget["enabled"].bool_value() << endl;
+        cout << "    generateSimulatedMeasurements:  " << widget["generateSimulatedMeasurements"].bool_value() << endl;
     }
 
     for (auto& pattern : configJsonObj["patterns"].array_items()) {

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Pattern.h"
+#include "WidgetChannel.h"
 
 class HorizontalStripePattern : public Pattern
 {
@@ -28,4 +29,10 @@ class HorizontalStripePattern : public Pattern
         bool initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();
+
+    private:
+
+        WidgetChannel redPositionChannel;
+        WidgetChannel greenPositionChannel;
+        WidgetChannel bluePositionChannel;
 };

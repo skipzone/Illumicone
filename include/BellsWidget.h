@@ -29,7 +29,7 @@ class BellsWidget : public Widget
         BellsWidget(const BellsWidget&) = delete;
         BellsWidget& operator =(const BellsWidget&) = delete;
 
-        void init(bool generateSimulatedMeasurements);
+        bool init(ConfigReader& config);
 
         bool moveData();
 

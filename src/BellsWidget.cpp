@@ -23,6 +23,7 @@
 ///#include <vector>
 
 #include "BellsWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
@@ -51,15 +52,17 @@ BellsWidget::BellsWidget()
 }
 
 
-void BellsWidget::init(bool generateSimulatedMeasurements)
+bool BellsWidget::init(ConfigReader& config)
 {
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
 
     channels.push_back(make_shared<WidgetChannel>(0, this));
 
     if (!generateSimulatedMeasurements) {
         startUdpRxThread();
     }
+
+    return true;
 }
 
 

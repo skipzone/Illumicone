@@ -21,6 +21,7 @@
 #include <time.h>
 
 #include "RainstickWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 
 using namespace std;
@@ -38,11 +39,13 @@ RainstickWidget::RainstickWidget()
 }
 
 
-void RainstickWidget::init(bool generateSimulatedMeasurements)
+bool RainstickWidget::init(ConfigReader& config)
 {
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
 
     channels.push_back(make_shared<WidgetChannel>(0, this));
+
+    return true;
 }
 
 

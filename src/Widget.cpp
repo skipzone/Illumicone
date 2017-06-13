@@ -54,7 +54,7 @@ unsigned int Widget::getChannelCount()
 
 std::shared_ptr<WidgetChannel> Widget::getChannel(unsigned int channelIdx)
 {
-    return (channelIdx <= channels.size()) ? channels[channelIdx] : nullptr;
+    return channelIdx < channels.size() ? channels[channelIdx] : nullptr;
 }
 
 

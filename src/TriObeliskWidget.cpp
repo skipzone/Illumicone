@@ -25,6 +25,7 @@
 ///#include <vector>
 
 #include "TriObeliskWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
@@ -45,9 +46,9 @@ TriObeliskWidget::TriObeliskWidget()
 }
 
 
-void TriObeliskWidget::init(bool generateSimulatedMeasurements)
+bool TriObeliskWidget::init(ConfigReader& config)
 {
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
 
     for (int i = 0; i < 3; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this));
@@ -56,6 +57,8 @@ void TriObeliskWidget::init(bool generateSimulatedMeasurements)
     if (!generateSimulatedMeasurements) {
         startUdpRxThread();
     }
+
+    return true;
 }
 
 

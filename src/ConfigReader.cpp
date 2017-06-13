@@ -55,6 +55,8 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
         return false;
     }
 
+    // TODO 6/12/2017 ross:  Build a map associating widget ids with widget config objects and use it to access the objects.
+
     return true;
 }
 
@@ -68,6 +70,29 @@ string ConfigReader::dumpToString()
 Json ConfigReader::getJsonObject()
 {
     return configObj;
+}
+
+
+Json ConfigReader::getWidgetConfigJsonObject(WidgetId widgetId)
+{
+    string widgetName = widgetIdToString(widgetId);
+    for (auto& widgetConfigObj : configObj["widgets"].array_items()) {
+        if (widgetConfigObj["name"].string_value() == widgetName) {
+            return widgetConfigObj;
+        }
+    }
+    return Json("{}");
+}
+
+
+Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
+{
+    for (auto& patternConfigObj : configObj["patterns"].array_items()) {
+        if (patternConfigObj["patternName"].string_value() == patternName) {
+            return patternConfigObj;
+        }
+    }
+    return Json("{}");
 }
 
 
@@ -98,6 +123,13 @@ string ConfigReader::getPatconIpAddress()
 int ConfigReader::getWidgetPortNumberBase()
 {
     return configObj["widgetPortNumberBase"].int_value();
+}
+
+
+bool ConfigReader::getWidgetGenerateSimulatedMeasurements(WidgetId widgetId)
+{
+    Json widgetConfig = getWidgetConfigJsonObject(widgetId);
+    return widgetConfig["generateSimulatedMeasurements"].bool_value();
 }
 
 

@@ -30,7 +30,7 @@ class EyeWidget : public Widget
         EyeWidget(const EyeWidget&) = delete;
         EyeWidget& operator = (const EyeWidget&) = delete;
 
-        void init(bool generateSimulatedMeasurements);
+        bool init(ConfigReader& config);
 
         bool moveData();
 

@@ -26,6 +26,7 @@
 
 #include "WidgetId.h"
 
+class ConfigReader;
 class WidgetChannel;
 
 
@@ -43,7 +44,7 @@ class Widget
         WidgetId getId();
         std::string getName();
 
-        virtual void init(bool generateSimulatedMeasurements = true) = 0;
+        virtual bool init(ConfigReader& config) = 0;
 
         virtual bool moveData() = 0;
 

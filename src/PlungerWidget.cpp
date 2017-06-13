@@ -8,6 +8,7 @@
 ///#include <vector>
 
 #include "PlungerWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
@@ -33,9 +34,9 @@ PlungerWidget::PlungerWidget()
 }
 
 
-void PlungerWidget::init(bool generateSimulatedMeasurements)
+bool PlungerWidget::init(ConfigReader& config)
 {
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
 
     for (int i = 0; i < 1; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this));
@@ -44,6 +45,8 @@ void PlungerWidget::init(bool generateSimulatedMeasurements)
     if (!generateSimulatedMeasurements) {
         startUdpRxThread();
     }
+
+    return true;
 }
 
 

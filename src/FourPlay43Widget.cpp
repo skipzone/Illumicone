@@ -25,6 +25,7 @@
 ///#include <vector>
 
 #include "FourPlay43Widget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
@@ -50,9 +51,9 @@ FourPlay43Widget::FourPlay43Widget()
 }
 
 
-void FourPlay43Widget::init(bool generateSimulatedMeasurements)
+bool FourPlay43Widget::init(ConfigReader& config)
 {
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
 
     for (int i = 0; i < 4; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this));
@@ -61,6 +62,8 @@ void FourPlay43Widget::init(bool generateSimulatedMeasurements)
     if (!generateSimulatedMeasurements) {
         startUdpRxThread();
     }
+
+    return true;
 }
 
 

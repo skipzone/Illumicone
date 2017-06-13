@@ -69,18 +69,54 @@
     ],
 
     "widgets" : [
-        "eye",
-        "shirleysWeb",
-        "bells",
-        //"rainstick",
-        //"schroedersPlaything",
-        "triObelisk",
-        //"squawkBox",
-        "plunger",
-        //"twister",
-        "fourPlay42",
-        "fourPlay43"
-        //"buckNorris",
+        {   "name" : "eye",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false
+        },
+        {   "name" : "shirleysWeb",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false
+        },
+        {   "name" : "bells",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false
+        },
+        {   "name" : "rainstick",
+            "enabled" : false,
+            "generateSimulatedMeasurements" : false
+        },
+        {   "name" : "schroedersPlaything",
+            "enabled" : false,
+            "generateSimulatedMeasurements" : false
+        },
+        {   "name" : "triObelisk",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false
+        },
+        {   "name" : "squawkBox",
+            "enabled" : false,
+            "generateSimulatedMeasurements" : false
+        },
+        {   "name" : "plunger",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false
+        },
+        {   "name" : "twister",
+            "enabled" : false,
+            "generateSimulatedMeasurements" : false
+        },
+        {   "name" : "fourPlay42",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : true
+        },
+        {   "name" : "fourPlay43",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : true
+        },
+        {   "name" : "buckNorris",
+            "enabled" : false,
+            "generateSimulatedMeasurements" : false
+        }
     ],
 
     "patterns" : [

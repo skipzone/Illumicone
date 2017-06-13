@@ -17,8 +17,10 @@
 
 #pragma once
 
-#include "json11.hpp"
 #include <string>
+
+#include "json11.hpp"
+#include "WidgetId.h"
 
 
 class ConfigReader
@@ -35,12 +37,15 @@ class ConfigReader
 
         std::string dumpToString();
         json11::Json getJsonObject();
+        json11::Json getWidgetConfigJsonObject(WidgetId widgetId);
+        json11::Json getPatternConfigJsonObject(const std::string& patternName);
 
         int getNumberOfStrings();
         int getNumberOfPixelsPerString();
         std::string getOpcServerIpAddress();
         std::string getPatconIpAddress();
         int getWidgetPortNumberBase();
+        bool getWidgetGenerateSimulatedMeasurements(WidgetId widgetId);
 
     private:
 

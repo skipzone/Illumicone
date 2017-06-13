@@ -23,6 +23,7 @@
 ///#include <vector>
 
 #include "EyeWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
@@ -41,15 +42,17 @@ EyeWidget::EyeWidget()
 }
 
 
-void EyeWidget::init(bool generateSimulatedMeasurements)
+bool EyeWidget::init(ConfigReader& config)
 {
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
+    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
 
     channels.push_back(make_shared<WidgetChannel>(0, this));
 
     if (!generateSimulatedMeasurements) {
         startUdpRxThread();
     }
+
+    return true;
 }
 
 
