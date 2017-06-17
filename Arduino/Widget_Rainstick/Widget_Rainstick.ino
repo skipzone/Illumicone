@@ -104,16 +104,17 @@ float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gra
 uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
 
 
-
 /************************
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 5
+#define WIDGET_ID 4
 ///#define NUM_CHANNELS 2
-#define ACTIVE_TX_INTERVAL_MS 100L
+#define ACTIVE_TX_INTERVAL_MS 500L
 #define INACTIVE_TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 2
+#define MIC_SIGNAL_PIN A0
+#define MIC_POWER_PIN 8
 
 #define LCD_RS_PIN A1
 #define LCD_E_PIN  A0
@@ -124,10 +125,10 @@ uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\
 #define LCD_NUM_COLS 20
 #define LCD_NUM_ROWS 2
 
-#define NUM_VALUES_TO_SEND 4
+#define NUM_MPU_VALUES_TO_SEND 4
 
-//#define ENABLE_DEBUG_PRINT
-#define ENABLE_LCD
+#define ENABLE_DEBUG_PRINT
+//#define ENABLE_LCD
 
 
 /***************************************
@@ -160,8 +161,11 @@ MeasurementVectorPayload payload;
 LiquidCrystal lcd(LCD_RS_PIN, LCD_E_PIN, LCD_D4_PIN, LCD_D5_PIN, LCD_D6_PIN, LCD_D7_PIN);
 static FILE lcdout = {0};
 
-int16_t measurementValues[NUM_VALUES_TO_SEND];
+int16_t mpuMeasurementValues[NUM_MPU_VALUES_TO_SEND];
 bool isActive;
+
+static uint16_t minSoundSample = UINT16_MAX;
+static uint16_t maxSoundSample;
 
 
 /******************
@@ -281,6 +285,9 @@ void setup()
   Serial.begin(115200);
 #endif
 
+  pinMode(MIC_POWER_PIN, OUTPUT);
+  digitalWrite(MIC_POWER_PIN, HIGH);
+
 #if defined(ENABLE_DEBUG_PRINT) || defined(ENABLE_LCD)
   printf_begin();
 #endif
@@ -366,24 +373,24 @@ void gatherMeasurements()
     mpu.dmpGetQuaternion(&quat, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &quat);
     mpu.dmpGetYawPitchRoll(ypr, &quat, &gravity);
-    measurementValues[0] = ypr[0] * 180/M_PI;
-    measurementValues[1] = ypr[1] * 180/M_PI;
-    measurementValues[2] = ypr[2] * 180/M_PI;
-    measurementValues[3] = 0;
+    mpuMeasurementValues[0] = ypr[0] * 180/M_PI;
+    mpuMeasurementValues[1] = ypr[1] * 180/M_PI;
+    mpuMeasurementValues[2] = ypr[2] * 180/M_PI;
+    mpuMeasurementValues[3] = 0;
 //#ifdef ENABLE_DEBUG_PRINT
 //    Serial.print("ypr\t");
-//    Serial.print(measurementValues[0]);
+//    Serial.print(mpuMeasurementValues[0]);
 //    Serial.print("\t");
-//    Serial.print(measurementValues[1]);
+//    Serial.print(mpuMeasurementValues[1]);
 //    Serial.print("\t");
-//    Serial.println(measurementValues[2]);
+//    Serial.println(mpuMeasurementValues[2]);
 //#endif
 #ifdef ENABLE_LCD
     // 0123456789012345
     // Yaw   Pitch Roll
     // 123456 123456 123456
     lcd.setCursor(0, 1);
-    fprintf(&lcdout, "%5d %5d %4d", measurementValues[0], measurementValues[1], measurementValues[2]);
+    fprintf(&lcdout, "%5d %5d %4d", mpuMeasurementValues[0], mpuMeasurementValues[1], mpuMeasurementValues[2]);
 #endif
 #endif
 
@@ -441,10 +448,10 @@ void gatherMeasurements()
   isActive = true;
 
 //#ifdef ENABLE_DEBUG_PRINT
-//  for (int i = 0; i < NUM_VALUES_TO_SEND; ++i) {
+//  for (int i = 0; i < NUM_MPU_VALUES_TO_SEND; ++i) {
 //    Serial.print(i);
 //    Serial.print(",");
-//    Serial.println(measurementValues[i]);
+//    Serial.println(mpuMeasurementValues[i]);
 //  }
 //#endif
     
@@ -453,13 +460,26 @@ void gatherMeasurements()
 
 void sendMeasurements()
 {
-  for (int i = 0; i < NUM_VALUES_TO_SEND; ++i) {
-      payload.measurements[i] = measurementValues[i];
+  payload.measurements[0] = maxSoundSample;
+  payload.measurements[1] = minSoundSample;
+  minSoundSample = UINT16_MAX;
+  maxSoundSample = 0;
+
+  for (int i = 0, j = 2; i < NUM_MPU_VALUES_TO_SEND; ++i, ++j) {
+      payload.measurements[j] = mpuMeasurementValues[i];
   }
 
   payload.widgetHeader.isActive = isActive;
 
-  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * NUM_VALUES_TO_SEND)) {
+#ifdef ENABLE_DEBUG_PRINT
+  for (int i = 0; i < NUM_MPU_VALUES_TO_SEND + 2; ++i) {
+    Serial.print(i);
+    Serial.print(":  ");
+    Serial.println(payload.measurements[i]);
+  }
+#endif
+
+  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * NUM_MPU_VALUES_TO_SEND + 2)) {
 #ifdef LED_PIN      
     digitalWrite(LED_PIN, HIGH);
 #endif
@@ -489,6 +509,14 @@ void loop() {
     gatherMeasurements();
   }
   
+  unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
+  if (soundSample < minSoundSample) {
+    minSoundSample = soundSample;
+  }
+  if (soundSample > maxSoundSample) {
+    maxSoundSample = soundSample;
+  }
+
   if (now - lastTxMs >= (isActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
     sendMeasurements();
     lastTxMs = now;
