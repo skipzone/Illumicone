@@ -25,13 +25,24 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#define ENABLE_DEBUG_PRINT
+//#define ENABLE_LCD
+
+
 #include "I2Cdev.h"
 #include "illumiconeWidget.h"
+
+#ifdef ENABLE_LCD
 #include <LiquidCrystal.h>
+#endif
+
 #include "MPU6050_6Axis_MotionApps20.h"
 //#include "MPU6050.h" // not necessary if using MotionApps include file
-#include "printf.h"
 
+//#if defined(ENABLE_DEBUG_PRINT) || defined(ENABLE_LCD)
+// For some unkown reason, shit don't work without printf.
+#include "printf.h"
+//#endif
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h
@@ -110,7 +121,7 @@ uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\
 
 #define WIDGET_ID 4
 ///#define NUM_CHANNELS 2
-#define ACTIVE_TX_INTERVAL_MS 500L
+#define ACTIVE_TX_INTERVAL_MS 100L
 #define INACTIVE_TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 2
 #define MIC_SIGNAL_PIN A0
@@ -126,9 +137,7 @@ uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\
 #define LCD_NUM_ROWS 2
 
 #define NUM_MPU_VALUES_TO_SEND 4
-
-#define ENABLE_DEBUG_PRINT
-//#define ENABLE_LCD
+#define NUM_SOUND_VALUES_TO_SEND 3
 
 
 /***************************************
@@ -158,7 +167,10 @@ RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 1
 
 MeasurementVectorPayload payload;
 
+#ifdef ENABLE_LCD
 LiquidCrystal lcd(LCD_RS_PIN, LCD_E_PIN, LCD_D4_PIN, LCD_D5_PIN, LCD_D6_PIN, LCD_D7_PIN);
+#endif
+
 static FILE lcdout = {0};
 
 int16_t mpuMeasurementValues[NUM_MPU_VALUES_TO_SEND];
@@ -178,6 +190,8 @@ void dmpDataReady() {
 }
 
 
+#ifdef ENABLE_LCD
+
 static int lcd_putchar(char ch, FILE* stream)
 {
   lcd.write(ch);
@@ -196,6 +210,8 @@ void initLcd()
   lcd.setCursor(0, 1);
   lcd.print("                    ");
 }
+
+#endif
 
 
 void initI2c()
@@ -288,9 +304,9 @@ void setup()
   pinMode(MIC_POWER_PIN, OUTPUT);
   digitalWrite(MIC_POWER_PIN, HIGH);
 
-#if defined(ENABLE_DEBUG_PRINT) || defined(ENABLE_LCD)
+//#if defined(ENABLE_DEBUG_PRINT) || defined(ENABLE_LCD)
   printf_begin();
-#endif
+//#endif
 
 #ifdef ENABLE_LCD
   initLcd();
@@ -462,24 +478,25 @@ void sendMeasurements()
 {
   payload.measurements[0] = maxSoundSample;
   payload.measurements[1] = minSoundSample;
+  payload.measurements[2] = maxSoundSample - minSoundSample;
   minSoundSample = UINT16_MAX;
   maxSoundSample = 0;
 
-  for (int i = 0, j = 2; i < NUM_MPU_VALUES_TO_SEND; ++i, ++j) {
+  for (int i = 0, j = NUM_SOUND_VALUES_TO_SEND; i < NUM_MPU_VALUES_TO_SEND; ++i, ++j) {
       payload.measurements[j] = mpuMeasurementValues[i];
   }
 
   payload.widgetHeader.isActive = isActive;
 
 #ifdef ENABLE_DEBUG_PRINT
-  for (int i = 0; i < NUM_MPU_VALUES_TO_SEND + 2; ++i) {
+  for (int i = 0; i < NUM_MPU_VALUES_TO_SEND + NUM_SOUND_VALUES_TO_SEND; ++i) {
     Serial.print(i);
     Serial.print(":  ");
     Serial.println(payload.measurements[i]);
   }
 #endif
 
-  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * NUM_MPU_VALUES_TO_SEND + 2)) {
+  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * (NUM_MPU_VALUES_TO_SEND + NUM_SOUND_VALUES_TO_SEND))) {
 #ifdef LED_PIN      
     digitalWrite(LED_PIN, HIGH);
 #endif
