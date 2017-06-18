@@ -28,7 +28,7 @@ using namespace std;
 
 
 RainstickWidget::RainstickWidget()
-    : Widget(WidgetId::rainstick)
+    : Widget(WidgetId::rainstick, 1)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -36,16 +36,6 @@ RainstickWidget::RainstickWidget()
     }
 
     updateIntervalMs[0] = 200;
-}
-
-
-bool RainstickWidget::init(ConfigReader& config)
-{
-    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
-
-    channels.push_back(make_shared<WidgetChannel>(0, this));
-
-    return true;
 }
 
 
@@ -58,7 +48,7 @@ bool RainstickWidget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             //cout << "updating channel " << i << endl;

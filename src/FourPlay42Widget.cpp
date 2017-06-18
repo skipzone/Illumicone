@@ -33,7 +33,7 @@ using namespace std;
 
 
 FourPlay42Widget::FourPlay42Widget()
-    : Widget(WidgetId::fourPlay42)
+    : Widget(WidgetId::fourPlay42, 4)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -51,22 +51,6 @@ FourPlay42Widget::FourPlay42Widget()
 }
 
 
-bool FourPlay42Widget::init(ConfigReader& config)
-{
-    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
-
-    for (int i = 0; i < 4; ++i) {
-        channels.push_back(make_shared<WidgetChannel>(i, this));
-    }
-
-    if (!generateSimulatedMeasurements) {
-        startUdpRxThread();
-    }
-
-    return true;
-}
-
-
 bool FourPlay42Widget::moveData()
 {
     if (!generateSimulatedMeasurements) {
@@ -80,7 +64,7 @@ bool FourPlay42Widget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             //cout << "updating channel " << i << endl;

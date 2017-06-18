@@ -133,6 +133,14 @@ bool ConfigReader::getWidgetGenerateSimulatedMeasurements(WidgetId widgetId)
 }
 
 
+int ConfigReader::getWidgetAutoInactiveMs(WidgetId widgetId)
+{
+    Json widgetConfig = getWidgetConfigJsonObject(widgetId);
+    // If autoInactiveMs isn't present, the value returned will
+    // be zero, which disables the auto-inactive feature.
+    return widgetConfig["autoInactiveMs"].int_value();
+}
+
 
 /* =-=-=-=-=-=-=-=-=
 

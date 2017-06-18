@@ -29,8 +29,6 @@ class BellsWidget : public Widget
         BellsWidget(const BellsWidget&) = delete;
         BellsWidget& operator =(const BellsWidget&) = delete;
 
-        bool init(ConfigReader& config);
-
         bool moveData();
 
     private:

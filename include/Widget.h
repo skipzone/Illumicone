@@ -34,7 +34,7 @@ class Widget
 {
     public:
 
-        Widget(WidgetId id);
+        Widget(WidgetId id, unsigned int numChannels);
         virtual ~Widget();
 
         Widget() = delete;
@@ -44,11 +44,10 @@ class Widget
         WidgetId getId();
         std::string getName();
 
-        virtual bool init(ConfigReader& config) = 0;
+        virtual bool init(ConfigReader& config);
 
         virtual bool moveData() = 0;
 
-        virtual unsigned int getChannelCount();
         virtual std::shared_ptr<WidgetChannel> getChannel(unsigned int channelIdx);
         virtual std::vector<std::shared_ptr<WidgetChannel>> getChannels();
 
@@ -64,6 +63,8 @@ class Widget
         const WidgetId id;
         std::vector<std::shared_ptr<WidgetChannel>> channels;
         bool generateSimulatedMeasurements;
+        unsigned int autoInactiveMs;
+        unsigned int numChannels;
 
     private:
 

@@ -29,8 +29,6 @@ class ShirleysWebWidget : public Widget
         ShirleysWebWidget(const ShirleysWebWidget&) = delete;
         ShirleysWebWidget& operator =(const ShirleysWebWidget&) = delete;
 
-        bool init(ConfigReader& config);
-
         bool moveData();
 
     private:

@@ -46,6 +46,7 @@ class ConfigReader
         std::string getPatconIpAddress();
         int getWidgetPortNumberBase();
         bool getWidgetGenerateSimulatedMeasurements(WidgetId widgetId);
+        int getWidgetAutoInactiveMs(WidgetId widgetId);
 
     private:
 

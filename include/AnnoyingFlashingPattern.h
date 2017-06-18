@@ -19,6 +19,7 @@
 
 #include <map>
 #include <memory>
+#include <time.h>
 
 #include "Pattern.h"
 #include "WidgetId.h"
@@ -28,31 +29,27 @@ class ConfigReader;
 class Widget;
 
 
-class RgbVerticalPattern : public Pattern {
+class AnnoyingFlashingPattern : public Pattern {
 
     public:
 
-        RgbVerticalPattern();
-        ~RgbVerticalPattern() {};
+        AnnoyingFlashingPattern();
+        ~AnnoyingFlashingPattern() {};
 
-        RgbVerticalPattern(const RgbVerticalPattern&) = delete;
-        RgbVerticalPattern& operator =(const RgbVerticalPattern&) = delete;
+        AnnoyingFlashingPattern(const AnnoyingFlashingPattern&) = delete;
+        AnnoyingFlashingPattern& operator =(const AnnoyingFlashingPattern&) = delete;
 
         bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
-        bool update();       
+        bool update();
 
     private:
 
-        std::shared_ptr<WidgetChannel> redPositionChannel;
-        std::shared_ptr<WidgetChannel> greenPositionChannel;
-        std::shared_ptr<WidgetChannel> bluePositionChannel;
-        std::shared_ptr<WidgetChannel> widthChannel;
+        std::shared_ptr<WidgetChannel> intensityChannel;
 
-        int rPos;
-        int gPos;
-        int bPos;
+        int activationThreshold;
+        time_t flashingTimeoutSeconds;
+        time_t timeExceededThreshold;
 
-        bool rIsActive;
-        bool gIsActive;
-        bool bIsActive;
+        void goInactive();
 };
+

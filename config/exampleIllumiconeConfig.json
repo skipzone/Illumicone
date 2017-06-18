@@ -71,7 +71,8 @@
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 500
         },
         {   "name" : "shirleysWeb",
             "enabled" : true,
@@ -189,14 +190,16 @@
                 }
             ]
         },
-        {   "patternName" : "solidBlack",
+        {   "patternName" : "annoyingFlashing",
             "inputs" : [
                 {   "inputName" : "intensity",
                     "widgetName" : "eye",
                     "channelNumber" : 0,
                     "measurement" : "position"
                 }
-            ]
+            ],
+            "flashingTimeoutSeconds" : 1,
+            "activationThreshold" : 200         // 300 is a basic LED flashlight from a few feet away
         }
     ]
 

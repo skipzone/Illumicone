@@ -33,7 +33,7 @@ using namespace std;
 
 
 TriObeliskWidget::TriObeliskWidget()
-    : Widget(WidgetId::triObelisk)
+    : Widget(WidgetId::triObelisk, 3)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -43,22 +43,6 @@ TriObeliskWidget::TriObeliskWidget()
     updateIntervalMs[0] = 200;
     updateIntervalMs[1] = 400;
     updateIntervalMs[2] = 500;
-}
-
-
-bool TriObeliskWidget::init(ConfigReader& config)
-{
-    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
-
-    for (int i = 0; i < 3; ++i) {
-        channels.push_back(make_shared<WidgetChannel>(i, this));
-    }
-
-    if (!generateSimulatedMeasurements) {
-        startUdpRxThread();
-    }
-
-    return true;
 }
 
 
@@ -75,7 +59,7 @@ bool TriObeliskWidget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             //cout << "updating channel " << i << endl;

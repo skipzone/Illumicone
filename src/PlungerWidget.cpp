@@ -16,7 +16,7 @@ using namespace std;
 
 
 PlungerWidget::PlungerWidget()
-    : Widget(WidgetId::plunger)
+    : Widget(WidgetId::plunger, 1)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -34,22 +34,6 @@ PlungerWidget::PlungerWidget()
 }
 
 
-bool PlungerWidget::init(ConfigReader& config)
-{
-    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
-
-    for (int i = 0; i < 1; ++i) {
-        channels.push_back(make_shared<WidgetChannel>(i, this));
-    }
-
-    if (!generateSimulatedMeasurements) {
-        startUdpRxThread();
-    }
-
-    return true;
-}
-
-
 bool PlungerWidget::moveData()
 {
     if (!generateSimulatedMeasurements) {
@@ -63,7 +47,7 @@ bool PlungerWidget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             //cout << "updating channel " << i << endl;

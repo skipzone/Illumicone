@@ -38,7 +38,7 @@
 #include "illumiconeTypes.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
-//#include "SolidBlackPattern.h"
+#include "AnnoyingFlashingPattern.h"
 //#include "SparklePattern.h"
 //#include "HorizontalStripePattern.h"
 //#include "RainbowExplosionPattern.h"
@@ -63,7 +63,7 @@ static uint8_t* opcData;        // points to the data portion of opcBuffer
 
 static map<WidgetId, Widget*> widgets;
 
-//static SolidBlackPattern solidBlackPattern;
+static AnnoyingFlashingPattern annoyingFlashingPattern;
 static RgbVerticalPattern rgbVerticalPattern;
 //static SparklePattern sparklePattern;
 //static HorizontalStripePattern horizontalStripePattern;
@@ -169,7 +169,7 @@ void zeroFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
  * Ideally this would be called for each pattern that has updates before sending
  * the final packet over the network, like:
  *      buildPacket(finalFrame, rgbPattern.pixelArray, rgbPattern.priority);
- *      buildPacket(finalFrame, solidBlackPattern.pixelArray, solidBlackPattern.priority);
+ *      buildPacket(finalFrame, annoyingFlashingPattern.pixelArray, annoyingFlashingPattern.priority);
  *      ..
  *      ..
  *
@@ -190,7 +190,7 @@ bool buildFrame(
     switch (priority) {
         case 0:
             //
-            // SolidBlackPattern
+            // AnnoyingFlashingPattern
             //
             for (col = 0; col < numberOfStrings; col++) {
                 for (row = 0; row < numberOfPixelsPerString; row++) {
@@ -316,17 +316,19 @@ bool readConfig(const string& configFileName)
 
 int acquireProcessLock()
 {
-    int fd = open(lockFilePath, O_CREAT);
+    int fd = open(lockFilePath, O_CREAT, S_IRUSR | S_IWUSR);
     if (fd >= 0) {
         if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
             return fd;
         }
         else {
             if (errno == EWOULDBLOCK) {
-                // Another process has the file locked.
+                close(fd);
+                fprintf(stderr, "Another process has locked %s.\n", lockFilePath);
                 return -1;
             }
             else {
+                close(fd);
                 fprintf(stderr, "Unable to lock %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
                 return -1;
             }
@@ -409,9 +411,13 @@ void initPatterns()
     // to be filled in from a config file somewhere
     int priorities[6] = {0, 1, 2, 3, 4, 5};
 
-//    solidBlackPattern.initPattern(numberOfStrings, numberOfPixelsPerString, priorities[0]);
-//    solidBlackPattern.initWidgets(1, numChannels[0]);
-//    printPatternConfig(solidBlackPattern);
+    if (annoyingFlashingPattern.initPattern(config, widgets, priorities[2])) {
+        patternIsOk[&annoyingFlashingPattern] = true;
+        cout << "annoyingFlashingPattern ok" << endl;
+    }
+    else {
+        cout << "annoyingFlashingPattern initialization failed." << endl;
+    }
 
 //    rainbowExplosionPattern.initPattern(numberOfStrings, numberOfPixelsPerString, priorities[1]);
 //    rainbowExplosionPattern.initWidgets(1, numChannels[1]);
@@ -448,10 +454,12 @@ void doPatterns()
     static bool doIdlePattern;
     static time_t timeWentIdle;
 
+    if (patternIsOk.find(&annoyingFlashingPattern) != patternIsOk.end()) {
+        annoyingFlashingPattern.update();
+    }
     if (patternIsOk.find(&rgbVerticalPattern) != patternIsOk.end()) {
         rgbVerticalPattern.update();
     }
-//    solidBlackPattern.update();
 //    sparklePattern.update();
 //    horizontalStripePattern.update();
 //    rainbowExplosionPattern.update();
@@ -475,7 +483,7 @@ void doPatterns()
 
     if (rgbVerticalPattern.isActive) {
         anyPatternIsActive = true;
-        //cout << "rgb active" << endl;
+        //cout << "rgbVertical active" << endl;
         buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
     }
 
@@ -484,11 +492,11 @@ void doPatterns()
 //        buildFrame(finalFrame1, rainbowExplosionPattern.pixelArray, rainbowExplosionPattern.priority);
 //    }
 
-//    if (solidBlackPattern.isActive) {
-//        anyPatternIsActive = true;
-//        //cout << "solid active" << endl;
-//        buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
-//    }
+    if (annoyingFlashingPattern.isActive) {
+        anyPatternIsActive = true;
+        //cout << "annoyingFlashing active" << endl;
+        buildFrame(finalFrame1, annoyingFlashingPattern.pixelArray, annoyingFlashingPattern.priority);
+    }
 
     if (!anyPatternIsActive) {
         //cout << "no patterns are active; finalizing finalFrame1" << endl;

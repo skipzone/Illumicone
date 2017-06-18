@@ -29,8 +29,6 @@ class RainstickWidget : public Widget
         RainstickWidget(const RainstickWidget&) = delete;
         RainstickWidget& operator =(const RainstickWidget&) = delete;
 
-        bool init(ConfigReader& config);
-
         bool moveData();
 
     private:

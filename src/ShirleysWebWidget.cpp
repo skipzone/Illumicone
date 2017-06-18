@@ -31,7 +31,7 @@ using namespace std;
 
 
 ShirleysWebWidget::ShirleysWebWidget()
-    : Widget(WidgetId::shirleysWeb)
+    : Widget(WidgetId::shirleysWeb, 1)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -39,20 +39,6 @@ ShirleysWebWidget::ShirleysWebWidget()
     }
 
     updateIntervalMs[0] = 1000;
-}
-
-
-bool ShirleysWebWidget::init(ConfigReader& config)
-{
-    this->generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
-
-    channels.push_back(make_shared<WidgetChannel>(0, this));
-
-    if (!generateSimulatedMeasurements) {
-        startUdpRxThread();
-    }
-
-    return true;
 }
 
 
@@ -69,7 +55,7 @@ bool ShirleysWebWidget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             int prevPos = channels[i]->getPreviousPosition();

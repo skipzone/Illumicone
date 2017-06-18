@@ -37,7 +37,6 @@ bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Wi
     numStrings = config.getNumberOfStrings();
     pixelsPerString = config.getNumberOfPixelsPerString();
     this->priority = priority;
-    isActive = 0;
     opacity = 90;
 
     pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));

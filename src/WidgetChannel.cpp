@@ -27,11 +27,11 @@
 //using namespace std;
 
 
-WidgetChannel::WidgetChannel(unsigned int channelNumber, Widget* widget)
+WidgetChannel::WidgetChannel(unsigned int channelNumber, Widget* widget, unsigned int autoInactiveMs)
     : channelNumber(channelNumber)
     , widget(widget)
     , isActive(false)
-    , autoInactiveMs(2000)      // make configurable
+    , autoInactiveMs(autoInactiveMs)
     , lastActiveMs(0)
     , hasNewMeasurement(false)
     , position(0)
@@ -51,11 +51,13 @@ unsigned int WidgetChannel::getChannelNumber()
 bool WidgetChannel::getIsActive()
 {
     if (isActive) {
-        using namespace std::chrono;
-        milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-        unsigned int nowMs = epochMs.count();
-        if (nowMs - lastActiveMs > autoInactiveMs) {
-            isActive = false;
+        if (autoInactiveMs != 0) {
+            using namespace std::chrono;
+            milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+            unsigned int nowMs = epochMs.count();
+            if (nowMs - lastActiveMs > autoInactiveMs) {
+                isActive = false;
+            }
         }
     }
 
@@ -109,7 +111,7 @@ int WidgetChannel::getPreviousVelocity()
 
 void WidgetChannel::setIsActive(bool isNowActive)
 {
-    if (isNowActive) {
+    if (isNowActive && autoInactiveMs != 0) {
         using namespace std::chrono;
         milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
         lastActiveMs = epochMs.count();

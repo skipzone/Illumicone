@@ -40,12 +40,11 @@ class Pattern
         int pixelsPerString;
         int numStrings;
         std::vector<std::vector<opc_pixel_t>> pixelArray;
-///        std::vector<Widget*> widgets;
 
         int priority;
         int opacity;
         std::string name;
-        int isActive;
+        bool isActive;
 
         std::string getName() { return name; }
 

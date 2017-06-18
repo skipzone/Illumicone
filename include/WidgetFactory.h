@@ -15,8 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef WIDGET_FACTORY_H
-#define WIDGET_FACTORY_H
+#pragma once
 
 #include "BellsWidget.h"
 //#include "BuckNorrisWidget.h"
@@ -67,4 +66,3 @@ static Widget* widgetFactory(WidgetId id) { switch (id) {
     }
 }
 
-#endif /* WIDGET_FACTORY_H */

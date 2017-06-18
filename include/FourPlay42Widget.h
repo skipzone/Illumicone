@@ -29,8 +29,6 @@ class FourPlay42Widget : public Widget
         FourPlay42Widget(const FourPlay42Widget&) = delete;
         FourPlay42Widget& operator =(const FourPlay42Widget&) = delete;
 
-        bool init(ConfigReader& config);
-
         bool moveData();
 
     private:

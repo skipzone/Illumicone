@@ -23,15 +23,21 @@
 #include <netinet/in.h>	// for UDP
 #include <unistd.h>
 
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
-#include "WidgetId.h"
 
-Widget::Widget(WidgetId id)
+
+using namespace std;
+
+
+Widget::Widget(WidgetId id, unsigned int numChannels)
     : id(id)
+    , numChannels(numChannels)
 {
 }
+
 
 Widget::~Widget()
 {
@@ -40,15 +46,30 @@ Widget::~Widget()
 }
 
 
-WidgetId Widget::getId()
+bool Widget::init(ConfigReader& config)
 {
-    return id;
+    generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
+    autoInactiveMs = config.getWidgetAutoInactiveMs(id);
+
+    if (autoInactiveMs != 0) {
+        cout << "autoInactiveMs=" << autoInactiveMs << " for " << widgetIdToString(id) << endl;
+    }
+
+    for (int i = 0; i < numChannels; ++i) {
+        channels.push_back(make_shared<WidgetChannel>(i, this, autoInactiveMs));
+    }
+
+    if (!generateSimulatedMeasurements) {
+        startUdpRxThread();
+    }
+
+    return true;
 }
 
 
-unsigned int Widget::getChannelCount()
+WidgetId Widget::getId()
 {
-    return channels.size();
+    return id;
 }
 
 

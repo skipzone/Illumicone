@@ -23,7 +23,7 @@ class WidgetChannel
 {
     public:
 
-        WidgetChannel(unsigned int channelNumber, Widget* widget);
+        WidgetChannel(unsigned int channelNumber, Widget* widget, unsigned int autoInactiveMs);
         virtual ~WidgetChannel() {}
 
         WidgetChannel() = delete;
