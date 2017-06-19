@@ -26,20 +26,14 @@
 */
 
 //#define ENABLE_DEBUG_PRINT
-//#define ENABLE_LCD
 
 
 #include "I2Cdev.h"
 #include "illumiconeWidget.h"
 
-#ifdef ENABLE_LCD
-#include <LiquidCrystal.h>
-#endif
-
 #include "MPU6050_6Axis_MotionApps20.h"
-//#include "MPU6050.h" // not necessary if using MotionApps include file
 
-//#if defined(ENABLE_DEBUG_PRINT) || defined(ENABLE_LCD)
+//#ifdef ENABLE_DEBUG_PRINT
 // For some unkown reason, shit don't work without printf.
 #include "printf.h"
 //#endif
@@ -120,24 +114,18 @@ uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\
  ************************/
 
 #define WIDGET_ID 4
-///#define NUM_CHANNELS 2
-#define ACTIVE_TX_INTERVAL_MS 100L
-#define INACTIVE_TX_INTERVAL_MS 1000L
+#define SOUND_SAMPLE_INTERVAL_MS 10L
+#define ACTIVE_TX_INTERVAL_MS 500L
+#define INACTIVE_TX_INTERVAL_MS 2000L
 //#define TX_FAILURE_LED_PIN 2
 #define MIC_SIGNAL_PIN A0
 #define MIC_POWER_PIN 8
 
-#define LCD_RS_PIN A1
-#define LCD_E_PIN  A0
-#define LCD_D4_PIN 5
-#define LCD_D5_PIN 6
-#define LCD_D6_PIN 7
-#define LCD_D7_PIN 8
-#define LCD_NUM_COLS 20
-#define LCD_NUM_ROWS 2
-
-#define NUM_MPU_VALUES_TO_SEND 4
 #define NUM_SOUND_VALUES_TO_SEND 3
+#define NUM_MPU_VALUES_TO_SEND 4
+
+#define MA_LENGTH 10
+#define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
 
 
 /***************************************
@@ -167,10 +155,6 @@ RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 1
 
 MeasurementVectorPayload payload;
 
-#ifdef ENABLE_LCD
-LiquidCrystal lcd(LCD_RS_PIN, LCD_E_PIN, LCD_D4_PIN, LCD_D5_PIN, LCD_D6_PIN, LCD_D7_PIN);
-#endif
-
 static FILE lcdout = {0};
 
 int16_t mpuMeasurementValues[NUM_MPU_VALUES_TO_SEND];
@@ -178,6 +162,11 @@ bool isActive;
 
 static uint16_t minSoundSample = UINT16_MAX;
 static uint16_t maxSoundSample;
+
+static float maValues[NUM_MA_SETS][MA_LENGTH];
+static float maSums[NUM_MA_SETS];
+static uint8_t nextSlotIdx[NUM_MA_SETS];
+static bool maSetFull[NUM_MA_SETS];
 
 
 /******************
@@ -188,30 +177,6 @@ volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin h
 void dmpDataReady() {
     mpuInterrupt = true;
 }
-
-
-#ifdef ENABLE_LCD
-
-static int lcd_putchar(char ch, FILE* stream)
-{
-  lcd.write(ch);
-  return (0);
-}
-
-
-void initLcd()
-{
-  lcd.begin(LCD_NUM_COLS, LCD_NUM_ROWS);
-
-  fdev_setup_stream(&lcdout, lcd_putchar, NULL, _FDEV_SETUP_WRITE);
-
-  lcd.setCursor(0, 0);  // col, row
-  lcd.print(F("Yaw   Pitch Roll"));
-  lcd.setCursor(0, 1);
-  lcd.print("                    ");
-}
-
-#endif
 
 
 void initI2c()
@@ -304,13 +269,10 @@ void setup()
   pinMode(MIC_POWER_PIN, OUTPUT);
   digitalWrite(MIC_POWER_PIN, HIGH);
 
-//#if defined(ENABLE_DEBUG_PRINT) || defined(ENABLE_LCD)
+// For some unkown reason, shit don't work without printf.
+//#ifdef ENABLE_DEBUG_PRINT
   printf_begin();
 //#endif
-
-#ifdef ENABLE_LCD
-  initLcd();
-#endif
 
   initI2c();
   initMpu();
@@ -320,6 +282,34 @@ void setup()
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
+}
+
+
+void updateMovingAverage(uint8_t setIdx, float newValue)
+{
+  maSums[setIdx] -= maValues[setIdx][nextSlotIdx[setIdx]];
+  maSums[setIdx] += newValue;
+  maValues[setIdx][nextSlotIdx[setIdx]] = newValue;
+
+  ++nextSlotIdx[setIdx];
+  if (nextSlotIdx[setIdx] >= MA_LENGTH) {
+     maSetFull[setIdx] = true;
+     nextSlotIdx[setIdx] = 0;
+  }
+}
+
+
+float getMovingAverage(uint8_t setIdx)
+{
+  uint16_t avg;
+  if (maSetFull[setIdx]) {
+    avg = maSums[setIdx] / MA_LENGTH;
+  }
+  else {
+    avg = nextSlotIdx[setIdx] > 0 ? maSums[setIdx] / nextSlotIdx[setIdx] : 0;
+  }
+
+  return avg;
 }
 
 
@@ -389,10 +379,12 @@ void gatherMeasurements()
     mpu.dmpGetQuaternion(&quat, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &quat);
     mpu.dmpGetYawPitchRoll(ypr, &quat, &gravity);
-    mpuMeasurementValues[0] = ypr[0] * 180/M_PI;
-    mpuMeasurementValues[1] = ypr[1] * 180/M_PI;
-    mpuMeasurementValues[2] = ypr[2] * 180/M_PI;
-    mpuMeasurementValues[3] = 0;
+
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND, ypr[0] * 180/M_PI);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 1, ypr[1] * 180/M_PI);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 2, ypr[2] * 180/M_PI);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 3, 0);
+
 //#ifdef ENABLE_DEBUG_PRINT
 //    Serial.print("ypr\t");
 //    Serial.print(mpuMeasurementValues[0]);
@@ -401,13 +393,6 @@ void gatherMeasurements()
 //    Serial.print("\t");
 //    Serial.println(mpuMeasurementValues[2]);
 //#endif
-#ifdef ENABLE_LCD
-    // 0123456789012345
-    // Yaw   Pitch Roll
-    // 123456 123456 123456
-    lcd.setCursor(0, 1);
-    fprintf(&lcdout, "%5d %5d %4d", mpuMeasurementValues[0], mpuMeasurementValues[1], mpuMeasurementValues[2]);
-#endif
 #endif
 
         #ifdef OUTPUT_READABLE_REALACCEL
@@ -476,14 +461,19 @@ void gatherMeasurements()
 
 void sendMeasurements()
 {
-  payload.measurements[0] = maxSoundSample;
-  payload.measurements[1] = minSoundSample;
-  payload.measurements[2] = maxSoundSample - minSoundSample;
+  updateMovingAverage(0, minSoundSample);
+  updateMovingAverage(1, maxSoundSample);
   minSoundSample = UINT16_MAX;
   maxSoundSample = 0;
 
+  payload.measurements[0] = getMovingAverage(0);
+  payload.measurements[1] = getMovingAverage(1);
+  payload.measurements[2] = getMovingAverage(1) - getMovingAverage(0);
+  
+//  updateMovingAverage(2, getMovingAverage(1) - getMovingAverage(0));
+
   for (int i = 0, j = NUM_SOUND_VALUES_TO_SEND; i < NUM_MPU_VALUES_TO_SEND; ++i, ++j) {
-      payload.measurements[j] = mpuMeasurementValues[i];
+      payload.measurements[j] = getMovingAverage(j);
   }
 
   payload.widgetHeader.isActive = isActive;
@@ -519,19 +509,22 @@ void sendMeasurements()
 void loop() {
 
   static int32_t lastTxMs;
+  static int32_t lastSoundSampleMs;
 
   uint32_t now = millis();
 
   if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
     gatherMeasurements();
   }
-  
-  unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
-  if (soundSample < minSoundSample) {
-    minSoundSample = soundSample;
-  }
-  if (soundSample > maxSoundSample) {
-    maxSoundSample = soundSample;
+
+  if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
+    unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
+    if (soundSample < minSoundSample) {
+      minSoundSample = soundSample;
+    }
+    if (soundSample > maxSoundSample) {
+      maxSoundSample = soundSample;
+    }
   }
 
   if (now - lastTxMs >= (isActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
