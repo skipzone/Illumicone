@@ -40,7 +40,7 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
         case 8:
             return WidgetId::plunger;
         case 9:
-            return WidgetId::twister;
+            return WidgetId::contortOMatic;
         case 10:
             return WidgetId::fourPlay42;
         case 11:
@@ -75,7 +75,7 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 7;
         case WidgetId::plunger:
             return 8;
-        case WidgetId::twister:
+        case WidgetId::contortOMatic:
             return 9;
         case WidgetId::fourPlay42:
             return 10;
@@ -111,8 +111,8 @@ std::string widgetIdToString(WidgetId widgetId)
             return "squawkBox";
         case WidgetId::plunger:
             return "plunger";
-        case WidgetId::twister:
-            return "twister";
+        case WidgetId::contortOMatic:
+            return "contortOMatic";
         case WidgetId::fourPlay42:
             return "fourPlay42";
         case WidgetId::fourPlay43:

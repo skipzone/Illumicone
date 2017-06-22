@@ -30,7 +30,7 @@
  *  6:  TriObelisk (Phyxx and Dr. Naked)
  *  7:  Squawk Box (James)
  *  8:  Plunger (Monte, based on Kayla's original)
- *  9:  Twister (Ray and Mishi)
+ *  9:  Contort-O-Matic (Ray and Mishi)
  * 10:  FourPlay-4-2
  * 11:  FourPlay-4-3
  * 12:  Buck Norris
@@ -52,7 +52,7 @@ enum class WidgetId {
     triObelisk,
     squawkBox,
     plunger,
-    twister,
+    contortOMatic,
     fourPlay42,
     fourPlay43,
     buckNorris,

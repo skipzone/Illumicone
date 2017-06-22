@@ -454,7 +454,7 @@ int main(int argc, char** argv)
     openUdpPort(WidgetId::triObelisk);
     openUdpPort(WidgetId::squawkBox);
     openUdpPort(WidgetId::plunger);
-    openUdpPort(WidgetId::twister);
+    openUdpPort(WidgetId::contortOMatic);
     openUdpPort(WidgetId::fourPlay42);
     openUdpPort(WidgetId::fourPlay43);
     openUdpPort(WidgetId::buckNorris);
