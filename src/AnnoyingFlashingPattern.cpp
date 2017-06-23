@@ -16,6 +16,7 @@
 */
 
 #include <iostream>
+#include <time.h>
 
 #include "AnnoyingFlashingPattern.h"
 #include "ConfigReader.h"
@@ -73,6 +74,7 @@ bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetI
                 << "' in input configuration for " << name << " is not recognized." << endl;
             continue;
         }
+        cout << name << " using " << channelConfig.widgetChannel->getName() << " for " << channelConfig.inputName << endl;
 
         if (channelConfig.measurement != "position") {
             cerr << "Warning:  " << name << " supports only position measurements, but the input configuration for "
@@ -86,14 +88,16 @@ bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetI
 
 void AnnoyingFlashingPattern::goInactive()
 {
-    isActive = false;
-    timeExceededThreshold = 0;
-    // Set all the pixels to 0 intensity to make this pattern effectively transparent.
-    for (auto&& pixels:pixelArray) {
-        for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
+    if (isActive) {
+        isActive = false;
+        timeExceededThreshold = 0;
+        // Set all the pixels to 0 intensity to make this pattern effectively transparent.
+        for (auto&& pixels:pixelArray) {
+            for (auto&& pixel:pixels) {
+                pixel.r = 0;
+                pixel.g = 0;
+                pixel.b = 0;
+            }
         }
     }
 }
@@ -115,14 +119,12 @@ bool AnnoyingFlashingPattern::update()
 
     // If the widget channel has gone inactive, turn off this pattern.
     if (!intensityChannel->getIsActive()) {
-        if (isActive) {
-            goInactive();
-        }
+        goInactive();
         return false;
     }
 
     // No change to the pattern if we haven't received a new measurement.
-    if (!intensityChannel->getHasNewMeasurement()) {
+    if (!intensityChannel->getHasNewPositionMeasurement()) {
         return isActive;
     }
 

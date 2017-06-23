@@ -74,6 +74,7 @@ bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Wi
                 << "' in input configuration for " << name << " is not recognized." << endl;
             continue;
         }
+        cout << name << " using " << channelConfig.widgetChannel->getName() << " for " << channelConfig.inputName << endl;
 
         if (channelConfig.measurement != "position") {
             cerr << "Warning:  " << name << " supports only position measurements, but the input configuration for "
@@ -103,7 +104,7 @@ bool RgbVerticalPattern::update()
     }
 
     // TODO 6/13/2017 ross:  If we kept the previous position and didn't clear it above, maybe we would have to do
-    //                       this only if redPositionChannel->getHasNewMeasurement() && redPositionChannel->getIsActive().
+    //                       this only if redPositionChannel->getHasNewPositionMeasurement() && redPositionChannel->getIsActive().
     //                       We'd have to remember to clear the previous position if the channel went inactive, though.
     //                       Same for green and blue.
     if (redPositionChannel != nullptr && redPositionChannel->getIsActive()) {

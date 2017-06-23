@@ -85,26 +85,37 @@ std::vector<std::shared_ptr<WidgetChannel>> Widget::getChannels()
 }
 
 
-bool Widget::getIsActive()
-{
-    for (auto&& channel : channels) {
-        if (channel->getIsActive()) {
-            return true;
-        }
-    }
-    return false;
-}
+//bool Widget::getIsActive()
+//{
+//    for (auto&& channel : channels) {
+//        if (channel->getIsActive()) {
+//            return true;
+//        }
+//    }
+//    return false;
+//}
 
 
-bool Widget::getHasNewMeasurement()
-{
-    for (auto&& channel : channels) {
-        if (channel->getHasNewMeasurement()) {
-            return true;
-        }
-    }
-    return false;
-}
+//bool Widget::getHasNewPositionMeasurement()
+//{
+//    for (auto&& channel : channels) {
+//        if (channel->getHasNewPositionMeasurement()) {
+//            return true;
+//        }
+//    }
+//    return false;
+//}
+
+
+//bool Widget::getHasNewVelocityMeasurement()
+//{
+//    for (auto&& channel : channels) {
+//        if (channel->getHasNewVelocityMeasurement()) {
+//            return true;
+//        }
+//    }
+//    return false;
+//}
 
 
 void Widget::startUdpRxThread()

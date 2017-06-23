@@ -26,6 +26,7 @@
 
 #include "WidgetId.h"
 
+
 class ConfigReader;
 class WidgetChannel;
 
@@ -42,7 +43,6 @@ class Widget
         Widget& operator =(const Widget&) = delete;
 
         WidgetId getId();
-        std::string getName();
 
         virtual bool init(ConfigReader& config);
 
@@ -51,8 +51,9 @@ class Widget
         virtual std::shared_ptr<WidgetChannel> getChannel(unsigned int channelIdx);
         virtual std::vector<std::shared_ptr<WidgetChannel>> getChannels();
 
-        virtual bool getIsActive();
-        virtual bool getHasNewMeasurement();
+//        virtual bool getIsActive();
+//        virtual bool getHasNewPositionMeasurement();
+//        virtual bool getHasNewVelocityMeasurement();
 
         static void* udpRxThreadEntry(void* widgetObj);
 

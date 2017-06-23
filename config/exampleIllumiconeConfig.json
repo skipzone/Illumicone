@@ -175,11 +175,13 @@
                     //"widgetName" : "shirleysWeb",
                     //"channelNumber" : 0,
                     //"measurement" : "velocity"
-                    "widgetName" : "fourPlay42",
+                    "widgetName" : "fourPlay43",
                     "channelNumber" : 3,
                     "measurement" : "velocity"
                 }
-            ]
+            ],
+            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "activationThreshold" : 20          // 20 is what we used with Shirley's Web in 2016
         },
         {   "patternName" : "rainbowExplosion",
             "inputs" : [

@@ -39,7 +39,7 @@
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
 #include "AnnoyingFlashingPattern.h"
-//#include "SparklePattern.h"
+#include "SparklePattern.h"
 //#include "HorizontalStripePattern.h"
 //#include "RainbowExplosionPattern.h"
 #include "Widget.h"
@@ -65,7 +65,7 @@ static map<WidgetId, Widget*> widgets;
 
 static AnnoyingFlashingPattern annoyingFlashingPattern;
 static RgbVerticalPattern rgbVerticalPattern;
-//static SparklePattern sparklePattern;
+static SparklePattern sparklePattern;
 //static HorizontalStripePattern horizontalStripePattern;
 //static RainbowExplosionPattern rainbowExplosionPattern;
 
@@ -408,10 +408,9 @@ void initPatterns()
 {
     cout << "Initializing patterns..." << endl;
 
-    // to be filled in from a config file somewhere
-    int priorities[6] = {0, 1, 2, 3, 4, 5};
+    // TODO:  Get priorities from config file.
 
-    if (annoyingFlashingPattern.initPattern(config, widgets, priorities[2])) {
+    if (annoyingFlashingPattern.initPattern(config, widgets, 0)) {
         patternIsOk[&annoyingFlashingPattern] = true;
         cout << "annoyingFlashingPattern ok" << endl;
     }
@@ -423,7 +422,7 @@ void initPatterns()
 //    rainbowExplosionPattern.initWidgets(1, numChannels[1]);
 //    printPatternConfig(rainbowExplosionPattern);
 
-    if (rgbVerticalPattern.initPattern(config, widgets, priorities[2])) {
+    if (rgbVerticalPattern.initPattern(config, widgets, 2)) {
         patternIsOk[&rgbVerticalPattern] = true;
         cout << "rgbVerticalPattern ok" << endl;
     }
@@ -435,9 +434,13 @@ void initPatterns()
 //    horizontalStripePattern.initWidgets(1, numChannels[3]);
 //    printPatternConfig(horizontalStripePattern);
 
-//    sparklePattern.initPattern(numberOfStrings, numberOfPixelsPerString, priorities[4]);
-//    sparklePattern.initWidgets(1, numChannels[4]);
-//    printPatternConfig(sparklePattern);
+    if (sparklePattern.initPattern(config, widgets, 4)) {
+        patternIsOk[&sparklePattern] = true;
+        cout << "sparklePattern ok" << endl;
+    }
+    else {
+        cout << "sparklePattern initialization failed." << endl;
+    }
 }
 
 
@@ -460,7 +463,9 @@ void doPatterns()
     if (patternIsOk.find(&rgbVerticalPattern) != patternIsOk.end()) {
         rgbVerticalPattern.update();
     }
-//    sparklePattern.update();
+    if (patternIsOk.find(&sparklePattern) != patternIsOk.end()) {
+        sparklePattern.update();
+    }
 //    horizontalStripePattern.update();
 //    rainbowExplosionPattern.update();
 
@@ -470,11 +475,11 @@ void doPatterns()
     finalFrame1.resize(numberOfStrings, std::vector<opc_pixel_t>(numberOfPixelsPerString));
     zeroFrame(finalFrame1);
 
-//    if (sparklePattern.isActive) {
-//        anyPatternIsActive = true;
-//        //cout << "sparkle active" << endl;
-//        buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
-//    }
+    if (sparklePattern.isActive) {
+        anyPatternIsActive = true;
+        //cout << "sparkle active" << endl;
+        buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
+    }
    
 //    if (horizontalStripePattern.isActive) {
 //        anyPatternIsActive = true;

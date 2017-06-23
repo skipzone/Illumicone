@@ -19,7 +19,6 @@
 
 #include <map>
 #include <memory>
-#include <time.h>
 
 #include "Pattern.h"
 #include "WidgetId.h"

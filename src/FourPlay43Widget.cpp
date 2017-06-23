@@ -65,16 +65,14 @@ bool FourPlay43Widget::moveData()
     //cout << "---------- nowMs = " << nowMs << endl;
 
     for (unsigned int i = 0; i < numChannels; ++i) {
-        //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            // TODO:  Widgets should not need to be aware of the cone dimensions (that's the pattern's job).
-            //        For now, use a reasonable constant.  Eventually, replace this with simulation file playback.
-            //channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % PIXELS_PER_STRING, 0);
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % 36, 0);
+            channels[i]->getPosition();      // make sure previous velocity has been updated
+            int newPosition = (channels[i]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
+            int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
+            //cout << "newPosition=" << newPosition << ", newVelocity=" << newVelocity << endl;
+            channels[i]->setPositionAndVelocity(newPosition, newVelocity);
             channels[i]->setIsActive(true);
-            //cout << "updated channel " << i << endl;
         }
     }
 
