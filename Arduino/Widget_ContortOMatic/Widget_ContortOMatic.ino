@@ -29,7 +29,7 @@
 
 #include <ADCTouch.h>
 #include "illumiconeWidget.h"
-///#include "printf.h"
+#include "printf.h"
 
 
 /************************
@@ -41,7 +41,7 @@
 #define INACTIVE_TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 2
 
-constexpr uint32_t gatherMeasurementsIntervalMs = 333;
+constexpr uint32_t gatherMeasurementsIntervalMs = 1000;
 
 constexpr uint8_t numCapSensePins = 16;
 constexpr uint8_t capSensePins[numCapSensePins] = {A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15};
@@ -50,7 +50,7 @@ constexpr int capSenseNumSamples = 10;
 constexpr int capSenseThresholds[numCapSensePins] = {750, 750, 750, 750,
                                                      750, 750, 750, 750,
                                                      750, 750, 750, 750,
-                                                     750, 750, 750, 750};
+                                                     770, 770, 770, 770};
 
 
 /***************************************
@@ -59,7 +59,7 @@ constexpr int capSenseThresholds[numCapSensePins] = {750, 750, 750, 750,
 
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
-#define TX_PIPE_ADDRESS "2wdgt"
+#define TX_PIPE_ADDRESS "5wdgt"
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
@@ -76,7 +76,7 @@ constexpr int capSenseThresholds[numCapSensePins] = {750, 750, 750, 750,
  * Globals *
  ***********/
 
-RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
+RF24 radio(7, 8);    // Mega:  CE on pin 7, CSN on pin 8, also uses SPI bus (SCK on 52, MISO on 50, MOSI on 51)
 
 CustomPayload payload;
 
@@ -93,7 +93,7 @@ void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
   Serial.begin(115200);
-///  printf_begin();
+  printf_begin();
 #endif
 
 // TODO 6/22/2017 ross:  Need to do a periodic recalibration to set the reference values.
