@@ -25,22 +25,27 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#define ENABLE_DEBUG_PRINT
+
 #include "illumiconeWidget.h"
+
+#ifdef ENABLE_DEBUG_PRINT
 #include "printf.h"
+#endif
 
 
 /************************
  * Widget Configuration *
  ************************/
 
+#define SPINNAH
 //#define FOURPLAY
 //#define FOURPLAY_4_2
-#define FOURPLAY_4_3
+//#define FOURPLAY_4_3
 
-
-//#define ENABLE_DEBUG_PRINT
-
-#if defined(FOURPLAY)
+#if defined(SPINNAH)
+  #define WIDGET_ID 2
+#elif defined(FOURPLAY)
   #define WIDGET_ID 9
 #elif defined(FOURPLAY_4_2)
   #define WIDGET_ID 12
@@ -48,34 +53,40 @@
   #define WIDGET_ID 13
 #endif
 
-#define NUM_CHANNELS 4
-#define ACTIVE_TX_INTERVAL_MS 10L
-#define INACTIVE_TX_INTERVAL_MS 1000L
-//#define TX_FAILURE_LED_PIN 2
-#define ENCODER_0_A_PIN 2
-#define ENCODER_0_B_PIN 3
-#define ENCODER_1_A_PIN 4
-#define ENCODER_1_B_PIN 5
-#define ENCODER_2_A_PIN 6
-#define ENCODER_2_B_PIN 7
-#define ENCODER_3_A_PIN A0
-#define ENCODER_3_B_PIN A1
-//#define ENCODERS_VDD_PIN 8
-//#define ENCODER_ACTIVE_PIN 8
-
-//#define GREEN_LED_PIN 4
-//#define ORANGE_LED_PIN 5
+#ifdef SPINNAH
+  #define NUM_ENCODERS 1
+  #define ACTIVE_TX_INTERVAL_MS 100L
+  #define INACTIVE_TX_INTERVAL_MS 1000L
+  //#define TX_FAILURE_LED_PIN 2
+  #define ENCODER_0_A_PIN 2
+  #define ENCODER_0_B_PIN 3
+#else
+  #define NUM_ENCODERS 4
+  #define ACTIVE_TX_INTERVAL_MS 10L
+  #define INACTIVE_TX_INTERVAL_MS 1000L
+  //#define TX_FAILURE_LED_PIN 2
+  #define ENCODER_0_A_PIN 2
+  #define ENCODER_0_B_PIN 3
+  #define ENCODER_1_A_PIN 4
+  #define ENCODER_1_B_PIN 5
+  #define ENCODER_2_A_PIN 6
+  #define ENCODER_2_B_PIN 7
+  #define ENCODER_3_A_PIN A0
+  #define ENCODER_3_B_PIN A1
+  //#define ENCODERS_VDD_PIN 8
+  //#define ENCODER_ACTIVE_PIN 8
+#endif
 
 #define SPIN_ACTIVITY_DETECT_MS 50
 #define SPIN_INACTIVITY_TIMEOUT_MS 500
 
 #define RPM_UPDATE_INTERVAL_MS 250L
 
-#define NUM_ENCODERS 4
-
-#ifdef FOURPLAY
+#if defined(SPINNAH) || defined(FOURPLAY)
+  // bicycle wheels
   #define NUM_STEPS_PER_REV 36
 #elif defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
+  // them cool little spoked wheels that someone left out back
   #define NUM_STEPS_PER_REV 20
 #endif
 
@@ -89,15 +100,17 @@
 #define TX_PIPE_ADDRESS "1wdgt"
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
-// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
+// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11, 13) or 15 (the max).
 #define TX_RETRY_DELAY_MULTIPLIER 5
 
-#if defined(FOURPLAY)
+#if defined(SPINNAH)
+#define TX_RETRY_DELAY_MULTIPLIER 11
+#elif defined(FOURPLAY)
 #define TX_RETRY_DELAY_MULTIPLIER 7
 #elif defined(FOURPLAY_4_2)
 #define TX_RETRY_DELAY_MULTIPLIER 3
 #elif defined(FOURPLAY_4_3)
-#define TX_RETRY_DELAY_MULTIPLIER 11
+#define TX_RETRY_DELAY_MULTIPLIER 7
 #endif
 
 // Max. retries can be 0 to 15.
@@ -115,12 +128,12 @@ RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 1
 
 PositionVelocityPayload payload;
 
-bool g_anyEncoderActive;
-bool g_encoderActive[NUM_ENCODERS];
-volatile uint8_t g_lastPortCEncoderStates = 0;
-volatile uint8_t g_lastPortDEncoderStates = 0;
-volatile int g_encoderValues[NUM_ENCODERS] = {0, 0, 0, 0};
-uint32_t g_encoderRpms[NUM_ENCODERS];
+static bool g_anyEncoderActive;
+static bool g_encoderActive[NUM_ENCODERS];
+static volatile uint8_t g_lastPortCEncoderStates;
+static volatile uint8_t g_lastPortDEncoderStates;
+static volatile int g_encoderValues[NUM_ENCODERS];
+static uint32_t g_encoderRpms[NUM_ENCODERS];
 
 const int8_t g_greyCodeToEncoderStepMap[] = {
        // last this
@@ -204,36 +217,38 @@ void setup()
   printf_begin();
 #endif
 
+#ifdef ENCODER_0_A_PIN
   pinMode(ENCODER_0_A_PIN, INPUT); 
   pinMode(ENCODER_0_B_PIN, INPUT);
-  pinMode(ENCODER_1_A_PIN, INPUT); 
-  pinMode(ENCODER_1_B_PIN, INPUT);
-  pinMode(ENCODER_2_A_PIN, INPUT); 
-  pinMode(ENCODER_2_B_PIN, INPUT);
-  pinMode(ENCODER_3_A_PIN, INPUT); 
-  pinMode(ENCODER_3_B_PIN, INPUT);
-#ifdef ENCODERS_VDD_PIN
-  pinMode(ENCODERS_VDD_PIN, OUTPUT);
-#endif
-#ifdef ENCODER_ACTIVE_PIN
-  pinMode(ENCODER_ACTIVE_PIN, OUTPUT);
-#endif
-
-  // Turn on pullups.
   digitalWrite(ENCODER_0_A_PIN, HIGH);
   digitalWrite(ENCODER_0_B_PIN, HIGH);
+#endif
+#ifdef ENCODER_1_A_PIN
+  pinMode(ENCODER_1_A_PIN, INPUT); 
+  pinMode(ENCODER_1_B_PIN, INPUT);
   digitalWrite(ENCODER_1_A_PIN, HIGH);
   digitalWrite(ENCODER_1_B_PIN, HIGH);
+#endif
+#ifdef ENCODER_2_A_PIN
+  pinMode(ENCODER_2_A_PIN, INPUT); 
+  pinMode(ENCODER_2_B_PIN, INPUT);
   digitalWrite(ENCODER_2_A_PIN, HIGH);
   digitalWrite(ENCODER_2_B_PIN, HIGH);
+#endif
+#ifdef ENCODER_3_A_PIN
+  pinMode(ENCODER_3_A_PIN, INPUT); 
+  pinMode(ENCODER_3_B_PIN, INPUT);
   digitalWrite(ENCODER_3_A_PIN, HIGH);
   digitalWrite(ENCODER_3_B_PIN, HIGH);
-  
+#endif
+
   // Initially, turn on power to the encoders and set the active indicator low.
 #ifdef ENCODERS_VDD_PIN
+  pinMode(ENCODERS_VDD_PIN, OUTPUT);
   digitalWrite(ENCODERS_VDD_PIN, HIGH);
 #endif
 #ifdef ENCODER_ACTIVE_PIN
+  pinMode(ENCODER_ACTIVE_PIN, OUTPUT);
   digitalWrite(ENCODER_ACTIVE_PIN, LOW);
 #endif
 
@@ -244,26 +259,35 @@ void setup()
 
   g_anyEncoderActive = false;
   for (uint8_t i = 0; i < NUM_ENCODERS; ++i) {
+    g_encoderValues[i] = 0;
     g_encoderActive[i] = false;
   }
 
   // Set up and turn on the pin-change interrupts last.
+#ifdef ENCODER_0_A_PIN
   setUpPinChangeInterrupt(ENCODER_0_A_PIN);
   setUpPinChangeInterrupt(ENCODER_0_B_PIN);
+#endif
+#ifdef ENCODER_1_A_PIN
   setUpPinChangeInterrupt(ENCODER_1_A_PIN);
   setUpPinChangeInterrupt(ENCODER_1_B_PIN);
+#endif
+#ifdef ENCODER_2_A_PIN
   setUpPinChangeInterrupt(ENCODER_2_A_PIN);
   setUpPinChangeInterrupt(ENCODER_2_B_PIN);
+#endif
+#ifdef ENCODER_3_A_PIN
   setUpPinChangeInterrupt(ENCODER_3_A_PIN);
   setUpPinChangeInterrupt(ENCODER_3_B_PIN);
+#endif
 }
 
 
 void gatherMeasurements()
 {
-  static int32_t lastEncoderValues[4] = {0, 0, 0, 0};
-  static uint32_t lastEncoderInactiveMs[4] = {0, 0, 0, 0};
-  static uint32_t lastEncoderChangeMs[4] = {0, 0, 0, 0};
+  static int32_t lastEncoderValues[NUM_ENCODERS];
+  static uint32_t lastEncoderInactiveMs[NUM_ENCODERS];
+  static uint32_t lastEncoderChangeMs[NUM_ENCODERS];
 
   unsigned long now = millis();
 
