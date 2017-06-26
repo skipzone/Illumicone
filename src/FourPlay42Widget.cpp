@@ -40,10 +40,10 @@ FourPlay42Widget::FourPlay42Widget()
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 200;
-    updateIntervalMs[1] = 300;
+    updateIntervalMs[0] = 100;
+    updateIntervalMs[1] = 200;
     updateIntervalMs[2] = 400;
-    updateIntervalMs[3] = 100;
+    updateIntervalMs[3] = 50;
     updateIntervalMs[4] = 0;
     updateIntervalMs[5] = 0;
     updateIntervalMs[6] = 0;

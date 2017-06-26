@@ -17,22 +17,41 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
+
 #include "Pattern.h"
-#include "WidgetChannel.h"
+#include "WidgetId.h"
+
+
+class ConfigReader;
+class Widget;
+
 
 class HorizontalStripePattern : public Pattern
 {
     public:
-        HorizontalStripePattern() {};
+        HorizontalStripePattern();
         ~HorizontalStripePattern() {};
 
-        bool initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority);
-        bool initWidgets(int numWidgets, int channelsPerWidget);
+        HorizontalStripePattern(const HorizontalStripePattern&) = delete;
+        HorizontalStripePattern& operator =(const HorizontalStripePattern&) = delete;
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
 
     private:
 
-        WidgetChannel redPositionChannel;
-        WidgetChannel greenPositionChannel;
-        WidgetChannel bluePositionChannel;
+        int widthScaleFactor;
+        int maxCyclicalWidth;
+        int widthResetTimeoutSeconds;
+
+        std::shared_ptr<WidgetChannel> redPositionChannel;
+        std::shared_ptr<WidgetChannel> greenPositionChannel;
+        std::shared_ptr<WidgetChannel> bluePositionChannel;
+        std::shared_ptr<WidgetChannel> widthChannel;
+
+        int rPos;
+        int gPos;
+        int bPos;
 };

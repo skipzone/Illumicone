@@ -139,11 +139,17 @@
                     "measurement" : "position"
                 },
                 {   "inputName" : "width",
-                    "widgetName" : "bells",
-                    "channelNumber" : 0,
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 3,
                     "measurement" : "position"
                 }
-            ]
+            ],
+            //"widthScaleFactor" : 85,            // 1024 / (numStrings / 3) = 85.33 is the hardcoded value we used with Bells in 2016
+            //"maxCyclicalWidth" : 0              // 0 for non-cyclical positions that are explicitly bounded (e.g., 0-1023)
+            //"widthResetTimeoutSeconds" : 0      // 0 to disable
+            "widthScaleFactor" : 6,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 12,
+            "widthResetTimeoutSeconds" : 10     // reset width to normal after this period of inactivity of the width channel
         },
         {   "patternName" : "horizontalStripe",
             "inputs" : [
@@ -161,22 +167,22 @@
                     "widgetName" : "fourPlay43",
                     "channelNumber" : 2,
                     "measurement" : "position"
+                },
+                {   "inputName" : "width",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 3,
+                    "measurement" : "position"
                 }
-                //{   "inputName" : "width",
-                //    "widgetName" : "bells",
-                //    "channelNumber" : 1,
-                //    "measurement" : "position"
-                //}
-            ]
+            ],
+            "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 20,                // the maximum width when cyclical values are used
+            "widthResetTimeoutSeconds" : 10     // reset width to normal after this period of inactivity of the width channel
         },
         {   "patternName" : "sparkle",
             "inputs" : [
                 {   "inputName" : "density",
-                    //"widgetName" : "shirleysWeb",
-                    //"channelNumber" : 0,
-                    //"measurement" : "velocity"
-                    "widgetName" : "fourPlay43",
-                    "channelNumber" : 3,
+                    "widgetName" : "shirleysWeb",
+                    "channelNumber" : 0,
                     "measurement" : "velocity"
                 }
             ],
