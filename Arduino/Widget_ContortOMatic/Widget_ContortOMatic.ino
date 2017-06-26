@@ -1,10 +1,10 @@
 /*****************************************************************
  *                                                               *
- * Twister Widget                                                *
+ * Contort-O-Matic Widget                                        *
  *                                                               *
- * Platform:  Arduino Uno, Pro, Pro Mini                         *
+ * Platform:  Arduino Mega 2560                                  *
  *                                                               *
- * by Ross Butler, February 2017                             )'( *
+ * by Ross Butler, June 2017                                 )'( *
  *                                                               *
  *****************************************************************/
 
@@ -25,48 +25,32 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#define ENABLE_DEBUG_PRINT
+
 #include <ADCTouch.h>
 #include "illumiconeWidget.h"
-#include <LiquidCrystal.h>
 #include "printf.h"
-
-
 
 
 /************************
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 10
-#define ACTIVE_TX_INTERVAL_MS 50000L
-#define INACTIVE_TX_INTERVAL_MS 100000L
+#define WIDGET_ID 9
+#define ACTIVE_TX_INTERVAL_MS 250L
+#define INACTIVE_TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 2
 
-constexpr uint32_t gatherMeasurementsIntervalMs = 333;
+constexpr uint32_t gatherMeasurementsIntervalMs = 500;
 
-constexpr uint8_t numCapSensePins = 2;
-constexpr uint8_t capSensePins[numCapSensePins] = {A2, A3};
+constexpr uint8_t numCapSensePins = 16;
+constexpr uint8_t capSensePins[numCapSensePins] = {A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15};
 constexpr int capSenseNumSamplesForRef = 500;
 constexpr int capSenseNumSamples = 10;
-constexpr int capSenseThresholds[numCapSensePins] = {750, 750};
-
-constexpr uint8_t greenLedPin = 3;
-constexpr uint8_t greenLedStateOff = 1;
-constexpr uint8_t greenLedStateOn = 0;
-
-#define LCD_RS_PIN A1
-#define LCD_E_PIN  A0
-#define LCD_D4_PIN 5
-#define LCD_D5_PIN 6
-#define LCD_D6_PIN 7
-#define LCD_D7_PIN 8
-#define LCD_NUM_COLS 20
-#define LCD_NUM_ROWS 2
-
-#define NUM_VALUES_TO_SEND 2
-
-#define ENABLE_DEBUG_PRINT
-#define ENABLE_LCD
+constexpr int capSenseThresholds[numCapSensePins] = { 20,  20,  20,  20,
+                                                      20,  20,  20,  20,
+                                                      20,  20,  20,  20,
+                                                      20,  20,  20,  20};
 
 
 /***************************************
@@ -75,7 +59,7 @@ constexpr uint8_t greenLedStateOn = 0;
 
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
-#define TX_PIPE_ADDRESS "2wdgt"
+#define TX_PIPE_ADDRESS "5wdgt"
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
@@ -92,14 +76,11 @@ constexpr uint8_t greenLedStateOn = 0;
  * Globals *
  ***********/
 
-RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
+RF24 radio(7, 8);    // Mega:  CE on pin 7, CSN on pin 8, also uses SPI bus (SCK on 52, MISO on 50, MOSI on 51)
 
-MeasurementVectorPayload payload;
+CustomPayload payload;
 
-LiquidCrystal lcd(LCD_RS_PIN, LCD_E_PIN, LCD_D4_PIN, LCD_D5_PIN, LCD_D6_PIN, LCD_D7_PIN);
-static FILE lcdout = {0};
-
-static int capSenseRef[numCapSensePins];
+static int capSenseReferenceValues[numCapSensePins];
 static bool padIsTouched[numCapSensePins];
 bool isActive;
 
@@ -108,93 +89,91 @@ bool isActive;
  * Implementation *
  ******************/
 
-static int lcd_putchar(char ch, FILE* stream)
-{
-  lcd.write(ch);
-  return (0);
-}
-
-
-void initLcd()
-{
-  lcd.begin(LCD_NUM_COLS, LCD_NUM_ROWS);
-
-  fdev_setup_stream(&lcdout, lcd_putchar, NULL, _FDEV_SETUP_WRITE);
-
-  lcd.setCursor(0, 0);  // col, row
-  lcd.print(F("                    "));
-  lcd.setCursor(0, 1);
-  lcd.print(F("                    "));
-}
-
-
 void setup()
 {
-  pinMode(greenLedPin, OUTPUT);
-
 #ifdef ENABLE_DEBUG_PRINT
   Serial.begin(115200);
-#endif
-
-#if defined(ENABLE_DEBUG_PRINT) || defined(ENABLE_LCD)
   printf_begin();
 #endif
-
-#ifdef ENABLE_LCD
-  initLcd();
-#endif
-
-//          // Create reference value to account for stray
-//          // capacitance and capacitance of the pad.
-//          capSenseRef[stepNum] = ADCTouch.read(capSensePins[stepNum], capSenseNumSamplesForRef);
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
   
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
+
+  calibrateCapSense();
+}
+
+
+void calibrateCapSense()
+{
+  Serial.println(F("Calibrating..."));
+  
+  for (byte i = 0; i < numCapSensePins; ++i) {
+    // Create reference value to account for stray
+    // capacitance and capacitance of the pad.
+    capSenseReferenceValues[i] = ADCTouch.read(capSensePins[i], capSenseNumSamplesForRef);
+  }
+
+  Serial.println(F("---------- Calibration Values ----------"));
+  for (byte i = 0; i < numCapSensePins; ++i) {
+    Serial.print(i);
+    Serial.print(":  ");
+    Serial.println(capSenseReferenceValues[i]);
+  }
 }
 
 
 void gatherMeasurements()
 {
-  unsigned long now = millis();
-  isActive = true;
+  int capSenseValues[numCapSensePins];
+  
+  isActive = false;
 
   for (uint8_t i = 0; i < numCapSensePins; ++i) {
-    int value = ADCTouch.read(capSensePins[i], capSenseNumSamples) - capSenseRef[i];
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(i);
-    Serial.print(":");
-    Serial.println(value);
-#endif
-    padIsTouched[i] = value > capSenseThresholds[i];
+    capSenseValues[i] = ADCTouch.read(capSensePins[i], capSenseNumSamples);
   }
 
+  for (uint8_t i = 0; i < numCapSensePins; ++i) {
+    int netValue = capSenseValues[i] - capSenseReferenceValues[i];
+    if (netValue > capSenseThresholds[i]) {
+      padIsTouched[i] = true;
+      isActive = true;
+    }
+    else {
+      padIsTouched[i] = false;
+    }
 #ifdef ENABLE_DEBUG_PRINT
-  for (int i = 0; i < NUM_VALUES_TO_SEND; ++i) {
     Serial.print(i);
     Serial.print(":  ");
-    Serial.print(capSenseRef[i]);
-    Serial.print(", ");
+    Serial.print(capSenseValues[i]);
+    Serial.print(" - ");
+    Serial.print(capSenseReferenceValues[i]);
+    Serial.print(" = ");
+    Serial.print(netValue);
+    Serial.print(" >? ");
+    Serial.print(capSenseThresholds[i]);
+    Serial.print(" -> ");
     Serial.println(padIsTouched[i]);
-  }
 #endif
-
-  digitalWrite(greenLedPin, padIsTouched[0] ? greenLedStateOn : greenLedStateOff);
-
+  }
 }
 
 
 void sendMeasurements()
 {
-  for (int i = 0; i < NUM_VALUES_TO_SEND; ++i) {
-      payload.measurements[i] = padIsTouched[i];
+  // TODO 6/22/2017 ross:  Send the pad-is-touched data as a bit field instead of one byte per pad.
+  // First byte of payload is the nubmer of cap sense pins.  The remainder
+  // of the bits are 1 if the corresponding pad is touched, 0 if not.
+  payload.buf[0] = numCapSensePins;
+  for (int i = 0; i < numCapSensePins; ++i) {
+      payload.buf[i + 1] = padIsTouched[i];
   }
 
   payload.widgetHeader.isActive = isActive;
 
-  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * NUM_VALUES_TO_SEND)) {
+  if (!radio.write(&payload, sizeof(WidgetHeader) + numCapSensePins + 1)) {
 #ifdef LED_PIN      
     digitalWrite(LED_PIN, HIGH);
 #endif

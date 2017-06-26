@@ -43,10 +43,10 @@ constexpr char lockFilePath[] = "/tmp/widgetRcvr.lock";
 RF24 radio(RPI_BPLUS_GPIO_J8_22, RPI_BPLUS_GPIO_J8_24, BCM2835_SPI_SPEED_8MHZ);
 
 // We're using dynamic payload size, but we still need to know what the largest can be.
-constexpr const uint8_t maxPayloadSize = 32;
+constexpr uint8_t maxPayloadSize = 32;
 
-constexpr const uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
-constexpr const int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
+constexpr uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
+constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 
 // nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
 // ISM: 2400-2500;  ham: 2390-2450
@@ -113,7 +113,7 @@ bool openUdpPort(WidgetId widgetId)
         return false;
     }
 
-    if (bind(widgetSock[widgetIdNumber], (struct sockaddr *) &widgetSockAddr[widgetIdNumber], sizeof(struct sockaddr_in)) < 0) {
+    if (::bind(widgetSock[widgetIdNumber], (struct sockaddr *) &widgetSockAddr[widgetIdNumber], sizeof(struct sockaddr_in)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
@@ -273,19 +273,19 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
         cout << setfill(' ') << setw(6) << payload->measurements[i] << endl;
     }
 
-    // The steps widget sends 5 position measurements.  We'll map them to
-    // channels 0 through 4.
-    if (payload->widgetHeader.id == widgetIdToInt(WidgetId::steps)) {
-        for (unsigned int i = 0; i < 5; ++i) {
-            UdpPayload udpPayload;
-            udpPayload.id       = payload->widgetHeader.id;
-            udpPayload.channel  = i;
-            udpPayload.isActive = payload->widgetHeader.isActive;
-            udpPayload.position = payload->measurements[i];
-            udpPayload.velocity = 0;
-            sendUdp(udpPayload);
-        }
-    }
+//    // The steps widget sends 5 position measurements.  We'll map them to
+//    // channels 0 through 4.
+//    if (payload->widgetHeader.id == widgetIdToInt(WidgetId::steps)) {
+//        for (unsigned int i = 0; i < 5; ++i) {
+//            UdpPayload udpPayload;
+//            udpPayload.id       = payload->widgetHeader.id;
+//            udpPayload.channel  = i;
+//            udpPayload.isActive = payload->widgetHeader.isActive;
+//            udpPayload.position = payload->measurements[i];
+//            udpPayload.velocity = 0;
+//            sendUdp(udpPayload);
+//        }
+//    }
 }
 
 
@@ -454,7 +454,7 @@ int main(int argc, char** argv)
     openUdpPort(WidgetId::triObelisk);
     openUdpPort(WidgetId::squawkBox);
     openUdpPort(WidgetId::plunger);
-    openUdpPort(WidgetId::twister);
+    openUdpPort(WidgetId::contortOMatic);
     openUdpPort(WidgetId::fourPlay42);
     openUdpPort(WidgetId::fourPlay43);
     openUdpPort(WidgetId::buckNorris);

@@ -29,7 +29,7 @@
 #include "ShirleysWebWidget.h"
 //#include "SquawkBoxWidget.h"
 #include "TriObeliskWidget.h"
-//#include "TwisterWidget.h"
+//#include "ContortOMaticWidget.h"
 #include "WidgetId.h"
 
 
@@ -53,8 +53,8 @@ static Widget* widgetFactory(WidgetId id) { switch (id) {
 //            return new SquawkBoxWidget;
         case WidgetId::plunger:
             return new PlungerWidget;
-//        case WidgetId::twister:
-//            return new TwisterWidget;
+//        case WidgetId::contortOMatic:
+//            return new ContortOMaticWidget;
         case WidgetId::fourPlay42:
             return new FourPlay42Widget;
         case WidgetId::fourPlay43:
