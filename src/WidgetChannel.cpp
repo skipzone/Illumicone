@@ -17,23 +17,25 @@
 
 #include <chrono>
 ///#include <stdbool.h>
-///#include <iostream>
+#include <iostream>
 ///#include <vector>
 
 #include <time.h>
 
+#include "Widget.h"
 #include "WidgetChannel.h"
 
-//using namespace std;
+using namespace std;
 
 
-WidgetChannel::WidgetChannel(unsigned int channelNumber, Widget* widget)
+WidgetChannel::WidgetChannel(unsigned int channelNumber, Widget* widget, unsigned int autoInactiveMs)
     : channelNumber(channelNumber)
     , widget(widget)
     , isActive(false)
-    , autoInactiveMs(2000)      // make configurable
+    , autoInactiveMs(autoInactiveMs)
     , lastActiveMs(0)
-    , hasNewMeasurement(false)
+    , hasNewPositionMeasurement(false)
+    , hasNewVelocityMeasurement(false)
     , position(0)
     , velocity(0)
     , prevPosition(0)
@@ -48,14 +50,22 @@ unsigned int WidgetChannel::getChannelNumber()
 }
 
 
+string WidgetChannel::getName()
+{
+    return widgetIdToString(widget->getId()) + "/ch" + to_string(channelNumber);
+}
+
+
 bool WidgetChannel::getIsActive()
 {
     if (isActive) {
-        using namespace std::chrono;
-        milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-        unsigned int nowMs = epochMs.count();
-        if (nowMs - lastActiveMs > autoInactiveMs) {
-            isActive = false;
+        if (autoInactiveMs != 0) {
+            using namespace std::chrono;
+            milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+            unsigned int nowMs = epochMs.count();
+            if (nowMs - lastActiveMs > autoInactiveMs) {
+                isActive = false;
+            }
         }
     }
 
@@ -63,35 +73,35 @@ bool WidgetChannel::getIsActive()
 }
 
 
-bool WidgetChannel::getHasNewMeasurement()
+bool WidgetChannel::getHasNewPositionMeasurement()
 {
-    return hasNewMeasurement;
+    return hasNewPositionMeasurement;
+}
+
+
+bool WidgetChannel::getHasNewVelocityMeasurement()
+{
+    return hasNewVelocityMeasurement;
 }
 
 
 int WidgetChannel::getPosition()
 {
-    hasNewMeasurement = false;
-    prevPosition = position;
+    if (hasNewPositionMeasurement) {
+        hasNewPositionMeasurement = false;
+        prevPosition = position;
+    }
     return position;
 }
 
 
 int WidgetChannel::getVelocity()
 {
-    hasNewMeasurement = false;
-    prevVelocity = velocity;
+    if (hasNewVelocityMeasurement) {
+        hasNewVelocityMeasurement = false;
+        prevVelocity = velocity;
+    }
     return velocity;
-}
-
-
-void WidgetChannel::positionAndVelocity(int& currentPosition, int& currentVelocity)
-{
-    hasNewMeasurement = false;
-    prevPosition = position;
-    prevVelocity = velocity;
-    currentPosition = position;
-    currentVelocity = velocity;
 }
 
 
@@ -109,7 +119,7 @@ int WidgetChannel::getPreviousVelocity()
 
 void WidgetChannel::setIsActive(bool isNowActive)
 {
-    if (isNowActive) {
+    if (isNowActive && autoInactiveMs != 0) {
         using namespace std::chrono;
         milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
         lastActiveMs = epochMs.count();
@@ -119,25 +129,35 @@ void WidgetChannel::setIsActive(bool isNowActive)
 }
 
 
+// A race condition will exist if setPosition, setVelocity, or setPositionAndVelocity are called from anywhere
+// other than Widget::pollForUdpRx() when simulated measurements are not being used because pollForUpdRx and
+// the pattern controller run on different threads.  However, there is no reason to call any of these set
+// functions when simulated measurements are not being used, so there really shouldn't be a problem.
+
+
 void WidgetChannel::setPosition(int newPosition)
 {
+    //cout << "setting position to " << newPosition << endl;
     position = newPosition;
-    hasNewMeasurement = true;
+    hasNewPositionMeasurement = true;
 }
 
 
 void WidgetChannel::setVelocity(int newVelocity)
 {
+    //cout << "setting velocity to " << newVelocity << endl;
     velocity = newVelocity;
-    hasNewMeasurement = true;
+    hasNewVelocityMeasurement = true;
 }
 
 
 void WidgetChannel::setPositionAndVelocity(int newPosition, int newVelocity)
 {
+    //cout << "setting position to " << newPosition << ", velocity to " << newVelocity << endl;
     position = newPosition;
     velocity = newVelocity;
-    hasNewMeasurement = true;
+    hasNewPositionMeasurement = true;
+    hasNewVelocityMeasurement = true;
 }
 
 

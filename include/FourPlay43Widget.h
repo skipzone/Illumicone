@@ -29,8 +29,6 @@ class FourPlay43Widget : public Widget
         FourPlay43Widget(const FourPlay43Widget&) = delete;
         FourPlay43Widget& operator =(const FourPlay43Widget&) = delete;
 
-        void init(bool generateSimulatedMeasurements);
-
         bool moveData();
 
     private:

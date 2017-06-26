@@ -15,26 +15,25 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <algorithm>
 #include <iostream>
+#include <time.h>
 
+#include "AnnoyingFlashingPattern.h"
 #include "ConfigReader.h"
 #include "Pattern.h"
-#include "SparklePattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
-
 
 using namespace std;
 
 
-SparklePattern::SparklePattern()
-    : Pattern("sparkle")
+AnnoyingFlashingPattern::AnnoyingFlashingPattern()
+    : Pattern("annoyingFlashing")
 {
 };
 
 
-bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
 {
     numStrings = config.getNumberOfStrings();
     pixelsPerString = config.getNumberOfPixelsPerString();
@@ -52,16 +51,12 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
     activationThreshold = patternConfig["activationThreshold"].int_value();
     cout << name << " activationThreshold=" << activationThreshold << endl;
 
-    if (!patternConfig["densityScaledownFactor"].is_number()) {
-        cerr << "densityScaledownFactor not specified in " << name << " pattern configuration." << endl;
+    if (!patternConfig["flashingTimeoutSeconds"].is_number()) {
+        cerr << "flashingTimeoutSeconds not specified in " << name << " pattern configuration." << endl;
         return false;
     }
-    densityScaledownFactor = patternConfig["densityScaledownFactor"].int_value();
-    if (densityScaledownFactor == 0) {
-        cerr << "densityScaledownFactor is zero in " << name << " pattern configuration." << endl;
-        return false;
-    }
-    cout << name << " densityScaledownFactor=" << densityScaledownFactor << endl;
+    flashingTimeoutSeconds = patternConfig["flashingTimeoutSeconds"].int_value();
+    cout << name << " flashingTimeoutSeconds=" << flashingTimeoutSeconds << endl;
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
@@ -71,8 +66,8 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 
     for (auto&& channelConfig : channelConfigs) {
 
-        if (channelConfig.inputName == "density") {
-            densityChannel = channelConfig.widgetChannel;
+        if (channelConfig.inputName == "intensity") {
+            intensityChannel = channelConfig.widgetChannel;
         }
         else {
             cerr << "Warning:  inputName '" << channelConfig.inputName
@@ -81,9 +76,9 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
         }
         cout << name << " using " << channelConfig.widgetChannel->getName() << " for " << channelConfig.inputName << endl;
 
-        if (channelConfig.measurement != "velocity") {
-            cerr << "Warning:  " << name << " supports only velocity measurements, but the input configuration for "
-                << channelConfig.inputName << " doesn't specify velocity." << endl;
+        if (channelConfig.measurement != "position") {
+            cerr << "Warning:  " << name << " supports only position measurements, but the input configuration for "
+                << channelConfig.inputName << " doesn't specify position." << endl;
         }
     }
 
@@ -91,10 +86,11 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 }
 
 
-void SparklePattern::goInactive()
+void AnnoyingFlashingPattern::goInactive()
 {
     if (isActive) {
         isActive = false;
+        timeExceededThreshold = 0;
         // Set all the pixels to 0 intensity to make this pattern effectively transparent.
         for (auto&& pixels:pixelArray) {
             for (auto&& pixel:pixels) {
@@ -107,58 +103,74 @@ void SparklePattern::goInactive()
 }
 
 
-bool SparklePattern::update()
+bool AnnoyingFlashingPattern::update()
 {
-    // TODO:  The frequency of the sparkling is determined by the frequency at which the widget
+    // TODO:  The frequency of the flashing is determined by the frequency at which the widget
     //        sends measurements. Instead, the frequency should be determined here in the pattern.
+    //        Also, when this pattern disables itself because it has flashed for flashingTimeoutSeconds,
+    //        it should not re-enable itself immediately after the widget goes inactive or the
+    //        measurement drops below the threshold.  Instead, it should wait for some predetermined
+    //        period of time before becoming enabled again.
 
     // Don't do anything if no input channel was assigned.
-    if (densityChannel == nullptr) {
+    if (intensityChannel == nullptr) {
         return false;
     }
 
     // If the widget channel has gone inactive, turn off this pattern.
-    if (!densityChannel->getIsActive()) {
+    if (!intensityChannel->getIsActive()) {
         goInactive();
         return false;
     }
 
     // No change to the pattern if we haven't received a new measurement.
-    if (!densityChannel->getHasNewVelocityMeasurement()) {
+    if (!intensityChannel->getHasNewPositionMeasurement()) {
         return isActive;
     }
 
-    int curVel = densityChannel->getVelocity();
-
     // If the latest measurement is below the activation threshold, turn off this pattern.
-    if (curVel <= activationThreshold) {
-        //cout << curVel << " is below sparkle activation threshold " << activationThreshold << endl;
+    if (intensityChannel->getPosition() <= activationThreshold) {
         goInactive();
         return false;
     }
 
-    isActive = true;
+    bool disableFlashing = false;
+    if (!isActive) {
+        isActive = true;
+        // The threshold was just crossed, so initialize auto-disable.
+        time(&timeExceededThreshold);
+    }
+    else {
+        // If we've been above the threshold for too long, automatically disable
+        // this pattern so that it doesn't continually override other patterns.
+        time_t now;
+        time(&now);
+        if (now - timeExceededThreshold >= flashingTimeoutSeconds) {
+            disableFlashing = true;
+        }
+    }
+    //cout << "annoyingFlashing is " << (disableFlashing ? "disabled" : "enabled");
+    //cout << endl;
 
-    float sparkePercentage = min((float) curVel / (float) densityScaledownFactor, (float) 1);
-    int numPixelsPerStringToSparkle = sparkePercentage * (float) pixelsPerString;
-
-    //cout << "curVel: " << curVel << endl;
-    //cout << "sparkePercentage: " << sparkePercentage << endl;
-    //cout << "numPixelsPerStringToSparkle: " << numPixelsPerStringToSparkle << endl;
-
-    // Set approximately numPixelsPerStringToSparkle to a random color in each string.
-    // ("Approximately" because we could select the same pixel twice.)
+    uint8_t redVal;
+    uint8_t greenVal;
+    uint8_t blueVal;
+    if (disableFlashing) {
+        // We'll set all the pixels to 0 intensity to make this pattern effectively transparent.
+        redVal = 0;
+        greenVal = 0;
+        blueVal = 0;
+    }
+    else {
+        redVal = rand() % 255;
+        greenVal = rand() % 255;
+        blueVal = rand() % 255;
+    }
     for (auto&& pixels:pixelArray) {
         for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
-        }
-        for (int i = 0; i < numPixelsPerStringToSparkle; i++) {
-            int randPos = rand() % pixelsPerString;
-            pixels[randPos].r = rand() % 255;
-            pixels[randPos].g = rand() % 255;
-            pixels[randPos].b = rand() % 255;
+            pixel.r = redVal;  // TODO ross:  this is really blue!
+            pixel.g = greenVal;
+            pixel.b = blueVal;  // TODO ross:  this is really red!
         }
     }
 

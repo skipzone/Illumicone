@@ -26,12 +26,14 @@
 
 using namespace std;
 
-//
-// keep track of the position of the trickle for each string
-//
-static int tricklePositions[NUM_STRINGS];
 
-bool TricklePattern::initPattern(int numStrings, int pixelsPerString, int priority)
+TricklePattern::~TricklePattern()
+{
+    delete [] tricklePositions;
+}
+
+
+bool TricklePattern::initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority)
 {
     this->numStrings = numStrings;
     this->pixelsPerString = pixelsPerString;
@@ -42,12 +44,15 @@ bool TricklePattern::initPattern(int numStrings, int pixelsPerString, int priori
 
     this->isActive = 0;
     this->opacity = 100;
-    for (auto&& pos:tricklePositions) {
+
+    tricklePositions = new unsigned int[numStrings];
+    for (auto&& pos : tricklePositions) {
         pos = 0;
     }
 
     return true;
 }
+
 
 bool TricklePattern::initWidgets(int numWidgets, int channelsPerWidget)
 {
@@ -72,15 +77,15 @@ bool TricklePattern::update()
     int curPos = 190;
 //    cout << "Updating Solid Black Pattern!" << endl;
 
-    for (auto&& pixels:pixelArray) {
-        for (auto&& pixel:pixels) {
+    for (auto&& pixels : pixelArray) {
+        for (auto&& pixel : pixels) {
             pixel.r = 0;
             pixel.g = 0;
             pixel.b = 0;
         }
     }
 
-//    for (auto&& widget:widgets) {
+//    for (auto&& widget : widgets) {
 ////        cout << "Updating Solid Black Pattern widget!" << endl;
 //        // update active, position, velocity for each channel in widget
 //        widget->moveData();
@@ -100,14 +105,14 @@ bool TricklePattern::update()
                     // just do shifts on the previous array?
                     //
                     if (curPos >= 180) {
-                        for (auto&& pos:tricklePositions) {
-                            if (pos < PIXELS_PER_STRING) {
+                        for (auto&& pos : tricklePositions) {
+                            if (pos < pixelsPerString) {
                                 pos += rand() % 2;
                             }
                         }
                     }
 
-                    for (auto&& col:pixelArray) {
+                    for (auto&& col : pixelArray) {
                         cout << "Updating string " << stringNum << "with position  " << tricklePositions[stringNum] << endl;
                         for (int i = 0; i < tricklePositions[stringNum]; i++) {
                             col[i].r = 51;

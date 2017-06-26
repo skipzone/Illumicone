@@ -28,25 +28,26 @@ class ConfigReader;
 class Widget;
 
 
-class SparklePattern : public Pattern {
+class AnnoyingFlashingPattern : public Pattern {
 
     public:
 
-        SparklePattern();
-        ~SparklePattern() {};
+        AnnoyingFlashingPattern();
+        ~AnnoyingFlashingPattern() {};
 
-        SparklePattern(const SparklePattern&) = delete;
-        SparklePattern& operator =(const SparklePattern&) = delete;
+        AnnoyingFlashingPattern(const AnnoyingFlashingPattern&) = delete;
+        AnnoyingFlashingPattern& operator =(const AnnoyingFlashingPattern&) = delete;
 
         bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
 
     private:
 
-        std::shared_ptr<WidgetChannel> densityChannel;
+        std::shared_ptr<WidgetChannel> intensityChannel;
 
-        int densityScaledownFactor;
         int activationThreshold;
+        time_t flashingTimeoutSeconds;
+        time_t timeExceededThreshold;
 
         void goInactive();
 };

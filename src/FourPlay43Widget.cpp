@@ -25,6 +25,7 @@
 ///#include <vector>
 
 #include "FourPlay43Widget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
@@ -32,35 +33,21 @@ using namespace std;
 
 
 FourPlay43Widget::FourPlay43Widget()
-    : Widget(WidgetId::fourPlay43)
+    : Widget(WidgetId::fourPlay43, 4)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 200;
-    updateIntervalMs[1] = 300;
-    updateIntervalMs[2] = 400;
-    updateIntervalMs[3] = 100;
+    updateIntervalMs[0] = 20;
+    updateIntervalMs[1] = 40;
+    updateIntervalMs[2] = 80;
+    updateIntervalMs[3] = 50;
     updateIntervalMs[4] = 0;
     updateIntervalMs[5] = 0;
     updateIntervalMs[6] = 0;
     updateIntervalMs[7] = 0;
-}
-
-
-void FourPlay43Widget::init(bool generateSimulatedMeasurements)
-{
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
-
-    for (int i = 0; i < 4; ++i) {
-        channels.push_back(make_shared<WidgetChannel>(i, this));
-    }
-
-    if (!generateSimulatedMeasurements) {
-        startUdpRxThread();
-    }
 }
 
 
@@ -77,14 +64,15 @@ bool FourPlay43Widget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
-        //cout << "checking channel " << i << endl;
+    for (unsigned int i = 0; i < numChannels; ++i) {
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % PIXELS_PER_STRING, 0);
+            channels[i]->getPosition();      // make sure previous velocity has been updated
+            int newPosition = (channels[i]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
+            int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
+            //cout << "newPosition=" << newPosition << ", newVelocity=" << newVelocity << endl;
+            channels[i]->setPositionAndVelocity(newPosition, newVelocity);
             channels[i]->setIsActive(true);
-            //cout << "updated channel " << i << endl;
         }
     }
 

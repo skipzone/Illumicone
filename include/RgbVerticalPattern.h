@@ -17,15 +17,42 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
+
 #include "Pattern.h"
+#include "WidgetId.h"
+
+
+class ConfigReader;
+class Widget;
+
 
 class RgbVerticalPattern : public Pattern {
+
     public:
 
-        RgbVerticalPattern() {};
+        RgbVerticalPattern();
         ~RgbVerticalPattern() {};
 
-        bool initPattern(int numStrings, int pixelsPerString, int priority);
-        bool initWidgets(int numWidgets, int channelsPerWidget);
+        RgbVerticalPattern(const RgbVerticalPattern&) = delete;
+        RgbVerticalPattern& operator =(const RgbVerticalPattern&) = delete;
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();       
+
+    private:
+
+        int widthScaleFactor;
+        int maxCyclicalWidth;
+        int widthResetTimeoutSeconds;
+
+        std::shared_ptr<WidgetChannel> redPositionChannel;
+        std::shared_ptr<WidgetChannel> greenPositionChannel;
+        std::shared_ptr<WidgetChannel> bluePositionChannel;
+        std::shared_ptr<WidgetChannel> widthChannel;
+
+        int rPos;
+        int gPos;
+        int bPos;
 };

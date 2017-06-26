@@ -21,13 +21,14 @@
 #include <time.h>
 
 #include "RainstickWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 
 using namespace std;
 
 
 RainstickWidget::RainstickWidget()
-    : Widget(WidgetId::rainstick)
+    : Widget(WidgetId::rainstick, 1)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -35,14 +36,6 @@ RainstickWidget::RainstickWidget()
     }
 
     updateIntervalMs[0] = 200;
-}
-
-
-void RainstickWidget::init(bool generateSimulatedMeasurements)
-{
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
-
-    channels.push_back(make_shared<WidgetChannel>(0, this));
 }
 
 
@@ -55,12 +48,15 @@ bool RainstickWidget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+            // TODO:  Widgets should not need to be aware of the cone dimensions (that's the pattern's job).
+            //        For now, use a reasonable constant.  Eventually, replace this with simulation file playback.
+            //channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % 36, 0);
             channels[i]->setIsActive(true);
             //cout << "updated channel " << i << endl;
         }

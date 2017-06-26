@@ -12,8 +12,6 @@ class PlungerWidget : public Widget
         PlungerWidget(const PlungerWidget&) = delete;
         PlungerWidget& operator =(const PlungerWidget&) = delete;
 
-        void init(bool generateSimulatedMeasurements);
-
         bool moveData();
 
     private:

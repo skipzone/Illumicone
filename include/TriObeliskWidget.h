@@ -29,8 +29,6 @@ class TriObeliskWidget : public Widget
         TriObeliskWidget(const TriObeliskWidget&) = delete;
         TriObeliskWidget& operator =(const TriObeliskWidget&) = delete;
 
-        void init(bool generateSimulatedMeasurements);
-
         bool moveData();
 
     private:

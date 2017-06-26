@@ -29,8 +29,6 @@ class ShirleysWebWidget : public Widget
         ShirleysWebWidget(const ShirleysWebWidget&) = delete;
         ShirleysWebWidget& operator =(const ShirleysWebWidget&) = delete;
 
-        void init(bool generateSimulatedMeasurements);
-
         bool moveData();
 
     private:

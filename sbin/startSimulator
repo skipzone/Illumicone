@@ -1,4 +1,4 @@
 #!/bin/bash
-~/devl/openpixelcontrol/bin/gl_server -l ~/devl/Illumicone/openpixelcontrol\ layouts/cone_lg.json -p 7890 &
+~/devl/openpixelcontrol/bin/gl_server -l ~/devl/Illumicone/openpixelcontrol\ layouts/cone_med.json -p 7890 &
 sleep 2
 ~/devl/Illumicone/src/PatternController >> ~/PatternController.out 2>&1 &

@@ -16,7 +16,8 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=PatternController
-OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o RgbVerticalPattern.o SolidBlackPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o
+#OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o RgbVerticalPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o json11.o ConfigReader.o
+OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o HorizontalStripePattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o json11.o ConfigReader.o
 LIBS=
 
 INCLUDE=../include
@@ -25,7 +26,8 @@ INCLUDE=../include
 CC=g++
 CFLAGS=-Wall -g -I$(INCLUDE)
 CXX=g++
-CXXFLAGS=-Wall -g -std=c++0x -pthread -I$(INCLUDE)
+###CXXFLAGS=-Wall -g -std=c++0x -pthread -I$(INCLUDE)
+CXXFLAGS=-Wall -g -std=c++11 -pthread -I$(INCLUDE)
 #LDFLAGS=-stdlib=libc++
 #LDLIBS=-L$(LIBS) -lpthread
 
@@ -42,13 +44,16 @@ $(PROGS): $(OBJS)
 WidgetSimulator: WidgetSimulator.cpp
 	g++ $(CXXFLAGS) -o $@ $^ -lrt
 
-GpioTester: GpioTester.cpp
+GpioTester: GpioTester.cpp json11.o ConfigReader.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 widgetRcvr: widgetRcvr.cpp WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
 
 widgetTester: widgetTester.cpp
+	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
+
+jsonTester: jsonTester.cpp json11.o ConfigReader.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 clean:
@@ -65,3 +70,7 @@ clean-GpioTester:
 
 clean-WidgetSimulator:
 	rm -f WidgetSimulator
+
+clean-jsonTester:
+	rm -f jsonTester
+

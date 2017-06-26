@@ -23,7 +23,7 @@
  *
  *  0:  reserved
  *  1:  Eye (Ray)
- *  2:  Shirley's Web (Reiley)
+ *  2:  Shirley's Web (Reiley, Monty)
  *  3:  Bells (Ray)
  *  4:  Rainstick (Dr. Naked)
  *  5:  Schroeder's Plaything (Ross)

@@ -23,11 +23,16 @@ class TricklePattern : public Pattern
 {
     public:
         TricklePattern() {};
-        ~TricklePattern() {};
+        ~TricklePattern();
 
-        bool initPattern(int numStrings, int pixelsPerString, int priority);
+        bool initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority);
         bool initWidgets(int numWidgets, int channelsPerWidget);
         bool update();
+
+    private:
+
+        // for keeping track of the position of the trickle for each string
+        unsigned int* tricklePositions;
 };
 
 #endif /* TRICKLE_PATTERN_H */
