@@ -25,7 +25,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 #include <ADCTouch.h>
 #include "illumiconeWidget.h"
@@ -37,20 +37,20 @@
  ************************/
 
 #define WIDGET_ID 9
-#define ACTIVE_TX_INTERVAL_MS 1000L
+#define ACTIVE_TX_INTERVAL_MS 250L
 #define INACTIVE_TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 2
 
-constexpr uint32_t gatherMeasurementsIntervalMs = 1000;
+constexpr uint32_t gatherMeasurementsIntervalMs = 500;
 
 constexpr uint8_t numCapSensePins = 16;
 constexpr uint8_t capSensePins[numCapSensePins] = {A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15};
 constexpr int capSenseNumSamplesForRef = 500;
 constexpr int capSenseNumSamples = 10;
-constexpr int capSenseThresholds[numCapSensePins] = {750, 750, 750, 750,
-                                                     750, 750, 750, 750,
-                                                     750, 750, 750, 750,
-                                                     770, 770, 770, 770};
+constexpr int capSenseThresholds[numCapSensePins] = { 20,  20,  20,  20,
+                                                      20,  20,  20,  20,
+                                                      20,  20,  20,  20,
+                                                      20,  20,  20,  20};
 
 
 /***************************************
@@ -80,7 +80,7 @@ RF24 radio(7, 8);    // Mega:  CE on pin 7, CSN on pin 8, also uses SPI bus (SCK
 
 CustomPayload payload;
 
-static int capSenseRef[numCapSensePins];
+static int capSenseReferenceValues[numCapSensePins];
 static bool padIsTouched[numCapSensePins];
 bool isActive;
 
@@ -96,44 +96,68 @@ void setup()
   printf_begin();
 #endif
 
-// TODO 6/22/2017 ross:  Need to do a periodic recalibration to set the reference values.
-//          // Create reference value to account for stray
-//          // capacitance and capacitance of the pad.
-//          capSenseRef[stepNum] = ADCTouch.read(capSensePins[stepNum], capSenseNumSamplesForRef);
-
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
   
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
+
+  calibrateCapSense();
+}
+
+
+void calibrateCapSense()
+{
+  Serial.println(F("Calibrating..."));
+  
+  for (byte i = 0; i < numCapSensePins; ++i) {
+    // Create reference value to account for stray
+    // capacitance and capacitance of the pad.
+    capSenseReferenceValues[i] = ADCTouch.read(capSensePins[i], capSenseNumSamplesForRef);
+  }
+
+  Serial.println(F("---------- Calibration Values ----------"));
+  for (byte i = 0; i < numCapSensePins; ++i) {
+    Serial.print(i);
+    Serial.print(":  ");
+    Serial.println(capSenseReferenceValues[i]);
+  }
 }
 
 
 void gatherMeasurements()
 {
-  unsigned long now = millis();
-  isActive = true;
+  int capSenseValues[numCapSensePins];
+  
+  isActive = false;
 
   for (uint8_t i = 0; i < numCapSensePins; ++i) {
-    int value = ADCTouch.read(capSensePins[i], capSenseNumSamples) - capSenseRef[i];
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(i);
-    Serial.print(":");
-    Serial.println(value);
-#endif
-    padIsTouched[i] = value > capSenseThresholds[i];
+    capSenseValues[i] = ADCTouch.read(capSensePins[i], capSenseNumSamples);
   }
 
+  for (uint8_t i = 0; i < numCapSensePins; ++i) {
+    int netValue = capSenseValues[i] - capSenseReferenceValues[i];
+    if (netValue > capSenseThresholds[i]) {
+      padIsTouched[i] = true;
+      isActive = true;
+    }
+    else {
+      padIsTouched[i] = false;
+    }
 #ifdef ENABLE_DEBUG_PRINT
-  for (int i = 0; i < numCapSensePins; ++i) {
     Serial.print(i);
     Serial.print(":  ");
-    Serial.print(capSenseRef[i]);
-    Serial.print(", ");
+    Serial.print(capSenseValues[i]);
+    Serial.print(" - ");
+    Serial.print(capSenseReferenceValues[i]);
+    Serial.print(" = ");
+    Serial.print(netValue);
+    Serial.print(" >? ");
+    Serial.print(capSenseThresholds[i]);
+    Serial.print(" -> ");
     Serial.println(padIsTouched[i]);
-  }
 #endif
-
+  }
 }
 
 
