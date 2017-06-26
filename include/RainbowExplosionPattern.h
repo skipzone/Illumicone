@@ -16,15 +16,58 @@
 */
 
 #pragma once
+
+#include <map>
+#include <memory>
+
 #include "Pattern.h"
+#include "WidgetId.h"
+
 
 class RainbowExplosionPattern : public Pattern
 {
     public:
-        RainbowExplosionPattern() {};
+        RainbowExplosionPattern();
         ~RainbowExplosionPattern() {};
 
-        bool initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority);
-        bool initWidgets(int numWidgets, int channelsPerWidget);
+        RainbowExplosionPattern(const RainbowExplosionPattern&) = delete;
+        RainbowExplosionPattern& operator =(const RainbowExplosionPattern&) = delete;
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    private:
+
+        enum class PatternState {
+            fizzle = 0,
+            fillRed,
+            fillOrange,
+            fillYellow,
+            fillGreen,
+            fillBlue,
+            fillIndigo,
+            fillViolet,
+            endExplosion
+        };
+
+        std::shared_ptr<WidgetChannel> intensityChannel;
+
+        // pattern configuration
+        int activationThreshold;
+        int explosionThreshold;
+        int accumulatorResetUpperLimit;
+        int minFizzleFill;
+        int maxFizzleFill;
+        int fillStepSize;
+        unsigned int fillStepIntervalMs;
+        constexpr static unsigned int fizzleMeasurementTimeoutPeriodMs = 1000;
+
+        PatternState state;
+        int fillPosition;
+        int accumulator;
+        unsigned int nextStepMs;
+        unsigned int fizzleMeasurementTimeoutMs;
+
+        void clearAllPixels();
 };
+

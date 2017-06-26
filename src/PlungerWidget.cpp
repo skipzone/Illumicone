@@ -23,7 +23,7 @@ PlungerWidget::PlungerWidget()
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 1000;
+    updateIntervalMs[0] = 100;
     updateIntervalMs[1] = 0;
     updateIntervalMs[2] = 0;
     updateIntervalMs[3] = 0;
@@ -45,19 +45,11 @@ bool PlungerWidget::moveData()
     milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     unsigned int nowMs = epochMs.count();
 
-    //cout << "---------- nowMs = " << nowMs << endl;
-
     for (unsigned int i = 0; i < numChannels; ++i) {
-        //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            // TODO:  Widgets should not need to be aware of the cone dimensions (that's the pattern's job).
-            //        For now, use a reasonable constant.  Eventually, replace this with simulation file playback.
-            //channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % 36, 0);
+            channels[i]->setPositionAndVelocity(rand() % 1024, 0);
             channels[i]->setIsActive(true);
-            //cout << "updated channel " << i << endl;
         }
     }
 

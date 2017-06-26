@@ -71,7 +71,7 @@
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 500
         },
         {   "name" : "shirleysWeb",
@@ -92,7 +92,7 @@
         },
         {   "name" : "triObelisk",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : true
         },
         {   "name" : "squawkBox",
             "enabled" : false,
@@ -100,7 +100,7 @@
         },
         {   "name" : "plunger",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : true
         },
         {   "name" : "twister",
             "enabled" : false,
@@ -181,8 +181,8 @@
         {   "patternName" : "sparkle",
             "inputs" : [
                 {   "inputName" : "density",
-                    "widgetName" : "shirleysWeb",
-                    "channelNumber" : 0,
+                    "widgetName" : "triObelisk",
+                    "channelNumber" : 2,
                     "measurement" : "velocity"
                 }
             ],
@@ -191,12 +191,19 @@
         },
         {   "patternName" : "rainbowExplosion",
             "inputs" : [
-                {   "inputName" : "soundLevel",
+                {   "inputName" : "intensity",
                     "widgetName" : "plunger",
                     "channelNumber" : 0,
                     "measurement" : "position"
                 }
-            ]
+            ],
+            "activationThreshold" : 700,        // 700 is what we used with the second Plunger widget in 2016
+            "explosionThreshold" : 40,          // 40 is what we used with the second Plunger widget in 2016
+            "accumulatorResetUpperLimit" : 8,   // 8 is what we used with the second Plunger widget in 2016
+            "minFizzleFill" : 3,                // 0 is what we implicitly used with the second Plunger widget in 2016
+            "maxFizzleFill" : 30,               // 30 is what we used with the second Plunger widget in 2016
+            "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
+            "fillStepIntervalMs" : 20
         },
         {   "patternName" : "annoyingFlashing",
             "inputs" : [

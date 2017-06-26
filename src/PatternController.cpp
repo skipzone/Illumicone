@@ -41,7 +41,7 @@
 #include "AnnoyingFlashingPattern.h"
 #include "SparklePattern.h"
 #include "HorizontalStripePattern.h"
-//#include "RainbowExplosionPattern.h"
+#include "RainbowExplosionPattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 #include "WidgetFactory.h"
@@ -67,7 +67,7 @@ static AnnoyingFlashingPattern annoyingFlashingPattern;
 static RgbVerticalPattern rgbVerticalPattern;
 static SparklePattern sparklePattern;
 static HorizontalStripePattern horizontalStripePattern;
-//static RainbowExplosionPattern rainbowExplosionPattern;
+static RainbowExplosionPattern rainbowExplosionPattern;
 
 static map<Pattern*, bool> patternIsOk;
 
@@ -418,9 +418,13 @@ void initPatterns()
         cout << "annoyingFlashingPattern initialization failed." << endl;
     }
 
-//    rainbowExplosionPattern.initPattern(numberOfStrings, numberOfPixelsPerString, priorities[1]);
-//    rainbowExplosionPattern.initWidgets(1, numChannels[1]);
-//    printPatternConfig(rainbowExplosionPattern);
+    if (rainbowExplosionPattern.initPattern(config, widgets, 1)) {
+        patternIsOk[&rainbowExplosionPattern] = true;
+        cout << "rainbowExplosionPattern ok" << endl;
+    }
+    else {
+        cout << "rainbowExplosionPattern initialization failed." << endl;
+    }
 
     if (rgbVerticalPattern.initPattern(config, widgets, 2)) {
         patternIsOk[&rgbVerticalPattern] = true;
@@ -464,6 +468,9 @@ void doPatterns()
     if (patternIsOk.find(&annoyingFlashingPattern) != patternIsOk.end()) {
         annoyingFlashingPattern.update();
     }
+    if (patternIsOk.find(&rainbowExplosionPattern) != patternIsOk.end()) {
+        rainbowExplosionPattern.update();
+    }
     if (patternIsOk.find(&rgbVerticalPattern) != patternIsOk.end()) {
         rgbVerticalPattern.update();
     }
@@ -473,7 +480,6 @@ void doPatterns()
     if (patternIsOk.find(&sparklePattern) != patternIsOk.end()) {
         sparklePattern.update();
     }
-//    rainbowExplosionPattern.update();
 
     bool anyPatternIsActive = false;
 
@@ -499,10 +505,11 @@ void doPatterns()
         buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
     }
 
-//    if (rainbowExplosionPattern.isActive) {
-//        anyPatternIsActive = true;
-//        buildFrame(finalFrame1, rainbowExplosionPattern.pixelArray, rainbowExplosionPattern.priority);
-//    }
+    if (rainbowExplosionPattern.isActive) {
+        anyPatternIsActive = true;
+        //cout << "rainbowExplosion active" << endl;
+        buildFrame(finalFrame1, rainbowExplosionPattern.pixelArray, rainbowExplosionPattern.priority);
+    }
 
     if (annoyingFlashingPattern.isActive) {
         anyPatternIsActive = true;
@@ -572,7 +579,7 @@ int main(int argc, char **argv)
         moveWidgetData();
         doPatterns();
         // TODO 6/25/2017 ross:  Use an actual interval.  Set it in the JSON config.
-        usleep(10000);
+        usleep(5000);
     }
 
     // We should never get here, but if we do, something went wrong.
