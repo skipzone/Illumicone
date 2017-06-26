@@ -10,7 +10,7 @@ import sys
 
 NUM_STRINGS = 36
 PIXELS_PER_STRING = 100
-SCALE = 10 # You can also think of this as the length of the strands.
+SCALE = 1   # You can also think of this as the length of the strands.  Use 7 for cone_med, 10 for cone_lg.
 print  "scale: " + str(SCALE)
 PIXEL_DISTANCE = SCALE / PIXELS_PER_STRING
 print "\npixel distance: " + str(PIXEL_DISTANCE)
@@ -24,7 +24,7 @@ print "\nmin radius: " + str(MIN_RADIUS)
 result = ['[']
 theta = 0
 for s in range(NUM_STRINGS):
-    theta = 2 * math.pi * s / (NUM_STRINGS - 1)
+    theta = 2 * math.pi * s / NUM_STRINGS
 
     for p in range(PIXELS_PER_STRING):
         z = HEIGHT - PIXEL_DISTANCE * p
