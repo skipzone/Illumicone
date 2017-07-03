@@ -120,6 +120,137 @@ string ConfigReader::getPatconIpAddress()
 }
 
 
+bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods)
+{
+    bool problemEncountered = false;
+
+    for (auto& periodConfigObj : configObj[scheduleName].array_items()) {
+
+        string desc = periodConfigObj["description"].string_value();
+        if (desc.empty()) {
+            cerr << "Shutoff period has no description:  " << periodConfigObj.dump() << endl;
+            problemEncountered = true;
+            continue;
+        }
+        string startTimeStr = periodConfigObj["startDateTime"].string_value();
+        if (startTimeStr.empty()) {
+            cerr << "Shutoff period has no startDateTime:  " << periodConfigObj.dump() << endl;
+            problemEncountered = true;
+            continue;
+        }
+        string endTimeStr = periodConfigObj["endDateTime"].string_value();
+        if (endTimeStr.empty()) {
+            cerr << "Shutoff period has no endDateTime:  " << periodConfigObj.dump() << endl;
+            problemEncountered = true;
+            continue;
+        }
+
+        struct tm tmTime;
+        char* strptimeRetVal;
+
+        time_t now;
+        time(&now);
+
+/*
+        cout << desc << " " << startTimeStr << " before startTime conversion:"
+            << "  tm_sec=" << tmTime.tm_sec
+            << ", tm_min=" << tmTime.tm_min
+            << ", tm_hour=" << tmTime.tm_hour
+            << ", tm_mday=" << tmTime.tm_mday
+            << ", tm_mon=" << tmTime.tm_mon
+            << ", tm_year=" << tmTime.tm_year
+            << ", tm_wday=" << tmTime.tm_wday
+            << ", tm_yday=" << tmTime.tm_yday
+            << ", tm_isdst=" << tmTime.tm_isdst
+            << ", tm_zone=" << tmTime.tm_zone
+            << ", tm_gmtoff=" << tmTime.tm_gmtoff
+            << endl;
+*/
+        localtime_r(&now, &tmTime);
+        if (startTimeStr.find("1970-01-01") != string::npos) {
+            //tmTime.tm_mday = 1;
+            //tmTime.tm_mon = 0;
+            //tmTime.tm_year = 70;
+            tmTime.tm_isdst = 0;
+        }
+        strptimeRetVal = strptime(startTimeStr.c_str(), "%Y-%m-%d %H:%M:%S", &tmTime);
+        if (strptimeRetVal == nullptr) {
+            cerr << "Unable to parse startDateTime \"" << startTimeStr << "\" for \"" << desc
+                << "\" shutoff period.  Format must be yyyy-mm-dd hh:mm:ss." << endl;
+            problemEncountered = true;
+            continue;
+        }
+        time_t startTime = mktime(&tmTime);
+/*
+        cout << desc << " " << startTimeStr << " after startTime conversion:"
+            << "  tm_sec=" << tmTime.tm_sec
+            << ", tm_min=" << tmTime.tm_min
+            << ", tm_hour=" << tmTime.tm_hour
+            << ", tm_mday=" << tmTime.tm_mday
+            << ", tm_mon=" << tmTime.tm_mon
+            << ", tm_year=" << tmTime.tm_year
+            << ", tm_wday=" << tmTime.tm_wday
+            << ", tm_yday=" << tmTime.tm_yday
+            << ", tm_isdst=" << tmTime.tm_isdst
+            << ", tm_zone=" << tmTime.tm_zone
+            << ", tm_gmtoff=" << tmTime.tm_gmtoff
+            << endl;
+*/
+
+/*
+        cout << desc << " " << endTimeStr << " before endTime conversion:"
+            << "  tm_sec=" << tmTime.tm_sec
+            << ", tm_min=" << tmTime.tm_min
+            << ", tm_hour=" << tmTime.tm_hour
+            << ", tm_mday=" << tmTime.tm_mday
+            << ", tm_mon=" << tmTime.tm_mon
+            << ", tm_year=" << tmTime.tm_year
+            << ", tm_wday=" << tmTime.tm_wday
+            << ", tm_yday=" << tmTime.tm_yday
+            << ", tm_isdst=" << tmTime.tm_isdst
+            << ", tm_zone=" << tmTime.tm_zone
+            << ", tm_gmtoff=" << tmTime.tm_gmtoff
+            << endl;
+*/
+        localtime_r(&now, &tmTime);
+        if (endTimeStr.find("1970-01-01") != string::npos) {
+            //tmTime.tm_mday = 1;
+            //tmTime.tm_mon = 0;
+            //tmTime.tm_year = 70;
+            tmTime.tm_isdst = 0;
+        }
+        strptimeRetVal = strptime(endTimeStr.c_str(), "%Y-%m-%d %H:%M:%S", &tmTime);
+        if (strptimeRetVal == nullptr) {
+            cerr << "Unable to parse endDateTime \"" << endTimeStr << "\" for \"" << desc
+                << "\" shutoff period.  Format must be yyyy-mm-dd hh:mm:ss." << endl;
+            problemEncountered = true;
+            continue;
+        }
+        time_t endTime = mktime(&tmTime);
+/*
+        cout << desc << " " << endTimeStr << " after endTime conversion:"
+            << "  tm_sec=" << tmTime.tm_sec
+            << ", tm_min=" << tmTime.tm_min
+            << ", tm_hour=" << tmTime.tm_hour
+            << ", tm_mday=" << tmTime.tm_mday
+            << ", tm_mon=" << tmTime.tm_mon
+            << ", tm_year=" << tmTime.tm_year
+            << ", tm_wday=" << tmTime.tm_wday
+            << ", tm_yday=" << tmTime.tm_yday
+            << ", tm_isdst=" << tmTime.tm_isdst
+            << ", tm_zone=" << tmTime.tm_zone
+            << ", tm_gmtoff=" << tmTime.tm_gmtoff
+            << endl;
+*/
+
+        SchedulePeriod newSchedulePeriod = {desc, startTime, endTime};
+        schedulePeriods.emplace_back(newSchedulePeriod);
+    }
+
+    return problemEncountered;
+}
+
+
 int ConfigReader::getWidgetPortNumberBase()
 {
     return configObj["widgetPortNumberBase"].int_value();
