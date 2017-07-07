@@ -325,8 +325,10 @@ void finalizeFrame(vector<vector<opc_pixel_t>> &finalFrame)
 }
 
 
-void printSchedulePeriods(const vector<SchedulePeriod>& schedulePeriods)
+void printSchedulePeriods(const std::string& scheduleDescription, const vector<SchedulePeriod>& schedulePeriods)
 {
+    cout << scheduleDescription << ":" << endl;
+
     for (auto&& schedulePeriod : schedulePeriods) {
         struct tm tmStartTime;
         struct tm tmEndTime;
@@ -334,9 +336,17 @@ void printSchedulePeriods(const vector<SchedulePeriod>& schedulePeriods)
         localtime_r(&schedulePeriod.endTime, &tmEndTime);
         char startTimeBuf[20];
         char endTimeBuf[20];
-        cout << schedulePeriod.description << ":  ";
-        if (strftime(startTimeBuf, sizeof(startTimeBuf), "%Y-%m-%d %H:%M:%S", &tmStartTime) != 0
-            && strftime(endTimeBuf, sizeof(endTimeBuf), "%Y-%m-%d %H:%M:%S", &tmEndTime) != 0)
+        cout << "    " << schedulePeriod.description << ":  ";
+        string dateTimeFormat;
+        if (schedulePeriod.isDaily) {
+            dateTimeFormat = "%H:%M:%S";
+            cout << "daily, ";
+        }
+        else {
+            dateTimeFormat = "%Y-%m-%d %H:%M:%S";
+        }
+        if (strftime(startTimeBuf, sizeof(startTimeBuf), dateTimeFormat.c_str(), &tmStartTime) != 0
+            && strftime(endTimeBuf, sizeof(endTimeBuf), dateTimeFormat.c_str(), &tmEndTime) != 0)
         {
             cout << string(startTimeBuf) << " - " << string(endTimeBuf) << endl;
         }
@@ -364,8 +374,8 @@ bool readConfig(const string& configFileName)
     {
         return false;
     }
-    printSchedulePeriods(shutoffPeriods);
-    printSchedulePeriods(quiescentPeriods);
+    printSchedulePeriods("Shutoff periods", shutoffPeriods);
+    printSchedulePeriods("Quiescent periods", quiescentPeriods);
 
     return true;
 }
@@ -511,39 +521,33 @@ void initPatterns()
 
 bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, string& periodDescription)
 {
-    // Time values on 1 Jan 1970 indicate a daily recurring period.
-    // TODO:  initialize once somewhere else
-    struct tm tmDailyIndicatorDate;
-    strptime("1970-01-01 23:59:59", "%Y-%m-%d %H:%M:%S", &tmDailyIndicatorDate);
-    time_t dailyIndicatorDate = mktime(&tmDailyIndicatorDate);
-
-    // For daily events, we need to convert now to a time on 1 Jan 1970
-    // so that we can compare it to the period start and end times.
+    // For daily events, we need a tm structure containing the current
+    // time so that we can set a daily event's date to today.
     struct tm tmNowTime = *localtime(&now);
-//    struct tm tmNowTime;
-//    localtime_r(&now, &tmNowTime);
-    tmNowTime.tm_year = 70;
-    tmNowTime.tm_mon = 0;
-    tmNowTime.tm_mday = 1;
-    tmNowTime.tm_isdst = 0;
-    time_t nowTime = mktime(&tmNowTime);
 
     for (auto&& schedulePeriod : schedulePeriods) {
-        // Daily events have a date that is on the daily indicator date.
-        if (schedulePeriod.startTime <= dailyIndicatorDate || schedulePeriod.endTime <= dailyIndicatorDate) {
-            // This is a daily event.
-            cout << "desc=" << schedulePeriod.description << ", nowTime=" << nowTime << ", startTime="
-                << schedulePeriod.startTime << ", endTime=" << schedulePeriod.endTime << endl;
+        if (schedulePeriod.isDaily) {
+            // Modify the start and end times so that they occur today.
+            struct tm tmStartTimeToday = *localtime(&schedulePeriod.startTime);
+            struct tm tmEndTimeToday = *localtime(&schedulePeriod.endTime);
+            tmStartTimeToday.tm_year = tmEndTimeToday.tm_year = tmNowTime.tm_year;
+            tmStartTimeToday.tm_mon = tmEndTimeToday.tm_mon = tmNowTime.tm_mon;
+            tmStartTimeToday.tm_mday = tmEndTimeToday.tm_mday = tmNowTime.tm_mday;
+            tmStartTimeToday.tm_isdst = tmEndTimeToday.tm_isdst = tmNowTime.tm_isdst;
+            time_t startTimeToday = mktime(&tmStartTimeToday);
+            time_t endTimeToday = mktime(&tmEndTimeToday);
+            //cout << "desc=" << schedulePeriod.description << ", now=" << now << ", startTime="
+            //    << startTimeToday << ", endTime=" << endTimeToday << endl;
             // Periods that span midnight have an end time that is numerically less
             // than the start time (which actually occurs on the previous day).
-            if (schedulePeriod.endTime < schedulePeriod.startTime) {
-                if (nowTime >= schedulePeriod.startTime || nowTime <= schedulePeriod.endTime) {
+            if (endTimeToday < startTimeToday) {
+                if (now >= startTimeToday || now <= endTimeToday) {
                     periodDescription = schedulePeriod.description;
                     return true;
                 }
             }
             else {
-                if (nowTime >= schedulePeriod.startTime && nowTime <= schedulePeriod.endTime) {
+                if (now >= startTimeToday && now <= endTimeToday) {
                     periodDescription = schedulePeriod.description;
                     return true;
                 }
@@ -551,8 +555,8 @@ bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, s
         }
         else {
             // This is a one-time event.
-            cout << "desc=" << schedulePeriod.description << ", now=" << now << ", startTime="
-                << schedulePeriod.startTime << ", endTime=" << schedulePeriod.endTime << endl;
+            //cout << "desc=" << schedulePeriod.description << ", now=" << now << ", startTime="
+            //    << schedulePeriod.startTime << ", endTime=" << schedulePeriod.endTime << endl;
             if (now >= schedulePeriod.startTime && now <= schedulePeriod.endTime) {
                 periodDescription = schedulePeriod.description;
                 return true;
@@ -710,7 +714,7 @@ int main(int argc, char **argv)
                 inPeriod = true;
                 if (periodDesc != lastPeriodDesc) {
                     lastPeriodDesc = periodDesc;
-                    cout << "In " << periodDesc << " shutoff period." << endl;
+                    cout << "In \"" << periodDesc << "\" shutoff period." << endl;
                 }
                 turnOffAllPixels();
             }
@@ -718,7 +722,7 @@ int main(int argc, char **argv)
                 inPeriod = true;
                 if (periodDesc != lastPeriodDesc) {
                     lastPeriodDesc = periodDesc;
-                    cout << "In " << periodDesc << " quiescent period." << endl;
+                    cout << "In \"" << periodDesc << "\" quiescent period." << endl;
                 }
                 setAllPixelsToQuiescentColor();
             }
