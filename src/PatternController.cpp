@@ -54,6 +54,8 @@ constexpr char lockFilePath[] = "/tmp/PatternController.lock";
 static ConfigReader config;
 static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
+static vector<SchedulePeriod> shutoffPeriods;
+static vector<SchedulePeriod> quiescentPeriods;
 
 static struct sockaddr_in server;
 static int sock;
@@ -122,7 +124,7 @@ void dumpOpcBuffer()
 }
 
 
-void sendOpcMessage(std::vector<std::vector<opc_pixel_t>> &finalFrame)
+void sendOpcMessage(vector<vector<opc_pixel_t>> &finalFrame)
 {
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         unsigned int colOffset = col * numberOfPixelsPerString * 3;
@@ -141,7 +143,7 @@ void sendOpcMessage(std::vector<std::vector<opc_pixel_t>> &finalFrame)
 }
 
 
-void zeroFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
+void zeroFrame(vector<vector<opc_pixel_t>> &finalFrame)
 {
     int col;
     int row;
@@ -153,6 +155,30 @@ void zeroFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
             finalFrame[col][row].b = 0;
         }
     }
+}
+
+
+void turnOffAllPixels()
+{
+    vector<vector<opc_pixel_t>> finalFrame;
+    finalFrame.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
+    zeroFrame(finalFrame);
+    sendOpcMessage(finalFrame);
+}
+
+
+void setAllPixelsToQuiescentColor()
+{
+    vector<vector<opc_pixel_t>> finalFrame;
+    finalFrame.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
+    for (int col = 0; col < numberOfStrings; col++) {
+        for (int row = 0; row < numberOfPixelsPerString; row++) {
+            finalFrame[col][row].r = 0;
+            finalFrame[col][row].g = 0;
+            finalFrame[col][row].b = 64;
+        }
+    }
+    sendOpcMessage(finalFrame);
 }
 
 
@@ -179,8 +205,8 @@ void zeroFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
  * 2, then 1, then 0.
  */
 bool buildFrame(
-        std::vector<std::vector<opc_pixel_t>> &finalFrame,
-        std::vector<std::vector<opc_pixel_t>> &pixelArray,
+        vector<vector<opc_pixel_t>> &finalFrame,
+        vector<vector<opc_pixel_t>> &pixelArray,
         int priority)
 {
     int col;
@@ -289,12 +315,45 @@ bool buildFrame(
 //
 // light each string at the bottom for visibility
 //
-void finalizeFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
+void finalizeFrame(vector<vector<opc_pixel_t>> &finalFrame)
 {
     for (auto&& stringPixels : finalFrame) {
         stringPixels[numberOfPixelsPerString - 1].r = 255;
         stringPixels[numberOfPixelsPerString - 1].g = 0;
         stringPixels[numberOfPixelsPerString - 1].b = 255;
+    }
+}
+
+
+void printSchedulePeriods(const std::string& scheduleDescription, const vector<SchedulePeriod>& schedulePeriods)
+{
+    cout << scheduleDescription << ":" << endl;
+
+    for (auto&& schedulePeriod : schedulePeriods) {
+        struct tm tmStartTime;
+        struct tm tmEndTime;
+        localtime_r(&schedulePeriod.startTime, &tmStartTime);
+        localtime_r(&schedulePeriod.endTime, &tmEndTime);
+        char startTimeBuf[20];
+        char endTimeBuf[20];
+        cout << "    " << schedulePeriod.description << ":  ";
+        string dateTimeFormat;
+        if (schedulePeriod.isDaily) {
+            dateTimeFormat = "%H:%M:%S";
+            cout << "daily, ";
+        }
+        else {
+            dateTimeFormat = "%Y-%m-%d %H:%M:%S";
+        }
+        if (strftime(startTimeBuf, sizeof(startTimeBuf), dateTimeFormat.c_str(), &tmStartTime) != 0
+            && strftime(endTimeBuf, sizeof(endTimeBuf), dateTimeFormat.c_str(), &tmEndTime) != 0)
+        {
+            cout << string(startTimeBuf) << " - " << string(endTimeBuf) << endl;
+        }
+        else
+        {
+            cout << "is shit!" << endl;
+        }
     }
 }
 
@@ -306,9 +365,17 @@ bool readConfig(const string& configFileName)
     }
 
     numberOfStrings = config.getNumberOfStrings();
-    numberOfPixelsPerString = config.getNumberOfPixelsPerString();
     cout << "numberOfStrings = " << numberOfStrings << endl;
+    numberOfPixelsPerString = config.getNumberOfPixelsPerString();
     cout << "numberOfPixelsPerString = " << numberOfPixelsPerString << endl;
+
+    if (config.getSchedulePeriods("shutoffPeriods", shutoffPeriods)
+        || config.getSchedulePeriods("quiescentPeriods", quiescentPeriods))
+    {
+        return false;
+    }
+    printSchedulePeriods("Shutoff periods", shutoffPeriods);
+    printSchedulePeriods("Quiescent periods", quiescentPeriods);
 
     return true;
 }
@@ -452,6 +519,55 @@ void initPatterns()
 }
 
 
+bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, string& periodDescription)
+{
+    // For daily events, we need a tm structure containing the current
+    // time so that we can set a daily event's date to today.
+    struct tm tmNowTime = *localtime(&now);
+
+    for (auto&& schedulePeriod : schedulePeriods) {
+        if (schedulePeriod.isDaily) {
+            // Modify the start and end times so that they occur today.
+            struct tm tmStartTimeToday = *localtime(&schedulePeriod.startTime);
+            struct tm tmEndTimeToday = *localtime(&schedulePeriod.endTime);
+            tmStartTimeToday.tm_year = tmEndTimeToday.tm_year = tmNowTime.tm_year;
+            tmStartTimeToday.tm_mon = tmEndTimeToday.tm_mon = tmNowTime.tm_mon;
+            tmStartTimeToday.tm_mday = tmEndTimeToday.tm_mday = tmNowTime.tm_mday;
+            tmStartTimeToday.tm_isdst = tmEndTimeToday.tm_isdst = tmNowTime.tm_isdst;
+            time_t startTimeToday = mktime(&tmStartTimeToday);
+            time_t endTimeToday = mktime(&tmEndTimeToday);
+            //cout << "desc=" << schedulePeriod.description << ", now=" << now << ", startTime="
+            //    << startTimeToday << ", endTime=" << endTimeToday << endl;
+            // Periods that span midnight have an end time that is numerically less
+            // than the start time (which actually occurs on the previous day).
+            if (endTimeToday < startTimeToday) {
+                if (now >= startTimeToday || now <= endTimeToday) {
+                    periodDescription = schedulePeriod.description;
+                    return true;
+                }
+            }
+            else {
+                if (now >= startTimeToday && now <= endTimeToday) {
+                    periodDescription = schedulePeriod.description;
+                    return true;
+                }
+            }
+        }
+        else {
+            // This is a one-time event.
+            //cout << "desc=" << schedulePeriod.description << ", now=" << now << ", startTime="
+            //    << schedulePeriod.startTime << ", endTime=" << schedulePeriod.endTime << endl;
+            if (now >= schedulePeriod.startTime && now <= schedulePeriod.endTime) {
+                periodDescription = schedulePeriod.description;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+
 void moveWidgetData()
 {
     for (auto&& widget : widgets) {
@@ -484,7 +600,7 @@ void doPatterns()
     bool anyPatternIsActive = false;
 
     vector<vector<opc_pixel_t>> finalFrame1;
-    finalFrame1.resize(numberOfStrings, std::vector<opc_pixel_t>(numberOfPixelsPerString));
+    finalFrame1.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
     zeroFrame(finalFrame1);
 
     if (sparklePattern.isActive) {
@@ -575,9 +691,50 @@ int main(int argc, char **argv)
     initPatterns();
     cout << "Pattern initialization done.  Start moving shit!" << endl;
 
+
+    time_t lastPeriodCheckTime = 0;
+    bool inPeriod = false;
+    string lastPeriodDesc = "";
+
+    // ----- run loop -----
     while (true) {
+
         moveWidgetData();
-        doPatterns();
+
+        // Once per second, check if we're in a schedule period.
+        time_t now;
+        time(&now);
+        if (now > lastPeriodCheckTime) {
+            lastPeriodCheckTime = now;
+
+            // TODO:  Log appropriate messages at both the start and end of each period.
+
+            string periodDesc;
+            if (timeIsInPeriod(now, shutoffPeriods, periodDesc)) {
+                inPeriod = true;
+                if (periodDesc != lastPeriodDesc) {
+                    lastPeriodDesc = periodDesc;
+                    cout << "In \"" << periodDesc << "\" shutoff period." << endl;
+                }
+                turnOffAllPixels();
+            }
+            else if (timeIsInPeriod(now, quiescentPeriods, periodDesc)) {
+                inPeriod = true;
+                if (periodDesc != lastPeriodDesc) {
+                    lastPeriodDesc = periodDesc;
+                    cout << "In \"" << periodDesc << "\" quiescent period." << endl;
+                }
+                setAllPixelsToQuiescentColor();
+            }
+            else {
+                inPeriod = false;
+            }
+        }
+
+        if (!inPeriod) {
+            doPatterns();
+        }
+
         // TODO 6/25/2017 ross:  Use an actual interval.  Set it in the JSON config.
         usleep(5000);
     }

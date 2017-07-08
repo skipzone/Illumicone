@@ -18,7 +18,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
+#include "illumiconeTypes.h"
 #include "json11.hpp"
 #include "WidgetId.h"
 
@@ -44,6 +46,7 @@ class ConfigReader
         int getNumberOfPixelsPerString();
         std::string getOpcServerIpAddress();
         std::string getPatconIpAddress();
+        bool getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods);
         int getWidgetPortNumberBase();
         bool getWidgetGenerateSimulatedMeasurements(WidgetId widgetId);
         int getWidgetAutoInactiveMs(WidgetId widgetId);

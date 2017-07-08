@@ -18,7 +18,16 @@
 #pragma once
 
 #include <cstdint>
+#include <time.h>
 #include <string>
+
+
+struct SchedulePeriod {
+    bool isDaily;
+    std::string description;
+    time_t startTime;
+    time_t endTime;
+};
 
 
 // structure to hold Open Pixel Control pixel data
