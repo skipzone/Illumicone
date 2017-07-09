@@ -120,6 +120,77 @@ string ConfigReader::getPatconIpAddress()
 }
 
 
+bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods)
+{
+    bool problemEncountered = false;
+
+    for (auto& periodConfigObj : configObj[scheduleName].array_items()) {
+
+        string desc = periodConfigObj["description"].string_value();
+        if (desc.empty()) {
+            cerr << "Shutoff period has no description:  " << periodConfigObj.dump() << endl;
+            problemEncountered = true;
+            continue;
+        }
+        string startTimeStr = periodConfigObj["startDateTime"].string_value();
+        if (startTimeStr.empty()) {
+            cerr << "Shutoff period has no startDateTime:  " << periodConfigObj.dump() << endl;
+            problemEncountered = true;
+            continue;
+        }
+        string endTimeStr = periodConfigObj["endDateTime"].string_value();
+        if (endTimeStr.empty()) {
+            cerr << "Shutoff period has no endDateTime:  " << periodConfigObj.dump() << endl;
+            problemEncountered = true;
+            continue;
+        }
+
+        bool isDaily;
+        string dateTimeFormat;
+        if (startTimeStr.length() == 8) {
+            isDaily = true;
+            dateTimeFormat = "%H:%M:%S";
+        }
+        else {
+            isDaily = false;
+            dateTimeFormat = "%Y-%m-%d %H:%M:%S";
+        }
+
+        struct tm tmTime;
+        char* strptimeRetVal;
+        time_t now;
+        time(&now);
+
+        localtime_r(&now, &tmTime);
+        strptimeRetVal = strptime(startTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
+        if (strptimeRetVal == nullptr) {
+            cerr << "Unable to parse startDateTime \"" << startTimeStr << "\" for \"" << desc
+                << "\" shutoff period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
+                << " or hh:mm:ss for daily events." << endl;
+            problemEncountered = true;
+            continue;
+        }
+        time_t startTime = mktime(&tmTime);
+
+        localtime_r(&now, &tmTime);
+        strptimeRetVal = strptime(endTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
+        if (strptimeRetVal == nullptr) {
+            cerr << "Unable to parse endDateTime \"" << endTimeStr << "\" for \"" << desc
+                << "\" shutoff period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
+                << " or hh:mm:ss for daily events." << endl;
+            problemEncountered = true;
+            continue;
+        }
+        time_t endTime = mktime(&tmTime);
+
+        SchedulePeriod newSchedulePeriod = {isDaily, desc, startTime, endTime};
+        schedulePeriods.emplace_back(newSchedulePeriod);
+    }
+
+    return problemEncountered;
+}
+
+
 int ConfigReader::getWidgetPortNumberBase()
 {
     return configObj["widgetPortNumberBase"].int_value();
