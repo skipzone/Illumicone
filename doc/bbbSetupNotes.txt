@@ -1,3 +1,87 @@
+7/8/2017 - Set up ic-patcon with new jessie image
+=================================================
+
+- Log in as user debian, password temppwd.
+
+- Create user illumicone and add it to the sudo group.
+  
+    adduser illumicone
+    sudo adduser illumicone sudo
+
+- Change user debian's password to the same as illumicone's.
+
+    passwd
+
+- Remove the "default username:password" line from /etc/issue and
+  /etc/issue.net.
+
+- Set the host name to ic-patcon by changing all occurrences of "beaglebone"
+  to "ic-patcon" in /etc/hostname and /etc/hosts.
+
+- Assign the static IP address for ic-patcon by making the eth0 section of
+  /etc/network/interfaces look like this:
+
+    auto eth0
+    iface eth0 inet static
+    address 192.168.69.101
+    netmask 255.255.255.0
+    gateway 192.168.69.0
+
+- Reboot then log in as illumicone.
+
+- Create .bash_aliases, copy aliases from .bashrc.
+
+- Do updates.
+
+    sudo apt-get update
+    sudo apt-get upgrade
+
+- Set up ssh keys.
+
+    ssh-keygen
+
+    Add desired public keys to ~/.ssh/authorized_keys, and make sure that
+    file's permissions are 600.
+
+- Set up time zone and NTP.
+
+    sudo apt-get install ntp
+
+    Add this above the existing server lines in /etc/ntp.conf:
+
+        # On Illumicone's LAN, ic-widcon has the RTC and is an NTP server.
+        server 192.168.69.102
+
+    sudo rm /etc/localtime; sudo ln -s /usr/share/zoneinfo/America/Boise /etc/localtime
+
+        --> Check this.  After reboot, /etc/timezone still says "Etc/UTC".
+        But, the output from timedatectl looks correct.  Try this command
+        instead:  sudo timedatectl set-timezone America/Boise
+
+
+- Install git flow.
+
+    sudo apt-get install git-flow
+
+- Create the ~/devl directory.
+
+- In ~/devl, clone the Illumicone project.
+
+    git clone https://github.com/skipzone/Illumicone
+
+
+
+
+- If using an SD card larger than 4 GB, expand the partition then reboot
+  immediately afterward.
+
+    (May need to do "git pull" in /opt/scripts/tools.)
+
+    /opt/scripts/tools/grow_partition.sh
+
+
+
+
 1/17/2016 (updated 6/21/2016)
 =========
 
@@ -7,7 +91,7 @@ On a new BeagleBone Black that came with the 2015-03-01 image (Debian 4.6.3-14, 
 
 - apt-get upgrade
 
-- Edit .bashrc, enable aliases.  (Update 6/21/2016: Create .bashrc_aliases,
+- Edit .bashrc, enable aliases.  (Update 6/21/2016: Create .bash_aliases,
   copy aliases from .bashrc.)
 
 - Edit boot/uEnv.txt, disable HDMI by un-commenting-out this line:
