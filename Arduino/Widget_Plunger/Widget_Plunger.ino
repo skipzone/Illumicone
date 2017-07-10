@@ -25,6 +25,9 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+//#define ENABLE_DEBUG_PRINT
+
 #include "illumiconeWidget.h"
 #include "printf.h"
 
@@ -35,10 +38,10 @@
 
 #define WIDGET_ID 8
 #define NUM_CHANNELS 1
-#define TX_INTERVAL_MS 100L
-#define MIC_SIGNAL_PIN A3
+#define TX_INTERVAL_MS 250L
+#define PRESSURE_SAMPLE_INTERVAL_MS 10L
+#define PRESSURE_SENSOR_SIGNAL_PIN A3
 //#define TX_FAILURE_LED_PIN 8
-//#define ENABLE_DEBUG_PRINT
 
 
 /***************************************
@@ -90,18 +93,26 @@ void setup()
 
 void loop() {
 
-  static uint16_t minSoundSample = UINT16_MAX;
-  static uint16_t maxSoundSample;
-//  static uint16_t numSamples;
   static int32_t lastTxMs;
+  static int32_t lastSampleMs;
+  static uint8_t numSamples;
+  static int32_t pressureMeasmtSum;
 
   uint32_t now = millis();
+
+  if (now - lastSampleMs >= PRESSURE_SAMPLE_INTERVAL_MS) {
+    lastSampleMs = now;
+    ++numSamples;
+    pressureMeasmtSum += analogRead(PRESSURE_SENSOR_SIGNAL_PIN);
+  }
+
   if (now - lastTxMs >= TX_INTERVAL_MS) {
+    lastTxMs = now;
 
-    uint16_t pp = maxSoundSample - minSoundSample;
+    int16_t avgPressure = numSamples > 0 ? pressureMeasmtSum / numSamples : 0;
 
-    payload.position = pp;
-    payload.velocity = 0;
+    payload.position = avgPressure;
+    payload.velocity = numSamples;
 
     if (!radio.write(&payload, sizeof(payload))) {
 #ifdef TX_FAILURE_LED_PIN
@@ -114,20 +125,8 @@ void loop() {
 #endif
     }
     
-    minSoundSample = UINT16_MAX;
-    maxSoundSample = 0;
-//    numSamples = 0;
-    lastTxMs = now;
+    numSamples = 0;
+    pressureMeasmtSum = 0;
   }
-
-//  ++numSamples;
-  unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
-  if (soundSample < minSoundSample) {
-    minSoundSample = soundSample;
-  }
-  if (soundSample > maxSoundSample) {
-    maxSoundSample = soundSample;
-  }
-
 }
 
