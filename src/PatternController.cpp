@@ -145,11 +145,8 @@ void sendOpcMessage(vector<vector<opc_pixel_t>> &finalFrame)
 
 void zeroFrame(vector<vector<opc_pixel_t>> &finalFrame)
 {
-    int col;
-    int row;
-
-    for (col = 0; col < numberOfStrings; col++) {
-        for (row = 0; row < numberOfPixelsPerString; row++) {
+    for (unsigned int col = 0; col < numberOfStrings; col++) {
+        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
             finalFrame[col][row].r = 0;
             finalFrame[col][row].g = 0;
             finalFrame[col][row].b = 0;
@@ -171,8 +168,8 @@ void setAllPixelsToQuiescentColor()
 {
     vector<vector<opc_pixel_t>> finalFrame;
     finalFrame.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
-    for (int col = 0; col < numberOfStrings; col++) {
-        for (int row = 0; row < numberOfPixelsPerString; row++) {
+    for (unsigned int col = 0; col < numberOfStrings; col++) {
+        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
             finalFrame[col][row].r = 0;
             finalFrame[col][row].g = 0;
             finalFrame[col][row].b = 64;
@@ -209,17 +206,13 @@ bool buildFrame(
         vector<vector<opc_pixel_t>> &pixelArray,
         int priority)
 {
-    int col;
-    int row;
-    //bool foundNonZeroValue = false;
-
     switch (priority) {
         case 0:
             //
             // AnnoyingFlashingPattern
             //
-            for (col = 0; col < numberOfStrings; col++) {
-                for (row = 0; row < numberOfPixelsPerString; row++) {
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 && pixelArray[col][row].g != 0 && pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
@@ -232,8 +225,8 @@ bool buildFrame(
             //
             // RainbowExplosionPattern
             //
-            for (col = 0; col < numberOfStrings; col++) {
-                for (row = 0; row < numberOfPixelsPerString; row++) {
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row]; 
                     }
@@ -246,19 +239,15 @@ bool buildFrame(
             //
             // RgbVerticalPattern
             //
-            for (col = 0; col < numberOfStrings; col++) {
-                for (row = 0; row < numberOfPixelsPerString; row++) {
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     // only update the value of the final frame if the pixel
                     // contains non-zero values (is on)
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        //foundNonZeroValue = true;
                         finalFrame[col][row] = pixelArray[col][row];
                     }
                 }
             }
-            //if (foundNonZeroValue) {
-            //    cout << "found non-zero pixel value for RgbVerticalPattern" << endl;
-            //}
             break;
  
         case 3:
@@ -266,8 +255,8 @@ bool buildFrame(
             //
             // HorizontalStripePattern
             //
-            for (col = 0; col < numberOfStrings; col++) {
-                for (row = 0; row < numberOfPixelsPerString; row++) {
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
@@ -279,8 +268,8 @@ bool buildFrame(
             //
             // SparklePattern
             //
-            for (col = 0; col < numberOfStrings; col++) {
-                for (row = 0; row < numberOfPixelsPerString; row++) {
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
@@ -294,8 +283,8 @@ bool buildFrame(
             //
             // QuadSlicePattern
             //
-            for (col = 0; col < numberOfStrings; col++) {
-                for (row = 0; row < numberOfPixelsPerString; row++) {
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     // only update the value of the final frame if the pixel
                     // contains non-zero values (is on)
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {

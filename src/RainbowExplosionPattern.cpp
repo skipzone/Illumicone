@@ -15,6 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <chrono>
 #include <iostream>
 #include <time.h>
 
@@ -144,7 +145,6 @@ bool RainbowExplosionPattern::update()
         return false;
     }
 
-///    using namespace std::chrono;
     std::chrono::milliseconds epochMs =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     unsigned int nowMs = epochMs.count();

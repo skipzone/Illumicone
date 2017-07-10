@@ -33,8 +33,8 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 6
-#define NUM_CHANNELS 3
+#define WIDGET_ID 11  // FourPlay-4-3
+#define NUM_CHANNELS 4
 #define TX_INTERVAL_MS 100L
 #define STATS_PRINT_INTERVAL_MS 1000L
 //#define LED_PIN 2
@@ -47,6 +47,7 @@
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
 #define TX_PIPE_ADDRESS "0wdgt"       // 0 for tx stress
+//#define TX_PIPE_ADDRESS "1wdgt"       // 0 for tx stress
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).

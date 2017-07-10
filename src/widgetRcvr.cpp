@@ -31,6 +31,9 @@ static int widgetSock[16];
 
 constexpr char lockFilePath[] = "/tmp/widgetRcvr.lock";
 
+// TODO 7/9/2017 ross:  Get from JSON config.
+static const string patconIpAddress = "192.168.69.101";
+
 
 /***********************
  * Radio Configuration *
