@@ -38,19 +38,19 @@
  * Widget Configuration *
  ************************/
 
-#define SPINNAH
+//#define SPINNAH
 //#define FOURPLAY
 //#define FOURPLAY_4_2
-//#define FOURPLAY_4_3
+#define FOURPLAY_4_3
 
 #if defined(SPINNAH)
   #define WIDGET_ID 2
 #elif defined(FOURPLAY)
   #define WIDGET_ID 9
 #elif defined(FOURPLAY_4_2)
-  #define WIDGET_ID 12
+  #define WIDGET_ID 10
 #elif defined(FOURPLAY_4_3)
-  #define WIDGET_ID 13
+  #define WIDGET_ID 11
 #endif
 
 #ifdef SPINNAH
