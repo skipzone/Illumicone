@@ -86,7 +86,7 @@
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 500
         },
         {   "name" : "shirleysWeb",
@@ -115,7 +115,7 @@
         },
         {   "name" : "plunger",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true
+            "generateSimulatedMeasurements" : false
         },
         {   "name" : "twister",
             "enabled" : false,

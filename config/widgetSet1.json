@@ -86,7 +86,7 @@
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 500
         },
         {   "name" : "shirleysWeb",
@@ -115,7 +115,7 @@
         },
         {   "name" : "plunger",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true
+            "generateSimulatedMeasurements" : false
         },
         {   "name" : "twister",
             "enabled" : false,
@@ -123,11 +123,11 @@
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true
+            "generateSimulatedMeasurements" : false
         },
         {   "name" : "fourPlay43",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true
+            "generateSimulatedMeasurements" : false
         },
         {   "name" : "buckNorris",
             "enabled" : false,
