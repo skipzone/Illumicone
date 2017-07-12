@@ -1,0 +1,2 @@
+#!/bin/bash
+~/devl/openpixelcontrol/bin/gl_server -l ~/devl/Illumicone/openpixelcontrol\ layouts/cone_med.json -p 7890 &
