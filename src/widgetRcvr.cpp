@@ -31,8 +31,10 @@ static int widgetSock[16];
 
 constexpr char lockFilePath[] = "/tmp/widgetRcvr.lock";
 
-// TODO 7/9/2017 ross:  Get from JSON config.
-static const string patconIpAddress = "192.168.69.101";
+// TODO 7/9/2017 ross:  Get this from the JSON config.
+//static const string patconIpAddress = "192.168.69.101";
+static const string patconIpAddress = "192.168.69.12";
+
 
 
 /***********************
@@ -212,6 +214,7 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
     int widgetId = payload->widgetHeader.id;
     int widgetChannel = payload->widgetHeader.channel;
     int velocity = payload->velocity;
+/*
     if (payload->widgetHeader.id == widgetIdToInt(WidgetId::fourPlay42)) {
         if (payload->widgetHeader.channel == 3) {
             cout << getTimestamp() << "Remapping fourPlay:3 to shirleysWeb:0"
@@ -245,6 +248,7 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
         //    }
         //}
     }
+*/
 
     UdpPayload udpPayload;
     udpPayload.id       = widgetId;
