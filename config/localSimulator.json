@@ -105,7 +105,7 @@
         },
         {   "name" : "plunger",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "twister",

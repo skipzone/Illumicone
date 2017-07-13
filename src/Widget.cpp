@@ -124,6 +124,8 @@ void Widget::startUdpRxThread()
     // TODO 6/12/2017 ross:  Get this value from config when calls to widget init are moved to PatternController.
     constexpr static unsigned int widgetPortNumberBase = 4200;
 
+    unsigned int widgetPortNumber = widgetPortNumberBase + widgetIdToInt(id);
+
     // TODO 7/10/2016 ross:  determine if we really need to do this
     //pthread_t thisThread = pthread_self();
     //pthread_setschedprio(thisThread, SCHED_FIFO);
@@ -133,11 +135,15 @@ void Widget::startUdpRxThread()
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(widgetPortNumberBase + widgetIdToInt(id));
+    servaddr.sin_port = htons(widgetPortNumber);
     bind(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
     if (pthread_create(&udpRxThread, NULL, udpRxThreadEntry, this)) {
         logMsg(LOG_ERR, "pthread_create failed in Widget::startUdpRxThread for " + widgetIdToString(id));
+    }
+    else {
+        logMsg(LOG_INFO, "Listening on port " + to_string(widgetPortNumber)
+        + " (" + to_string(servaddr.sin_port) + ") for " + widgetIdToString(id));
     }
 }
 
