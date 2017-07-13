@@ -227,7 +227,7 @@
             ],
             "lowPressureCutoff" : 50,
             "burstThreshold" : 700,
-            "pressureColorRedValue" : 64,
+            "pressureColorRedValue" : 96,
             "pressureColorGreenValue" : 0,
             "pressureColorBlueValue" : 0,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step

@@ -42,9 +42,9 @@ bool PlungerWidget::moveData()
             if (newPosition > 1023) {
                 newPosition = 0;
             }
-            if (newPosition % 10 == 0) {
-                logMsg(LOG_DEBUG, channels[i]->getName() + " newPosition=" + to_string(newPosition));
-            }
+            //if (newPosition % 10 == 0) {
+            //    logMsg(LOG_DEBUG, channels[i]->getName() + " newPosition=" + to_string(newPosition));
+            //}
             channels[i]->setPositionAndVelocity(newPosition, 0);
             channels[i]->setIsActive(true);
         }

@@ -42,7 +42,10 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
 {
     numStrings = config.getNumberOfStrings();
     pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
+    // This pattern will change its priority based on its state--6 while pressurizing, 1 while bursting.
+    // The value passed to initPattern is ignored.
+    // TODO:  Eliminate magic number.
+    this->priority = 6;
     opacity = 100;
 
     pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
@@ -91,6 +94,10 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
         logMsg(LOG_ERR, "No pressure color values are specified in " + name + " pattern configuration.");
         return false;
     }
+    logMsg(LOG_INFO, name
+            + " pressureColor r=" + to_string(pressureColor.r)
+            + ", g=" + to_string(pressureColor.g)
+            + ", b=" + to_string(pressureColor.b) );
 
     if (!patternConfig["fillStepSize"].is_number()) {
         logMsg(LOG_ERR, "fillStepSize not specified in " + name + " pattern configuration.");
@@ -209,6 +216,8 @@ bool FillAndBurstPattern::update()
             break;
 
         case PatternState::fillRed:
+            // TODO:  Eliminate magic number.
+            priority = 1;
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
@@ -320,6 +329,8 @@ bool FillAndBurstPattern::update()
             break;
 
         case PatternState::endBursting:
+            // TODO:  Eliminate magic number.
+            priority = 6;
             clearAllPixels();
             state = PatternState::depressurizing;
             // We'll return true this time so that the last burst color
