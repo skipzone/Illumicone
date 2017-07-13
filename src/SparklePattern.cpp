@@ -19,6 +19,7 @@
 #include <iostream>
 
 #include "ConfigReader.h"
+#include "log.h"
 #include "Pattern.h"
 #include "SparklePattern.h"
 #include "Widget.h"
@@ -46,26 +47,26 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["activationThreshold"].is_number()) {
-        cerr << "activationThreshold not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "activationThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
     activationThreshold = patternConfig["activationThreshold"].int_value();
-    cout << name << " activationThreshold=" << activationThreshold << endl;
+    logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
     if (!patternConfig["densityScaledownFactor"].is_number()) {
-        cerr << "densityScaledownFactor not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "densityScaledownFactor not specified in " + name + " pattern configuration.");
         return false;
     }
     densityScaledownFactor = patternConfig["densityScaledownFactor"].int_value();
     if (densityScaledownFactor == 0) {
-        cerr << "densityScaledownFactor is zero in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "densityScaledownFactor is zero in " + name + " pattern configuration.");
         return false;
     }
-    cout << name << " densityScaledownFactor=" << densityScaledownFactor << endl;
+    logMsg(LOG_INFO, name + " densityScaledownFactor=" + to_string(densityScaledownFactor));
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        cerr << "No valid widget channels are configured for " << name << "." << endl;
+        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -75,15 +76,15 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
             densityChannel = channelConfig.widgetChannel;
         }
         else {
-            cerr << "Warning:  inputName '" << channelConfig.inputName
-                << "' in input configuration for " << name << " is not recognized." << endl;
+            logMsg(LOG_WARNING, "Warning:  inputName '" + channelConfig.inputName
+                + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        cout << name << " using " << channelConfig.widgetChannel->getName() << " for " << channelConfig.inputName << endl;
+        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "velocity") {
-            cerr << "Warning:  " << name << " supports only velocity measurements, but the input configuration for "
-                << channelConfig.inputName << " doesn't specify velocity." << endl;
+            logMsg(LOG_WARNING, "Warning:  " + name + " supports only velocity measurements, but the input configuration for "
+                + channelConfig.inputName + " doesn't specify velocity.");
         }
     }
 

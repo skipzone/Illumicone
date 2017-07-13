@@ -18,6 +18,7 @@
 #include <iostream>
 
 #include "ConfigReader.h"
+#include "log.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
 #include "Widget.h"
@@ -49,29 +50,29 @@ bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Wi
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["widthScaleFactor"].is_number()) {
-        cerr << "widthScaleFactor not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "widthScaleFactor not specified in " + name + " pattern configuration.");
         return false;
     }
     widthScaleFactor = patternConfig["widthScaleFactor"].int_value();
-    cout << name << " widthScaleFactor=" << widthScaleFactor << endl;
+    logMsg(LOG_INFO, name + " widthScaleFactor=" + to_string(widthScaleFactor));
 
     if (!patternConfig["maxCyclicalWidth"].is_number()) {
-        cerr << "maxCyclicalWidth not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "maxCyclicalWidth not specified in " + name + " pattern configuration.");
         return false;
     }
     maxCyclicalWidth = patternConfig["maxCyclicalWidth"].int_value();
-    cout << name << " maxCyclicalWidth=" << maxCyclicalWidth << endl;
+    logMsg(LOG_INFO, name + " maxCyclicalWidth=" + to_string(maxCyclicalWidth));
 
     if (!patternConfig["widthResetTimeoutSeconds"].is_number()) {
-        cerr << "widthResetTimeoutSeconds not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "widthResetTimeoutSeconds not specified in " + name + " pattern configuration.");
         return false;
     }
     widthResetTimeoutSeconds = patternConfig["widthResetTimeoutSeconds"].int_value();
-    cout << name << " widthResetTimeoutSeconds=" << widthResetTimeoutSeconds << endl;
+    logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        cerr << "No valid widget channels are configured for " << name << "." << endl;
+        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -90,15 +91,15 @@ bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Wi
             widthChannel = channelConfig.widgetChannel;
         }
         else {
-            cerr << "Warning:  inputName '" << channelConfig.inputName
-                << "' in input configuration for " << name << " is not recognized." << endl;
+            logMsg(LOG_ERR, "Warning:  inputName '" + channelConfig.inputName
+                + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        cout << name << " using " << channelConfig.widgetChannel->getName() << " for " << channelConfig.inputName << endl;
+        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            cerr << "Warning:  " << name << " supports only position measurements, but the input configuration for "
-                << channelConfig.inputName << " doesn't specify position." << endl;
+            logMsg(LOG_ERR, "Warning:  " + name + " supports only position measurements, but the input configuration for "
+                + channelConfig.inputName + " doesn't specify position.");
         }
     }
 
@@ -126,7 +127,6 @@ bool RgbVerticalPattern::update()
     if (redPositionChannel != nullptr && redPositionChannel->getIsActive()) {
         isActive = true;
         rPos = ((unsigned int) redPositionChannel->getPosition()) % numStrings;
-        //cout << "rPos=" << rPos << endl;
         for (auto&& pixel:pixelArray[rPos]) {
             pixel.r = 255;
         }
@@ -156,18 +156,15 @@ bool RgbVerticalPattern::update()
 
         int widthPos = widthChannel->getPosition() / widthScaleFactor;
 
-        //cout << "widthPos=" << widthPos;
         if (maxCyclicalWidth != 0) {
             // This is a triangle wave function where the period is (maxCyclicalWidth - 1) * 2 and the range is 1 to maxCyclicalWidth.
             widthPos = abs(abs(widthPos) % ((maxCyclicalWidth - 1) * 2) - (maxCyclicalWidth - 1)) + 1;
         }
-        //cout << "," << widthPos << endl;
 
         if (widthPos >= 2) {
 
             int leftExtraWidth = widthPos / 2;
             int rightExtraWidth = widthPos - leftExtraWidth;
-            //cout << "leftExtraWidth" << leftExtraWidth << ", rightExtraWidth=" << rightExtraWidth << endl;
 
             int rWidthLowIndex = rPos - leftExtraWidth;
             int rWidthHighIndex = rPos + rightExtraWidth;
@@ -180,7 +177,6 @@ bool RgbVerticalPattern::update()
 
             for (int i = rWidthLowIndex; i < rWidthHighIndex; ++i) {
                 int stringIndex = (i % numStrings + numStrings) % numStrings;
-                //cout << "  stringIndex=" << stringIndex << endl;
                 for (auto&& pixels:pixelArray[stringIndex]) {
                     pixels.r = 255;
                 }
