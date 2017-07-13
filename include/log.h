@@ -19,6 +19,7 @@
 
 
 #include <string>
+#include <syslog.h>
 
 
 const std::string getTimestamp();

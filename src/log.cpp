@@ -20,9 +20,10 @@
 #include <sstream>
 //#include <stdlib.h>
 //#include <stdio.h>
-#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+
+#include "log.h"
 
 
 using namespace std;

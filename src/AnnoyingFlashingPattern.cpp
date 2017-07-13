@@ -20,6 +20,7 @@
 
 #include "AnnoyingFlashingPattern.h"
 #include "ConfigReader.h"
+#include "log.h"
 #include "Pattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
@@ -45,22 +46,22 @@ bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetI
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["activationThreshold"].is_number()) {
-        cerr << "activationThreshold not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "activationThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
     activationThreshold = patternConfig["activationThreshold"].int_value();
-    cout << name << " activationThreshold=" << activationThreshold << endl;
+    logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
     if (!patternConfig["flashingTimeoutSeconds"].is_number()) {
-        cerr << "flashingTimeoutSeconds not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "flashingTimeoutSeconds not specified in " + name + " pattern configuration.");
         return false;
     }
     flashingTimeoutSeconds = patternConfig["flashingTimeoutSeconds"].int_value();
-    cout << name << " flashingTimeoutSeconds=" << flashingTimeoutSeconds << endl;
+    logMsg(LOG_INFO, name + " flashingTimeoutSeconds=" + to_string(flashingTimeoutSeconds));
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        cerr << "No valid widget channels are configured for " << name << "." << endl;
+        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -70,15 +71,15 @@ bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetI
             intensityChannel = channelConfig.widgetChannel;
         }
         else {
-            cerr << "Warning:  inputName '" << channelConfig.inputName
-                << "' in input configuration for " << name << " is not recognized." << endl;
+            logMsg(LOG_ERR, "Warning:  inputName '" + channelConfig.inputName
+                + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        cout << name << " using " << channelConfig.widgetChannel->getName() << " for " << channelConfig.inputName << endl;
+        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            cerr << "Warning:  " << name << " supports only position measurements, but the input configuration for "
-                << channelConfig.inputName << " doesn't specify position." << endl;
+            logMsg(LOG_ERR, "Warning:  " + name + " supports only position measurements, but the input configuration for "
+                + channelConfig.inputName + " doesn't specify position.");
         }
     }
 
@@ -149,8 +150,6 @@ bool AnnoyingFlashingPattern::update()
             disableFlashing = true;
         }
     }
-    //cout << "annoyingFlashing is " << (disableFlashing ? "disabled" : "enabled");
-    //cout << endl;
 
     uint8_t redVal;
     uint8_t greenVal;

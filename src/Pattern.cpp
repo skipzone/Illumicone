@@ -19,6 +19,7 @@
 
 #include "ConfigReader.h"
 #include "json11.hpp"
+#include "log.h"
 #include "Pattern.h"
 
 using namespace std;
@@ -38,13 +39,13 @@ std::vector<Pattern::ChannelConfiguration> Pattern::getChannelConfigurations(
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
     if (patternConfig["patternName"].string_value() != name) {
-        cerr << name << " not found in patterns configuration section." << endl;
+        logMsg(LOG_ERR, name + " not found in patterns configuration section.");
         return channelConfigs;
     }
 
     auto inputConfigs = patternConfig["inputs"].array_items();
     if (inputConfigs.empty()) {
-        cerr << name << " inputs configuration is missing or empty:  " << patternConfig.dump() << endl;
+        logMsg(LOG_ERR, name + " inputs configuration is missing or empty:  " + patternConfig.dump());
         return channelConfigs;
     }
 
@@ -52,35 +53,35 @@ std::vector<Pattern::ChannelConfiguration> Pattern::getChannelConfigurations(
 
         string inputName = inputConfig["inputName"].string_value();
         if (inputName.empty()) {
-            cerr << name << " input configuration inputName is missing or empty:  " << inputConfig.dump() << endl;
+            logMsg(LOG_ERR, name + " input configuration inputName is missing or empty:  " + inputConfig.dump());
             continue;
         }
 
         string widgetName = inputConfig["widgetName"].string_value();
         WidgetId widgetId = stringToWidgetId(widgetName);
         if (widgetId == WidgetId::invalid) {
-            cerr << name << " input configuration for " << inputName
-                << " does not specify a valid widget:  " << inputConfig.dump() << endl;
+            logMsg(LOG_ERR, name + " input configuration for " + inputName
+                + " does not specify a valid widget:  " + inputConfig.dump());
             continue;
         }
 
         if (widgets.find(widgetId) == widgets.end()) {
-            cerr << name << " input configuration for " << inputName
-                << " does not specify an available widget:  " << inputConfig.dump() << endl;
+            logMsg(LOG_ERR, name + " input configuration for " + inputName
+                + " does not specify an available widget:  " + inputConfig.dump());
             continue;
         }
         Widget* widget = widgets[widgetId];
 
         if (!inputConfig["channelNumber"].is_number()) {
-            cerr << name << " input configuration for " << inputName
-                << " does not specify a channel number:  " << inputConfig.dump() << endl;
+            logMsg(LOG_ERR, name + " input configuration for " + inputName
+                + " does not specify a channel number:  " + inputConfig.dump());
             continue;
         }
         unsigned int channelNumber = inputConfig["channelNumber"].int_value();
         shared_ptr<WidgetChannel> widgetChannel = widget->getChannel(channelNumber);
         if (widgetChannel == nullptr) {
-            cerr << name << " input configuration for " << inputName << " specifies channel "
-                << channelNumber << ", which doesn't exist:  " << inputConfig.dump() << endl;
+            logMsg(LOG_ERR, name + " input configuration for " + inputName + " specifies channel "
+                + to_string(channelNumber) + ", which doesn't exist:  " + inputConfig.dump());
             continue;
         }
 

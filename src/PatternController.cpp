@@ -29,7 +29,6 @@
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <syslog.h>
 #include <thread>
 #include <time.h>
 #include <unistd.h>

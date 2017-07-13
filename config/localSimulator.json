@@ -75,47 +75,58 @@
         },
         {   "name" : "shirleysWeb",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "bells",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "rainstick",
             "enabled" : false,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
             "enabled" : false,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "triObelisk",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "squawkBox",
             "enabled" : false,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "plunger",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true
+            "generateSimulatedMeasurements" : true,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "twister",
             "enabled" : false,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true
+            "generateSimulatedMeasurements" : true,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true
+            "generateSimulatedMeasurements" : true,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "buckNorris",
             "enabled" : false,
-            "generateSimulatedMeasurements" : false
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         }
     ],
 

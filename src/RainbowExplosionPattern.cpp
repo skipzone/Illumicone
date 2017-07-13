@@ -20,6 +20,7 @@
 #include <time.h>
 
 #include "ConfigReader.h"
+#include "log.h"
 #include "Pattern.h"
 #include "RainbowExplosionPattern.h"
 #include "Widget.h"
@@ -50,57 +51,57 @@ bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetI
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["activationThreshold"].is_number()) {
-        cerr << "activationThreshold not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "activationThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
     activationThreshold = patternConfig["activationThreshold"].int_value();
-    cout << name << " activationThreshold=" << activationThreshold << endl;
+    logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
     if (!patternConfig["explosionThreshold"].is_number()) {
-        cerr << "explosionThreshold not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "explosionThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
     explosionThreshold = patternConfig["explosionThreshold"].int_value();
-    cout << name << " explosionThreshold=" << explosionThreshold << endl;
+    logMsg(LOG_INFO, name + " explosionThreshold=" + to_string(explosionThreshold));
 
     if (!patternConfig["accumulatorResetUpperLimit"].is_number()) {
-        cerr << "accumulatorResetUpperLimit not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "accumulatorResetUpperLimit not specified in " + name + " pattern configuration.");
         return false;
     }
     accumulatorResetUpperLimit = patternConfig["accumulatorResetUpperLimit"].int_value();
-    cout << name << " accumulatorResetUpperLimit=" << accumulatorResetUpperLimit << endl;
+    logMsg(LOG_INFO, name + " accumulatorResetUpperLimit=" + to_string(accumulatorResetUpperLimit));
 
     if (!patternConfig["minFizzleFill"].is_number()) {
-        cerr << "minFizzleFill not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "minFizzleFill not specified in " + name + " pattern configuration.");
         return false;
     }
     minFizzleFill = patternConfig["minFizzleFill"].int_value();
-    cout << name << " minFizzleFill=" << minFizzleFill << endl;
+    logMsg(LOG_INFO, name + " minFizzleFill=" + to_string(minFizzleFill));
 
     if (!patternConfig["maxFizzleFill"].is_number()) {
-        cerr << "maxFizzleFill not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "maxFizzleFill not specified in " + name + " pattern configuration.");
         return false;
     }
     maxFizzleFill = patternConfig["maxFizzleFill"].int_value();
-    cout << name << " maxFizzleFill=" << maxFizzleFill << endl;
+    logMsg(LOG_INFO, name + " maxFizzleFill=" + to_string(maxFizzleFill));
 
     if (!patternConfig["fillStepSize"].is_number()) {
-        cerr << "fillStepSize not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "fillStepSize not specified in " + name + " pattern configuration.");
         return false;
     }
     fillStepSize = patternConfig["fillStepSize"].int_value();
-    cout << name << " fillStepSize=" << fillStepSize << endl;
+    logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
 
     if (!patternConfig["fillStepIntervalMs"].is_number()) {
-        cerr << "fillStepIntervalMs not specified in " << name << " pattern configuration." << endl;
+        logMsg(LOG_ERR, "fillStepIntervalMs not specified in " + name + " pattern configuration.");
         return false;
     }
     fillStepIntervalMs = patternConfig["fillStepIntervalMs"].int_value();
-    cout << name << " fillStepIntervalMs=" << fillStepIntervalMs << endl;
+    logMsg(LOG_INFO, name + " fillStepIntervalMs=" + to_string(fillStepIntervalMs));
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        cerr << "No valid widget channels are configured for " << name << "." << endl;
+        logMsg(LOG_WARNING, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -110,15 +111,15 @@ bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetI
             intensityChannel = channelConfig.widgetChannel;
         }
         else {
-            cerr << "Warning:  inputName '" << channelConfig.inputName
-                << "' in input configuration for " << name << " is not recognized." << endl;
+            logMsg(LOG_WARNING, "Warning:  inputName '" + channelConfig.inputName
+                + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        cout << name << " using " << channelConfig.widgetChannel->getName() << " for " << channelConfig.inputName << endl;
+        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            cerr << "Warning:  " << name << " supports only position measurements, but the input configuration for "
-                << channelConfig.inputName << " doesn't specify position." << endl;
+            logMsg(LOG_ERR, "Warning:  " + name + " supports only position measurements, but the input configuration for "
+                + channelConfig.inputName + " doesn't specify position.");
         }
     }
 
@@ -218,7 +219,6 @@ bool RainbowExplosionPattern::update()
             break;
 
         case PatternState::fillRed:
-            //cout << "fillRed" << endl;
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
@@ -235,7 +235,6 @@ bool RainbowExplosionPattern::update()
             break;
 
         case PatternState::fillOrange:
-            //cout << "fillOrange" << endl;
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
@@ -252,7 +251,6 @@ bool RainbowExplosionPattern::update()
             break;
 
         case PatternState::fillYellow:
-            //cout << "fillYellow" << endl;
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
@@ -269,7 +267,6 @@ bool RainbowExplosionPattern::update()
             break;
 
         case PatternState::fillGreen:
-            //cout << "fillGreen" << endl;
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
@@ -286,7 +283,6 @@ bool RainbowExplosionPattern::update()
             break;
 
         case PatternState::fillBlue:
-            //cout << "fillBlue" << endl;
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
@@ -303,7 +299,6 @@ bool RainbowExplosionPattern::update()
             break;
 
         case PatternState::fillIndigo:
-            //cout << "fillIndigo" << endl;
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
@@ -320,7 +315,6 @@ bool RainbowExplosionPattern::update()
             break;
 
         case PatternState::fillViolet:
-            //cout << "fillViolet" << endl;
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
@@ -336,7 +330,6 @@ bool RainbowExplosionPattern::update()
             break;
 
         case PatternState::endExplosion:
-            //cout << "endExplosion" << endl;
             for (auto&& pixels:pixelArray) {
                 for (auto&& pixel:pixels) {
                     pixel.r = 0;
