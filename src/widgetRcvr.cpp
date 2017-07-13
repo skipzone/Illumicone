@@ -33,7 +33,7 @@ constexpr char lockFilePath[] = "/tmp/widgetRcvr.lock";
 
 // TODO 7/9/2017 ross:  Get this from the JSON config.
 //static const string patconIpAddress = "192.168.69.101";
-static const string patconIpAddress = "192.168.69.12";
+static const string patconIpAddress = "192.168.69.12";  // can't get the goddamn static ip address to work on ic-patcon
 
 
 
@@ -210,52 +210,12 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
         << ", velocity = " << payload->velocity
         << endl;
 
-    // 4/7/2017 ross:  This is a hack that makes fourPlay42's fourth wheel look like Reiley's wheel (Shirley's Web).
-    int widgetId = payload->widgetHeader.id;
-    int widgetChannel = payload->widgetHeader.channel;
-    int velocity = payload->velocity;
-/*
-    if (payload->widgetHeader.id == widgetIdToInt(WidgetId::fourPlay42)) {
-        if (payload->widgetHeader.channel == 3) {
-            cout << getTimestamp() << "Remapping fourPlay:3 to shirleysWeb:0"
-                << endl;
-            widgetId = widgetIdToInt(WidgetId::shirleysWeb);
-            widgetChannel = 0;
-            velocity = abs(velocity);
-        }
-        //if (payload->widgetHeader.channel == 3) {
-        //    cout << getTimestamp() << "Remapping fourPlay:3 to fourPlay:0"
-        //        << endl;
-        //    widgetChannel = 0;
-        //}
-        //else if (payload->widgetHeader.channel == 0) {
-        //    cout << getTimestamp() << "Remapping fourPlay:0 to shirleysWeb:0"
-        //        << endl;
-        //    widgetId = widgetIdToInt(WidgetId::shirleysWeb);
-        //}
-        //if (payload->widgetHeader.channel == 3) {
-        //    cout << getTimestamp() << "Remapping fourPlay:3 to fourPlay:1"
-        //        << endl;
-        //    widgetChannel = 1;
-        //}
-        //else if (payload->widgetHeader.channel == 1) {
-        //    cout << getTimestamp() << "Remapping fourPlay:1 to shirleysWeb:0"
-        //        << endl;
-        //    widgetId = widgetIdToInt(WidgetId::shirleysWeb);
-        //    widgetChannel = 0;
-        //    if (velocity > 200 || velocity < 0) {
-        //        velocity = 0;
-        //    }
-        //}
-    }
-*/
-
     UdpPayload udpPayload;
-    udpPayload.id       = widgetId;
-    udpPayload.channel  = widgetChannel;
+    udpPayload.id       = payload->widgetHeader.id;
+    udpPayload.channel  = payload->widgetHeader.channel;
     udpPayload.isActive = payload->widgetHeader.isActive;
     udpPayload.position = payload->position;
-    udpPayload.velocity = velocity;
+    udpPayload.velocity = payload->velocity;
 
     sendUdp(udpPayload);
 }
@@ -282,20 +242,6 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
     for (int i = 0; i < numMeasurements; ++i) {
         cout << setfill(' ') << setw(6) << payload->measurements[i] << endl;
     }
-
-//    // The steps widget sends 5 position measurements.  We'll map them to
-//    // channels 0 through 4.
-//    if (payload->widgetHeader.id == widgetIdToInt(WidgetId::steps)) {
-//        for (unsigned int i = 0; i < 5; ++i) {
-//            UdpPayload udpPayload;
-//            udpPayload.id       = payload->widgetHeader.id;
-//            udpPayload.channel  = i;
-//            udpPayload.isActive = payload->widgetHeader.isActive;
-//            udpPayload.position = payload->measurements[i];
-//            udpPayload.velocity = 0;
-//            sendUdp(udpPayload);
-//        }
-//    }
 }
 
 
