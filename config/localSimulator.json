@@ -70,7 +70,7 @@
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 500
         },
         {   "name" : "shirleysWeb",
@@ -120,7 +120,7 @@
         },
         {   "name" : "fourPlay43",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "buckNorris",
@@ -199,6 +199,7 @@
             "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "activationThreshold" : 20          // 20 is what we used with Shirley's Web in 2016
         },
+/*
         {   "patternName" : "rainbowExplosion",
             "inputs" : [
                 {   "inputName" : "intensity",
@@ -212,6 +213,23 @@
             "accumulatorResetUpperLimit" : 8,   // 8 is what we used with the second Plunger widget in 2016
             "minFizzleFill" : 3,                // 0 is what we implicitly used with the second Plunger widget in 2016
             "maxFizzleFill" : 30,               // 30 is what we used with the second Plunger widget in 2016
+            "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
+            "fillStepIntervalMs" : 20
+        },
+*/
+        {   "patternName" : "fillAndBurst",
+            "inputs" : [
+                {   "inputName" : "intensity",
+                    "widgetName" : "plunger",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "lowPressureCutoff" : 50,
+            "burstThreshold" : 700,
+            "pressureColorRedValue" : 64,
+            "pressureColorGreenValue" : 0,
+            "pressureColorBlueValue" : 0,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalMs" : 20
         },

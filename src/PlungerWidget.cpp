@@ -24,13 +24,6 @@ PlungerWidget::PlungerWidget()
     }
 
     updateIntervalMs[0] = 100;
-    updateIntervalMs[1] = 0;
-    updateIntervalMs[2] = 0;
-    updateIntervalMs[3] = 0;
-    updateIntervalMs[4] = 0;
-    updateIntervalMs[5] = 0;
-    updateIntervalMs[6] = 0;
-    updateIntervalMs[7] = 0;
 }
 
 
@@ -48,7 +41,11 @@ bool PlungerWidget::moveData()
     for (unsigned int i = 0; i < numChannels; ++i) {
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity(rand() % 1024, 0);
+            int newPosition = channels[i]->getPreviousPosition() + 1;
+            if (newPosition > 1023) {
+                newPosition = 0;
+            }
+            channels[i]->setPositionAndVelocity(newPosition, 0);
             channels[i]->setIsActive(true);
         }
     }
