@@ -1,15 +1,12 @@
 #include <chrono>
 #include <iostream>
-///#include <fstream>
-///#include <regex>
 #include <string>
-//#include <thread>
 #include <time.h>
-///#include <vector>
 
-#include "PlungerWidget.h"
 #include "ConfigReader.h"
 #include "illumiconeTypes.h"
+#include "log.h"
+#include "PlungerWidget.h"
 #include "WidgetId.h"
 
 using namespace std;
@@ -23,7 +20,7 @@ PlungerWidget::PlungerWidget()
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 100;
+    updateIntervalMs[0] = 10;
 }
 
 
@@ -44,6 +41,9 @@ bool PlungerWidget::moveData()
             int newPosition = channels[i]->getPreviousPosition() + 1;
             if (newPosition > 1023) {
                 newPosition = 0;
+            }
+            if (newPosition % 10 == 0) {
+                logMsg(LOG_DEBUG, channels[i]->getName() + " newPosition=" + to_string(newPosition));
             }
             channels[i]->setPositionAndVelocity(newPosition, 0);
             channels[i]->setIsActive(true);

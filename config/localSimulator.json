@@ -219,7 +219,7 @@
 */
         {   "patternName" : "fillAndBurst",
             "inputs" : [
-                {   "inputName" : "intensity",
+                {   "inputName" : "pressure",
                     "widgetName" : "plunger",
                     "channelNumber" : 0,
                     "measurement" : "position"
