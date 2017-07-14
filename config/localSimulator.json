@@ -115,7 +115,7 @@
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
@@ -225,8 +225,8 @@
                     "measurement" : "position"
                 }
             ],
-            "lowPressureCutoff" : 50,
-            "burstThreshold" : 700,
+            "lowPressureCutoff" : 150,
+            "burstThreshold" : 400,
             "pressureColorRedValue" : 96,
             "pressureColorGreenValue" : 0,
             "pressureColorBlueValue" : 0,
