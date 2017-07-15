@@ -220,7 +220,8 @@
             "emitIntervalMeasmtLow" : 300,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
-            "emitIntervalHighMs" : 50,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 5,
             "emitDirectionIsUp" : false,
             "particleMoveIntervalMs" : 10
         }

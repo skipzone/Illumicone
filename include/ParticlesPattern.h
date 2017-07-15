@@ -51,6 +51,7 @@ class ParticlesPattern : public Pattern {
         int emitIntervalMeasmtHigh;
         int emitIntervalLowMs;
         int emitIntervalHighMs;
+        int emitBatchSize;
         bool emitDirectionIsUp;
         unsigned int particleMoveIntervalMs;
 

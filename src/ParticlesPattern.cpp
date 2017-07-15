@@ -98,6 +98,13 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
     emitIntervalHighMs = patternConfig["emitIntervalHighMs"].int_value();
     logMsg(LOG_INFO, name + " emitIntervalHighMs=" + to_string(emitIntervalHighMs));
 
+    if (!patternConfig["emitBatchSize"].is_number()) {
+        logMsg(LOG_ERR, "emitBatchSize not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    emitBatchSize = patternConfig["emitBatchSize"].int_value();
+    logMsg(LOG_INFO, name + " emitBatchSize=" + to_string(emitBatchSize));
+
     if (!patternConfig["emitDirectionIsUp"].is_bool()) {
         logMsg(LOG_ERR, "emitDirectionIsUp not specified in " + name + " pattern configuration.");
         return false;
@@ -175,7 +182,6 @@ bool ParticlesPattern::moveParticles()
 }
 
 
-
 bool ParticlesPattern::update()
 {
     // Don't do anything if no input channel was assigned.
@@ -193,7 +199,7 @@ bool ParticlesPattern::update()
 
     // Move the existing particles if it is time to do so.
     if (isActive && (int) (nowMs - nextMoveParticlesMs) >= 0) {
-        logMsg(LOG_DEBUG, "time to move particles");
+        //logMsg(LOG_DEBUG, "time to move particles");
         if (moveParticles()) {
             isActive = true;
             nextMoveParticlesMs = nowMs + particleMoveIntervalMs;
@@ -251,13 +257,13 @@ bool ParticlesPattern::update()
     if (nextEmitParticlesMs > 0 && (int) (nowMs - nextEmitParticlesMs) >= 0) {
         nextEmitParticlesMs = nowMs + particleEmitIntervalMs;
 
-        logMsg(LOG_DEBUG, "time to emit particles");
+        //logMsg(LOG_DEBUG, "time to emit particles");
 
-        // TODO:  add ability to emit multiple particles in a batch
-
-        // Emit a particle.
-        int randStringNum = rand() % numStrings;
-        pixelArray[randStringNum][emitDirectionIsUp ? pixelsPerString - 1 : 0] = emitColor;
+        // Emit particles.
+        for (int i = 0; i < emitBatchSize; ++i) {
+            int randStringNum = rand() % numStrings;
+            pixelArray[randStringNum][emitDirectionIsUp ? pixelsPerString - 1 : 0] = emitColor;
+        }
 
         // Make sure the new particles eventually get moved out of the frame.
         numRotationsNeededToClearParticles = pixelsPerString;
