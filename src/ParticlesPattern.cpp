@@ -114,6 +114,15 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
 
     // ----- get input channels -----
 
+    // 0:  min sound sample
+    // 1:  max sound sample
+    // 2:  sound amplitude
+    // 3:  yaw
+    // 4:  pitch
+    // 5:  roll
+    // 6:  0
+
+
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
         logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
@@ -132,9 +141,9 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
         }
         logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
-        if (channelConfig.measurement != "velocity") {
-            logMsg(LOG_WARNING, "Warning:  " + name + " supports only velocity measurements, but the input configuration for "
-                + channelConfig.inputName + " doesn't specify velocity.");
+        if (channelConfig.measurement != "position") {
+            logMsg(LOG_WARNING, "Warning:  " + name + " supports only position measurements, but the input configuration for "
+                + channelConfig.inputName + " doesn't specify position.");
         }
     }
 
@@ -147,16 +156,18 @@ bool ParticlesPattern::moveParticles()
     if (numRotationsNeededToClearParticles > 0) {
         --numRotationsNeededToClearParticles;
         for (auto&& stringPixels : pixelArray) {
+            unsigned int i;
             if (!emitDirectionIsUp) {
-                for (unsigned int i = stringPixels.size() - 1; i > 0; --i) {
+                for (i = stringPixels.size() - 1; i > 0; --i) {
                     stringPixels[i] = stringPixels[i - 1];
                 }
             }
             else {
-                for (unsigned int i = 0; i < stringPixels.size() - 1; ++i) {
+                for (i = 0; i < stringPixels.size() - 1; ++i) {
                     stringPixels[i] = stringPixels[i + 1];
                 }
             }
+            stringPixels[i].r = stringPixels[i].g = stringPixels[i].b = 0;
         }
     }
 
@@ -182,6 +193,7 @@ bool ParticlesPattern::update()
 
     // Move the existing particles if it is time to do so.
     if (isActive && (int) (nowMs - nextMoveParticlesMs) >= 0) {
+        logMsg(LOG_DEBUG, "time to move particles");
         if (moveParticles()) {
             isActive = true;
             nextMoveParticlesMs = nowMs + particleMoveIntervalMs;
@@ -194,17 +206,20 @@ bool ParticlesPattern::update()
 
     // Don't emit any particles if the widget has gone inactive.
     if (!emitRateChannel->getIsActive()) {
+        //logMsg(LOG_DEBUG, "emitRateChannel is inactive");
         nextEmitParticlesMs = 0;
         return wasActive;
     }
 
     // If there is a new measurement, update the emit rate.
-    if (emitRateChannel->getHasNewVelocityMeasurement()) {
+    if (emitRateChannel->getHasNewPositionMeasurement()) {
+        //logMsg(LOG_DEBUG, "emitRateChannel has a new measurement");
 
-        int emitIntervalMeasmt = emitRateChannel->getVelocity();
+        int emitIntervalMeasmt = emitRateChannel->getPosition();
 
         // Don't emit anything if the measurement is below the lower limit.
         if (emitIntervalMeasmt < emitIntervalMeasmtLow) {
+            //logMsg(LOG_DEBUG, "emitIntervalMeasmt is below the lower limit");
             nextEmitParticlesMs = 0;
         }
         else {
@@ -216,14 +231,27 @@ bool ParticlesPattern::update()
             int emitIntervalRange = emitIntervalHighMs - emitIntervalLowMs;
             particleEmitIntervalMs =
                 emitIntervalRange * (emitIntervalMeasmt - emitIntervalMeasmtLow) / emitIntervalMeasmtRange + emitIntervalLowMs;
-            // TODO:  maybe set nextEmitParticlesMs to nowMs to force an immediate emission?
-            nextEmitParticlesMs = nowMs + particleEmitIntervalMs;
+            // If we're not currently emitting particles, start doing so immediately.
+            if (nextEmitParticlesMs == 0) {
+                nextEmitParticlesMs = nowMs;
+            }
+            //logMsg(LOG_DEBUG,
+            //    "emitIntervalMeasmt=" + to_string(emitIntervalMeasmt)
+            //    + ", particleEmitIntervalMs=" + to_string(particleEmitIntervalMs)
+            //    + ", nextEmitParticlesMs=" + to_string(nextEmitParticlesMs));
         }
     }
+
+    //logMsg(LOG_DEBUG,
+    //    "nowMs=" + to_string(nowMs)
+    //    + ", nextEmitParticlesMs=" + to_string(nextEmitParticlesMs)
+    //    + ", particleEmitIntervalMs=" + to_string(particleEmitIntervalMs));
 
     // Emit some particles if it is time to do so.
     if (nextEmitParticlesMs > 0 && (int) (nowMs - nextEmitParticlesMs) >= 0) {
         nextEmitParticlesMs = nowMs + particleEmitIntervalMs;
+
+        logMsg(LOG_DEBUG, "time to emit particles");
 
         // TODO:  add ability to emit multiple particles in a batch
 
@@ -238,6 +266,8 @@ bool ParticlesPattern::update()
         if (nextMoveParticlesMs == 0) {
             nextMoveParticlesMs = nowMs + particleMoveIntervalMs;
         }
+
+        isActive = true;
     }
 
     return wasActive;

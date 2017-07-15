@@ -46,8 +46,8 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "rainstick",
-            "enabled" : false,
-            "generateSimulatedMeasurements" : false,
+            "enabled" : true,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
@@ -210,7 +210,7 @@
             "inputs" : [
                 {   "inputName" : "emitRate",
                     "widgetName" : "rainstick",
-                    "channelNumber" : 0,
+                    "channelNumber" : 2,        // average sound amplitude
                     "measurement" : "position"
                 }
             ],
