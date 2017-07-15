@@ -42,7 +42,8 @@
 #include "AnnoyingFlashingPattern.h"
 #include "SparklePattern.h"
 #include "HorizontalStripePattern.h"
-#include "RainbowExplosionPattern.h"
+//#include "RainbowExplosionPattern.h"
+#include "FillAndBurstPattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 #include "WidgetFactory.h"
@@ -70,7 +71,8 @@ static AnnoyingFlashingPattern annoyingFlashingPattern;
 static RgbVerticalPattern rgbVerticalPattern;
 static SparklePattern sparklePattern;
 static HorizontalStripePattern horizontalStripePattern;
-static RainbowExplosionPattern rainbowExplosionPattern;
+//static RainbowExplosionPattern rainbowExplosionPattern;
+static FillAndBurstPattern fillAndBurstPattern;
 
 static map<Pattern*, bool> patternIsOk;
 
@@ -202,7 +204,7 @@ bool buildFrame(
             break;
 
         case 1:
-            // RainbowExplosionPattern
+            // FillAndBurstPattern, bursting
             for (unsigned int col = 0; col < numberOfStrings; col++) {
                 for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
@@ -246,7 +248,6 @@ bool buildFrame(
                 }
             }
             break;
-
           
         case 5:
             // QuadSlicePattern
@@ -256,6 +257,17 @@ bool buildFrame(
                     // contains non-zero values (is on)
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
+                    }
+                }
+            }
+            break;
+
+        case 6:
+            // FillAndBurstPattern, pressurizing
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
+                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
+                        finalFrame[col][row] = pixelArray[col][row]; 
                     }
                 }
             }
@@ -447,12 +459,13 @@ void initPatterns()
         logMsg(LOG_ERR, "annoyingFlashingPattern initialization failed.");
     }
 
-    if (rainbowExplosionPattern.initPattern(config, widgets, 1)) {
-        patternIsOk[&rainbowExplosionPattern] = true;
-        logMsg(LOG_INFO, "rainbowExplosionPattern ok");
+    // FillAndBurstPattern will change its priority based on its state--6 while pressurizing, 1 while bursting.
+    if (fillAndBurstPattern.initPattern(config, widgets, 1)) {
+        patternIsOk[&fillAndBurstPattern] = true;
+        logMsg(LOG_INFO, "fillAndBurstPattern ok");
     }
     else {
-        logMsg(LOG_ERR, "rainbowExplosionPattern initialization failed.");
+        logMsg(LOG_ERR, "fillAndBurstPattern initialization failed.");
     }
 
     if (rgbVerticalPattern.initPattern(config, widgets, 2)) {
@@ -546,8 +559,8 @@ void doPatterns()
     if (patternIsOk.find(&annoyingFlashingPattern) != patternIsOk.end()) {
         annoyingFlashingPattern.update();
     }
-    if (patternIsOk.find(&rainbowExplosionPattern) != patternIsOk.end()) {
-        rainbowExplosionPattern.update();
+    if (patternIsOk.find(&fillAndBurstPattern) != patternIsOk.end()) {
+        fillAndBurstPattern.update();
     }
     if (patternIsOk.find(&rgbVerticalPattern) != patternIsOk.end()) {
         rgbVerticalPattern.update();
@@ -565,38 +578,39 @@ void doPatterns()
     finalFrame1.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
     zeroFrame(finalFrame1);
 
+    if (fillAndBurstPattern.isActive && fillAndBurstPattern.priority == 6) {
+        anyPatternIsActive = true;
+        //logMsg(LOG_DEBUG, "fillAndBurst active while pressurizing.");
+        buildFrame(finalFrame1, fillAndBurstPattern.pixelArray, fillAndBurstPattern.priority);
+    }
+
     if (sparklePattern.isActive) {
         anyPatternIsActive = true;
-        //cout << "sparkle active" << endl;
         buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
     }
    
     if (horizontalStripePattern.isActive) {
         anyPatternIsActive = true;
-        //cout << "horizontalStripe active" << endl;
         buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
     }
 
     if (rgbVerticalPattern.isActive) {
         anyPatternIsActive = true;
-        //cout << "rgbVertical active" << endl;
         buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
     }
 
-    if (rainbowExplosionPattern.isActive) {
+    if (fillAndBurstPattern.isActive && fillAndBurstPattern.priority == 1) {
         anyPatternIsActive = true;
-        //cout << "rainbowExplosion active" << endl;
-        buildFrame(finalFrame1, rainbowExplosionPattern.pixelArray, rainbowExplosionPattern.priority);
+        //logMsg(LOG_DEBUG, "fillAndBurst active while bursting.");
+        buildFrame(finalFrame1, fillAndBurstPattern.pixelArray, fillAndBurstPattern.priority);
     }
 
     if (annoyingFlashingPattern.isActive) {
         anyPatternIsActive = true;
-        //cout << "annoyingFlashing active" << endl;
         buildFrame(finalFrame1, annoyingFlashingPattern.pixelArray, annoyingFlashingPattern.priority);
     }
 
     if (!anyPatternIsActive) {
-        //cout << "no patterns are active; finalizing finalFrame1" << endl;
         finalizeFrame(finalFrame1);
     }
 

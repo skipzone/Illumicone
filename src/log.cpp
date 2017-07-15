@@ -15,6 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <chrono>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
