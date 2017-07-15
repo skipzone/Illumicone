@@ -16,8 +16,8 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=PatternController
-#OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o RgbVerticalPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o FillAndBurstPattern.o json11.o ConfigReader.o
-OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o HorizontalStripePattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o FillAndBurstPattern.o json11.o ConfigReader.o log.o
+#OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o RgbVerticalPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o FillAndBurstPattern.o ParticlesPattern.o json11.o ConfigReader.o
+OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o HorizontalStripePattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o FillAndBurstPattern.o ParticlesPattern.o json11.o ConfigReader.o log.o
 LIBS=
 
 INCLUDE=../include

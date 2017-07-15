@@ -220,6 +220,22 @@
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalMs" : 20
         },
+        {   "patternName" : "fillAndBurst",
+            "inputs" : [
+                {   "inputName" : "pressure",
+                    "widgetName" : "plunger",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "lowPressureCutoff" : 150,
+            "burstThreshold" : 400,
+            "pressureColorRedValue" : 96,
+            "pressureColorGreenValue" : 0,
+            "pressureColorBlueValue" : 0,
+            "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
+            "fillStepIntervalMs" : 20
+        },
         {   "patternName" : "annoyingFlashing",
             "inputs" : [
                 {   "inputName" : "intensity",

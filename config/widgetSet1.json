@@ -129,7 +129,7 @@
             //"widthResetTimeoutSeconds" : 0      // 0 to disable
             "widthScaleFactor" : 6,             // effectively gear down a rotating widget
             "maxCyclicalWidth" : 12,
-            "widthResetTimeoutSeconds" : 10     // reset width to normal after this period of inactivity of the width channel
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
         {   "patternName" : "horizontalStripe",
             "inputs" : [
@@ -156,7 +156,7 @@
             ],
             "widthScaleFactor" : 3,             // effectively gear down a rotating widget
             "maxCyclicalWidth" : 20,                // the maximum width when cyclical values are used
-            "widthResetTimeoutSeconds" : 10     // reset width to normal after this period of inactivity of the width channel
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
         {   "patternName" : "sparkle",
             "inputs" : [
@@ -193,7 +193,7 @@
                     "measurement" : "position"
                 }
             ],
-            "flashingTimeoutSeconds" : 1,
+            "flashingTimeoutSeconds" : 2,
             "activationThreshold" : 200         // 300 is a basic LED flashlight from a few feet away
         }
     ]
