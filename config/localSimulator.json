@@ -217,7 +217,7 @@
             "emitColorRedValue" : 0,
             "emitColorGreenValue" : 64,
             "emitColorBlueValue" : 192,
-            "emitIntervalMeasmtLow" : 300,
+            "emitIntervalMeasmtLow" : 800,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,

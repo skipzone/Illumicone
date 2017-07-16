@@ -63,7 +63,7 @@
             "generateSimulatedMeasurements" : false
         },
         {   "name" : "rainstick",
-            "enabled" : false,
+            "enabled" : true,
             "generateSimulatedMeasurements" : false
         },
         {   "name" : "schroedersPlaything",
@@ -179,8 +179,8 @@
             ],
             "lowPressureCutoff" : 150,
             "burstThreshold" : 400,
-            "pressureColorRedValue" : 64,
-            "pressureColorGreenValue" : 0,
+            "pressureColorRedValue" : 96,
+            "pressureColorGreenValue" : 32,
             "pressureColorBlueValue" : 0,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalMs" : 20
@@ -195,7 +195,25 @@
             ],
             "flashingTimeoutSeconds" : 2,
             "activationThreshold" : 200         // 300 is a basic LED flashlight from a few feet away
+        },
+        {   "patternName" : "particles",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 2,        // average sound amplitude
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorRedValue" : 0,
+            "emitColorGreenValue" : 64,
+            "emitColorBlueValue" : 192,
+            "emitIntervalMeasmtLow" : 800,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 5,
+            "emitDirectionIsUp" : false,
+            "particleMoveIntervalMs" : 10
         }
     ]
-
 }

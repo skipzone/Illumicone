@@ -25,13 +25,19 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#define ENABLE_MOTION_DETECTION
 //#define ENABLE_DEBUG_PRINT
 
 
+#ifdef ENABLE_MOTION_DETECTION
 #include "I2Cdev.h"
+#endif
+
 #include "illumiconeWidget.h"
 
+#ifdef ENABLE_MOTION_DETECTION
 #include "MPU6050_6Axis_MotionApps20.h"
+#endif
 
 //#ifdef ENABLE_DEBUG_PRINT
 // For some unkown reason, shit don't work without printf.
@@ -44,13 +50,15 @@
     #include "Wire.h"
 #endif
 
+
+#ifdef ENABLE_MOTION_DETECTION
+
 // class default I2C address is 0x68
 // specific I2C addresses may be passed as a parameter here
 // AD0 low = 0x68 (default for SparkFun breakout and InvenSense evaluation board)
 // AD0 high = 0x69
 MPU6050 mpu;
 //MPU6050 mpu(0x69); // <-- use for AD0 high
-
 
 // uncomment "OUTPUT_READABLE_QUATERNION" if you want to see the actual
 // quaternion components in a [w, x, y, z] format (not best for parsing
@@ -108,6 +116,8 @@ float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gra
 // packet structure for InvenSense teapot demo
 uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
 
+#endif
+
 
 /************************
  * Widget Configuration *
@@ -124,7 +134,7 @@ uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\
 #define NUM_SOUND_VALUES_TO_SEND 3
 #define NUM_MPU_VALUES_TO_SEND 4
 
-#define MA_LENGTH 10
+#define MA_LENGTH 3
 #define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
 
 
@@ -155,8 +165,6 @@ RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 1
 
 MeasurementVectorPayload payload;
 
-static FILE lcdout = {0};
-
 int16_t mpuMeasurementValues[NUM_MPU_VALUES_TO_SEND];
 bool isActive;
 
@@ -172,6 +180,8 @@ static bool maSetFull[NUM_MA_SETS];
 /******************
  * Implementation *
  ******************/
+
+#ifdef ENABLE_MOTION_DETECTION
 
 volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 void dmpDataReady() {
@@ -259,6 +269,8 @@ void initMpu()
     }
 }
 
+#endif
+
 
 void setup()
 {
@@ -274,8 +286,10 @@ void setup()
   printf_begin();
 //#endif
 
+#ifdef ENABLE_MOTION_DETECTION
   initI2c();
   initMpu();
+#endif
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
   
@@ -317,6 +331,7 @@ void gatherMeasurements()
 {
   unsigned long now = millis();
 
+#ifdef ENABLE_MOTION_DETECTION
     // reset interrupt flag and get INT_STATUS byte
     mpuInterrupt = false;
     mpuIntStatus = mpu.getIntStatus();
@@ -448,6 +463,15 @@ void gatherMeasurements()
 
   isActive = true;
 
+#else   // #ifdef ENABLE_MOTION_DETECTION
+
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND, 0);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 1, 0);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 2, 0);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 3, 0);
+
+#endif  // #ifdef ENABLE_MOTION_DETECTION
+
 //#ifdef ENABLE_DEBUG_PRINT
 //  for (int i = 0; i < NUM_MPU_VALUES_TO_SEND; ++i) {
 //    Serial.print(i);
@@ -476,7 +500,8 @@ void sendMeasurements()
       payload.measurements[j] = getMovingAverage(j);
   }
 
-  payload.widgetHeader.isActive = isActive;
+//  payload.widgetHeader.isActive = isActive;
+  payload.widgetHeader.isActive = true;
 
 #ifdef ENABLE_DEBUG_PRINT
   for (int i = 0; i < NUM_MPU_VALUES_TO_SEND + NUM_SOUND_VALUES_TO_SEND; ++i) {
@@ -513,9 +538,11 @@ void loop() {
 
   uint32_t now = millis();
 
+#ifdef ENABLE_MOTION_DETECTION
   if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
     gatherMeasurements();
   }
+#endif
 
   if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
     unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
@@ -525,6 +552,7 @@ void loop() {
     if (soundSample > maxSoundSample) {
       maxSoundSample = soundSample;
     }
+    isActive = true;
   }
 
   if (now - lastTxMs >= (isActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
