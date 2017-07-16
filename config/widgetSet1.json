@@ -63,7 +63,7 @@
             "generateSimulatedMeasurements" : false
         },
         {   "name" : "rainstick",
-            "enabled" : false,
+            "enabled" : true,
             "generateSimulatedMeasurements" : false
         },
         {   "name" : "schroedersPlaything",
@@ -129,7 +129,7 @@
             //"widthResetTimeoutSeconds" : 0      // 0 to disable
             "widthScaleFactor" : 6,             // effectively gear down a rotating widget
             "maxCyclicalWidth" : 12,
-            "widthResetTimeoutSeconds" : 10     // reset width to normal after this period of inactivity of the width channel
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
         {   "patternName" : "horizontalStripe",
             "inputs" : [
@@ -156,7 +156,7 @@
             ],
             "widthScaleFactor" : 3,             // effectively gear down a rotating widget
             "maxCyclicalWidth" : 20,                // the maximum width when cyclical values are used
-            "widthResetTimeoutSeconds" : 10     // reset width to normal after this period of inactivity of the width channel
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
         {   "patternName" : "sparkle",
             "inputs" : [
@@ -179,8 +179,8 @@
             ],
             "lowPressureCutoff" : 150,
             "burstThreshold" : 400,
-            "pressureColorRedValue" : 64,
-            "pressureColorGreenValue" : 0,
+            "pressureColorRedValue" : 96,
+            "pressureColorGreenValue" : 32,
             "pressureColorBlueValue" : 0,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalMs" : 20
@@ -193,9 +193,27 @@
                     "measurement" : "position"
                 }
             ],
-            "flashingTimeoutSeconds" : 1,
+            "flashingTimeoutSeconds" : 2,
             "activationThreshold" : 200         // 300 is a basic LED flashlight from a few feet away
+        },
+        {   "patternName" : "particles",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 2,        // average sound amplitude
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorRedValue" : 0,
+            "emitColorGreenValue" : 64,
+            "emitColorBlueValue" : 192,
+            "emitIntervalMeasmtLow" : 800,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 5,
+            "emitDirectionIsUp" : false,
+            "particleMoveIntervalMs" : 10
         }
     ]
-
 }

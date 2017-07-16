@@ -242,6 +242,20 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
     for (int i = 0; i < numMeasurements; ++i) {
         cout << setfill(' ') << setw(6) << payload->measurements[i] << endl;
     }
+
+    // The rainstick widget sends 7 position measurements.  We'll map them to
+    // channels 0 through 6.
+    if (payload->widgetHeader.id == widgetIdToInt(WidgetId::rainstick)) {
+        for (unsigned int i = 0; i < 7; ++i) {
+            UdpPayload udpPayload;
+            udpPayload.id       = payload->widgetHeader.id;
+            udpPayload.channel  = i;
+            udpPayload.isActive = payload->widgetHeader.isActive;
+            udpPayload.position = payload->measurements[i];
+            udpPayload.velocity = 0;
+            sendUdp(udpPayload);
+        }
+    }
 }
 
 

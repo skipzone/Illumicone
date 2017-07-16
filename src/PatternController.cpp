@@ -44,6 +44,7 @@
 #include "HorizontalStripePattern.h"
 //#include "RainbowExplosionPattern.h"
 #include "FillAndBurstPattern.h"
+#include "ParticlesPattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 #include "WidgetFactory.h"
@@ -73,6 +74,7 @@ static SparklePattern sparklePattern;
 static HorizontalStripePattern horizontalStripePattern;
 //static RainbowExplosionPattern rainbowExplosionPattern;
 static FillAndBurstPattern fillAndBurstPattern;
+static ParticlesPattern particlesPattern;
 
 static map<Pattern*, bool> patternIsOk;
 
@@ -191,6 +193,8 @@ bool buildFrame(
         vector<vector<opc_pixel_t>> &pixelArray,
         int priority)
 {
+    // TODO 7/15/2017 ross:  All these cases end up doing the same thing.  We need a different approach.
+
     switch (priority) {
         case 0:
             // AnnoyingFlashingPattern
@@ -238,7 +242,18 @@ bool buildFrame(
             }
             break;
 
-         case 4:
+        case 4:
+            // ParticlesPattern
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
+                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
+                        finalFrame[col][row] = pixelArray[col][row]; 
+                    }
+                }
+            }
+            break;
+
+         case 5:
             // SparklePattern
             for (unsigned int col = 0; col < numberOfStrings; col++) {
                 for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
@@ -249,19 +264,6 @@ bool buildFrame(
             }
             break;
           
-        case 5:
-            // QuadSlicePattern
-            for (unsigned int col = 0; col < numberOfStrings; col++) {
-                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-                    // only update the value of the final frame if the pixel
-                    // contains non-zero values (is on)
-                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row];
-                    }
-                }
-            }
-            break;
-
         case 6:
             // FillAndBurstPattern, pressurizing
             for (unsigned int col = 0; col < numberOfStrings; col++) {
@@ -484,7 +486,15 @@ void initPatterns()
         logMsg(LOG_ERR, "horizontalStripePattern initialization failed.");
     }
 
-    if (sparklePattern.initPattern(config, widgets, 4)) {
+    if (particlesPattern.initPattern(config, widgets, 4)) {
+        patternIsOk[&particlesPattern] = true;
+        logMsg(LOG_INFO, "particlesPattern ok");
+    }
+    else {
+        logMsg(LOG_ERR, "particlesPattern initialization failed.");
+    }
+
+    if (sparklePattern.initPattern(config, widgets, 5)) {
         patternIsOk[&sparklePattern] = true;
         logMsg(LOG_INFO, "sparklePattern ok");
     }
@@ -568,6 +578,9 @@ void doPatterns()
     if (patternIsOk.find(&horizontalStripePattern) != patternIsOk.end()) {
         horizontalStripePattern.update();
     }
+    if (patternIsOk.find(&particlesPattern) != patternIsOk.end()) {
+        particlesPattern.update();
+    }
     if (patternIsOk.find(&sparklePattern) != patternIsOk.end()) {
         sparklePattern.update();
     }
@@ -587,6 +600,11 @@ void doPatterns()
     if (sparklePattern.isActive) {
         anyPatternIsActive = true;
         buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
+    }
+
+    if (particlesPattern.isActive) {
+        anyPatternIsActive = true;
+        buildFrame(finalFrame1, particlesPattern.pixelArray, particlesPattern.priority);
     }
    
     if (horizontalStripePattern.isActive) {
