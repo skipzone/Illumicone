@@ -22,15 +22,16 @@
 #include <time.h>
 ///#include <vector>
 
-#include "RotaryWidget.h"
+#include "ShirleysWebWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
 using namespace std;
 
 
-RotaryWidget::RotaryWidget()
-    : Widget(WidgetId::hypnotyzer, "Hypnotyzer")
+ShirleysWebWidget::ShirleysWebWidget()
+    : Widget(WidgetId::shirleysWeb, 1)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -41,19 +42,7 @@ RotaryWidget::RotaryWidget()
 }
 
 
-void RotaryWidget::init(bool generateSimulatedMeasurements)
-{
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
-
-    channels.push_back(make_shared<WidgetChannel>(0, this));
-
-    if (!generateSimulatedMeasurements) {
-        startUdpRxThread();
-    }
-}
-
-
-bool RotaryWidget::moveData()
+bool ShirleysWebWidget::moveData()
 {
     if (!generateSimulatedMeasurements) {
         return true;
@@ -66,10 +55,9 @@ bool RotaryWidget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            int prevPos = channels[i]->getPreviousPosition();
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
 

@@ -23,21 +23,48 @@
 #include <netinet/in.h>	// for UDP
 #include <unistd.h>
 
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
+#include "log.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
-#include "WidgetId.h"
 
-Widget::Widget(WidgetId id, std::string name)
+
+using namespace std;
+
+
+Widget::Widget(WidgetId id, unsigned int numChannels)
     : id(id)
-    , name(name)
+    , numChannels(numChannels)
 {
 }
+
 
 Widget::~Widget()
 {
     pthread_join(udpRxThread, NULL); 	// close the thread
     close(sockfd); 					// close UDP socket
+}
+
+
+bool Widget::init(ConfigReader& config)
+{
+    generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
+    autoInactiveMs = config.getWidgetAutoInactiveMs(id);
+
+    if (autoInactiveMs != 0) {
+        logMsg(LOG_INFO, "autoInactiveMs=" + to_string(autoInactiveMs) + " for " + widgetIdToString(id));
+    }
+
+    for (int i = 0; i < numChannels; ++i) {
+        channels.push_back(make_shared<WidgetChannel>(i, this, autoInactiveMs));
+    }
+
+    if (!generateSimulatedMeasurements) {
+        startUdpRxThread();
+    }
+
+    return true;
 }
 
 
@@ -47,21 +74,9 @@ WidgetId Widget::getId()
 }
 
 
-std::string Widget::getName()
-{
-    return name;
-}
-
-
-unsigned int Widget::getChannelCount()
-{
-    return channels.size();
-}
-
-
 std::shared_ptr<WidgetChannel> Widget::getChannel(unsigned int channelIdx)
 {
-    return (channelIdx <= channels.size()) ? channels[channelIdx] : nullptr;
+    return channelIdx < channels.size() ? channels[channelIdx] : nullptr;
 }
 
 
@@ -71,44 +86,64 @@ std::vector<std::shared_ptr<WidgetChannel>> Widget::getChannels()
 }
 
 
-bool Widget::getIsActive()
-{
-    for (auto&& channel : channels) {
-        if (channel->getIsActive()) {
-            return true;
-        }
-    }
-    return false;
-}
+//bool Widget::getIsActive()
+//{
+//    for (auto&& channel : channels) {
+//        if (channel->getIsActive()) {
+//            return true;
+//        }
+//    }
+//    return false;
+//}
 
 
-bool Widget::getHasNewMeasurement()
-{
-    for (auto&& channel : channels) {
-        if (channel->getHasNewMeasurement()) {
-            return true;
-        }
-    }
-    return false;
-}
+//bool Widget::getHasNewPositionMeasurement()
+//{
+//    for (auto&& channel : channels) {
+//        if (channel->getHasNewPositionMeasurement()) {
+//            return true;
+//        }
+//    }
+//    return false;
+//}
+
+
+//bool Widget::getHasNewVelocityMeasurement()
+//{
+//    for (auto&& channel : channels) {
+//        if (channel->getHasNewVelocityMeasurement()) {
+//            return true;
+//        }
+//    }
+//    return false;
+//}
 
 
 void Widget::startUdpRxThread()
 {
-	// TODO 7/10/2016 ross:  determine if we really need to do this
-    pthread_t thisThread = pthread_self();
-	pthread_setschedprio(thisThread, SCHED_FIFO);
+    // TODO 6/12/2017 ross:  Get this value from config when calls to widget init are moved to PatternController.
+    constexpr static unsigned int widgetPortNumberBase = 4200;
 
-	// udp initialization
-	sockfd=socket(AF_INET,SOCK_DGRAM,0);
+    unsigned int widgetPortNumber = widgetPortNumberBase + widgetIdToInt(id);
+
+    // TODO 7/10/2016 ross:  determine if we really need to do this
+    //pthread_t thisThread = pthread_self();
+    //pthread_setschedprio(thisThread, SCHED_FIFO);
+
+    // udp initialization
+    sockfd=socket(AF_INET,SOCK_DGRAM,0);
     memset(&servaddr, 0, sizeof(servaddr));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	servaddr.sin_port = htons(widgetPortNumberBase + widgetIdToInt(id));
-	bind(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(widgetPortNumber);
+    bind(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
     if (pthread_create(&udpRxThread, NULL, udpRxThreadEntry, this)) {
-        std::cerr << "pthread_create failed in Widget::startUdpRxThread" << std::endl;
+        logMsg(LOG_ERR, "pthread_create failed in Widget::startUdpRxThread for " + widgetIdToString(id));
+    }
+    else {
+        logMsg(LOG_INFO, "Listening on port " + to_string(widgetPortNumber)
+        + " (" + to_string(servaddr.sin_port) + ") for " + widgetIdToString(id));
     }
 }
 
@@ -129,23 +164,21 @@ void Widget::pollForUdpRx()
                                        (struct sockaddr *) &cliaddr,
                                        &len);
 
-        std::cout << "got UDP payload; "
-            << " length = " << rxByteCount
-            << ", id = " << (int) payload.id
-            << ", channel = " << (int) payload.channel
-            << ", isActive = " << (int) payload.isActive
-            << ", position = " << payload.position
-            << ", velocity = " << payload.velocity
-            << std::endl;
+        logMsg(LOG_INFO, 
+            "got UDP payload; length = " + to_string(rxByteCount)
+            + ", id = " + to_string((int) payload.id)
+            + ", channel = " + to_string((int) payload.channel)
+            + ", isActive = " + to_string((int) payload.isActive)
+            + ", position = " + to_string(payload.position)
+            + ", velocity = " + to_string(payload.velocity));
 
         if (payload.channel < channels.size()) {
             channels[payload.channel]->setPositionAndVelocity(payload.position, payload.velocity);
             channels[payload.channel]->setIsActive(payload.isActive);
         }
         else {
-            std::cerr << "pollForUdpRx:  invalid channel " << (int) payload.channel
-                << " received for widget id " << (int) payload.id
-                << std::endl;
+            logMsg(LOG_ERR, "pollForUdpRx:  invalid channel " + to_string((int) payload.channel)
+                + " received for widget id " + to_string((int) payload.id));
         }
 	}
 

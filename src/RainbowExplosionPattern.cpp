@@ -15,44 +15,120 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <chrono>
 #include <iostream>
+#include <time.h>
+
+#include "ConfigReader.h"
+#include "log.h"
+#include "Pattern.h"
+#include "RainbowExplosionPattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
-#include "Pattern.h"
-#include "WidgetFactory.h"
-#include "RainbowExplosionPattern.h"
+
 
 using namespace std;
 
-enum patternState {
-    STATE_FIZZLE = 0,
-    STATE_R,
-    STATE_O,
-    STATE_Y,
-    STATE_G,
-    STATE_B,
-    STATE_I,
-    STATE_V,
-};
 
-static patternState state;
-static int colorPosition;
-static int accumulator;
-
-bool RainbowExplosionPattern::initPattern(int numStrings, int pixelsPerString, int priority)
+RainbowExplosionPattern::RainbowExplosionPattern()
+    : Pattern("rainbowExplosion")
 {
-    this->numStrings = numStrings;
-    this->pixelsPerString = pixelsPerString;
-    cout << "RainbowExplosionPattern priority: " << priority << endl;
+}
+
+
+bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+{
+    numStrings = config.getNumberOfStrings();
+    pixelsPerString = config.getNumberOfPixelsPerString();
     this->priority = priority;
-    this->pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-    this->name = "RainbowExplosionPattern";
+    opacity = 100;
 
-    this->isActive = 0;
-    this->opacity = 100;
+    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
 
-    state = STATE_FIZZLE;
+    state = PatternState::fizzle;
+    accumulator = 0;
 
+    auto patternConfig = config.getPatternConfigJsonObject(name);
+
+    if (!patternConfig["activationThreshold"].is_number()) {
+        logMsg(LOG_ERR, "activationThreshold not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    activationThreshold = patternConfig["activationThreshold"].int_value();
+    logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
+
+    if (!patternConfig["explosionThreshold"].is_number()) {
+        logMsg(LOG_ERR, "explosionThreshold not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    explosionThreshold = patternConfig["explosionThreshold"].int_value();
+    logMsg(LOG_INFO, name + " explosionThreshold=" + to_string(explosionThreshold));
+
+    if (!patternConfig["accumulatorResetUpperLimit"].is_number()) {
+        logMsg(LOG_ERR, "accumulatorResetUpperLimit not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    accumulatorResetUpperLimit = patternConfig["accumulatorResetUpperLimit"].int_value();
+    logMsg(LOG_INFO, name + " accumulatorResetUpperLimit=" + to_string(accumulatorResetUpperLimit));
+
+    if (!patternConfig["minFizzleFill"].is_number()) {
+        logMsg(LOG_ERR, "minFizzleFill not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    minFizzleFill = patternConfig["minFizzleFill"].int_value();
+    logMsg(LOG_INFO, name + " minFizzleFill=" + to_string(minFizzleFill));
+
+    if (!patternConfig["maxFizzleFill"].is_number()) {
+        logMsg(LOG_ERR, "maxFizzleFill not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    maxFizzleFill = patternConfig["maxFizzleFill"].int_value();
+    logMsg(LOG_INFO, name + " maxFizzleFill=" + to_string(maxFizzleFill));
+
+    if (!patternConfig["fillStepSize"].is_number()) {
+        logMsg(LOG_ERR, "fillStepSize not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    fillStepSize = patternConfig["fillStepSize"].int_value();
+    logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
+
+    if (!patternConfig["fillStepIntervalMs"].is_number()) {
+        logMsg(LOG_ERR, "fillStepIntervalMs not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    fillStepIntervalMs = patternConfig["fillStepIntervalMs"].int_value();
+    logMsg(LOG_INFO, name + " fillStepIntervalMs=" + to_string(fillStepIntervalMs));
+
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    if (channelConfigs.empty()) {
+        logMsg(LOG_WARNING, "No valid widget channels are configured for " + name + ".");
+        return false;
+    }
+
+    for (auto&& channelConfig : channelConfigs) {
+
+        if (channelConfig.inputName == "intensity") {
+            intensityChannel = channelConfig.widgetChannel;
+        }
+        else {
+            logMsg(LOG_WARNING, "Warning:  inputName '" + channelConfig.inputName
+                + "' in input configuration for " + name + " is not recognized.");
+            continue;
+        }
+        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+
+        if (channelConfig.measurement != "position") {
+            logMsg(LOG_ERR, "Warning:  " + name + " supports only position measurements, but the input configuration for "
+                + channelConfig.inputName + " doesn't specify position.");
+        }
+    }
+
+    return true;
+}
+
+
+void RainbowExplosionPattern::clearAllPixels()
+{
     for (auto&& pixels:pixelArray) {
         for (auto&& pixel:pixels) {
             pixel.r = 0;
@@ -60,210 +136,213 @@ bool RainbowExplosionPattern::initPattern(int numStrings, int pixelsPerString, i
             pixel.b = 0;
         }
     }
-
-    colorPosition = PIXELS_PER_STRING;
-    accumulator = 0;
-
-    return true;
-}
-
-bool RainbowExplosionPattern::initWidgets(int numWidgets, int channelsPerWidget)
-{
-    int i;
-//    cout << "Init RGB Vertical Pattern Widgets!" << endl;
-
-    for (i = 0; i < numWidgets; i++) {
-        Widget* newWidget = widgetFactory(WidgetId::plunger);
-        widgets.emplace_back(newWidget);
-        newWidget->init(false);
-    }
-
-    return true;
 }
 
 
 bool RainbowExplosionPattern::update()
 {
-    bool hadActivity = false;
-//    cout << "Updating Solid Black Pattern!" << endl;
-
-//    cout << "Updating rainbowExplosion" << endl;
-    for (auto&& widget:widgets) {
-//        cout << "Updating Solid Black Pattern widget!" << endl;
-        // update active, position, velocity for each channel in widget
-        widget->moveData();
-        if (widget->getIsActive()) {
-//            cout << "Plunger is active!" << endl;
-            for (auto&& channel:widget->getChannels()) {
-//                cout << "Got a channel" << endl;
-//                cout << "Updating widget's channel!" << endl;
-                if (channel->getHasNewMeasurement() || channel->getIsActive()) {
-                    // TODO: Do stuff
-                    int curPos = channel->getPosition();
-//                    cout << "Plunger position: " << curPos << endl;
-
-                    switch (state) {
-                        case STATE_FIZZLE:
-                            for (auto&& pixels:pixelArray) {
-                                for (auto&& pixel:pixels) {
-                                    pixel.r = 0;
-                                    pixel.g = 0;
-                                    pixel.b = 0;
-                                }
-                            }
-
-                            //
-                            // pump only "counts" if it registers above 900 p-p
-                            // accumulator is set rand() mod 5 to get more of a "random"
-                            // explosion response
-                            //                               
-                            if (curPos >= 700) {
-                                hadActivity = true;
-                                if (accumulator > 20) {
-                                    accumulator = rand() % 8;
-                                    state = STATE_R;
-                                } else {
-                                    accumulator++;
-                                }
-
-                                for (auto&& pixels:pixelArray) {
-                                    int randPixel = rand() % 30;
-                                    for (int i = PIXELS_PER_STRING - randPixel; i < PIXELS_PER_STRING; i++) {
-                                        pixels[i].r = 127;
-                                        pixels[i].g = 0;
-                                        pixels[i].b = 0;
-                                    }
-                                }
-                            }
-                            break;
-
-                        case STATE_R:
-                            hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
-                                for (auto&& pixels:pixelArray) {
-                                    pixels[i].r = 255;
-                                    pixels[i].g = 0;
-                                    pixels[i].b = 0;
-                                }
-                            }
-                            if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
-                                state = STATE_O;
-                            }
-                            colorPosition -= 8;
-
-                            break;
-
-                        case STATE_O:
-                            hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
-                                for (auto&& pixels:pixelArray) {
-                                    pixels[i].r = 255;
-                                    pixels[i].g = 127;
-                                    pixels[i].b = 0;
-                                }
-                            }
-                            if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
-                                state = STATE_Y;
-                            }
-                            colorPosition -= 8;
-
-                            break;
-
-                        case STATE_Y:
-                            hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
-                                for (auto&& pixels:pixelArray) {
-                                    pixels[i].r = 255;
-                                    pixels[i].g = 255;
-                                    pixels[i].b = 0;
-                                }
-                            }
-                            if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
-                                state = STATE_G;
-                            }
-                            colorPosition -= 8;
-
-                            break;
-
-                        case STATE_G:
-                            hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
-                                for (auto&& pixels:pixelArray) {
-                                    pixels[i].r = 0;
-                                    pixels[i].g = 255;
-                                    pixels[i].b = 0;
-                                }
-                            }
-                            if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
-                                state = STATE_B;
-                            }
-                            colorPosition -= 8;
-
-                            break;
-
-                        case STATE_B:
-                            hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
-                                for (auto&& pixels:pixelArray) {
-                                    pixels[i].r = 0;
-                                    pixels[i].g = 0;
-                                    pixels[i].b = 255;
-                                }
-                            }
-                            if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
-                                state = STATE_I;
-                            }
-                            colorPosition -= 8;
-
-                            break;
-
-                        case STATE_I:
-                            hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
-                                for (auto&& pixels:pixelArray) {
-                                    pixels[i].r = 75;
-                                    pixels[i].g = 0;
-                                    pixels[i].b = 130;
-                                }
-                            }
-                            if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
-                                state = STATE_V;
-                            }
-                            colorPosition -= 8;
-
-                            break;
-
-                        case STATE_V:
-                            hadActivity = true;
-                            for (int i = colorPosition; i < PIXELS_PER_STRING; i++) {
-                                for (auto&& pixels:pixelArray) {
-                                    pixels[i].r = 148;
-                                    pixels[i].g = 0;
-                                    pixels[i].b = 211;
-                                }
-                            }
-                            if (colorPosition <= 0) {
-                                colorPosition = PIXELS_PER_STRING;
-                                state = STATE_FIZZLE;
-                            }
-                            colorPosition -= 8;
-
-                            break;
-
-                        default:
-                            cout << "SOMETHING'S FUCKY: state in RainbowExplosionPattern" << endl;
-                    }
-                }
-            }
-        }
+    // Don't do anything if no input channel was assigned.
+    if (intensityChannel == nullptr) {
+        return false;
     }
 
-    isActive = hadActivity;
+    std::chrono::milliseconds epochMs =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    unsigned int nowMs = epochMs.count();
+
+    // If we're in one of the explosion states and it isn't time
+    // to do the next step, just return that we're active.
+    if (state != PatternState::fizzle && (int) (nowMs - nextStepMs) < 0) {
+        return isActive;
+    }
+
+    int curMeasmt;
+
+    switch (state) {
+
+        case PatternState::fizzle:
+
+            // If we haven't received a new measurement, what we'll do depends
+            // on whether or not we're displaying a fizzle.  If we are displaying
+            // a fizzle and another measurement hasn't been received in a timely
+            // fashion, we'll clear the fizzle display and go inactive.  Otherwise,
+            // we'll leave the current pattern in place.
+            if (!intensityChannel->getHasNewPositionMeasurement()) {
+                if (isActive && (int) (nowMs - fizzleMeasurementTimeoutMs) >= 0) {
+                    clearAllPixels();
+                    isActive = false;
+                    // We'll return true this time so that the fizzle
+                    // we just displayed will get turned off.
+                    return true;
+                }
+                return isActive;
+            }
+
+            clearAllPixels();
+
+            // A pump "counts" only if it registers above the activation threshold.
+            curMeasmt = intensityChannel->getPosition();
+            if (curMeasmt <= activationThreshold) {
+                if (isActive) {
+                    isActive = false;
+                    // We'll return true this time so that a fizzle we
+                    // might have just displayed will get turned off.
+                    return true;
+                }
+                return false;
+            }
+            isActive = true;
+
+            // Each time we get a measurement above the activation threshold, we
+            // increment the accumulator and turn a random portion of the bottom of
+            // the cone red.  When the accumulator exceeds the explosion threshold,
+            // we reset the accumulator to a random value (to get more of a random
+            // explosion response) and do the rainbow explosion.
+            if (accumulator > explosionThreshold) {
+                accumulator = rand() % accumulatorResetUpperLimit;
+                fillPosition = pixelsPerString;
+                nextStepMs = nowMs;         // immediately
+                state = PatternState::fillRed;
+            } else {
+                accumulator++;
+                // Fill the cone with red from the bottom up to a random depth.
+                for (auto&& pixels:pixelArray) {
+                    int fillLevel = (rand() + minFizzleFill) % maxFizzleFill;
+                    for (int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
+                        pixels[i].r = 127;
+                        pixels[i].g = 0;
+                        pixels[i].b = 0;
+                    }
+                }
+                fizzleMeasurementTimeoutMs = nowMs + fizzleMeasurementTimeoutPeriodMs;
+            }
+            break;
+
+        case PatternState::fillRed:
+            fillPosition = max(fillPosition - fillStepSize, 0);
+            for (int i = fillPosition; i < pixelsPerString; i++) {
+                for (auto&& pixels:pixelArray) {
+                    pixels[i].r = 255;
+                    pixels[i].g = 0;
+                    pixels[i].b = 0;
+                }
+            }
+            nextStepMs = nowMs + fillStepIntervalMs;
+            if (fillPosition <= 0) {
+                fillPosition = pixelsPerString;
+                state = PatternState::fillOrange;
+            }
+            break;
+
+        case PatternState::fillOrange:
+            fillPosition = max(fillPosition - fillStepSize, 0);
+            for (int i = fillPosition; i < pixelsPerString; i++) {
+                for (auto&& pixels:pixelArray) {
+                    pixels[i].r = 255;
+                    pixels[i].g = 127;
+                    pixels[i].b = 0;
+                }
+            }
+            nextStepMs = nowMs + fillStepIntervalMs;
+            if (fillPosition <= 0) {
+                fillPosition = pixelsPerString;
+                state = PatternState::fillYellow;
+            }
+            break;
+
+        case PatternState::fillYellow:
+            fillPosition = max(fillPosition - fillStepSize, 0);
+            for (int i = fillPosition; i < pixelsPerString; i++) {
+                for (auto&& pixels:pixelArray) {
+                    pixels[i].r = 255;
+                    pixels[i].g = 255;
+                    pixels[i].b = 0;
+                }
+            }
+            nextStepMs = nowMs + fillStepIntervalMs;
+            if (fillPosition <= 0) {
+                fillPosition = pixelsPerString;
+                state = PatternState::fillGreen;
+            }
+            break;
+
+        case PatternState::fillGreen:
+            fillPosition = max(fillPosition - fillStepSize, 0);
+            for (int i = fillPosition; i < pixelsPerString; i++) {
+                for (auto&& pixels:pixelArray) {
+                    pixels[i].r = 0;
+                    pixels[i].g = 255;
+                    pixels[i].b = 0;
+                }
+            }
+            nextStepMs = nowMs + fillStepIntervalMs;
+            if (fillPosition <= 0) {
+                fillPosition = pixelsPerString;
+                state = PatternState::fillBlue;
+            }
+            break;
+
+        case PatternState::fillBlue:
+            fillPosition = max(fillPosition - fillStepSize, 0);
+            for (int i = fillPosition; i < pixelsPerString; i++) {
+                for (auto&& pixels:pixelArray) {
+                    pixels[i].r = 0;
+                    pixels[i].g = 0;
+                    pixels[i].b = 255;
+                }
+            }
+            nextStepMs = nowMs + fillStepIntervalMs;
+            if (fillPosition <= 0) {
+                fillPosition = pixelsPerString;
+                state = PatternState::fillIndigo;
+            }
+            break;
+
+        case PatternState::fillIndigo:
+            fillPosition = max(fillPosition - fillStepSize, 0);
+            for (int i = fillPosition; i < pixelsPerString; i++) {
+                for (auto&& pixels:pixelArray) {
+                    pixels[i].r = 75;
+                    pixels[i].g = 0;
+                    pixels[i].b = 130;
+                }
+            }
+            nextStepMs = nowMs + fillStepIntervalMs;
+            if (fillPosition <= 0) {
+                fillPosition = pixelsPerString;
+                state = PatternState::fillViolet;
+            }
+            break;
+
+        case PatternState::fillViolet:
+            fillPosition = max(fillPosition - fillStepSize, 0);
+            for (int i = fillPosition; i < pixelsPerString; i++) {
+                for (auto&& pixels:pixelArray) {
+                    pixels[i].r = 148;
+                    pixels[i].g = 0;
+                    pixels[i].b = 211;
+                }
+            }
+            nextStepMs = nowMs + fillStepIntervalMs;
+            if (fillPosition <= 0) {
+                state = PatternState::endExplosion;
+            }
+            break;
+
+        case PatternState::endExplosion:
+            for (auto&& pixels:pixelArray) {
+                for (auto&& pixel:pixels) {
+                    pixel.r = 0;
+                    pixel.g = 0;
+                    pixel.b = 0;
+                }
+            }
+            state = PatternState::fizzle;
+            // We'll return true this time so that the last explosion color
+            // will get turned off.  But, the pattern is going inactive.
+            isActive = false;
+            break;
+    }
+
     return true;
 }

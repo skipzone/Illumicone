@@ -18,27 +18,24 @@
 #pragma once
 
 #include <cstdint>
+#include <time.h>
 #include <string>
 
-#define NUM_STRINGS 36
-#define PIXELS_PER_STRING 100
-#define OPC_SERVER_ADDR "192.168.69.100"
-// david's home addr for the sever
-//#define OPC_SERVER_ADDR "192.168.0.10"
-// type definitions for Illumicone
 
-//
+struct SchedulePeriod {
+    bool isDaily;
+    std::string description;
+    time_t startTime;
+    time_t endTime;
+};
+
+
 // structure to hold Open Pixel Control pixel data
-//
 typedef struct _opc_pixel_ {
     uint8_t r;
     uint8_t g;
     uint8_t b;
 } opc_pixel_t;
-
-
-static const std::string patconIpAddress = "192.168.69.101";
-constexpr static unsigned int widgetPortNumberBase = 4200;
 
 
 /*******************

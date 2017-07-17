@@ -24,15 +24,16 @@
 #include <time.h>
 ///#include <vector>
 
-#include "FourPlayWidget.h"
+#include "TriObeliskWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
 using namespace std;
 
 
-FourPlayWidget::FourPlayWidget()
-    : Widget(WidgetId::fourPlay, "FourPlay")
+TriObeliskWidget::TriObeliskWidget()
+    : Widget(WidgetId::triObelisk, 3)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -40,31 +41,12 @@ FourPlayWidget::FourPlayWidget()
     }
 
     updateIntervalMs[0] = 200;
-    updateIntervalMs[1] = 300;
-    updateIntervalMs[2] = 400;
-    updateIntervalMs[3] = 100;
-    updateIntervalMs[4] = 0;
-    updateIntervalMs[5] = 0;
-    updateIntervalMs[6] = 0;
-    updateIntervalMs[7] = 0;
+    updateIntervalMs[1] = 400;
+    updateIntervalMs[2] = 50;
 }
 
 
-void FourPlayWidget::init(bool generateSimulatedMeasurements)
-{
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
-
-    for (int i = 0; i < 4; ++i) {
-        channels.push_back(make_shared<WidgetChannel>(i, this));
-    }
-
-    if (!generateSimulatedMeasurements) {
-        startUdpRxThread();
-    }
-}
-
-
-bool FourPlayWidget::moveData()
+bool TriObeliskWidget::moveData()
 {
     if (!generateSimulatedMeasurements) {
         return true;
@@ -75,16 +57,15 @@ bool FourPlayWidget::moveData()
     milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     unsigned int nowMs = epochMs.count();
 
-    //cout << "---------- nowMs = " << nowMs << endl;
-
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
-        //cout << "checking channel " << i << endl;
+    for (unsigned int i = 0; i < numChannels; ++i) {
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % PIXELS_PER_STRING, 0);
+            channels[i]->getPosition();      // make sure previous velocity has been updated
+            int newPosition = (channels[i]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
+            int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
+            //cout << "newPosition=" << newPosition << ", newVelocity=" << newVelocity << endl;
+            channels[i]->setPositionAndVelocity(newPosition, newVelocity);
             channels[i]->setIsActive(true);
-            //cout << "updated channel " << i << endl;
         }
     }
 

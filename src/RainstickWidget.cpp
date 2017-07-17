@@ -20,49 +20,51 @@
 #include <string>
 #include <time.h>
 
-#include "RainstickWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
+#include "log.h"
+#include "RainstickWidget.h"
 
 using namespace std;
 
 
 RainstickWidget::RainstickWidget()
-    : Widget(WidgetId::rainstick, "Rainstick")
+    : Widget(WidgetId::rainstick, 7)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 200;
-}
-
-
-void RainstickWidget::init(bool generateSimulatedMeasurements)
-{
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
-
-    channels.push_back(make_shared<WidgetChannel>(0, this));
+    updateIntervalMs[2] = 10;
 }
 
 
 bool RainstickWidget::moveData()
 {
+    if (!generateSimulatedMeasurements) {
+        return true;
+    }
+
     using namespace std::chrono;
 
     milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     unsigned int nowMs = epochMs.count();
 
-    //cout << "---------- nowMs = " << nowMs << endl;
-
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
-        //cout << "checking channel " << i << endl;
-        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            //cout << "updating channel " << i << endl;
+    for (unsigned int i = 0; i < numChannels; ++i) {
+        if (updateIntervalMs[i] > 0 && (int) (nowMs - lastUpdateMs[i]) > updateIntervalMs[i]) {
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+            channels[i]->getPosition();      // make sure previous position and velocity have been updated in case the pattern hasn't read them
+            int newPosition = channels[i]->getPreviousPosition() + 1;
+            //logMsg(LOG_DEBUG, "RainstickWidget::moveData:  newPosition=" + to_string(newPosition));
+            if (newPosition > 1023) {
+                newPosition = 0;
+            }
+            if (newPosition % 100 == 0) {
+                logMsg(LOG_DEBUG, channels[i]->getName() + " newPosition=" + to_string(newPosition));
+            }
+            channels[i]->setPositionAndVelocity(newPosition, 0);
             channels[i]->setIsActive(true);
-            //cout << "updated channel " << i << endl;
         }
     }
 

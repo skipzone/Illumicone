@@ -26,15 +26,16 @@
 
 #include "WidgetId.h"
 
+
+class ConfigReader;
 class WidgetChannel;
 
 
 class Widget
 {
     public:
-        ///Widget(unsigned int id, const std::string& name);
 
-        Widget(WidgetId id, std::string name);
+        Widget(WidgetId id, unsigned int numChannels);
         virtual ~Widget();
 
         Widget() = delete;
@@ -42,18 +43,17 @@ class Widget
         Widget& operator =(const Widget&) = delete;
 
         WidgetId getId();
-        std::string getName();
 
-        virtual void init(bool generateSimulatedMeasurements = true) = 0;
+        virtual bool init(ConfigReader& config);
 
         virtual bool moveData() = 0;
 
-        virtual unsigned int getChannelCount();
         virtual std::shared_ptr<WidgetChannel> getChannel(unsigned int channelIdx);
         virtual std::vector<std::shared_ptr<WidgetChannel>> getChannels();
 
-        virtual bool getIsActive();
-        virtual bool getHasNewMeasurement();
+//        virtual bool getIsActive();
+//        virtual bool getHasNewPositionMeasurement();
+//        virtual bool getHasNewVelocityMeasurement();
 
         static void* udpRxThreadEntry(void* widgetObj);
 
@@ -62,9 +62,10 @@ class Widget
         void startUdpRxThread();
 
         const WidgetId id;
-        const std::string name;
         std::vector<std::shared_ptr<WidgetChannel>> channels;
         bool generateSimulatedMeasurements;
+        unsigned int autoInactiveMs;
+        unsigned int numChannels;
 
     private:
 

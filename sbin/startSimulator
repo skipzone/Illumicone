@@ -1,0 +1,5 @@
+#!/bin/bash
+#~/devl/openpixelcontrol/bin/gl_server -l ~/devl/Illumicone/openpixelcontrol\ layouts/cone_med.json -p 7890 &
+~/devl/Illumicone/sbin/startSimulatorGlServer
+sleep 2
+~/devl/Illumicone/src/PatternController ~/devl/Illumicone/config/activeConfig.json >> ~/devl/Illumicone/PatternController.out 2>&1 &

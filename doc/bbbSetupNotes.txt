@@ -1,0 +1,183 @@
+7/8/2017 - Set up ic-patcon with new jessie image
+=================================================
+
+- Log in as user debian, password temppwd.
+
+- Create user illumicone and add it to the sudo group.
+  
+    adduser illumicone
+    sudo adduser illumicone sudo
+
+- Change user debian's password to the same as illumicone's.
+
+    passwd
+
+- Remove the "default username:password" line from /etc/issue and
+  /etc/issue.net.
+
+- Set the host name to ic-patcon by changing all occurrences of "beaglebone"
+  to "ic-patcon" in /etc/hostname and /etc/hosts.
+
+- Assign the static IP address for ic-patcon by making the eth0 section of
+  /etc/network/interfaces look like this:
+
+    auto eth0
+    iface eth0 inet static
+    address 192.168.69.101
+    netmask 255.255.255.0
+    gateway 192.168.69.0
+
+- Reboot then log in as illumicone.
+
+- Create .bash_aliases, copy aliases from .bashrc.
+
+- Do updates.
+
+    sudo apt-get update
+    sudo apt-get upgrade
+
+- Set up ssh keys.
+
+    ssh-keygen
+
+    Add desired public keys to ~/.ssh/authorized_keys, and make sure that
+    file's permissions are 600.
+
+- Set up time zone and NTP.
+
+    sudo apt-get install ntp
+
+    Add this above the existing server lines in /etc/ntp.conf:
+
+        # On Illumicone's LAN, ic-widcon has the RTC and is an NTP server.
+        server 192.168.69.102
+
+    sudo rm /etc/localtime; sudo ln -s /usr/share/zoneinfo/America/Boise /etc/localtime
+
+        --> Check this.  After reboot, /etc/timezone still says "Etc/UTC".
+        But, the output from timedatectl looks correct.  Try this command
+        instead:  sudo timedatectl set-timezone America/Boise
+
+
+- Install git flow.
+
+    sudo apt-get install git-flow
+
+- Create the ~/devl directory.
+
+- In ~/devl, clone the Illumicone project.
+
+    git clone https://github.com/skipzone/Illumicone
+
+
+
+
+- If using an SD card larger than 4 GB, expand the partition then reboot
+  immediately afterward.
+
+    (May need to do "git pull" in /opt/scripts/tools.)
+
+    /opt/scripts/tools/grow_partition.sh
+
+
+
+
+1/17/2016 (updated 6/21/2016)
+=========
+
+On a new BeagleBone Black that came with the 2015-03-01 image (Debian 4.6.3-14, 3.8.13-bone70) (using sudo for most things):
+
+- apt-get update
+
+- apt-get upgrade
+
+- Edit .bashrc, enable aliases.  (Update 6/21/2016: Create .bash_aliases,
+  copy aliases from .bashrc.)
+
+- Edit boot/uEnv.txt, disable HDMI by un-commenting-out this line:
+  #cape_disable=capemgr.disable_partno=BB-BONELT-HDMI,BB-BONELT-HDMIN
+  uEnv.txt can be accessed by mounting /dev/mmcblk0p2.  (Update 6/21/2016:
+  If booted from the onboard flash then that device is already mounted
+  at /.)
+
+- In /opt/scripts/tools, "git pull" then ./update_kernel.sh
+
+- Edit /etc/network/interfaces, enable WiFi and eth0.  (If eth0 is not
+  explicitly enabled, the Ethernet cable must be connected to the board
+  before power-up.  (Update 6/21/2016:  That doesn’t appear to be true,
+  at least when WiFi is not enabled.))
+
+  Make sure the wlan0 section looks like this:
+
+  auto wlan0
+  iface wlan0 inet dhcp
+      wpa-driver wext
+      wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+
+- Add this to /etc/wpa_supplicant/wpa_supplicant.conf (create the file
+  if necessary):
+
+  ctrl_interface=/var/run/wpa_supplicant
+
+  network={
+      ssid=“ssid1”
+      psk=“password1”
+      id_str=“netname1”
+  }
+
+  network={
+      ssid=“ssid2”
+      psk=“password2”
+      id_str=“netname2”
+  }
+
+- sudo rm /etc/localtime; sudo ln -s /usr/share/zoneinfo/America/Boise /etc/localtime
+
+- Install the wifi-reset service:  (Update 6/21/2016:  Probably don’t do
+  this.  The service makes it take longer than fuck for the system to boot
+  and LEDscape to start.  Also, it doesn’t appear to be necessary with the
+  Edimax N150 (EW-7811Un).)
+
+    - cd
+    - git clone https://github.com/adafruit/wifi-reset.git
+    - cd wifi-reset
+    - sudo ./install.sh
+
+  The wifi-reset service can be disabled with this command:
+
+      sudo systemctl disable wifi-reset.service
+
+
+Notes
+-----
+
+If the WiFi dongle is plugged in after the system is running, you must do
+"sudo ifup wlan0" to make it associate with the WiFi network.
+
+When using an SD card larger than 4 GB, use
+/opt/scripts/tools/grow_partition.sh to expand the partition.  Reboot immediately afterward.
+
+
+LEDscape Setup
+--------------
+
+- git clone git://github.com/Yona-Appletree/LEDscape
+
+- cd LEDscape
+
+- sudo cp /boot/dtbs/3.8.13-bone79/am335x-boneblack.dtb{,.originalBeforeLEDscape}
+
+- sudo cp am335x-boneblack.dtb /boot/dtbs/3.8.13-bone79/
+
+- sudo modprobe -v uio_pruss
+
+- sudo reboot
+
+- make
+
+- sudo ./install-service.sh
+
+The osresearch branch specifies this command, which seems to be unnecessary
+for the Yona-Appletree branch:
+echo 'options uio_pruss extram_pool_sz=0x800000' | sudo tee -a /etc/modprobe.d/ledscape.conf
+

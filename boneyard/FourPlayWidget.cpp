@@ -24,15 +24,15 @@
 #include <time.h>
 ///#include <vector>
 
-#include "ThreeWheelWidget.h"
+#include "FourPlayWidget.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
 using namespace std;
 
 
-ThreeWheelWidget::ThreeWheelWidget()
-    : Widget(WidgetId::triObelisk, "TriObelisk")
+FourPlayWidget::FourPlayWidget()
+    : Widget(WidgetId::fourPlay)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -40,16 +40,21 @@ ThreeWheelWidget::ThreeWheelWidget()
     }
 
     updateIntervalMs[0] = 200;
-    updateIntervalMs[1] = 400;
-    updateIntervalMs[2] = 500;
+    updateIntervalMs[1] = 300;
+    updateIntervalMs[2] = 400;
+    updateIntervalMs[3] = 100;
+    updateIntervalMs[4] = 0;
+    updateIntervalMs[5] = 0;
+    updateIntervalMs[6] = 0;
+    updateIntervalMs[7] = 0;
 }
 
 
-void ThreeWheelWidget::init(bool generateSimulatedMeasurements)
+void FourPlayWidget::init(bool generateSimulatedMeasurements)
 {
     this->generateSimulatedMeasurements = generateSimulatedMeasurements;
 
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 4; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this));
     }
 
@@ -59,7 +64,7 @@ void ThreeWheelWidget::init(bool generateSimulatedMeasurements)
 }
 
 
-bool ThreeWheelWidget::moveData()
+bool FourPlayWidget::moveData()
 {
     if (!generateSimulatedMeasurements) {
         return true;
@@ -77,7 +82,7 @@ bool ThreeWheelWidget::moveData()
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % NUM_STRINGS, 0);
+            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % PIXELS_PER_STRING, 0);
             channels[i]->setIsActive(true);
             //cout << "updated channel " << i << endl;
         }

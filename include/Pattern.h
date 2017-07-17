@@ -18,29 +18,49 @@
 #ifndef PATTERN_H
 #define PATTERN_H
 
-#include "illumiconeTypes.h"
+#include <map>
+#include <string>
 #include <vector>
+
+#include "illumiconeTypes.h"
 #include "Widget.h"
+
 
 class Pattern
 {
     public:
-        Pattern() {}
+
+        Pattern(const std::string name);
         virtual ~Pattern() {}
+
+        Pattern() = delete;
+        Pattern(const Pattern&) = delete;
+        Pattern& operator =(const Pattern&) = delete;
+
         int pixelsPerString;
         int numStrings;
         std::vector<std::vector<opc_pixel_t>> pixelArray;
-        std::vector<Widget*> widgets;
 
         int priority;
         int opacity;
         std::string name;
-        int isActive;
+        bool isActive;
 
-        virtual bool initPattern(int numStrings, int pixelsPerString, int priority) = 0;
-        virtual bool initWidgets(int numWidgets, int channelsPerWidget) = 0;
+        std::string getName() { return name; }
+
+        virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority) = 0;
 
         virtual bool update() = 0;
+
+    protected:
+
+        struct ChannelConfiguration {
+            std::string inputName;
+            std::shared_ptr<WidgetChannel> widgetChannel;
+            std::string measurement;
+        };
+
+        std::vector<ChannelConfiguration> getChannelConfigurations(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 };
 
 #endif /* PATTERN_H */

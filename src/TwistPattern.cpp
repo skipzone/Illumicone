@@ -24,7 +24,7 @@
 
 using namespace std;
 
-bool TwistPattern::initPattern(int numStrings, int pixelsPerString, int priority)
+bool TwistPattern::initPattern(unsigned int numStrings, unsigned int pixelsPerString, int priority)
 {
 //    cout << "Init Solid Black Pattern!" << endl;
     this->numStrings = numStrings;
@@ -44,7 +44,7 @@ bool TwistPattern::initWidgets(int numWidgets, int channelsPerWidget)
 //    cout << "Init RGB Vertical Pattern Widgets!" << endl;
 
     for (i = 0; i < numWidgets; i++) {
-        Widget* newWidget = widgetFactory(WidgetId::hypnotyzer);
+        Widget* newWidget = widgetFactory(WidgetId::shirleysWeb);
         widgets.emplace_back(newWidget);
         newWidget->init();
     }
@@ -71,7 +71,7 @@ bool TwistPattern::initWidgets(int numWidgets, int channelsPerWidget)
  * // for each column
  * for (auto&& pixels:pixelArray) {
  *     for (i = 0; i < velocity; i++) {
- *         for (ii = velocity * PIXELS_PER_STRING*3/NUM_STRINGS; ii < PIXELS_PER_STRING*3/NUM_STRINGS + PIXELS_PER_STRING*3/NUM_STRINGS; ii+=3) {
+ *         for (ii = velocity * pixelsPerString*3/numStrings; ii < pixelsPerString*3/numStrings + pixelsPerString*3/numStrings; ii+=3) {
  *              pixels[ii+0].r = velocity + 1;
  *              pixels[ii+0].g = velocity + 1;
  *              pixels[ii+0].b = velocity + 1;
@@ -90,7 +90,7 @@ bool TwistPattern::initWidgets(int numWidgets, int channelsPerWidget)
 bool TwistPattern::update()
 {
     int hadActivity = 0;
-    int shiftValues[PIXELS_PER_STRING];
+    int shiftValues[pixelsPerString];
     int shiftGroup = 0;
     int pixelToShift = 0;
     int shiftAmount;
@@ -117,8 +117,8 @@ bool TwistPattern::update()
                     shiftAmount = curVel;
 
                     for (shiftGroup = 0; shiftGroup < curVel; shiftGroup++) {
-                        for (pixelToShift = (PIXELS_PER_STRING/NUM_STRINGS) * shiftGroup;
-                                pixelToShift < (PIXELS_PER_STRING/NUM_STRINGS) * (shiftGroup + 1);
+                        for (pixelToShift = (pixelsPerString / numStrings) * shiftGroup;
+                                pixelToShift < (pixelsPerString / numStrings) * (shiftGroup + 1);
                                 pixelToShift++) {
                             shiftValues[pixelToShift] = shiftAmount;
                             

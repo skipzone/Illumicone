@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <map>
 //#include <netinet/in.h>
 #include <sstream>
 #include <stdlib.h>
@@ -33,100 +34,106 @@
 #include <unistd.h>
 #include <vector>
 
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
-#include "Widget.h"
-#include "WidgetChannel.h"
+#include "log.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
-#include "SolidBlackPattern.h"
-#include "QuadSlicePattern.h"
+#include "AnnoyingFlashingPattern.h"
 #include "SparklePattern.h"
 #include "HorizontalStripePattern.h"
-#include "RainbowExplosionPattern.h"
+//#include "RainbowExplosionPattern.h"
+#include "FillAndBurstPattern.h"
+#include "ParticlesPattern.h"
+#include "Widget.h"
+#include "WidgetChannel.h"
+#include "WidgetFactory.h"
 
 using namespace std;
 
-static struct sockaddr_in server;
-static int sock;
-static int n;
-static uint8_t opcArray[NUM_STRINGS * PIXELS_PER_STRING * 3 + 4];
-static bool doIdlePattern;
-time_t timeWentIdle;
 
 constexpr char lockFilePath[] = "/tmp/PatternController.lock";
 
+static ConfigReader config;
+static unsigned int numberOfStrings;
+static unsigned int numberOfPixelsPerString;
+static vector<SchedulePeriod> shutoffPeriods;
+static vector<SchedulePeriod> quiescentPeriods;
 
-const string getTimestamp()
-{
-    using namespace std::chrono;
+static struct sockaddr_in server;
+static int sock;
+static uint8_t* opcBuffer;      // points to the buffer used for sending messages to the OPC server
+static size_t opcBufferSize;
+static uint8_t* opcData;        // points to the data portion of opcBuffer
 
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    int ms = epochMs.count() % 1000;
-    time_t now = epochMs.count() / 1000;
+static map<WidgetId, Widget*> widgets;
 
-    struct tm tmStruct = *localtime(&now);
-    char buf[20];
-    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmStruct);
+static AnnoyingFlashingPattern annoyingFlashingPattern;
+static RgbVerticalPattern rgbVerticalPattern;
+static SparklePattern sparklePattern;
+static HorizontalStripePattern horizontalStripePattern;
+//static RainbowExplosionPattern rainbowExplosionPattern;
+static FillAndBurstPattern fillAndBurstPattern;
+static ParticlesPattern particlesPattern;
 
-    stringstream sstr;
-    sstr << buf << "." << setfill('0') << setw(3) << ms << ":  ";
-
-    string str = sstr.str();
-    return str;
-}
+static map<Pattern*, bool> patternIsOk;
 
 
-bool setupConnection()
+bool setUpOpcServerConnection(const string& opcServerIpAddress)
 {
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    server.sin_addr.s_addr = inet_addr(OPC_SERVER_ADDR);
+    server.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
     server.sin_family = AF_INET;
     server.sin_port = htons(7890);
 
-    if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-        cout << "SOMETHING'S FUCKY: couldn't connect to opc-server!" << endl;
-        while (1);
+    if (connect(sock, (struct sockaddr *) &server, sizeof(server)) < 0) {
+        logMsg(LOG_ERR, "SOMETHING'S FUCKY: couldn't connect to opc-server!");
+        return false;
     }
 
     return true;
 }
 
-void dumpPacket(uint8_t *opcArray)
+
+void dumpOpcBuffer()
 {
-    int i;
-    uint8_t *pixels;
+    logMsg(LOG_DEBUG, "opcBuffer[0]: " + to_string(unsigned(opcBuffer[0])));
+    logMsg(LOG_DEBUG, "opcBuffer[1]: " + to_string(unsigned(opcBuffer[1])));
+    logMsg(LOG_DEBUG, "opcBuffer[2]: " + to_string(unsigned(opcBuffer[2])));
+    logMsg(LOG_DEBUG, "opcBuffer[3]: " + to_string(unsigned(opcBuffer[3])));
 
-    cout << "opcArray[0]: " << unsigned(opcArray[0]) << endl;
-    cout << "opcArray[1]: " << unsigned(opcArray[1]) << endl;
-    cout << "opcArray[2]: " << unsigned(opcArray[2]) << endl;
-    cout << "opcArray[3]: " << unsigned(opcArray[3]) << endl;
-
-    pixels = &opcArray[4];
-
-    for (i = 0; i < 2 * PIXELS_PER_STRING * 3; i++) {
-        cout << unsigned(pixels[i]) << " " << unsigned(pixels[i+1]) << " " << unsigned(pixels[i+2]) << " " << endl;
+    // Print just data for the first two strings.
+    for (size_t i = 0; i < 2 * numberOfPixelsPerString * 3; i++) {
+        logMsg(LOG_DEBUG, to_string(unsigned(opcData[i]))
+                + " " + to_string(unsigned(opcData[i+1]))
+                + " " + to_string(unsigned(opcData[i+2])));
     }
 }
 
-void printInit(Pattern *pattern)
+
+void sendOpcMessage(vector<vector<opc_pixel_t>> &finalFrame)
 {
-    cout << "Initialized " << pattern->name << "!" << endl;
-    cout << "    priority: " << pattern->priority << endl;
-    cout << "    pixelArray size X: " << pattern->pixelArray.size() << endl;
-    cout << "    pixelArray size Y: " << pattern->pixelArray[0].size() << endl;
-    cout << "    widgets size: " << pattern->widgets.size() << endl;
-//    for (auto&& widget:pattern->widgets) {
-//        cout << "        " << widget->numChannels << endl;
-//    }
+    for (unsigned int col = 0; col < numberOfStrings; col++) {
+        unsigned int colOffset = col * numberOfPixelsPerString * 3;
+        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
+            unsigned int pixelOffset = colOffset + row * 3;
+            opcData[pixelOffset] = finalFrame[col][row].r;
+            opcData[pixelOffset + 1] = finalFrame[col][row].g;
+            opcData[pixelOffset + 2] = finalFrame[col][row].b;
+        }
+    }
+
+    //dumpOpcBuffer(opcBuffer);
+
+    // send to OPC server over network connection
+    send(sock, opcBuffer, opcBufferSize, 0);
 }
 
-void zeroFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
-{
-    int col;
-    int row;
 
-    for (col = 0; col < NUM_STRINGS; col++) {
-        for (row = 0; row < PIXELS_PER_STRING; row++) {
+void zeroFrame(vector<vector<opc_pixel_t>> &finalFrame)
+{
+    for (unsigned int col = 0; col < numberOfStrings; col++) {
+        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
             finalFrame[col][row].r = 0;
             finalFrame[col][row].g = 0;
             finalFrame[col][row].b = 0;
@@ -134,43 +141,65 @@ void zeroFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
     }
 }
 
+
+void turnOffAllPixels()
+{
+    vector<vector<opc_pixel_t>> finalFrame;
+    finalFrame.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
+    zeroFrame(finalFrame);
+    sendOpcMessage(finalFrame);
+}
+
+
+void setAllPixelsToQuiescentColor()
+{
+    vector<vector<opc_pixel_t>> finalFrame;
+    finalFrame.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
+    for (unsigned int col = 0; col < numberOfStrings; col++) {
+        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
+            finalFrame[col][row].r = 0;
+            finalFrame[col][row].g = 0;
+            finalFrame[col][row].b = 64;
+        }
+    }
+    sendOpcMessage(finalFrame);
+}
+
+
 /*
  * Build the OPC packet based on the values in the pixelArray for a pattern, and
  * its priority.
  *
  * This will do some sort of math based on its parameters to determine how to update
  * the final array.  The final array will be stored separately as a 2d opc_pixel_t
- * vector, probably globally like opcArray.
+ * vector, probably globally like opcBuffer.
  *
  * We might have two to provide for double buffering of some sort.
  *
  * Ideally this would be called for each pattern that has updates before sending
  * the final packet over the network, like:
- *      buildPacket(finalFrame1, rgbPattern.pixelArray, rgbPattern.priority);
- *      buildPacket(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
+ *      buildPacket(finalFrame, rgbPattern.pixelArray, rgbPattern.priority);
+ *      buildPacket(finalFrame, annoyingFlashingPattern.pixelArray, annoyingFlashingPattern.priority);
  *      ..
  *      ..
  *
- *      sendPacket(finalFrame1);
+ *      sendPacket(finalFrame);
  *
  * Call this in reverse priority for best results, i.e. call with priority 3 pattern, then with
  * 2, then 1, then 0.
  */
 bool buildFrame(
-        std::vector<std::vector<opc_pixel_t>> &finalFrame,
-        std::vector<std::vector<opc_pixel_t>> &pixelArray,
+        vector<vector<opc_pixel_t>> &finalFrame,
+        vector<vector<opc_pixel_t>> &pixelArray,
         int priority)
 {
-    int col;
-    int row;
+    // TODO 7/15/2017 ross:  All these cases end up doing the same thing.  We need a different approach.
 
     switch (priority) {
         case 0:
-            //
-            // SolidBlackPattern
-            //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            // AnnoyingFlashingPattern
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 && pixelArray[col][row].g != 0 && pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
@@ -179,12 +208,9 @@ bool buildFrame(
             break;
 
         case 1:
-            //cout << "build frame plunger" << endl;
-            //
-            // RainbowExplosionPattern
-            //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            // FillAndBurstPattern, bursting
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row]; 
                     }
@@ -193,12 +219,9 @@ bool buildFrame(
             break;
 
         case 2:
-            //cout << "build frame rgb" << endl;
-            //
             // RgbVerticalPattern
-            //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     // only update the value of the final frame if the pixel
                     // contains non-zero values (is on)
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
@@ -209,12 +232,9 @@ bool buildFrame(
             break;
  
         case 3:
-            //cout << "build frame fourplay" << endl;
-            //
             // HorizontalStripePattern
-            //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
@@ -222,38 +242,41 @@ bool buildFrame(
             }
             break;
 
-         case 4:
-            //
+        case 4:
+            // ParticlesPattern
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
+                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
+                        finalFrame[col][row] = pixelArray[col][row]; 
+                    }
+                }
+            }
+            break;
+
+         case 5:
             // SparklePattern
-            //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
                         finalFrame[col][row] = pixelArray[col][row];
                     }
                 }
             }
             break;
-
           
-        case 5:
-            //cout << "build frame quad" << endl;
-            //
-            // QuadSlicePattern
-            //
-            for (col = 0; col < NUM_STRINGS; col++) {
-                for (row = 0; row < PIXELS_PER_STRING; row++) {
-                    // only update the value of the final frame if the pixel
-                    // contains non-zero values (is on)
+        case 6:
+            // FillAndBurstPattern, pressurizing
+            for (unsigned int col = 0; col < numberOfStrings; col++) {
+                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                     if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row];
+                        finalFrame[col][row] = pixelArray[col][row]; 
                     }
                 }
             }
             break;
 
         default:
-            cout << "SOMETHING'S FUCKY : no case for priority " << priority << endl;
+            logMsg(LOG_ERR, "SOMETHING'S FUCKY : no case for priority " + to_string(priority));
     }
 
     return true;
@@ -262,58 +285,93 @@ bool buildFrame(
 //
 // light each string at the bottom for visibility
 //
-void finalizeFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
+void finalizeFrame(vector<vector<opc_pixel_t>> &finalFrame)
 {
-    for (auto&& pixels:finalFrame) {
-        pixels[PIXELS_PER_STRING-1].r = 255;
-        pixels[PIXELS_PER_STRING-1].g = 0;
-        pixels[PIXELS_PER_STRING-1].b = 255;
+    for (auto&& stringPixels : finalFrame) {
+        stringPixels[numberOfPixelsPerString - 1].r = 255;
+        stringPixels[numberOfPixelsPerString - 1].g = 0;
+        stringPixels[numberOfPixelsPerString - 1].b = 255;
     }
 }
 
-int sendFrame(std::vector<std::vector<opc_pixel_t>> &finalFrame)
+
+void printSchedulePeriods(const std::string& scheduleDescription, const vector<SchedulePeriod>& schedulePeriods)
 {
-    uint8_t *pixels;
+    logMsg(LOG_INFO, scheduleDescription + ":");
 
-    int col;
-    int row;
+    for (auto&& schedulePeriod : schedulePeriods) {
+        string msg;
+        int msgPriority = LOG_INFO;
 
-    opcArray[0] = 0;
-    opcArray[1] = 0;
-    opcArray[2] = NUM_STRINGS * PIXELS_PER_STRING * 3 / 256;
-    opcArray[3] = NUM_STRINGS * PIXELS_PER_STRING * 3 % 256;
-
-    pixels = &opcArray[4];
-
-    for (col = 0; col < NUM_STRINGS; col++) {
-        for (row = 0; row < PIXELS_PER_STRING; row++) {
-            pixels[col*PIXELS_PER_STRING*3 + row*3 + 0] = finalFrame[col][row].r;
-            pixels[col*PIXELS_PER_STRING*3 + row*3 + 1] = finalFrame[col][row].g;
-            pixels[col*PIXELS_PER_STRING*3 + row*3 + 2] = finalFrame[col][row].b;
+        struct tm tmStartTime;
+        struct tm tmEndTime;
+        localtime_r(&schedulePeriod.startTime, &tmStartTime);
+        localtime_r(&schedulePeriod.endTime, &tmEndTime);
+        char startTimeBuf[20];
+        char endTimeBuf[20];
+        msg = "    " + schedulePeriod.description + ":  ";
+        string dateTimeFormat;
+        if (schedulePeriod.isDaily) {
+            dateTimeFormat = "%H:%M:%S";
+            msg += "daily, ";
         }
+        else {
+            dateTimeFormat = "%Y-%m-%d %H:%M:%S";
+        }
+        if (strftime(startTimeBuf, sizeof(startTimeBuf), dateTimeFormat.c_str(), &tmStartTime) != 0
+            && strftime(endTimeBuf, sizeof(endTimeBuf), dateTimeFormat.c_str(), &tmEndTime) != 0)
+        {
+            msg += string(startTimeBuf) + " - " + string(endTimeBuf);
+        }
+        else
+        {
+            msg += "is shit!";
+            msgPriority = LOG_ERR;
+        }
+
+        logMsg(msgPriority, msg);
+    }
+}
+
+
+bool readConfig(const string& configFileName)
+{
+    if (!config.readConfigurationFile(configFileName)) {
+        return false;
     }
 
-//    dumpPacket(opcArray);
-    // send over network connection
-    n = send(sock, opcArray, sizeof(opcArray), 0);
+    numberOfStrings = config.getNumberOfStrings();
+    logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
+    numberOfPixelsPerString = config.getNumberOfPixelsPerString();
+    logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
 
-    return n;
+    if (config.getSchedulePeriods("shutoffPeriods", shutoffPeriods)
+        || config.getSchedulePeriods("quiescentPeriods", quiescentPeriods))
+    {
+        return false;
+    }
+    printSchedulePeriods("Shutoff periods", shutoffPeriods);
+    printSchedulePeriods("Quiescent periods", quiescentPeriods);
+
+    return true;
 }
 
 
 int acquireProcessLock()
 {
-    int fd = open(lockFilePath, O_CREAT);
+    int fd = open(lockFilePath, O_CREAT, S_IRUSR | S_IWUSR);
     if (fd >= 0) {
         if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
             return fd;
         }
         else {
             if (errno == EWOULDBLOCK) {
-                // Another process has the file locked.
+                close(fd);
+                fprintf(stderr, "Another process has locked %s.\n", lockFilePath);
                 return -1;
             }
             else {
+                close(fd);
                 fprintf(stderr, "Unable to lock %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
                 return -1;
             }
@@ -326,155 +384,358 @@ int acquireProcessLock()
 }
 
 
-int main(void)
+bool initOpcBuffer()
 {
-    if (acquireProcessLock() < 0) {
-        exit(EXIT_FAILURE);
+    // Allocate the buffer that will be used to build and send the Open Pixel Control (OPC) messages.
+    opcBufferSize = numberOfStrings * numberOfPixelsPerString * 3 + 4;
+    opcBuffer = new uint8_t[opcBufferSize];
+    if (opcBuffer == nullptr) {
+        logMsg(LOG_ERR, "Unable to allocate an OPC buffer of size " + to_string(opcBufferSize));
+        return false;
     }
-    cout << getTimestamp() << "---------- PatternController  starting ----------" << endl;
 
-    doIdlePattern = true;
-    time(&timeWentIdle);
+    // Set up the header now because it won't change.
+    opcBuffer[0] = 0;   // channel
+    opcBuffer[1] = 0;   // command
+    opcBuffer[2] = numberOfStrings * numberOfPixelsPerString * 3 / 256; // data length high byte
+    opcBuffer[3] = numberOfStrings * numberOfPixelsPerString * 3 % 256; // data length low byte
 
-    SolidBlackPattern solidBlackPattern;
-    RgbVerticalPattern rgbVerticalPattern;
-    QuadSlicePattern quadSlicePattern;
-    SparklePattern sparklePattern;
-    HorizontalStripePattern horizontalStripePattern;
-    RainbowExplosionPattern rainbowExplosionPattern;
+    // The data portion of the OPC message starts just after the header.
+    opcData = &opcBuffer[4];
 
-    vector<vector<opc_pixel_t>> finalFrame1;
-    vector<vector<opc_pixel_t>> finalFrame2;
+    return true;
+}
 
-    // to be filled in from a config file somewhere
-    int numChannels[6] = {1, 1, 3, 4, 1, 1};
-    int priorities[6] = {0, 1, 2, 3, 4, 5};
 
-    finalFrame1.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
-    finalFrame2.resize(NUM_STRINGS, std::vector<opc_pixel_t>(PIXELS_PER_STRING));
+void initWidgets()
+{
+    logMsg(LOG_INFO, "Initializing widgets...");
 
-    cout << "Pattern initialization!\n";
+    // TODO 6/12/2017 ross:  Move widget config access to ConfigReader.
 
-    // open socket, connect with opc-server
-    setupConnection();
-    cout << "NUM_STRINGS: " << NUM_STRINGS << endl;
-    cout << "PIXELS_PER_STRING: " << PIXELS_PER_STRING << endl;
-    solidBlackPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[0]);
-    solidBlackPattern.initWidgets(1, numChannels[0]);
-    printInit(&solidBlackPattern);
-
-    rainbowExplosionPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[1]);
-    rainbowExplosionPattern.initWidgets(1, numChannels[1]);
-    printInit(&rainbowExplosionPattern);
-
-    rgbVerticalPattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[2]);
-    rgbVerticalPattern.initWidgets(1, numChannels[2]);
-    printInit(&rgbVerticalPattern);
-
-    horizontalStripePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[3]);
-    horizontalStripePattern.initWidgets(1, numChannels[3]);
-    printInit(&horizontalStripePattern);
-
-    sparklePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[4]);
-    sparklePattern.initWidgets(1, numChannels[4]);
-    printInit(&sparklePattern);
-
-    quadSlicePattern.initPattern(NUM_STRINGS, PIXELS_PER_STRING, priorities[5]);
-    quadSlicePattern.initWidgets(1, numChannels[5]);
-    printInit(&quadSlicePattern);
-
-    cout << "Pattern initialization done.  Start moving shit!" << endl;
-    while (true) {
-        rgbVerticalPattern.update();
-        solidBlackPattern.update();
-        quadSlicePattern.update();
-        sparklePattern.update();
-        horizontalStripePattern.update();
-        rainbowExplosionPattern.update();
-
-        bool anyPatternIsActive = false;
-
-        zeroFrame(finalFrame1);
-
-        if (quadSlicePattern.isActive) {
-            anyPatternIsActive = true;
-//            cout << "quad active" << endl;
-            buildFrame(finalFrame1, quadSlicePattern.pixelArray, quadSlicePattern.priority);
+    for (auto& widgetConfig : config.getJsonObject()["widgets"].array_items()) {
+        string widgetName = widgetConfig["name"].string_value();
+        if (widgetName.empty()) {
+            logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfig.dump());
+            continue;
         }
-
-        if (sparklePattern.isActive) {
-            anyPatternIsActive = true;
-//            cout << "sparkle active" << endl;
-            buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
+        if (!widgetConfig["enabled"].bool_value()) {
+            logMsg(LOG_INFO, widgetName + " is disabled.");
+            continue;
         }
-       
-        if (horizontalStripePattern.isActive) {
-            anyPatternIsActive = true;
-            buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
+        WidgetId widgetId = stringToWidgetId(widgetName);
+        if (widgetId == WidgetId::invalid) {
+            logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfig.dump());
+            continue;
         }
-
-        if (rgbVerticalPattern.isActive) {
-            anyPatternIsActive = true;
-//            cout << "rgb active" << endl;
-            buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
+        if (widgets.find(widgetId) != widgets.end()) {
+            logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfig.dump());
+            continue;
         }
-
-        if (rainbowExplosionPattern.isActive) {
-            anyPatternIsActive = true;
-            buildFrame(finalFrame1, rainbowExplosionPattern.pixelArray, rainbowExplosionPattern.priority);
+        Widget* newWidget = widgetFactory(widgetId);
+        if (newWidget == nullptr) {
+            logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
+            continue;
         }
-
-        if (solidBlackPattern.isActive) {
-            anyPatternIsActive = true;
-//            cout << "solid active" << endl;
-            buildFrame(finalFrame1, solidBlackPattern.pixelArray, solidBlackPattern.priority);
+        if (!newWidget->init(config)) {
+            logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
+            continue;
         }
+        logMsg(LOG_INFO, widgetName + " initialized.");
+        widgets[widgetId] = newWidget;
+    }
+}
 
-        if (!anyPatternIsActive) {
-            finalizeFrame(finalFrame1);
-        }
 
-        if (!anyPatternIsActive) {
-            if (timeWentIdle == 0) {
-                time(&timeWentIdle);
+void initPatterns()
+{
+    logMsg(LOG_INFO, "Initializing patterns...");
+
+    // TODO:  Get priorities from config file.
+
+    if (annoyingFlashingPattern.initPattern(config, widgets, 0)) {
+        patternIsOk[&annoyingFlashingPattern] = true;
+        logMsg(LOG_INFO, "annoyingFlashingPattern ok");
+    }
+    else {
+        logMsg(LOG_ERR, "annoyingFlashingPattern initialization failed.");
+    }
+
+    // FillAndBurstPattern will change its priority based on its state--6 while pressurizing, 1 while bursting.
+    if (fillAndBurstPattern.initPattern(config, widgets, 1)) {
+        patternIsOk[&fillAndBurstPattern] = true;
+        logMsg(LOG_INFO, "fillAndBurstPattern ok");
+    }
+    else {
+        logMsg(LOG_ERR, "fillAndBurstPattern initialization failed.");
+    }
+
+    if (rgbVerticalPattern.initPattern(config, widgets, 2)) {
+        patternIsOk[&rgbVerticalPattern] = true;
+        logMsg(LOG_INFO, "rgbVerticalPattern ok");
+    }
+    else {
+        logMsg(LOG_ERR, "rgbVerticalPattern initialization failed.");
+    }
+
+    if (horizontalStripePattern.initPattern(config, widgets, 3)) {
+        patternIsOk[&horizontalStripePattern] = true;
+        logMsg(LOG_INFO, "horizontalStripePattern ok");
+    }
+    else {
+        logMsg(LOG_ERR, "horizontalStripePattern initialization failed.");
+    }
+
+    if (particlesPattern.initPattern(config, widgets, 4)) {
+        patternIsOk[&particlesPattern] = true;
+        logMsg(LOG_INFO, "particlesPattern ok");
+    }
+    else {
+        logMsg(LOG_ERR, "particlesPattern initialization failed.");
+    }
+
+    if (sparklePattern.initPattern(config, widgets, 5)) {
+        patternIsOk[&sparklePattern] = true;
+        logMsg(LOG_INFO, "sparklePattern ok");
+    }
+    else {
+        logMsg(LOG_ERR, "sparklePattern initialization failed.");
+    }
+}
+
+
+bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, string& periodDescription)
+{
+    // For daily events, we need a tm structure containing the current
+    // time so that we can set a daily event's date to today.
+    struct tm tmNowTime = *localtime(&now);
+
+    for (auto&& schedulePeriod : schedulePeriods) {
+        if (schedulePeriod.isDaily) {
+            // Modify the start and end times so that they occur today.
+            struct tm tmStartTimeToday = *localtime(&schedulePeriod.startTime);
+            struct tm tmEndTimeToday = *localtime(&schedulePeriod.endTime);
+            tmStartTimeToday.tm_year = tmEndTimeToday.tm_year = tmNowTime.tm_year;
+            tmStartTimeToday.tm_mon = tmEndTimeToday.tm_mon = tmNowTime.tm_mon;
+            tmStartTimeToday.tm_mday = tmEndTimeToday.tm_mday = tmNowTime.tm_mday;
+            tmStartTimeToday.tm_isdst = tmEndTimeToday.tm_isdst = tmNowTime.tm_isdst;
+            time_t startTimeToday = mktime(&tmStartTimeToday);
+            time_t endTimeToday = mktime(&tmEndTimeToday);
+            //cout << "desc=" << schedulePeriod.description << ", now=" << now << ", startTime="
+            //    << startTimeToday << ", endTime=" << endTimeToday << endl;
+            // Periods that span midnight have an end time that is numerically less
+            // than the start time (which actually occurs on the previous day).
+            if (endTimeToday < startTimeToday) {
+                if (now >= startTimeToday || now <= endTimeToday) {
+                    periodDescription = schedulePeriod.description;
+                    return true;
+                }
             }
             else {
-                time_t now;
-                time(&now);
-                if (!doIdlePattern && now - timeWentIdle > 3) {
-                    doIdlePattern = true;
+                if (now >= startTimeToday && now <= endTimeToday) {
+                    periodDescription = schedulePeriod.description;
+                    return true;
                 }
             }
         }
         else {
-            doIdlePattern = false;
-            timeWentIdle = 0;
+            // This is a one-time event.
+            //cout << "desc=" << schedulePeriod.description << ", now=" << now << ", startTime="
+            //    << schedulePeriod.startTime << ", endTime=" << schedulePeriod.endTime << endl;
+            if (now >= schedulePeriod.startTime && now <= schedulePeriod.endTime) {
+                periodDescription = schedulePeriod.description;
+                return true;
+            }
         }
-
-        if (!doIdlePattern) {
-            //numBytes = sendFrame(finalFrame1);
-            sendFrame(finalFrame1);
-        }
-
-        usleep(50000);
     }
 
-    //
-    // cleanup
-    //
-//    for (auto&& widget:quadSlicePattern.widgets) {
-//        delete widget;
-//    }
-
-//    for (auto&& widget:solidBlackPattern.widgets) {
-//        delete widget;
-//    }
-
-//    for (auto&& widget:rgbVerticalPattern.widgets) {
-//        delete widget;
-//    }
-
-//    for (auto&& widget:twistPattern.widgets) {
-//        delete widget;
-//    }
+    return false;
 }
+
+
+void moveWidgetData()
+{
+    for (auto&& widget : widgets) {
+        widget.second->moveData();
+    }
+}
+
+
+void doPatterns()
+{
+    static bool doIdlePattern;
+    static time_t timeWentIdle;
+
+    if (patternIsOk.find(&annoyingFlashingPattern) != patternIsOk.end()) {
+        annoyingFlashingPattern.update();
+    }
+    if (patternIsOk.find(&fillAndBurstPattern) != patternIsOk.end()) {
+        fillAndBurstPattern.update();
+    }
+    if (patternIsOk.find(&rgbVerticalPattern) != patternIsOk.end()) {
+        rgbVerticalPattern.update();
+    }
+    if (patternIsOk.find(&horizontalStripePattern) != patternIsOk.end()) {
+        horizontalStripePattern.update();
+    }
+    if (patternIsOk.find(&particlesPattern) != patternIsOk.end()) {
+        particlesPattern.update();
+    }
+    if (patternIsOk.find(&sparklePattern) != patternIsOk.end()) {
+        sparklePattern.update();
+    }
+
+    bool anyPatternIsActive = false;
+
+    vector<vector<opc_pixel_t>> finalFrame1;
+    finalFrame1.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
+    zeroFrame(finalFrame1);
+
+    if (fillAndBurstPattern.isActive && fillAndBurstPattern.priority == 6) {
+        anyPatternIsActive = true;
+        //logMsg(LOG_DEBUG, "fillAndBurst active while pressurizing.");
+        buildFrame(finalFrame1, fillAndBurstPattern.pixelArray, fillAndBurstPattern.priority);
+    }
+
+    if (sparklePattern.isActive) {
+        anyPatternIsActive = true;
+        buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
+    }
+
+    if (particlesPattern.isActive) {
+        anyPatternIsActive = true;
+        buildFrame(finalFrame1, particlesPattern.pixelArray, particlesPattern.priority);
+    }
+   
+    if (horizontalStripePattern.isActive) {
+        anyPatternIsActive = true;
+        buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
+    }
+
+    if (rgbVerticalPattern.isActive) {
+        anyPatternIsActive = true;
+        buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
+    }
+
+    if (fillAndBurstPattern.isActive && fillAndBurstPattern.priority == 1) {
+        anyPatternIsActive = true;
+        //logMsg(LOG_DEBUG, "fillAndBurst active while bursting.");
+        buildFrame(finalFrame1, fillAndBurstPattern.pixelArray, fillAndBurstPattern.priority);
+    }
+
+    if (annoyingFlashingPattern.isActive) {
+        anyPatternIsActive = true;
+        buildFrame(finalFrame1, annoyingFlashingPattern.pixelArray, annoyingFlashingPattern.priority);
+    }
+
+    if (!anyPatternIsActive) {
+        finalizeFrame(finalFrame1);
+    }
+
+    if (!anyPatternIsActive) {
+        if (timeWentIdle == 0) {
+            time(&timeWentIdle);
+        }
+        else {
+            time_t now;
+            time(&now);
+            if (!doIdlePattern && now - timeWentIdle > 3) {
+                doIdlePattern = true;
+            }
+        }
+    }
+    else {
+        doIdlePattern = false;
+        timeWentIdle = 0;
+    }
+
+    if (!doIdlePattern) {
+        sendOpcMessage(finalFrame1);
+    }
+}
+
+
+int main(int argc, char **argv)
+{
+    // Read configuration from the JSON file specified on the command line.
+    if (argc != 2) {
+        cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
+        return 2;
+    }
+    string configFileName(argv[1]);
+    if (!readConfig(configFileName)) {
+        return(EXIT_FAILURE);
+    }
+
+    // Make sure this is the only instance running.
+    if (acquireProcessLock() < 0) {
+        return(EXIT_FAILURE);
+    }
+
+    logMsg(LOG_INFO, "---------- PatternController  starting ----------");
+
+    if (!initOpcBuffer()) {
+        return(EXIT_FAILURE);
+    }
+
+    // open socket, connect with opc-server
+    if (!setUpOpcServerConnection(config.getOpcServerIpAddress())) {
+        return(EXIT_FAILURE);
+    }
+
+    initWidgets();
+    initPatterns();
+    logMsg(LOG_INFO, "Pattern initialization done.  Start moving shit!");
+
+
+    time_t lastPeriodCheckTime = 0;
+    bool inPeriod = false;
+    string lastPeriodDesc = "";
+
+    // ----- run loop -----
+    while (true) {
+
+        moveWidgetData();
+
+        // Once per second, check if we're in a schedule period.
+        time_t now;
+        time(&now);
+        if (now > lastPeriodCheckTime) {
+            lastPeriodCheckTime = now;
+
+            // TODO:  Log appropriate messages at both the start and end of each period.
+
+            string periodDesc;
+            if (timeIsInPeriod(now, shutoffPeriods, periodDesc)) {
+                inPeriod = true;
+                if (periodDesc != lastPeriodDesc) {
+                    lastPeriodDesc = periodDesc;
+                    logMsg(LOG_INFO, "In \"" + periodDesc + "\" shutoff period.");
+                }
+                turnOffAllPixels();
+            }
+            else if (timeIsInPeriod(now, quiescentPeriods, periodDesc)) {
+                inPeriod = true;
+                if (periodDesc != lastPeriodDesc) {
+                    lastPeriodDesc = periodDesc;
+                    logMsg(LOG_INFO, "In \"" + periodDesc + "\" quiescent period.");
+                }
+                setAllPixelsToQuiescentColor();
+            }
+            else {
+                inPeriod = false;
+            }
+        }
+
+        if (!inPeriod) {
+            doPatterns();
+        }
+
+        // TODO 6/25/2017 ross:  Use an actual interval.  Set it in the JSON config.
+        usleep(5000);
+    }
+
+    // We should never get here, but if we do, something went wrong.
+    return EXIT_FAILURE;
+}
+

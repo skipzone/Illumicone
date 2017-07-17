@@ -15,53 +15,43 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iostream>
-#include <vector>
 #include <chrono>
-
+#include <iostream>
+///#include <fstream>
+///#include <regex>
 #include <string>
+//#include <thread>
 #include <time.h>
+///#include <vector>
 
-#include "StairWidget.h"
+#include "FourPlay42Widget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
+#include "WidgetId.h"
 
 using namespace std;
 
 
-StairWidget::StairWidget()
-    : Widget(WidgetId::steps, "Steps")
+FourPlay42Widget::FourPlay42Widget()
+    : Widget(WidgetId::fourPlay42, 4)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
         lastUpdateMs[i] = 0;
     }
 
-    updateIntervalMs[0] = 3000;
-    updateIntervalMs[1] = 3000;
-    updateIntervalMs[2] = 3000;
-    updateIntervalMs[3] = 3000;
-    updateIntervalMs[4] = 3000;
+    updateIntervalMs[0] = 100;
+    updateIntervalMs[1] = 200;
+    updateIntervalMs[2] = 400;
+    updateIntervalMs[3] = 50;
+    updateIntervalMs[4] = 0;
     updateIntervalMs[5] = 0;
     updateIntervalMs[6] = 0;
     updateIntervalMs[7] = 0;
 }
 
 
-void StairWidget::init(bool generateSimulatedMeasurements)
-{
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
-
-    for (int i = 0; i < 5; ++i) {
-        channels.push_back(make_shared<WidgetChannel>(i, this));
-    }
-
-    if (!generateSimulatedMeasurements) {
-        startUdpRxThread();
-    }
-}
-
-
-bool StairWidget::moveData()
+bool FourPlay42Widget::moveData()
 {
     if (!generateSimulatedMeasurements) {
         return true;
@@ -74,17 +64,18 @@ bool StairWidget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
-//        cout << "checking channel " << i << endl;
-        if (updateIntervalMs[i] > 0 && (nowMs - lastUpdateMs[i] > updateIntervalMs[i])) {
-//            cout << "updating channel " << i << endl;
+    for (unsigned int i = 0; i < numChannels; ++i) {
+        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
             lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity((channels[i]->getPreviousPosition() + 1) % 3, 0);
+            channels[i]->getPosition();      // make sure previous velocity has been updated
+            int newPosition = (channels[i]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
+            int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
+            //cout << "newPosition=" << newPosition << ", newVelocity=" << newVelocity << endl;
+            channels[i]->setPositionAndVelocity(newPosition, newVelocity);
             channels[i]->setIsActive(true);
-//            cout << "updated channel " << i << endl;
         }
     }
 
-
     return true;
 }
+

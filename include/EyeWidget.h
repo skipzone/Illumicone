@@ -30,14 +30,17 @@ class EyeWidget : public Widget
         EyeWidget(const EyeWidget&) = delete;
         EyeWidget& operator = (const EyeWidget&) = delete;
 
-        void init(bool generateSimulatedMeasurements);
-
         bool moveData();
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
+        // for generating simulated measurements
+        constexpr static unsigned int updateIntervalMs = 100;
+        constexpr static unsigned int numActiveSteps = 30;
+        constexpr static unsigned int numInactiveSteps = 50;
+        constexpr static int activePositionValue = 201;
+        unsigned int stepCount;
+        unsigned int lastUpdateMs;
 };
 
 #endif /* EYE_WIDGET_H */

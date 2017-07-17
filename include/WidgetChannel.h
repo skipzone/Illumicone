@@ -17,22 +17,29 @@
 
 #pragma once
 
+#include <string>
+
+
 class Widget;
+
 
 class WidgetChannel
 {
     public:
 
-        WidgetChannel(unsigned int channelNumber, Widget* widget);
+        WidgetChannel(unsigned int channelNumber, Widget* widget, unsigned int autoInactiveMs);
         virtual ~WidgetChannel() {}
 
         WidgetChannel() = delete;
         WidgetChannel(const WidgetChannel&) = delete;
         WidgetChannel& operator =(const WidgetChannel&) = delete;
 
+        
         unsigned int getChannelNumber();
+        std::string getName();
         bool getIsActive();
-        bool getHasNewMeasurement();
+        bool getHasNewPositionMeasurement();
+        bool getHasNewVelocityMeasurement();
         int getPosition();
         int getVelocity();
         int getPreviousPosition();
@@ -50,13 +57,11 @@ class WidgetChannel
         bool isActive;
         unsigned int autoInactiveMs;
         unsigned int lastActiveMs;
-        bool hasNewMeasurement;
+        bool hasNewPositionMeasurement;
+        bool hasNewVelocityMeasurement;
         int position;
         int velocity;
-        void positionAndVelocity(int& position, int& velocity);
         int prevPosition;
         int prevVelocity;
-
-///        bool initChannel(int channelNumber, int initPosition, int initVelocity);
 };
 

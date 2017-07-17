@@ -15,18 +15,39 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SPARKLE_PATTERN_H
-#define SPARKLE_PATTERN_H
+#pragma once
+
+#include <map>
+#include <memory>
+
 #include "Pattern.h"
+#include "WidgetId.h"
+
+
+class ConfigReader;
+class Widget;
+
 
 class SparklePattern : public Pattern {
+
     public:
-        SparklePattern() {};
+
+        SparklePattern();
         ~SparklePattern() {};
 
-        bool initPattern(int numStrings, int pixelsPerString, int priority);
-        bool initWidgets(int numWidgets, int channelsPerWidget);
+        SparklePattern(const SparklePattern&) = delete;
+        SparklePattern& operator =(const SparklePattern&) = delete;
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    private:
+
+        std::shared_ptr<WidgetChannel> densityChannel;
+
+        int densityScaledownFactor;
+        int activationThreshold;
+
+        void goInactive();
 };
 
-#endif /* SPARKLE_PATTERN_H */

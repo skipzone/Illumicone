@@ -23,6 +23,7 @@
 ///#include <vector>
 
 #include "BellsWidget.h"
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "WidgetId.h"
 
@@ -31,7 +32,7 @@ using namespace std;
 static int simWidth;
 
 BellsWidget::BellsWidget()
-    : Widget(WidgetId::bells, "Bells")
+    : Widget(WidgetId::bells, 1)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -51,18 +52,6 @@ BellsWidget::BellsWidget()
 }
 
 
-void BellsWidget::init(bool generateSimulatedMeasurements)
-{
-    this->generateSimulatedMeasurements = generateSimulatedMeasurements;
-
-    channels.push_back(make_shared<WidgetChannel>(0, this));
-
-    if (!generateSimulatedMeasurements) {
-        startUdpRxThread();
-    }
-}
-
-
 bool BellsWidget::moveData()
 {
     if (!generateSimulatedMeasurements) {
@@ -76,15 +65,17 @@ bool BellsWidget::moveData()
 
     //cout << "---------- nowMs = " << nowMs << endl;
 
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         //cout << "checking channel " << i << endl;
         if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            int prevPos = channels[i]->getPreviousPosition();
             //cout << "updating channel " << i << endl;
             lastUpdateMs[i] = nowMs;
 
             if (simWidth == 0) {
-                simWidth = NUM_STRINGS / 3;
+                // TODO:  Widgets should not need to be aware of the cone dimensions (that's the pattern's job).
+                //        For now, use a reasonable constant.  Eventually, replace this with simulation file playback.
+                //simWidth = NUM_STRINGS / 3;
+                simWidth = 36 / 3;
             }
 
             channels[i]->setPositionAndVelocity(simWidth, 0);

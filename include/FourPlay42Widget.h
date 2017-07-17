@@ -20,16 +20,14 @@
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-class RotaryWidget : public Widget
+class FourPlay42Widget : public Widget
 {
     public:
-        RotaryWidget();
-        ~RotaryWidget() {};
+        FourPlay42Widget();
+        ~FourPlay42Widget() {};
 
-        RotaryWidget(const RotaryWidget&) = delete;
-        RotaryWidget& operator =(const RotaryWidget&) = delete;
-
-        void init(bool generateSimulatedMeasurements);
+        FourPlay42Widget(const FourPlay42Widget&) = delete;
+        FourPlay42Widget& operator =(const FourPlay42Widget&) = delete;
 
         bool moveData();
 

@@ -17,21 +17,23 @@
 
 #pragma once
 
+#include <string>
+
 /* Widget Id Assignment
  *
  *  0:  reserved
- *  1:  Ray's Eye
- *  2:  Reiley's Hypnotyzer (the bike wheel)
- *  3:  Ray's Bells
- *  4:  Kelli's Steps
- *  5:  Naked's Rain Stick
- *  6:  Phyxx's TriObelisk (the triple rotary thing)
- *  7:  Cowboy's Box Theramin
- *  8:  Kayla's Plunger
- *  9:  Ross's FourPlay
- * 10:  unassigned
- * 11:  unassigned
- * 12:  unassigned
+ *  1:  Eye (Ray)
+ *  2:  Shirley's Web (Reiley, Monty)
+ *  3:  Bells (Ray)
+ *  4:  Rainstick (Dr. Naked)
+ *  5:  Schroeder's Plaything (Ross)
+ *  6:  TriObelisk (Phyxx and Dr. Naked)
+ *  7:  Squawk Box (James)
+ *  8:  Plunger (Monte, based on Kayla's original)
+ *  9:  Contort-O-Matic (Ray and Mishi)
+ * 10:  FourPlay-4-2
+ * 11:  FourPlay-4-3
+ * 12:  Buck Norris
  * 13:  unassigned
  * 14:  unassigned
  * 15:  unassigned
@@ -43,18 +45,23 @@
 enum class WidgetId {
     reserved = 0,
     eye,
-    hypnotyzer,
+    shirleysWeb,
     bells,
-    steps,
     rainstick,
+    schroedersPlaything,
     triObelisk,
-    boxTheramin,
+    squawkBox,
     plunger,
-    fourPlay,
+    contortOMatic,
+    fourPlay42,
+    fourPlay43,
+    buckNorris,
     invalid = 255
 };
 
 
 WidgetId intToWidgetId(unsigned int widgetIdValue);
 unsigned int  widgetIdToInt(WidgetId widgetId);
+std::string widgetIdToString(WidgetId widgetId);
+WidgetId stringToWidgetId(const std::string& widgetName);
 

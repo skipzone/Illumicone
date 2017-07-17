@@ -17,25 +17,38 @@
 
 #pragma once
 
-#include "Widget.h"
-#include "WidgetChannel.h"
+#include <map>
+#include <memory>
 
-class ThreeWheelWidget : public Widget
-{
+#include "Pattern.h"
+#include "WidgetId.h"
+
+
+class ConfigReader;
+class Widget;
+
+
+class AnnoyingFlashingPattern : public Pattern {
+
     public:
-        ThreeWheelWidget();
-        ~ThreeWheelWidget() {};
 
-        ThreeWheelWidget(const ThreeWheelWidget&) = delete;
-        ThreeWheelWidget& operator =(const ThreeWheelWidget&) = delete;
+        AnnoyingFlashingPattern();
+        ~AnnoyingFlashingPattern() {};
 
-        void init(bool generateSimulatedMeasurements);
+        AnnoyingFlashingPattern(const AnnoyingFlashingPattern&) = delete;
+        AnnoyingFlashingPattern& operator =(const AnnoyingFlashingPattern&) = delete;
 
-        bool moveData();
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
+        bool update();
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
+        std::shared_ptr<WidgetChannel> intensityChannel;
+
+        int activationThreshold;
+        time_t flashingTimeoutSeconds;
+        time_t timeExceededThreshold;
+
+        void goInactive();
 };
 
