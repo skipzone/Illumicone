@@ -20,14 +20,14 @@
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-class PlungerWidget : public Widget
+class PumpWidget : public Widget
 {
     public:
-        PlungerWidget();
-        ~PlungerWidget() {};
+        PumpWidget();
+        ~PumpWidget() {};
 
-        PlungerWidget(const PlungerWidget&) = delete;
-        PlungerWidget& operator =(const PlungerWidget&) = delete;
+        PumpWidget(const PumpWidget&) = delete;
+        PumpWidget& operator =(const PumpWidget&) = delete;
 
         bool moveData();
 

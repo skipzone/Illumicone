@@ -73,9 +73,8 @@ Json ConfigReader::getJsonObject()
 }
 
 
-Json ConfigReader::getWidgetConfigJsonObject(WidgetId widgetId)
+Json ConfigReader::getWidgetConfigJsonObject(const std::string& widgetName)
 {
-    string widgetName = widgetIdToString(widgetId);
     for (auto& widgetConfigObj : configObj["widgets"].array_items()) {
         if (widgetConfigObj["name"].string_value() == widgetName) {
             return widgetConfigObj;
@@ -197,55 +196,18 @@ int ConfigReader::getWidgetPortNumberBase()
 }
 
 
-bool ConfigReader::getWidgetGenerateSimulatedMeasurements(WidgetId widgetId)
+bool ConfigReader::getWidgetGenerateSimulatedMeasurements(const std::string& widgetName)
 {
-    Json widgetConfig = getWidgetConfigJsonObject(widgetId);
+    Json widgetConfig = getWidgetConfigJsonObject(widgetName);
     return widgetConfig["generateSimulatedMeasurements"].bool_value();
 }
 
 
-int ConfigReader::getWidgetAutoInactiveMs(WidgetId widgetId)
+int ConfigReader::getWidgetAutoInactiveMs(const std::string& widgetName)
 {
-    Json widgetConfig = getWidgetConfigJsonObject(widgetId);
+    Json widgetConfig = getWidgetConfigJsonObject(widgetName);
     // If autoInactiveMs isn't present, the value returned will
     // be zero, which disables the auto-inactive feature.
     return widgetConfig["autoInactiveMs"].int_value();
 }
-
-
-/* =-=-=-=-=-=-=-=-=
-
-    for (auto& autoShutoffPeriod : json["autoShutoffPeriods"].array_items()) {
-        cout << "autoShutoffPeriod:  " << autoShutoffPeriod["description"].string_value() << endl;
-        cout << "    startDate:  " << autoShutoffPeriod["startDate"].string_value() << endl;
-        cout << "    startTime:  " << autoShutoffPeriod["startTime"].string_value() << endl;
-        cout << "      endDate:  " << autoShutoffPeriod["endDate"].string_value() << endl;
-        cout << "      endTime:  " << autoShutoffPeriod["endTime"].string_value() << endl;
-    }
-
-    for (auto& quiescentModePeriod : json["quiescentModePeriods"].array_items()) {
-        cout << "quiescentModePeriod:  " << quiescentModePeriod["description"].string_value() << endl;
-        cout << "      startDate:  " << quiescentModePeriod["startDate"].string_value() << endl;
-        cout << "      startTime:  " << quiescentModePeriod["startTime"].string_value() << endl;
-        cout << "        endDate:  " << quiescentModePeriod["endDate"].string_value() << endl;
-        cout << "        endTime:  " << quiescentModePeriod["endTime"].string_value() << endl;
-        cout << "    idlePattern:  " << quiescentModePeriod["idlePatternName"].string_value() << endl;
-    }
-
-    for (auto& widget : json["widgets"].array_items()) {
-        cout << "widget:  " << widget.string_value() << endl;
-    }
-
-    for (auto& pattern : json["patterns"].array_items()) {
-        cout << "pattern:  " << pattern["patternName"].string_value() << endl;
-        for (auto& input : pattern["inputs"].array_items()) {
-            cout << "    input:  " << input["inputName"].string_value() << endl;
-            cout << "        widget:  " << input["widgetName"].string_value() << endl;
-            cout << "        channel:  " << input["channelNumber"].int_value() << endl;
-            cout << "        measurement:  " << input["measurement"].string_value() << endl;
-        }
-    }
-
-*/
-
 

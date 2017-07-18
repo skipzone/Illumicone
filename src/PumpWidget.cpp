@@ -6,14 +6,14 @@
 #include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "log.h"
-#include "PlungerWidget.h"
+#include "PumpWidget.h"
 #include "WidgetId.h"
 
 using namespace std;
 
 
-PlungerWidget::PlungerWidget()
-    : Widget(WidgetId::plunger, 1)
+PumpWidget::PumpWidget()
+    : Widget(WidgetId::pump, 1)
 {
     for (unsigned int i = 0; i < 8; ++i) {
         updateIntervalMs[i] = 0;
@@ -24,7 +24,7 @@ PlungerWidget::PlungerWidget()
 }
 
 
-bool PlungerWidget::moveData()
+bool PumpWidget::moveData()
 {
     if (!generateSimulatedMeasurements) {
         return true;

@@ -15,9 +15,8 @@
 
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
-PROGS=PatternController
-#OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o RgbVerticalPattern.o SparklePattern.o RainbowExplosionPattern.o HorizontalStripePattern.o FillAndBurstPattern.o ParticlesPattern.o json11.o ConfigReader.o
-OBJS=WidgetId.o Widget.o WidgetChannel.o TriObeliskWidget.o ShirleysWebWidget.o EyeWidget.o RainstickWidget.o PlungerWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o HorizontalStripePattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o FillAndBurstPattern.o ParticlesPattern.o json11.o ConfigReader.o log.o
+PROGS=patternController
+OBJS=WidgetId.o widgetFactory.o Widget.o WidgetChannel.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o HorizontalStripePattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o FillAndBurstPattern.o ParticlesPattern.o json11.o ConfigReader.o log.o
 LIBS=
 
 INCLUDE=../include
@@ -41,16 +40,10 @@ $(PROGS): $(OBJS)
 # can use something like this if the implicit linking rule is not sufficient.
 #	$(CXX) $(LDFLAGS) $(LIBS) -o $@ $< $(LDLIBS)
 
-WidgetSimulator: WidgetSimulator.cpp
-	g++ $(CXXFLAGS) -o $@ $^ -lrt
-
-GpioTester: GpioTester.cpp json11.o ConfigReader.o
-	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
-
 widgetRcvr: widgetRcvr.cpp WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
 
-widgetTester: widgetTester.cpp
+stringTester: stringTester.cpp json11.o ConfigReader.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 jsonTester: jsonTester.cpp json11.o ConfigReader.o WidgetId.o
@@ -62,14 +55,8 @@ clean:
 clean-widgetRcvr:
 	rm -f widgetRcvr
 
-clean-widgetTester:
-	rm -f widgetTester
-
-clean-GpioTester:
-	rm -f GpioTester
-
-clean-WidgetSimulator:
-	rm -f WidgetSimulator
+clean-stringTester:
+	rm -f stringTester
 
 clean-jsonTester:
 	rm -f jsonTester

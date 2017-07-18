@@ -47,12 +47,12 @@
 #include "ParticlesPattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
-#include "WidgetFactory.h"
+#include "widgetFactory.h"
 
 using namespace std;
 
 
-constexpr char lockFilePath[] = "/tmp/PatternController.lock";
+constexpr char lockFilePath[] = "/tmp/patternController.lock";
 
 static ConfigReader config;
 static unsigned int numberOfStrings;
@@ -86,6 +86,7 @@ bool setUpOpcServerConnection(const string& opcServerIpAddress)
     server.sin_family = AF_INET;
     server.sin_port = htons(7890);
 
+    logMsg(LOG_INFO, "Connecting to OPC server at " + opcServerIpAddress + "...");
     if (connect(sock, (struct sockaddr *) &server, sizeof(server)) < 0) {
         logMsg(LOG_ERR, "SOMETHING'S FUCKY: couldn't connect to opc-server!");
         return false;
@@ -672,7 +673,7 @@ int main(int argc, char **argv)
         return(EXIT_FAILURE);
     }
 
-    logMsg(LOG_INFO, "---------- PatternController  starting ----------");
+    logMsg(LOG_INFO, "---------- patternController  starting ----------");
 
     if (!initOpcBuffer()) {
         return(EXIT_FAILURE);

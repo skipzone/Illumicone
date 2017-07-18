@@ -49,8 +49,11 @@ Widget::~Widget()
 
 bool Widget::init(ConfigReader& config)
 {
-    generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
-    autoInactiveMs = config.getWidgetAutoInactiveMs(id);
+    string widgetName = widgetIdToString(id);
+
+    generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(widgetName);
+
+    autoInactiveMs = config.getWidgetAutoInactiveMs(widgetName);
 
     if (autoInactiveMs != 0) {
         logMsg(LOG_INFO, "autoInactiveMs=" + to_string(autoInactiveMs) + " for " + widgetIdToString(id));

@@ -20,14 +20,14 @@
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-class ShirleysWebWidget : public Widget
+class SpinnahWidget : public Widget
 {
     public:
-        ShirleysWebWidget();
-        ~ShirleysWebWidget() {};
+        SpinnahWidget();
+        ~SpinnahWidget() {};
 
-        ShirleysWebWidget(const ShirleysWebWidget&) = delete;
-        ShirleysWebWidget& operator =(const ShirleysWebWidget&) = delete;
+        SpinnahWidget(const SpinnahWidget&) = delete;
+        SpinnahWidget& operator =(const SpinnahWidget&) = delete;
 
         bool moveData();
 

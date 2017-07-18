@@ -23,17 +23,17 @@
  *
  *  0:  reserved
  *  1:  Eye (Ray)
- *  2:  Shirley's Web (Reiley, Monty)
+ *  2:  Spinnah (Katya, Reiley, Monty)
  *  3:  Bells (Ray)
  *  4:  Rainstick (Dr. Naked)
  *  5:  Schroeder's Plaything (Ross)
  *  6:  TriObelisk (Phyxx and Dr. Naked)
- *  7:  Squawk Box (James)
- *  8:  Plunger (Monte, based on Kayla's original)
+ *  7:  unassigned
+ *  8:  Pump (Monte, Dr. Naked; based on Kayla's plunger)
  *  9:  Contort-O-Matic (Ray and Mishi)
- * 10:  FourPlay-4-2
- * 11:  FourPlay-4-3
- * 12:  Buck Norris
+ * 10:  FourPlay-4-2 (Dr. Naked, Ross)
+ * 11:  FourPlay-4-3 (Dr. Naked, Ross)
+ * 12:  Buck Norris (Connie)
  * 13:  unassigned
  * 14:  unassigned
  * 15:  unassigned
@@ -45,13 +45,13 @@
 enum class WidgetId {
     reserved = 0,
     eye,
-    shirleysWeb,
+    spinnah,
     bells,
     rainstick,
     schroedersPlaything,
     triObelisk,
-    squawkBox,
-    plunger,
+    unassigned_7,
+    pump,
     contortOMatic,
     fourPlay42,
     fourPlay43,

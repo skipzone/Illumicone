@@ -1,2 +1,2 @@
 #!/bin/bash
-/home/illumicone/devl/Illumicone/src/PatternController /home/illumicone/devl/Illumicone/config/activeConfig.json >> /home/illumicone/PatternController.out 2>&1
+/home/illumicone/devl/Illumicone/src/patternController /home/illumicone/devl/Illumicone/config/activeConfig.json >> /home/illumicone/patternController.out 2>&1

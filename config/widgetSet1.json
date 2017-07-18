@@ -54,7 +54,7 @@
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 500
         },
-        {   "name" : "shirleysWeb",
+        {   "name" : "spinnah",
             "enabled" : true,
             "generateSimulatedMeasurements" : false
         },
@@ -74,11 +74,7 @@
             "enabled" : true,
             "generateSimulatedMeasurements" : false
         },
-        {   "name" : "squawkBox",
-            "enabled" : false,
-            "generateSimulatedMeasurements" : false
-        },
-        {   "name" : "plunger",
+        {   "name" : "pump",
             "enabled" : true,
             "generateSimulatedMeasurements" : false
         },
@@ -166,13 +162,13 @@
                     "measurement" : "velocity"
                 }
             ],
-            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
-            "activationThreshold" : 20          // 20 is what we used with Shirley's Web in 2016
+            "densityScaledownFactor" : 1200,
+            "activationThreshold" : 20
         },
         {   "patternName" : "fillAndBurst",
             "inputs" : [
                 {   "inputName" : "pressure",
-                    "widgetName" : "plunger",
+                    "widgetName" : "pump",
                     "channelNumber" : 0,
                     "measurement" : "position"
                 }

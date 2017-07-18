@@ -109,11 +109,7 @@
             "enabled" : true,
             "generateSimulatedMeasurements" : false
         },
-        {   "name" : "squawkBox",
-            "enabled" : false,
-            "generateSimulatedMeasurements" : false
-        },
-        {   "name" : "plunger",
+        {   "name" : "pump",
             "enabled" : true,
             "generateSimulatedMeasurements" : true
         },
@@ -201,9 +197,10 @@
                     "measurement" : "velocity"
                 }
             ],
-            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
-            "activationThreshold" : 20          // 20 is what we used with Shirley's Web in 2016
+            "densityScaledownFactor" : 1200,
+            "activationThreshold" : 20
         },
+/*
         {   "patternName" : "rainbowExplosion",
             "inputs" : [
                 {   "inputName" : "intensity",
@@ -220,10 +217,11 @@
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalMs" : 20
         },
+*/
         {   "patternName" : "fillAndBurst",
             "inputs" : [
                 {   "inputName" : "pressure",
-                    "widgetName" : "plunger",
+                    "widgetName" : "pump",
                     "channelNumber" : 0,
                     "measurement" : "position"
                 }
@@ -246,6 +244,25 @@
             ],
             "flashingTimeoutSeconds" : 1,
             "activationThreshold" : 200         // 300 is a basic LED flashlight from a few feet away
+        },
+        {   "patternName" : "particles",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 2,        // average sound amplitude
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorRedValue" : 0,
+            "emitColorGreenValue" : 64,
+            "emitColorBlueValue" : 192,
+            "emitIntervalMeasmtLow" : 800,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 5,
+            "emitDirectionIsUp" : false,
+            "particleMoveIntervalMs" : 10
         }
     ]
 

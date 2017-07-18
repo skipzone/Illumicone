@@ -39,7 +39,7 @@ class ConfigReader
 
         std::string dumpToString();
         json11::Json getJsonObject();
-        json11::Json getWidgetConfigJsonObject(WidgetId widgetId);
+        json11::Json getWidgetConfigJsonObject(const std::string& widgetName);
         json11::Json getPatternConfigJsonObject(const std::string& patternName);
 
         int getNumberOfStrings();
@@ -48,8 +48,8 @@ class ConfigReader
         std::string getPatconIpAddress();
         bool getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods);
         int getWidgetPortNumberBase();
-        bool getWidgetGenerateSimulatedMeasurements(WidgetId widgetId);
-        int getWidgetAutoInactiveMs(WidgetId widgetId);
+        bool getWidgetGenerateSimulatedMeasurements(const std::string& widgetName);
+        int getWidgetAutoInactiveMs(const std::string& widgetName);
 
     private:
 

@@ -55,14 +55,26 @@ bool RainstickWidget::moveData()
         if (updateIntervalMs[i] > 0 && (int) (nowMs - lastUpdateMs[i]) > updateIntervalMs[i]) {
             lastUpdateMs[i] = nowMs;
             channels[i]->getPosition();      // make sure previous position and velocity have been updated in case the pattern hasn't read them
-            int newPosition = channels[i]->getPreviousPosition() + 1;
-            //logMsg(LOG_DEBUG, "RainstickWidget::moveData:  newPosition=" + to_string(newPosition));
-            if (newPosition > 1023) {
-                newPosition = 0;
+            int newPosition = channels[i]->getPreviousPosition();
+            if (!simulatedPositionGoingDown) {
+                if (newPosition < 1023) {
+                    ++newPosition;
+                }
+                else {
+                    simulatedPositionGoingDown = true;
+                }
             }
-            if (newPosition % 100 == 0) {
-                logMsg(LOG_DEBUG, channels[i]->getName() + " newPosition=" + to_string(newPosition));
+            else {
+                if (newPosition > 0) {
+                    --newPosition;
+                }
+                else {
+                    simulatedPositionGoingDown = false;
+                }
             }
+            //if (newPosition % 100 == 0) {
+            //    logMsg(LOG_DEBUG, channels[i]->getName() + " newPosition=" + to_string(newPosition));
+            //}
             channels[i]->setPositionAndVelocity(newPosition, 0);
             channels[i]->setIsActive(true);
         }

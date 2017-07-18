@@ -17,24 +17,8 @@
 
 #pragma once
 
-#include "Widget.h"
-#include "WidgetChannel.h"
+#include "WidgetId.h"
 
-class RainstickWidget : public Widget
-{
-    public:
-        RainstickWidget();
-        ~RainstickWidget() {};
 
-        RainstickWidget(const RainstickWidget&) = delete;
-        RainstickWidget& operator =(const RainstickWidget&) = delete;
-
-        bool moveData();
-
-    private:
-
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
-        bool simulatedPositionGoingDown;
-};
+Widget* widgetFactory(WidgetId id);
 

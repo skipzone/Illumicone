@@ -26,7 +26,7 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
         case 1:
             return WidgetId::eye;
         case 2:
-            return WidgetId::shirleysWeb;
+            return WidgetId::spinnah;
         case 3:
             return WidgetId::bells;
         case 4:
@@ -35,10 +35,8 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
             return WidgetId::schroedersPlaything;
         case 6:
             return WidgetId::triObelisk;
-        case 7:
-            return WidgetId::squawkBox;
         case 8:
-            return WidgetId::plunger;
+            return WidgetId::pump;
         case 9:
             return WidgetId::contortOMatic;
         case 10:
@@ -61,7 +59,7 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 0;
         case WidgetId::eye:
             return 1;
-        case WidgetId::shirleysWeb:
+        case WidgetId::spinnah:
             return 2;
         case WidgetId::bells:
             return 3;
@@ -71,9 +69,7 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 5;
         case WidgetId::triObelisk:
             return 6;
-        case WidgetId::squawkBox:
-            return 7;
-        case WidgetId::plunger:
+        case WidgetId::pump:
             return 8;
         case WidgetId::contortOMatic:
             return 9;
@@ -83,6 +79,7 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 11;
         case WidgetId::buckNorris:
             return 12;
+        case WidgetId::unassigned_7:
         case WidgetId::invalid:
             return 255;
     }
@@ -97,8 +94,8 @@ std::string widgetIdToString(WidgetId widgetId)
             return "reserved";
         case WidgetId::eye:
             return "eye";
-        case WidgetId::shirleysWeb:
-            return "shirleysWeb";
+        case WidgetId::spinnah:
+            return "spinnah";
         case WidgetId::bells:
             return "bells";
         case WidgetId::rainstick:
@@ -107,10 +104,8 @@ std::string widgetIdToString(WidgetId widgetId)
             return "schroedersPlaything";
         case WidgetId::triObelisk:
             return "triObelisk";
-        case WidgetId::squawkBox:
-            return "squawkBox";
-        case WidgetId::plunger:
-            return "plunger";
+        case WidgetId::pump:
+            return "pump";
         case WidgetId::contortOMatic:
             return "contortOMatic";
         case WidgetId::fourPlay42:
@@ -119,6 +114,7 @@ std::string widgetIdToString(WidgetId widgetId)
             return "fourPlay43";
         case WidgetId::buckNorris:
             return "buckNorris";
+        case WidgetId::unassigned_7:
         case WidgetId::invalid:
             return "invalid";
     }
