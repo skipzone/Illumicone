@@ -17,12 +17,9 @@
 
 // FillAndBurstPattern is based on RainbowExplosionPattern written by David Van Arnem in 2016.
 
-#include <chrono>
-#include <iostream>
-#include <time.h>
-
 #include "ConfigReader.h"
 #include "FillAndBurstPattern.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "Pattern.h"
 #include "Widget.h"
@@ -160,9 +157,7 @@ bool FillAndBurstPattern::update()
         return false;
     }
 
-    std::chrono::milliseconds epochMs =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
+    unsigned int nowMs = getNowMs();
 
     // If we're in one of the bursting states and it isn't time
     // to do the next step, just return that we're active.

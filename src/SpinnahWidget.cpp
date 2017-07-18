@@ -15,12 +15,8 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
-#include <iostream>
 #include <string>
-#include <time.h>
 
-#include "ConfigReader.h"
 #include "illumiconeTypes.h"
 #include "SpinnahWidget.h"
 #include "WidgetId.h"
@@ -31,34 +27,13 @@ using namespace std;
 SpinnahWidget::SpinnahWidget()
     : Widget(WidgetId::spinnah, 1)
 {
-    for (unsigned int i = 0; i < 8; ++i) {
-        updateIntervalMs[i] = 0;
-        lastUpdateMs[i] = 0;
-    }
-
-    updateIntervalMs[0] = 1000;
+    simulationUpdateIntervalMs[0] = 1000;
 }
 
 
-bool SpinnahWidget::moveData()
+void SpinnahWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    if (!generateSimulatedMeasurements) {
-        return true;
-    }
-
-    using namespace std::chrono;
-
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
-
-    for (unsigned int i = 0; i < numChannels; ++i) {
-        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            lastUpdateMs[i] = nowMs;
-            channels[i]->setPositionAndVelocity(0, 120);
-            channels[i]->setIsActive(true);
-        }
-    }
-
-    return true;
+    channels[chIdx]->setPositionAndVelocity(0, 120);
+    channels[chIdx]->setIsActive(true);
 }
 

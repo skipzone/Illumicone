@@ -25,6 +25,7 @@
 
 #include "ConfigReader.h"
 #include "illumiconeTypes.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
@@ -37,13 +38,19 @@ Widget::Widget(WidgetId id, unsigned int numChannels)
     : id(id)
     , numChannels(numChannels)
 {
+    unsigned int nowMs = getNowMs();
+
+    for (unsigned int i = 0; i < 8; ++i) {
+        simulationUpdateIntervalMs[i] = 0;      // disabled for channel
+        simulationNextUpdateMs[i] = nowMs;      // start doing updates immediately if enabled
+    }
 }
 
 
 Widget::~Widget()
 {
-    pthread_join(udpRxThread, NULL); 	// close the thread
-    close(sockfd); 					// close UDP socket
+    pthread_join(udpRxThread, NULL); 	        // close the thread
+    close(sockfd); 					            // close UDP socket
 }
 
 
@@ -87,39 +94,6 @@ std::vector<std::shared_ptr<WidgetChannel>> Widget::getChannels()
 {
     return channels;
 }
-
-
-//bool Widget::getIsActive()
-//{
-//    for (auto&& channel : channels) {
-//        if (channel->getIsActive()) {
-//            return true;
-//        }
-//    }
-//    return false;
-//}
-
-
-//bool Widget::getHasNewPositionMeasurement()
-//{
-//    for (auto&& channel : channels) {
-//        if (channel->getHasNewPositionMeasurement()) {
-//            return true;
-//        }
-//    }
-//    return false;
-//}
-
-
-//bool Widget::getHasNewVelocityMeasurement()
-//{
-//    for (auto&& channel : channels) {
-//        if (channel->getHasNewVelocityMeasurement()) {
-//            return true;
-//        }
-//    }
-//    return false;
-//}
 
 
 void Widget::startUdpRxThread()
@@ -192,5 +166,22 @@ void* Widget::udpRxThreadEntry(void* widgetObj)
 {
 	((Widget *) widgetObj)->pollForUdpRx();
     return nullptr;
+}
+
+
+void Widget::updateSimulatedMeasurements()
+{
+    if (!generateSimulatedMeasurements) {
+        return;
+    }
+
+    unsigned int nowMs = getNowMs();
+
+    for (unsigned int i = 0; i < numChannels; ++i) {
+        if (simulationUpdateIntervalMs[i] > 0 && (int) (nowMs - simulationNextUpdateMs[i]) >= 0) {
+            simulationNextUpdateMs[i] = nowMs + simulationUpdateIntervalMs[i];
+            updateChannelSimulatedMeasurements(i);
+        }
+    }
 }
 

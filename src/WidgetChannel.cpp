@@ -15,13 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
-///#include <stdbool.h>
-#include <iostream>
-///#include <vector>
-
-#include <time.h>
-
+#include "illumiconeUtility.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
@@ -60,10 +54,9 @@ bool WidgetChannel::getIsActive()
 {
     if (isActive) {
         if (autoInactiveMs != 0) {
-            using namespace std::chrono;
-            milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-            unsigned int nowMs = epochMs.count();
-            if (nowMs - lastActiveMs > autoInactiveMs) {
+            unsigned int forceInactiveMs = lastActiveMs + autoInactiveMs;
+            unsigned int nowMs = getNowMs();
+            if ((int) (nowMs - forceInactiveMs) >= 0) {
                 isActive = false;
             }
         }
@@ -120,9 +113,7 @@ int WidgetChannel::getPreviousVelocity()
 void WidgetChannel::setIsActive(bool isNowActive)
 {
     if (isNowActive && autoInactiveMs != 0) {
-        using namespace std::chrono;
-        milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-        lastActiveMs = epochMs.count();
+        lastActiveMs = getNowMs();
     }
 
     isActive = isNowActive;
@@ -137,7 +128,6 @@ void WidgetChannel::setIsActive(bool isNowActive)
 
 void WidgetChannel::setPosition(int newPosition)
 {
-    //cout << "setting position to " << newPosition << endl;
     position = newPosition;
     hasNewPositionMeasurement = true;
 }
@@ -145,7 +135,6 @@ void WidgetChannel::setPosition(int newPosition)
 
 void WidgetChannel::setVelocity(int newVelocity)
 {
-    //cout << "setting velocity to " << newVelocity << endl;
     velocity = newVelocity;
     hasNewVelocityMeasurement = true;
 }
@@ -153,7 +142,6 @@ void WidgetChannel::setVelocity(int newVelocity)
 
 void WidgetChannel::setPositionAndVelocity(int newPosition, int newVelocity)
 {
-    //cout << "setting position to " << newPosition << ", velocity to " << newVelocity << endl;
     position = newPosition;
     velocity = newVelocity;
     hasNewPositionMeasurement = true;

@@ -1,9 +1,22 @@
-#include <chrono>
-#include <iostream>
-#include <string>
-#include <time.h>
+/*
+    This file is part of Illumicone.
 
-#include "ConfigReader.h"
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <string>
+
 #include "illumiconeTypes.h"
 #include "log.h"
 #include "PumpWidget.h"
@@ -15,41 +28,20 @@ using namespace std;
 PumpWidget::PumpWidget()
     : Widget(WidgetId::pump, 1)
 {
-    for (unsigned int i = 0; i < 8; ++i) {
-        updateIntervalMs[i] = 0;
-        lastUpdateMs[i] = 0;
-    }
-
-    updateIntervalMs[0] = 10;
+    simulationUpdateIntervalMs[0] = 10;
 }
 
 
-bool PumpWidget::moveData()
+void PumpWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    if (!generateSimulatedMeasurements) {
-        return true;
+    int newPosition = channels[chIdx]->getPreviousPosition() + 1;
+    if (newPosition > 1023) {
+        newPosition = 0;
     }
-
-    using namespace std::chrono;
-
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
-
-    for (unsigned int i = 0; i < numChannels; ++i) {
-        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            lastUpdateMs[i] = nowMs;
-            int newPosition = channels[i]->getPreviousPosition() + 1;
-            if (newPosition > 1023) {
-                newPosition = 0;
-            }
-            //if (newPosition % 10 == 0) {
-            //    logMsg(LOG_DEBUG, channels[i]->getName() + " newPosition=" + to_string(newPosition));
-            //}
-            channels[i]->setPositionAndVelocity(newPosition, 0);
-            channels[i]->setIsActive(true);
-        }
-    }
-
-    return true;
+    //if (newPosition % 10 == 0) {
+    //    logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    //}
+    channels[chIdx]->setPositionAndVelocity(newPosition, 0);
+    channels[chIdx]->setIsActive(true);
 }
 

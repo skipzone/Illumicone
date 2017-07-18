@@ -15,11 +15,10 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <algorithm>
-#include <chrono>
-#include <iostream>
+#include <stdlib.h>
 
 #include "ConfigReader.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "ParticlesPattern.h"
 #include "Pattern.h"
@@ -193,9 +192,7 @@ bool ParticlesPattern::update()
     // frame will be displayed as this pattern goes inactive.
     bool wasActive = isActive;
 
-    std::chrono::milliseconds epochMs =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
+    unsigned int nowMs = getNowMs();
 
     // Move the existing particles if it is time to do so.
     if (isActive && (int) (nowMs - nextMoveParticlesMs) >= 0) {

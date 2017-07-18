@@ -15,15 +15,13 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
-//#include <stdlib.h>
-//#include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 
+#include "illumiconeUtility.h"
 #include "log.h"
 
 
@@ -32,11 +30,9 @@ using namespace std;
 
 const string getTimestamp()
 {
-    using namespace std::chrono;
-
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    int ms = epochMs.count() % 1000;
-    time_t now = epochMs.count() / 1000;
+    unsigned int nowMs = getNowMs();
+    int ms = nowMs % 1000;
+    time_t now = nowMs / 1000;
 
     struct tm tmStruct = *localtime(&now);
     char buf[20];
