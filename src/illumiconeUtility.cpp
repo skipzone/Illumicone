@@ -15,24 +15,17 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include <chrono>
 
-#include "Widget.h"
-#include "WidgetChannel.h"
 
-class PumpWidget : public Widget
+unsigned int getNowMs()
 {
-    public:
+    using namespace std::chrono;
 
-        PumpWidget();
-        ~PumpWidget() {};
+    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+    unsigned int nowMs = epochMs.count();
 
-        PumpWidget(const PumpWidget&) = delete;
-        PumpWidget& operator =(const PumpWidget&) = delete;
+    return nowMs;
+}
 
-        void updateChannelSimulatedMeasurements(unsigned int chIdx);
-
-    private:
-
-};
 

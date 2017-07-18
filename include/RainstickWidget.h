@@ -29,12 +29,10 @@ class RainstickWidget : public Widget
         RainstickWidget(const RainstickWidget&) = delete;
         RainstickWidget& operator =(const RainstickWidget&) = delete;
 
-        bool moveData();
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
         bool simulatedPositionGoingDown;
 };
 

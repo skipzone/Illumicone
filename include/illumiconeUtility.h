@@ -15,24 +15,6 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
 
-#include "Widget.h"
-#include "WidgetChannel.h"
-
-class PumpWidget : public Widget
-{
-    public:
-
-        PumpWidget();
-        ~PumpWidget() {};
-
-        PumpWidget(const PumpWidget&) = delete;
-        PumpWidget& operator =(const PumpWidget&) = delete;
-
-        void updateChannelSimulatedMeasurements(unsigned int chIdx);
-
-    private:
-
-};
+unsigned int getNowMs();
 

@@ -29,11 +29,9 @@ class SpinnahWidget : public Widget
         SpinnahWidget(const SpinnahWidget&) = delete;
         SpinnahWidget& operator =(const SpinnahWidget&) = delete;
 
-        bool moveData();
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
 };
 

@@ -46,16 +46,14 @@ class Widget
 
         virtual bool init(ConfigReader& config);
 
-        virtual bool moveData() = 0;
-
         virtual std::shared_ptr<WidgetChannel> getChannel(unsigned int channelIdx);
         virtual std::vector<std::shared_ptr<WidgetChannel>> getChannels();
 
-//        virtual bool getIsActive();
-//        virtual bool getHasNewPositionMeasurement();
-//        virtual bool getHasNewVelocityMeasurement();
-
         static void* udpRxThreadEntry(void* widgetObj);
+
+        void updateSimulatedMeasurements();
+        virtual void updateChannelSimulatedMeasurements(unsigned int chIdx) {};
+
 
     protected:
 
@@ -63,9 +61,11 @@ class Widget
 
         const WidgetId id;
         std::vector<std::shared_ptr<WidgetChannel>> channels;
-        bool generateSimulatedMeasurements;
         unsigned int autoInactiveMs;
         unsigned int numChannels;
+        bool generateSimulatedMeasurements;
+        unsigned int simulationNextUpdateMs[8];
+        unsigned int simulationUpdateIntervalMs[8];
 
     private:
 

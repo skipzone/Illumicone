@@ -23,17 +23,16 @@
 class FourPlay42Widget : public Widget
 {
     public:
+
         FourPlay42Widget();
         ~FourPlay42Widget() {};
 
         FourPlay42Widget(const FourPlay42Widget&) = delete;
         FourPlay42Widget& operator =(const FourPlay42Widget&) = delete;
 
-        bool moveData();
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
 };
 

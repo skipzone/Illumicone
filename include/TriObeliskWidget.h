@@ -23,17 +23,16 @@
 class TriObeliskWidget : public Widget
 {
     public:
+
         TriObeliskWidget();
         ~TriObeliskWidget() {};
 
         TriObeliskWidget(const TriObeliskWidget&) = delete;
         TriObeliskWidget& operator =(const TriObeliskWidget&) = delete;
 
-        bool moveData();
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
 };
 

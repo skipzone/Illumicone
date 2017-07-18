@@ -15,16 +15,11 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
-#include <iostream>
 #include <string>
-//#include <thread>
-#include <time.h>
-///#include <vector>
 
-#include "ConfigReader.h"
 #include "EyeWidget.h"
 #include "illumiconeTypes.h"
+#include "log.h"
 #include "WidgetId.h"
 
 using namespace std;
@@ -33,48 +28,35 @@ using namespace std;
 EyeWidget::EyeWidget()
     : Widget(WidgetId::eye, 1)
 {
+    simulationUpdateIntervalMs[0] = eyeSimulationUpdateIntervalMs;
 }
 
 
-bool EyeWidget::moveData()
+void EyeWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    if (!generateSimulatedMeasurements) {
-        return true;
-    }
-
-    using namespace std::chrono;
-
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
-
-    if (nowMs - lastUpdateMs > updateIntervalMs) {
-        lastUpdateMs = nowMs;
-        ++stepCount;
-        if (channels[0]->getIsActive()) {
-            if (stepCount < numActiveSteps) {
-                channels[0]->setIsActive(true);     // so that it doesn't auto inactivate
-                channels[0]->setPosition(activePositionValue);
-                //cout << "position value for Eye set to " << activePositionValue << endl;
-            }
-            else {
-                stepCount = 0;
-                channels[0]->setIsActive(false);
-                //cout << "Eye going inactive" << endl;
-            }
+    ++stepCount;
+    if (channels[chIdx]->getIsActive()) {
+        if (stepCount < numActiveSteps) {
+            channels[chIdx]->setIsActive(true);     // so that it doesn't auto inactivate
+            channels[chIdx]->setPosition(activePositionValue);
+            //logMsg(LOG_DEBUG, "position value for Eye set to " + to_string(activePositionValue));
         }
         else {
-            if (stepCount < numInactiveSteps) {
-                //cout << "Eye inactive" << endl;
-            }
-            else {
-                stepCount = 0;
-                channels[0]->setIsActive(true);
-                channels[0]->setPosition(activePositionValue);
-                //cout << "Eye going active; position value set to " << activePositionValue << endl;
-            }
+            stepCount = 0;
+            channels[chIdx]->setIsActive(false);
+            //logMsg(LOG_DEBUG, "Eye going inactive");
         }
     }
-
-    return true;
+    else {
+        if (stepCount < numInactiveSteps) {
+            //logMsg(LOG_DEBUG, "Eye inactive");
+        }
+        else {
+            stepCount = 0;
+            channels[chIdx]->setIsActive(true);
+            channels[chIdx]->setPosition(activePositionValue);
+            //logMsg(LOG_DEBUG, "Eye going active; position value set to " + to_string(activePositionValue));
+        }
+    }
 }
 

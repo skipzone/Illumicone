@@ -554,14 +554,6 @@ bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, s
 }
 
 
-void moveWidgetData()
-{
-    for (auto&& widget : widgets) {
-        widget.second->moveData();
-    }
-}
-
-
 void doPatterns()
 {
     static bool doIdlePattern;
@@ -696,7 +688,10 @@ int main(int argc, char **argv)
     // ----- run loop -----
     while (true) {
 
-        moveWidgetData();
+        // Give the widgets a chance to update their simulated measurements.
+        for (auto&& widget : widgets) {
+            widget.second->updateSimulatedMeasurements();
+        }
 
         // Once per second, check if we're in a schedule period.
         time_t now;

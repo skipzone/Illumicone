@@ -23,17 +23,18 @@
 class BellsWidget : public Widget
 {
     public:
+
         BellsWidget();
         ~BellsWidget() {};
 
         BellsWidget(const BellsWidget&) = delete;
         BellsWidget& operator =(const BellsWidget&) = delete;
 
-        bool moveData();
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
+        int simWidth;
+
 };
 
