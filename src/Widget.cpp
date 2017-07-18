@@ -59,7 +59,7 @@ bool Widget::init(ConfigReader& config)
         logMsg(LOG_INFO, "autoInactiveMs=" + to_string(autoInactiveMs) + " for " + widgetIdToString(id));
     }
 
-    for (int i = 0; i < numChannels; ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this, autoInactiveMs));
     }
 
