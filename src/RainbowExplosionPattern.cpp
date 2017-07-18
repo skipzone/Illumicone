@@ -15,11 +15,10 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
-#include <iostream>
-#include <time.h>
+#include <stdlib.h>
 
 #include "ConfigReader.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "Pattern.h"
 #include "RainbowExplosionPattern.h"
@@ -146,9 +145,7 @@ bool RainbowExplosionPattern::update()
         return false;
     }
 
-    std::chrono::milliseconds epochMs =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
+    unsigned int nowMs = getNowMs();
 
     // If we're in one of the explosion states and it isn't time
     // to do the next step, just return that we're active.
