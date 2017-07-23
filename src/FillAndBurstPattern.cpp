@@ -29,27 +29,28 @@
 using namespace std;
 
 
-FillAndBurstPattern::FillAndBurstPattern()
-    : Pattern("fillAndBurst")
+FillAndBurstPattern::FillAndBurstPattern(const std::string& name)
+    : Pattern(name)
 {
 }
 
 
-bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    // This pattern will change its priority based on its state--6 while pressurizing, 1 while bursting.
-    // The value passed to initPattern is ignored.
-    // TODO:  Eliminate magic number.
-    this->priority = 6;
-    opacity = 100;
-
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
+    // The plain priority, which is retrieved from the config by the parent
+    // class, is the priority used while filling (which is most of the time).
+    fillingPriority = priority;
 
     state = PatternState::pressurizing;
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
+
+    if (!patternConfig["burstingPriority"].is_number()) {
+        logMsg(LOG_ERR, "burstingPriority not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    burstingPriority = patternConfig["burstingPriority "].int_value();
+    logMsg(LOG_INFO, name + " burstingPriority=" + to_string(burstingPriority));
 
     if (!patternConfig["lowPressureCutoff"].is_number()) {
         logMsg(LOG_ERR, "lowPressureCutoff not specified in " + name + " pattern configuration.");
@@ -211,8 +212,7 @@ bool FillAndBurstPattern::update()
             break;
 
         case PatternState::fillRed:
-            // TODO:  Eliminate magic number.
-            priority = 1;
+            priority = burstingPriority;
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
@@ -324,8 +324,7 @@ bool FillAndBurstPattern::update()
             break;
 
         case PatternState::endBursting:
-            // TODO:  Eliminate magic number.
-            priority = 6;
+            priority = fillingPriority;
             clearAllPixels();
             state = PatternState::depressurizing;
             // We'll return true this time so that the last burst color

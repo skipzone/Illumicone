@@ -25,9 +25,30 @@
 using namespace std;
 
 
-Pattern::Pattern(const std::string name)
+Pattern::Pattern(const std::string& name)
     : name(name)
 {
+}
+
+
+bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+{
+    numStrings = config.getNumberOfStrings();
+    pixelsPerString = config.getNumberOfPixelsPerString();
+    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
+
+    auto patternConfig = config.getPatternConfigJsonObject(name);
+
+    if (!patternConfig["priority"].is_number()) {
+        logMsg(LOG_ERR, "priority not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    priority = patternConfig["priority"].int_value();
+    logMsg(LOG_INFO, name + " priority=" + to_string(priority));
+
+    opacity = 100;
+
+    return initPattern(config, widgets);
 }
 
 
@@ -38,7 +59,7 @@ std::vector<Pattern::ChannelConfiguration> Pattern::getChannelConfigurations(
     std::vector<ChannelConfiguration> channelConfigs;
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
-    if (patternConfig["patternName"].string_value() != name) {
+    if (patternConfig["name"].string_value() != name) {
         logMsg(LOG_ERR, name + " not found in patterns configuration section.");
         return channelConfigs;
     }

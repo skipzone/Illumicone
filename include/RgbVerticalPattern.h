@@ -32,14 +32,18 @@ class RgbVerticalPattern : public Pattern {
 
     public:
 
-        RgbVerticalPattern();
+        RgbVerticalPattern(const std::string& name);
         ~RgbVerticalPattern() {};
 
+        RgbVerticalPattern() = delete;
         RgbVerticalPattern(const RgbVerticalPattern&) = delete;
         RgbVerticalPattern& operator =(const RgbVerticalPattern&) = delete;
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();       
+
+    protected:
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 
     private:
 

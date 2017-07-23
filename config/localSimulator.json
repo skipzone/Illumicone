@@ -88,7 +88,10 @@
     ],
 
     "patterns" : [
-        {   "patternName" : "rgbVertical",
+        {   "name" : "verticalStripes",
+            "enabled" : true,
+            "priority" : 2,
+            "patternClassName" : "RgbVerticalPattern",
             "inputs" : [
                 {   "inputName" : "redPosition",
                     "widgetName" : "fourPlay42",
@@ -115,7 +118,10 @@
             "maxCyclicalWidth" : 12,
             "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
-        {   "patternName" : "horizontalStripe",
+        {   "name" : "horizontalRings",
+            "enabled" : true,
+            "priority" : 3,
+            "patternClassName" : "HorizontalStripePattern",
             "inputs" : [
                 {   "inputName" : "redPosition",
                     "widgetName" : "fourPlay43",
@@ -142,7 +148,10 @@
             "maxCyclicalWidth" : 20,            // the maximum width when cyclical values are used
             "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
-        {   "patternName" : "sparkle",
+        {   "name" : "multicolorSparkle",
+            "enabled" : true,
+            "priority" : 5,
+            "patternClassName" : "SparklePattern",
             "inputs" : [
                 {   "inputName" : "density",
                     "widgetName" : "triObelisk",
@@ -153,7 +162,11 @@
             "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "activationThreshold" : 20          // 20 is what we used with Shirley's Web in 2016
         },
-        {   "patternName" : "fillAndBurst",
+        {   "name" : "pumpFillAndBurst",
+            "enabled" : true,
+            "priority" : 6,
+            "burstingPriority" : 0,
+            "patternClassName" : "FillAndBurstPattern",
             "inputs" : [
                 {   "inputName" : "pressure",
                     "widgetName" : "pump",
@@ -169,7 +182,10 @@
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalMs" : 20
         },
-        {   "patternName" : "annoyingFlashing",
+        {   "name" : "eyeFlash",
+            "enabled" : true,
+            "priority" : 1,
+            "patternClassName" : "AnnoyingFlashingPattern",
             "inputs" : [
                 {   "inputName" : "intensity",
                     "widgetName" : "eye",
@@ -180,7 +196,10 @@
             "flashingTimeoutSeconds" : 1,
             "activationThreshold" : 200         // 300 is a basic LED flashlight from a few feet away
         },
-        {   "patternName" : "particles",
+        {   "name" : "rain",
+            "enabled" : true,
+            "priority" : 4,
+            "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
                     "widgetName" : "rainstick",

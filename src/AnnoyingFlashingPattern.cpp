@@ -28,21 +28,14 @@
 using namespace std;
 
 
-AnnoyingFlashingPattern::AnnoyingFlashingPattern()
-    : Pattern("annoyingFlashing")
+AnnoyingFlashingPattern::AnnoyingFlashingPattern(const std::string& name)
+    : Pattern(name)
 {
 };
 
 
-bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
-    opacity = 100;
-
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["activationThreshold"].is_number()) {

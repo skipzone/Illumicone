@@ -30,14 +30,19 @@
 class FillAndBurstPattern : public Pattern
 {
     public:
-        FillAndBurstPattern();
+
+        FillAndBurstPattern(const std::string& name);
         ~FillAndBurstPattern() {};
 
+        FillAndBurstPattern() = delete;
         FillAndBurstPattern(const FillAndBurstPattern&) = delete;
         FillAndBurstPattern& operator =(const FillAndBurstPattern&) = delete;
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    protected:
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 
     private:
 
@@ -58,6 +63,8 @@ class FillAndBurstPattern : public Pattern
         std::shared_ptr<WidgetChannel> pressureChannel;
 
         // pattern configuration
+        int fillingPriority;
+        int burstingPriority;
         int lowPressureCutoff;
         int burstThreshold;
         opc_pixel_t pressureColor;

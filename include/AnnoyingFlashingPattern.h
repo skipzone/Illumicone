@@ -32,14 +32,18 @@ class AnnoyingFlashingPattern : public Pattern {
 
     public:
 
-        AnnoyingFlashingPattern();
+        AnnoyingFlashingPattern(const std::string& name);
         ~AnnoyingFlashingPattern() {};
 
+        AnnoyingFlashingPattern() = delete;
         AnnoyingFlashingPattern(const AnnoyingFlashingPattern&) = delete;
         AnnoyingFlashingPattern& operator =(const AnnoyingFlashingPattern&) = delete;
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    protected:
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 
     private:
 

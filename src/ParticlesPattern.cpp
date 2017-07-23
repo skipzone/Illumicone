@@ -29,23 +29,17 @@
 using namespace std;
 
 
-ParticlesPattern::ParticlesPattern()
-    : Pattern("particles")
+ParticlesPattern::ParticlesPattern(const std::string& name)
+    : Pattern(name)
 {
-};
+}
 
 
-bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
-    opacity = 100;
     numRotationsNeededToClearParticles = 0;
     nextMoveParticlesMs = 0;
     nextEmitParticlesMs = 0;
-
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
 
     // ----- get pattern configuration -----
 

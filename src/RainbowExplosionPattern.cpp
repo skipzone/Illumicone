@@ -29,21 +29,14 @@
 using namespace std;
 
 
-RainbowExplosionPattern::RainbowExplosionPattern()
-    : Pattern("rainbowExplosion")
+RainbowExplosionPattern::RainbowExplosionPattern(const std::string& name)
+    : Pattern(name)
 {
 }
 
 
-bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
-    opacity = 100;
-
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-
     state = PatternState::fizzle;
     accumulator = 0;
 

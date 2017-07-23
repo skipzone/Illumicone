@@ -17,41 +17,8 @@
 
 #pragma once
 
-#include <map>
-#include <memory>
-
-#include "Pattern.h"
-#include "WidgetId.h"
+#include <string>
 
 
-class ConfigReader;
-class Widget;
-
-
-class SparklePattern : public Pattern {
-
-    public:
-
-        SparklePattern(const std::string& name);
-        ~SparklePattern() {};
-
-        SparklePattern() = delete;
-        SparklePattern(const SparklePattern&) = delete;
-        SparklePattern& operator =(const SparklePattern&) = delete;
-
-        bool update();
-
-    protected:
-
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
-
-    private:
-
-        std::shared_ptr<WidgetChannel> densityChannel;
-
-        int densityScaledownFactor;
-        int activationThreshold;
-
-        void goInactive();
-};
+Pattern* patternFactory(const std::string& patternClassName, const std::string& patternName);
 

@@ -30,12 +30,17 @@ class Pattern
 {
     public:
 
-        Pattern(const std::string name);
+        Pattern(const std::string& name);
         virtual ~Pattern() {}
 
         Pattern() = delete;
         Pattern(const Pattern&) = delete;
         Pattern& operator =(const Pattern&) = delete;
+
+        std::string getName() { return name; }
+
+        bool init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+        virtual bool update() = 0;
 
         int pixelsPerString;
         int numStrings;
@@ -46,11 +51,6 @@ class Pattern
         std::string name;
         bool isActive;
 
-        std::string getName() { return name; }
-
-        virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority) = 0;
-
-        virtual bool update() = 0;
 
     protected:
 
@@ -61,6 +61,8 @@ class Pattern
         };
 
         std::vector<ChannelConfiguration> getChannelConfigurations(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+
+        virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets) = 0;
 };
 
 #endif /* PATTERN_H */

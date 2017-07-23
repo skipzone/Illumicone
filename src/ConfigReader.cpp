@@ -87,7 +87,7 @@ Json ConfigReader::getWidgetConfigJsonObject(const std::string& widgetName)
 Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
 {
     for (auto& patternConfigObj : configObj["patterns"].array_items()) {
-        if (patternConfigObj["patternName"].string_value() == patternName) {
+        if (patternConfigObj["name"].string_value() == patternName) {
             return patternConfigObj;
         }
     }

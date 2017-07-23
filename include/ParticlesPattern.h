@@ -32,14 +32,18 @@ class ParticlesPattern : public Pattern {
 
     public:
 
-        ParticlesPattern();
+        ParticlesPattern(const std::string& name);
         ~ParticlesPattern() {};
 
+        ParticlesPattern() = delete;
         ParticlesPattern(const ParticlesPattern&) = delete;
         ParticlesPattern& operator =(const ParticlesPattern&) = delete;
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    protected:
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 
     private:
 

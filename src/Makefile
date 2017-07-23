@@ -16,7 +16,7 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=patternController
-OBJS=WidgetId.o widgetFactory.o Widget.o WidgetChannel.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o HorizontalStripePattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o FillAndBurstPattern.o ParticlesPattern.o json11.o ConfigReader.o log.o illumiconeUtility.o
+OBJS=patternFactory.o WidgetId.o widgetFactory.o Widget.o WidgetChannel.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o HorizontalStripePattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o FillAndBurstPattern.o ParticlesPattern.o json11.o ConfigReader.o log.o illumiconeUtility.o
 LIBS=
 
 INCLUDE=../include

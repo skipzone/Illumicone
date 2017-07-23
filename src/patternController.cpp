@@ -15,7 +15,9 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <algorithm>
 #include <arpa/inet.h>
+#include <climits>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
@@ -38,13 +40,7 @@
 #include "illumiconeTypes.h"
 #include "log.h"
 #include "Pattern.h"
-#include "RgbVerticalPattern.h"
-#include "AnnoyingFlashingPattern.h"
-#include "SparklePattern.h"
-#include "HorizontalStripePattern.h"
-//#include "RainbowExplosionPattern.h"
-#include "FillAndBurstPattern.h"
-#include "ParticlesPattern.h"
+#include "patternFactory.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 #include "widgetFactory.h"
@@ -53,6 +49,12 @@ using namespace std;
 
 
 constexpr char lockFilePath[] = "/tmp/patternController.lock";
+
+struct PatternState {
+    Pattern* pattern;
+    int currentPriority;
+    int wantsDisplay;
+};
 
 static ConfigReader config;
 static unsigned int numberOfStrings;
@@ -67,16 +69,9 @@ static size_t opcBufferSize;
 static uint8_t* opcData;        // points to the data portion of opcBuffer
 
 static map<WidgetId, Widget*> widgets;
+static vector<PatternState*> patternStates;
 
-static AnnoyingFlashingPattern annoyingFlashingPattern;
-static RgbVerticalPattern rgbVerticalPattern;
-static SparklePattern sparklePattern;
-static HorizontalStripePattern horizontalStripePattern;
-//static RainbowExplosionPattern rainbowExplosionPattern;
-static FillAndBurstPattern fillAndBurstPattern;
-static ParticlesPattern particlesPattern;
-
-static map<Pattern*, bool> patternIsOk;
+static vector<vector<opc_pixel_t>> finalFrame;
 
 
 bool setUpOpcServerConnection(const string& opcServerIpAddress)
@@ -112,7 +107,7 @@ void dumpOpcBuffer()
 }
 
 
-void sendOpcMessage(vector<vector<opc_pixel_t>> &finalFrame)
+void sendOpcMessage()
 {
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         unsigned int colOffset = col * numberOfPixelsPerString * 3;
@@ -131,7 +126,7 @@ void sendOpcMessage(vector<vector<opc_pixel_t>> &finalFrame)
 }
 
 
-void zeroFrame(vector<vector<opc_pixel_t>> &finalFrame)
+void zeroFrame()
 {
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
@@ -145,154 +140,35 @@ void zeroFrame(vector<vector<opc_pixel_t>> &finalFrame)
 
 void turnOffAllPixels()
 {
-    vector<vector<opc_pixel_t>> finalFrame;
-    finalFrame.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
-    zeroFrame(finalFrame);
-    sendOpcMessage(finalFrame);
+    zeroFrame();
+    sendOpcMessage();
+}
+
+
+void turnOnSafetyLights()
+{
+    zeroFrame();
+    for (auto&& stringPixels : finalFrame) {
+        // TODO ross 7/22/2017:  get the safety color from config
+        stringPixels[numberOfPixelsPerString - 1].r = 255;
+        stringPixels[numberOfPixelsPerString - 1].g = 0;
+        stringPixels[numberOfPixelsPerString - 1].b = 255;
+    }
+    sendOpcMessage();
 }
 
 
 void setAllPixelsToQuiescentColor()
 {
-    vector<vector<opc_pixel_t>> finalFrame;
-    finalFrame.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
+            // TODO ross 7/22/2017:  get the quiescent color from config
             finalFrame[col][row].r = 0;
             finalFrame[col][row].g = 0;
             finalFrame[col][row].b = 64;
         }
     }
-    sendOpcMessage(finalFrame);
-}
-
-
-/*
- * Build the OPC packet based on the values in the pixelArray for a pattern, and
- * its priority.
- *
- * This will do some sort of math based on its parameters to determine how to update
- * the final array.  The final array will be stored separately as a 2d opc_pixel_t
- * vector, probably globally like opcBuffer.
- *
- * We might have two to provide for double buffering of some sort.
- *
- * Ideally this would be called for each pattern that has updates before sending
- * the final packet over the network, like:
- *      buildPacket(finalFrame, rgbPattern.pixelArray, rgbPattern.priority);
- *      buildPacket(finalFrame, annoyingFlashingPattern.pixelArray, annoyingFlashingPattern.priority);
- *      ..
- *      ..
- *
- *      sendPacket(finalFrame);
- *
- * Call this in reverse priority for best results, i.e. call with priority 3 pattern, then with
- * 2, then 1, then 0.
- */
-bool buildFrame(
-        vector<vector<opc_pixel_t>> &finalFrame,
-        vector<vector<opc_pixel_t>> &pixelArray,
-        int priority)
-{
-    // TODO 7/15/2017 ross:  All these cases end up doing the same thing.  We need a different approach.
-
-    switch (priority) {
-        case 0:
-            // AnnoyingFlashingPattern
-            for (unsigned int col = 0; col < numberOfStrings; col++) {
-                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-                    if (pixelArray[col][row].r != 0 && pixelArray[col][row].g != 0 && pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row];
-                    }
-                }
-            }
-            break;
-
-        case 1:
-            // FillAndBurstPattern, bursting
-            for (unsigned int col = 0; col < numberOfStrings; col++) {
-                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row]; 
-                    }
-                }
-            }
-            break;
-
-        case 2:
-            // RgbVerticalPattern
-            for (unsigned int col = 0; col < numberOfStrings; col++) {
-                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-                    // only update the value of the final frame if the pixel
-                    // contains non-zero values (is on)
-                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row];
-                    }
-                }
-            }
-            break;
- 
-        case 3:
-            // HorizontalStripePattern
-            for (unsigned int col = 0; col < numberOfStrings; col++) {
-                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row];
-                    }
-                }
-            }
-            break;
-
-        case 4:
-            // ParticlesPattern
-            for (unsigned int col = 0; col < numberOfStrings; col++) {
-                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row]; 
-                    }
-                }
-            }
-            break;
-
-         case 5:
-            // SparklePattern
-            for (unsigned int col = 0; col < numberOfStrings; col++) {
-                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row];
-                    }
-                }
-            }
-            break;
-          
-        case 6:
-            // FillAndBurstPattern, pressurizing
-            for (unsigned int col = 0; col < numberOfStrings; col++) {
-                for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-                    if (pixelArray[col][row].r != 0 || pixelArray[col][row].g != 0 || pixelArray[col][row].b != 0) {
-                        finalFrame[col][row] = pixelArray[col][row]; 
-                    }
-                }
-            }
-            break;
-
-        default:
-            logMsg(LOG_ERR, "SOMETHING'S FUCKY : no case for priority " + to_string(priority));
-    }
-
-    return true;
-}
-
-//
-// light each string at the bottom for visibility
-//
-void finalizeFrame(vector<vector<opc_pixel_t>> &finalFrame)
-{
-    for (auto&& stringPixels : finalFrame) {
-        stringPixels[numberOfPixelsPerString - 1].r = 255;
-        stringPixels[numberOfPixelsPerString - 1].g = 0;
-        stringPixels[numberOfPixelsPerString - 1].b = 255;
-    }
+    sendOpcMessage();
 }
 
 
@@ -452,55 +328,43 @@ void initPatterns()
 {
     logMsg(LOG_INFO, "Initializing patterns...");
 
-    // TODO:  Get priorities from config file.
+    for (auto& patternConfig : config.getJsonObject()["patterns"].array_items()) {
+        string patternName = patternConfig["name"].string_value();
+        if (patternName.empty()) {
+            logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfig.dump());
+            continue;
+        }
+        if (!patternConfig["enabled"].bool_value()) {
+            logMsg(LOG_INFO, patternName + " is disabled.");
+            continue;
+        }
+        string patternClassName = patternConfig["patternClassName"].string_value();
+        if (patternClassName.empty()) {
+            logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfig.dump());
+            continue;
+        }
+//        PatternId patternId = stringToPatternId(patternClassName);
+//        if (patternId == PatternId::invalid) {
+//            logMsg(LOG_ERR, "Pattern configuration has invalid pattern class name:  " + patternConfig.dump());
+//            continue;
+//        }
+        Pattern* newPattern = patternFactory(patternClassName, patternName);
+        if (newPattern == nullptr) {
+            logMsg(LOG_ERR,
+                    "Unable to instantiate " + patternClassName + " object for " + patternName
+                    + ".  (Is the pattern class name correct?)");
+            continue;
+        }
+        if (!newPattern->init(config, widgets)) {
+            logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
+            delete newPattern;
+            continue;
+        }
+        logMsg(LOG_INFO, patternName + " initialized.");
 
-    if (annoyingFlashingPattern.initPattern(config, widgets, 0)) {
-        patternIsOk[&annoyingFlashingPattern] = true;
-        logMsg(LOG_INFO, "annoyingFlashingPattern ok");
-    }
-    else {
-        logMsg(LOG_ERR, "annoyingFlashingPattern initialization failed.");
-    }
-
-    // FillAndBurstPattern will change its priority based on its state--6 while pressurizing, 1 while bursting.
-    if (fillAndBurstPattern.initPattern(config, widgets, 1)) {
-        patternIsOk[&fillAndBurstPattern] = true;
-        logMsg(LOG_INFO, "fillAndBurstPattern ok");
-    }
-    else {
-        logMsg(LOG_ERR, "fillAndBurstPattern initialization failed.");
-    }
-
-    if (rgbVerticalPattern.initPattern(config, widgets, 2)) {
-        patternIsOk[&rgbVerticalPattern] = true;
-        logMsg(LOG_INFO, "rgbVerticalPattern ok");
-    }
-    else {
-        logMsg(LOG_ERR, "rgbVerticalPattern initialization failed.");
-    }
-
-    if (horizontalStripePattern.initPattern(config, widgets, 3)) {
-        patternIsOk[&horizontalStripePattern] = true;
-        logMsg(LOG_INFO, "horizontalStripePattern ok");
-    }
-    else {
-        logMsg(LOG_ERR, "horizontalStripePattern initialization failed.");
-    }
-
-    if (particlesPattern.initPattern(config, widgets, 4)) {
-        patternIsOk[&particlesPattern] = true;
-        logMsg(LOG_INFO, "particlesPattern ok");
-    }
-    else {
-        logMsg(LOG_ERR, "particlesPattern initialization failed.");
-    }
-
-    if (sparklePattern.initPattern(config, widgets, 5)) {
-        patternIsOk[&sparklePattern] = true;
-        logMsg(LOG_INFO, "sparklePattern ok");
-    }
-    else {
-        logMsg(LOG_ERR, "sparklePattern initialization failed.");
+        PatternState* newPatternState = new PatternState;
+        newPatternState->pattern = newPattern;
+        patternStates.emplace_back(newPatternState);
     }
 }
 
@@ -559,91 +423,73 @@ void doPatterns()
     static bool doIdlePattern;
     static time_t timeWentIdle;
 
-    if (patternIsOk.find(&annoyingFlashingPattern) != patternIsOk.end()) {
-        annoyingFlashingPattern.update();
-    }
-    if (patternIsOk.find(&fillAndBurstPattern) != patternIsOk.end()) {
-        fillAndBurstPattern.update();
-    }
-    if (patternIsOk.find(&rgbVerticalPattern) != patternIsOk.end()) {
-        rgbVerticalPattern.update();
-    }
-    if (patternIsOk.find(&horizontalStripePattern) != patternIsOk.end()) {
-        horizontalStripePattern.update();
-    }
-    if (patternIsOk.find(&particlesPattern) != patternIsOk.end()) {
-        particlesPattern.update();
-    }
-    if (patternIsOk.find(&sparklePattern) != patternIsOk.end()) {
-        sparklePattern.update();
-    }
-
+    // Let all the patterns update their shit.
     bool anyPatternIsActive = false;
-
-    vector<vector<opc_pixel_t>> finalFrame1;
-    finalFrame1.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
-    zeroFrame(finalFrame1);
-
-    if (fillAndBurstPattern.isActive && fillAndBurstPattern.priority == 6) {
-        anyPatternIsActive = true;
-        //logMsg(LOG_DEBUG, "fillAndBurst active while pressurizing.");
-        buildFrame(finalFrame1, fillAndBurstPattern.pixelArray, fillAndBurstPattern.priority);
+    int minPriority = INT_MAX;
+    int maxPriority = INT_MIN;
+    for (auto&& patternState : patternStates) {
+        patternState->wantsDisplay = patternState->pattern->update();
+        patternState->currentPriority = patternState->pattern->priority;
+        anyPatternIsActive |= patternState->wantsDisplay;
+        minPriority = min(patternState->currentPriority, minPriority);
+        maxPriority = max(patternState->currentPriority, maxPriority);
     }
 
-    if (sparklePattern.isActive) {
-        anyPatternIsActive = true;
-        buildFrame(finalFrame1, sparklePattern.pixelArray, sparklePattern.priority);
-    }
+    zeroFrame();
 
-    if (particlesPattern.isActive) {
-        anyPatternIsActive = true;
-        buildFrame(finalFrame1, particlesPattern.pixelArray, particlesPattern.priority);
-    }
-   
-    if (horizontalStripePattern.isActive) {
-        anyPatternIsActive = true;
-        buildFrame(finalFrame1, horizontalStripePattern.pixelArray, horizontalStripePattern.priority);
-    }
-
-    if (rgbVerticalPattern.isActive) {
-        anyPatternIsActive = true;
-        buildFrame(finalFrame1, rgbVerticalPattern.pixelArray, rgbVerticalPattern.priority);
-    }
-
-    if (fillAndBurstPattern.isActive && fillAndBurstPattern.priority == 1) {
-        anyPatternIsActive = true;
-        //logMsg(LOG_DEBUG, "fillAndBurst active while bursting.");
-        buildFrame(finalFrame1, fillAndBurstPattern.pixelArray, fillAndBurstPattern.priority);
-    }
-
-    if (annoyingFlashingPattern.isActive) {
-        anyPatternIsActive = true;
-        buildFrame(finalFrame1, annoyingFlashingPattern.pixelArray, annoyingFlashingPattern.priority);
-    }
-
-    if (!anyPatternIsActive) {
-        finalizeFrame(finalFrame1);
-    }
-
-    if (!anyPatternIsActive) {
-        if (timeWentIdle == 0) {
-            time(&timeWentIdle);
-        }
-        else {
-            time_t now;
-            time(&now);
-            if (!doIdlePattern && now - timeWentIdle > 3) {
-                doIdlePattern = true;
+    if (anyPatternIsActive) {
+        bool anyPixelIsOn = false;
+        // Layer the patterns into the final frame in reverse priority order
+        // (i.e., lowest priority first, highest priority last).  Note that
+        // a lower priority value denotes higher priority (0 is highest).
+        for (int priority = maxPriority; priority >= minPriority; --priority) {
+            for (auto&& patternState : patternStates) {
+                if (patternState->currentPriority == priority) {
+                    for (unsigned int col = 0; col < numberOfStrings; col++) {
+                        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
+                            // only update the value of the final frame if the pixel
+                            // contains non-zero values (is on)
+                            if (patternState->pattern->pixelArray[col][row].r != 0
+                                || patternState->pattern->pixelArray[col][row].g != 0
+                                || patternState->pattern->pixelArray[col][row].b != 0)
+                            {
+                                finalFrame[col][row] = patternState->pattern->pixelArray[col][row];
+                                anyPixelIsOn = true;
+                            }
+                        }
+                    }
+                }
             }
         }
-    }
-    else {
+        if (anyPixelIsOn) {
+            sendOpcMessage();
+        }
+        else {
+            // Don't allow the cone to go completely dark.
+            turnOnSafetyLights();
+        }
         doIdlePattern = false;
         timeWentIdle = 0;
     }
-
-    if (!doIdlePattern) {
-        sendOpcMessage(finalFrame1);
+    else {
+        if (!doIdlePattern) {
+            // Turn on the safety lights until the idle pattern takes over.
+            turnOnSafetyLights();
+            if (timeWentIdle == 0) {
+                time(&timeWentIdle);
+            }
+            else {
+                time_t now;
+                time(&now);
+                // TODO 7/22/2017 ross:  replace the magic number 3 with the hard idle timeout
+                if (now - timeWentIdle > 3) {
+                    doIdlePattern = true;
+                }
+            }
+        }
+        // When doIdlePattern is true, we stop sending messages to the OPC server.
+        // The server will display its own rainbow-like pattern when it hasn't
+        // received a message for a few seconds.
     }
 }
 
@@ -678,8 +524,10 @@ int main(int argc, char **argv)
 
     initWidgets();
     initPatterns();
-    logMsg(LOG_INFO, "Pattern initialization done.  Start moving shit!");
 
+    finalFrame.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
+
+    logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
 
     time_t lastPeriodCheckTime = 0;
     bool inPeriod = false;

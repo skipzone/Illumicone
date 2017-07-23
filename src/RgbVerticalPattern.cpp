@@ -28,21 +28,14 @@
 using namespace std;
 
 
-RgbVerticalPattern::RgbVerticalPattern()
-    : Pattern("rgbVertical")
+RgbVerticalPattern::RgbVerticalPattern(const std::string& name)
+    : Pattern(name)
 {
 }
 
 
-bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
-    opacity = 90;
-
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-
     rPos = 0;
     gPos = 0;
     bPos = 0;

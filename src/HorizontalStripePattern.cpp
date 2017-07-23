@@ -28,21 +28,14 @@
 using namespace std;
 
 
-HorizontalStripePattern::HorizontalStripePattern()
-    : Pattern("horizontalStripe")
+HorizontalStripePattern::HorizontalStripePattern(const std::string& name)
+    : Pattern(name)
 {
 }
 
 
-bool HorizontalStripePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool HorizontalStripePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
-    opacity = 100;
-
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-
     rPos = 0;
     gPos = 0;
     bPos = 0;

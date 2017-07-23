@@ -31,14 +31,19 @@ class Widget;
 class HorizontalStripePattern : public Pattern
 {
     public:
-        HorizontalStripePattern();
+
+        HorizontalStripePattern(const std::string& name);
         ~HorizontalStripePattern() {};
 
+        HorizontalStripePattern() = delete;
         HorizontalStripePattern(const HorizontalStripePattern&) = delete;
         HorizontalStripePattern& operator =(const HorizontalStripePattern&) = delete;
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    protected:
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 
     private:
 
