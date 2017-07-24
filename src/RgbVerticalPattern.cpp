@@ -107,11 +107,12 @@ bool RgbVerticalPattern::update()
     // clear pixel data
     for (auto&& pixels:pixelArray) {
         for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
+            pixel = CRGB::Black;
         }
     }
+
+    // TODO 7/24/2017 ross:  We need to figure out the width first, then set the pixels.
+    //                       That will allow us to do blending more easily.
 
     // TODO 6/13/2017 ross:  If we kept the previous position and didn't clear it above, maybe we would have to do
     //                       this only if redPositionChannel->getHasNewPositionMeasurement() && redPositionChannel->getIsActive().

@@ -35,7 +35,7 @@ bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
     numStrings = config.getNumberOfStrings();
     pixelsPerString = config.getNumberOfPixelsPerString();
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
+    pixelArray.resize(numStrings, std::vector<CRGB>(pixelsPerString));
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 

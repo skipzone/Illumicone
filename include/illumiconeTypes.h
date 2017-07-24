@@ -30,12 +30,14 @@ struct SchedulePeriod {
 };
 
 
+/*
 // structure to hold Open Pixel Control pixel data
 typedef struct _opc_pixel_ {
     uint8_t r;
     uint8_t g;
     uint8_t b;
 } opc_pixel_t;
+*/
 
 
 /*******************

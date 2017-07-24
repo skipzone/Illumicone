@@ -41,6 +41,7 @@
 #include "log.h"
 #include "Pattern.h"
 #include "patternFactory.h"
+#include "pixeltypes.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 #include "widgetFactory.h"
@@ -71,7 +72,7 @@ static uint8_t* opcData;        // points to the data portion of opcBuffer
 static map<WidgetId, Widget*> widgets;
 static vector<PatternState*> patternStates;
 
-static vector<vector<opc_pixel_t>> finalFrame;
+static vector<vector<CRGB>> finalFrame;
 
 
 bool setUpOpcServerConnection(const string& opcServerIpAddress)
@@ -130,9 +131,7 @@ void zeroFrame()
 {
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-            finalFrame[col][row].r = 0;
-            finalFrame[col][row].g = 0;
-            finalFrame[col][row].b = 0;
+            finalFrame[col][row] = CRGB::Black;
         }
     }
 }
@@ -150,9 +149,7 @@ void turnOnSafetyLights()
     zeroFrame();
     for (auto&& stringPixels : finalFrame) {
         // TODO ross 7/22/2017:  get the safety color from config
-        stringPixels[numberOfPixelsPerString - 1].r = 255;
-        stringPixels[numberOfPixelsPerString - 1].g = 0;
-        stringPixels[numberOfPixelsPerString - 1].b = 255;
+        stringPixels[numberOfPixelsPerString - 1] = CRGB::Magenta;
     }
     sendOpcMessage();
 }
@@ -163,9 +160,7 @@ void setAllPixelsToQuiescentColor()
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
             // TODO ross 7/22/2017:  get the quiescent color from config
-            finalFrame[col][row].r = 0;
-            finalFrame[col][row].g = 0;
-            finalFrame[col][row].b = 64;
+            finalFrame[col][row] = CRGB::Navy;
         }
     }
     sendOpcMessage();
@@ -449,10 +444,7 @@ void doPatterns()
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                             // only update the value of the final frame if the pixel
                             // contains non-zero values (is on)
-                            if (patternState->pattern->pixelArray[col][row].r != 0
-                                || patternState->pattern->pixelArray[col][row].g != 0
-                                || patternState->pattern->pixelArray[col][row].b != 0)
-                            {
+                            if (patternState->pattern->pixelArray[col][row] != CRGB(CRGB::Black)) {
                                 finalFrame[col][row] = patternState->pattern->pixelArray[col][row];
                                 anyPixelIsOn = true;
                             }
@@ -525,7 +517,7 @@ int main(int argc, char **argv)
     initWidgets();
     initPatterns();
 
-    finalFrame.resize(numberOfStrings, vector<opc_pixel_t>(numberOfPixelsPerString));
+    finalFrame.resize(numberOfStrings, vector<CRGB>(numberOfPixelsPerString));
 
     logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
 

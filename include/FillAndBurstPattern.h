@@ -67,7 +67,7 @@ class FillAndBurstPattern : public Pattern
         int burstingPriority;
         int lowPressureCutoff;
         int burstThreshold;
-        opc_pixel_t pressureColor;
+        CRGB pressureColor;
         int fillStepSize;
         unsigned int fillStepIntervalMs;
 

@@ -88,9 +88,7 @@ void AnnoyingFlashingPattern::goInactive()
         // Set all the pixels to 0 intensity to make this pattern effectively transparent.
         for (auto&& pixels:pixelArray) {
             for (auto&& pixel:pixels) {
-                pixel.r = 0;
-                pixel.g = 0;
-                pixel.b = 0;
+                pixel = CRGB::Black;
             }
         }
     }

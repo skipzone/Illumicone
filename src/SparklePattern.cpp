@@ -92,9 +92,7 @@ void SparklePattern::goInactive()
         // Set all the pixels to 0 intensity to make this pattern effectively transparent.
         for (auto&& pixels:pixelArray) {
             for (auto&& pixel:pixels) {
-                pixel.r = 0;
-                pixel.g = 0;
-                pixel.b = 0;
+                pixel = CRGB::Black;
             }
         }
     }
@@ -144,9 +142,7 @@ bool SparklePattern::update()
     // ("Approximately" because we could select the same pixel twice.)
     for (auto&& pixels:pixelArray) {
         for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
+            pixel = CRGB::Black;
         }
         for (int i = 0; i < numPixelsPerStringToSparkle; i++) {
             int randPos = rand() % pixelsPerString;

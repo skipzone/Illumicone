@@ -88,7 +88,7 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
     if (patternConfig["pressureColorBlueValue"].is_number()) {
         pressureColor.b = patternConfig["pressureColorBlueValue"].int_value();
     }
-    if (pressureColor.r == 0 && pressureColor.g == 0 && pressureColor.b == 0) {
+    if (pressureColor == CRGB(CRGB::Black)) {
         logMsg(LOG_ERR, "No pressure color values are specified in " + name + " pattern configuration.");
         return false;
     }
@@ -143,9 +143,7 @@ void FillAndBurstPattern::clearAllPixels()
 {
     for (auto&& pixels:pixelArray) {
         for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
+            pixel = CRGB::Black;
         }
     }
 }
@@ -216,9 +214,7 @@ bool FillAndBurstPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 255;
-                    pixels[i].g = 0;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Red;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -232,9 +228,7 @@ bool FillAndBurstPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 255;
-                    pixels[i].g = 127;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Orange;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -248,9 +242,7 @@ bool FillAndBurstPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 255;
-                    pixels[i].g = 255;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Yellow;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -264,9 +256,7 @@ bool FillAndBurstPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 0;
-                    pixels[i].g = 255;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Green;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -280,9 +270,7 @@ bool FillAndBurstPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 0;
-                    pixels[i].g = 0;
-                    pixels[i].b = 255;
+                    pixels[i] = CRGB::Blue;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -296,9 +284,7 @@ bool FillAndBurstPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 75;
-                    pixels[i].g = 0;
-                    pixels[i].b = 130;
+                    pixels[i] = CRGB::Indigo;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -312,9 +298,7 @@ bool FillAndBurstPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 148;
-                    pixels[i].g = 0;
-                    pixels[i].b = 211;
+                    pixels[i] = CRGB::Violet;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
