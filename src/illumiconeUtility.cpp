@@ -29,3 +29,11 @@ unsigned int getNowMs()
 }
 
 
+// XY is used in two-dimensional filter functions.  See colorutils.cpp ported from FastLED.
+uint16_t XY(uint8_t, uint8_t)
+{
+    // TODO 7/24/2017 ross:  Need to do one-time init with cone dimensions.  For now, just return zero.
+    return 0;
+}
+
+
