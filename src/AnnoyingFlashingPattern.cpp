@@ -40,19 +40,17 @@ AnnoyingFlashingPattern::~AnnoyingFlashingPattern()
 {
     for (auto&& pixelString : hsvPixelStrings) {
         delete [] (CHSV*) pixelString;
-        delete pixelString;
-        pixelString = nullptr;
+///        delete pixelString;
+///        pixelString = nullptr;
     }
 };
 
 
 bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    hsvPixelStrings.resize(numStrings);
+    hsvPixelStrings.resize(numStrings, CPixelView<CHSV>(nullptr, 0));
     for (auto&& pixelString : hsvPixelStrings) {
-        CHSV* p = new CHSV[pixelsPerString];
-        CPixelView<CHSV>* hsvPixels = new CPixelView<CHSV>(p, pixelsPerString);
-        pixelString = hsvPixels;
+        pixelString.resize(new CHSV[pixelsPerString], pixelsPerString);
     }
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
@@ -194,18 +192,11 @@ bool AnnoyingFlashingPattern::update()
         hsvColor.h = random8();
         hsvColor.s = hsvColor.v = 255;
     }
-    logMsg(LOG_DEBUG, "hsvColor.h=" + to_string(hsvColor.h));
     for (auto&& pixelString : hsvPixelStrings) {
-        *pixelString = hsvColor;
+        pixelString = hsvColor;
     }
     for (unsigned int i = 0; i < pixelArray.size(); ++i) {
-///    for (unsigned int i = 0; i < numStrings; ++i) {
-        CHSV* pHsv = (CHSV*) *hsvPixelStrings[i];
-        CRGB* pRgb = pixelArray[i].data();
-        hsv2rgb_rainbow(pHsv, pRgb, pixelArray[i].size());
-///        for (unsigned int j = 0; j < pixelsPerString; ++j) {
-///            hsv2rgb_rainbow((*hsvPixelStrings[i])[j], pixelArray[i][j]);
-///        }
+        hsv2rgb_rainbow((CHSV*) hsvPixelStrings[i], pixelArray[i].data(), pixelArray[i].size());
     }
 
     return true;

@@ -56,7 +56,7 @@ class AnnoyingFlashingPattern : public Pattern {
         time_t flashingTimeoutSeconds;
         time_t timeExceededThreshold;
 
-        std::vector<CPixelView<CHSV>*> hsvPixelStrings;
+        std::vector<CPixelView<CHSV>> hsvPixelStrings;
 
         void goInactive();
 };
