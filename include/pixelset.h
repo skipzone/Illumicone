@@ -54,11 +54,11 @@
 /// that a pixel set is a window into another set of led data, it is not its own set of led data.
 template<class PIXEL_TYPE>
 class CPixelView {
-public:
-  const int8_t  dir;
-  const int   len;
-  PIXEL_TYPE * const leds;
-  PIXEL_TYPE * const end_pos;
+private:
+  int8_t  dir;
+  int   len;
+  PIXEL_TYPE* leds;
+  PIXEL_TYPE* end_pos;
 
 public:
 
@@ -134,6 +134,25 @@ public:
     for(iterator pixel = begin(), rhspixel = rhs.begin(), _end = end(), rhs_end = rhs.end(); (pixel != _end) && (rhspixel != rhs_end); ++pixel, ++rhspixel) {
       (*pixel) = (*rhspixel);
     }
+    return *this;
+  }
+
+  /// Facilitate resizing or replacing the pixel array.
+  inline CPixelView& resize(PIXEL_TYPE *_leds, int _start, int _end)
+  {
+    // TODO 7/27/2017 ross:  untested
+    dir = (_end - _start) < 0 ? -1 : 1;
+    len = (_end - _start) + dir;
+    leds = _leds + _start;
+    end_pos = _leds + _start + len;
+    return *this;
+  }
+  inline CPixelView& resize(PIXEL_TYPE *_leds, int _len)
+  {
+    dir = _len < 0 ? -1 : 1;
+    len = _len;
+    leds = _leds;
+    end_pos = _leds + _len;
     return *this;
   }
 
