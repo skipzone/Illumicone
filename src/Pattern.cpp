@@ -17,6 +17,7 @@
 
 #include <iostream>
 
+#include "colorutils.h"
 #include "ConfigReader.h"
 #include "json11.hpp"
 #include "log.h"
@@ -36,6 +37,9 @@ bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
     numStrings = config.getNumberOfStrings();
     pixelsPerString = config.getNumberOfPixelsPerString();
     pixelArray.resize(numStrings, std::vector<CRGB>(pixelsPerString));
+    for (auto&& pixelString : pixelArray) {
+        fill_solid(pixelString.data(), pixelString.size(), CRGB::Black);
+    }
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 

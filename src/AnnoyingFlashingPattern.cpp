@@ -20,6 +20,8 @@
 
 #include "AnnoyingFlashingPattern.h"
 #include "ConfigReader.h"
+#include "hsv2rgb.h"
+#include "lib8tion.h"
 #include "log.h"
 #include "Pattern.h"
 #include "Widget.h"
@@ -34,8 +36,25 @@ AnnoyingFlashingPattern::AnnoyingFlashingPattern(const std::string& name)
 };
 
 
+AnnoyingFlashingPattern::~AnnoyingFlashingPattern()
+{
+    for (auto&& pixelString : hsvPixelStrings) {
+        delete [] (CHSV*) pixelString;
+        delete pixelString;
+        pixelString = nullptr;
+    }
+};
+
+
 bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
+    hsvPixelStrings.resize(numStrings);
+    for (auto&& pixelString : hsvPixelStrings) {
+        CHSV* p = new CHSV[pixelsPerString];
+        CPixelView<CHSV>* hsvPixels = new CPixelView<CHSV>(p, pixelsPerString);
+        pixelString = hsvPixels;
+    }
+
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["activationThreshold"].is_number()) {
@@ -142,6 +161,7 @@ bool AnnoyingFlashingPattern::update()
         }
     }
 
+/*
     uint8_t redVal;
     uint8_t greenVal;
     uint8_t blueVal;
@@ -162,6 +182,30 @@ bool AnnoyingFlashingPattern::update()
             pixel.g = greenVal;
             pixel.b = blueVal;  // TODO ross:  this is really red!
         }
+    }
+*/
+
+    CHSV hsvColor;
+    if (disableFlashing) {
+        // We'll set all the pixels to 0 intensity to make this pattern effectively transparent.
+        hsvColor.h = hsvColor.s = hsvColor.v = 0;
+    }
+    else {
+        hsvColor.h = random8();
+        hsvColor.s = hsvColor.v = 255;
+    }
+    logMsg(LOG_DEBUG, "hsvColor.h=" + to_string(hsvColor.h));
+    for (auto&& pixelString : hsvPixelStrings) {
+        *pixelString = hsvColor;
+    }
+    for (unsigned int i = 0; i < pixelArray.size(); ++i) {
+///    for (unsigned int i = 0; i < numStrings; ++i) {
+        CHSV* pHsv = (CHSV*) *hsvPixelStrings[i];
+        CRGB* pRgb = pixelArray[i].data();
+        hsv2rgb_rainbow(pHsv, pRgb, pixelArray[i].size());
+///        for (unsigned int j = 0; j < pixelsPerString; ++j) {
+///            hsv2rgb_rainbow((*hsvPixelStrings[i])[j], pixelArray[i][j]);
+///        }
     }
 
     return true;

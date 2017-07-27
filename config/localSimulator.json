@@ -32,7 +32,7 @@
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 500
         },
         {   "name" : "spinnah",
@@ -193,7 +193,7 @@
                     "measurement" : "position"
                 }
             ],
-            "flashingTimeoutSeconds" : 1,
+            "flashingTimeoutSeconds" : 3,
             "activationThreshold" : 200         // 300 is a basic LED flashlight from a few feet away
         },
         {   "name" : "rain",

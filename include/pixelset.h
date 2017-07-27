@@ -45,6 +45,7 @@
 
 #pragma once
 
+#include "colorutils.h"
 #include "pixeltypes.h"
 
 
@@ -202,7 +203,7 @@ public:
 
   // Color util functions
   inline CPixelView & fill_solid(const PIXEL_TYPE & color) { *this = color; return *this; }
-  inline CPixelView & fill_solid(const CHSV & color) { if(dir>0) { *this = color; return *this; } }
+  /// what the hell is this?  inline CPixelView & fill_solid(const CHSV & color) { if(dir>0) { *this = color; return *this; } }
 
   inline CPixelView & fill_rainbow(uint8_t initialhue, uint8_t deltahue=5) {
     if(dir >= 0) {
@@ -340,5 +341,13 @@ class CRGBArray : public CPixelView<CRGB> {
   CRGB rawleds[SIZE];
 public:
   CRGBArray() : CPixelView<CRGB>(rawleds, SIZE) {}
+};
+
+
+template<int SIZE>
+class CHSVArray : public CPixelView<CHSV> {
+  CHSV rawleds[SIZE];
+public:
+  CHSVArray() : CPixelView<CHSV>(rawleds, SIZE) {}
 };
 
