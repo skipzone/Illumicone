@@ -39,13 +39,13 @@ AnnoyingFlashingPattern::AnnoyingFlashingPattern(const std::string& name)
 
 AnnoyingFlashingPattern::~AnnoyingFlashingPattern()
 {
-    freeConePixels(hsvConePixels);
+    freeConePixels(hsvConeStrings);
 };
 
 
 bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    allocateConePixels(hsvConePixels, pixelsPerString, numStrings);
+    allocateConePixels(hsvConeStrings, pixelsPerString, numStrings);
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
@@ -62,6 +62,13 @@ bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetI
     }
     flashingTimeoutSeconds = patternConfig["flashingTimeoutSeconds"].int_value();
     logMsg(LOG_INFO, name + " flashingTimeoutSeconds=" + to_string(flashingTimeoutSeconds));
+
+    if (!patternConfig["allStringsSameColor"].is_bool()) {
+        logMsg(LOG_ERR, "allStringsSameColor not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    allStringsSameColor = patternConfig["allStringsSameColor"].bool_value();
+    logMsg(LOG_INFO, name + " allStringsSameColor=" + to_string(allStringsSameColor));
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
@@ -170,10 +177,18 @@ bool AnnoyingFlashingPattern::update()
 
     //logMsg(LOG_DEBUG, "flashing the cone");
     HsvPixel hsvColor;
-    hsvColor.h = random8();
     hsvColor.s = hsvColor.v = 255;
-    fillSolid(hsvConePixels, hsvColor);
-    hsv2rgb(hsvConePixels, pixelArray);
+    if (allStringsSameColor) {
+        hsvColor.h = random8();
+        fillSolid(hsvConeStrings, hsvColor);
+    }
+    else {
+        for (unsigned int i = 0; i < numStrings; ++i) {
+            hsvColor.h = random8();
+            fillSolid(hsvConeStrings, i, hsvColor);
+        }
+    }
+    hsv2rgb(hsvConeStrings, pixelArray);
 
     return isActive;
 }

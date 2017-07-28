@@ -51,12 +51,15 @@ class AnnoyingFlashingPattern : public Pattern {
 
         std::shared_ptr<WidgetChannel> intensityChannel;
 
+        // pattern config
         int activationThreshold;
         time_t flashingTimeoutSeconds;
+        bool allStringsSameColor;
+
         time_t timeExceededThreshold;
         bool disableFlashing;
 
-        HsvConePixels hsvConePixels;
+        HsvConeStrings hsvConeStrings;
 
         bool goInactive();
 };

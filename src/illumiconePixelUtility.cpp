@@ -22,13 +22,13 @@
 //#include "log.h"
 
 
-bool allocateConePixels(HsvConePixels& conePixels, int pixelsPerString, int numStrings)
+bool allocateConePixels(HsvConeStrings& coneStrings, int pixelsPerString, int numStrings)
 {
     // Resize the colleciton of strings to match the number of strings.
-    conePixels.resize(numStrings, HsvStringPixels(nullptr, 0));
+    coneStrings.resize(numStrings, HsvPixelString(nullptr, 0));
 
     // Allocate the pixels for each string.
-    for (auto&& pixelString : conePixels) {
+    for (auto&& pixelString : coneStrings) {
         HsvPixel* newStringPixels = new HsvPixel[pixelsPerString];
         if (newStringPixels == 0) {
             return false;
@@ -40,27 +40,39 @@ bool allocateConePixels(HsvConePixels& conePixels, int pixelsPerString, int numS
 }
 
 
-void freeConePixels(HsvConePixels& conePixels)
+void freeConePixels(HsvConeStrings& coneStrings)
 {
-    for (auto&& pixelString : conePixels) {
+    for (auto&& pixelString : coneStrings) {
         delete [] (HsvPixel*) pixelString;
         pixelString.resize(nullptr, 0);
     }
 }
 
 
-void fillSolid(HsvConePixels& conePixels, const HsvPixel& color)
+void fillSolid(HsvPixelString& pixelString, const HsvPixel& color)
 {
-    for (auto&& pixelString : conePixels) {
+    pixelString = color;
+}
+
+
+void fillSolid(HsvConeStrings& coneStrings, unsigned int stringIdx, const HsvPixel& color)
+{
+    coneStrings[stringIdx] = color;
+}
+
+
+void fillSolid(HsvConeStrings& coneStrings, const HsvPixel& color)
+{
+    for (auto&& pixelString : coneStrings) {
         pixelString = color;
     }
 }
 
 
-void hsv2rgb(const HsvConePixels& hsvConePixels, std::vector<std::vector<CRGB>>& pixelArray)
+void hsv2rgb(const HsvConeStrings& coneStrings, std::vector<std::vector<CRGB>>& pixelArray)
 {
     for (unsigned int i = 0; i < pixelArray.size(); ++i) {
-        hsv2rgb_rainbow((HsvPixel*) hsvConePixels[i], pixelArray[i].data(), pixelArray[i].size());
+        hsv2rgb_rainbow((HsvPixel*) coneStrings[i], pixelArray[i].data(), pixelArray[i].size());
     }
 }
 

@@ -21,12 +21,14 @@
 #include "illumiconePixelTypes.h"
 
 
-bool allocateConePixels(HsvConePixels& conePixels, int pixelsPerString, int numStrings);
-void freeConePixels(HsvConePixels& conePixels);
+bool allocateConePixels(HsvConeStrings& coneStrings, int pixelsPerString, int numStrings);
+void freeConePixels(HsvConeStrings& coneStrings);
 
-void fillSolid(HsvConePixels& conePixels, const HsvPixel& color);
+void fillSolid(HsvPixelString& pixelString, const HsvPixel& color);
+void fillSolid(HsvConeStrings& coneStrings, unsigned int stringIdx, const HsvPixel& color);
+void fillSolid(HsvConeStrings& coneStrings, const HsvPixel& color);
 
-void hsv2rgb(const HsvConePixels& hsvConePixels, std::vector<std::vector<CRGB>>& pixelArray);
+void hsv2rgb(const HsvConeStrings& coneStrings, std::vector<std::vector<CRGB>>& pixelArray);
 
 
 // XY is used in two-dimensional filter functions.  See colorutils.cpp ported from FastLED.

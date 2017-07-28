@@ -24,9 +24,9 @@
 typedef CHSV HsvPixel;
 typedef CRGB RgbPixel;
 
-typedef CPixelView<HsvPixel> HsvStringPixels;
-typedef CPixelView<RgbPixel> RgbStringPixels;
+typedef CPixelView<HsvPixel> HsvPixelString;
+typedef CPixelView<RgbPixel> RgbPixelString;
 
-typedef std::vector<HsvStringPixels> HsvConePixels;
-typedef std::vector<RgbStringPixels> RgbConePixels;
+typedef std::vector<HsvPixelString> HsvConeStrings;
+typedef std::vector<RgbPixelString> RgbConeStrings;
 

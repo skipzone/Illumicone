@@ -194,7 +194,8 @@
                 }
             ],
             "flashingTimeoutSeconds" : 3,
-            "activationThreshold" : 200         // 300 is a basic LED flashlight from a few feet away
+            "activationThreshold" : 200,        // 300 is a basic LED flashlight from a few feet away
+            "allStringsSameColor" : false
         },
         {   "name" : "rain",
             "enabled" : true,
