@@ -17,7 +17,7 @@
 
 #include "FourPlay42Widget.h"
 #include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
 #include "WidgetId.h"
 
 using namespace std;

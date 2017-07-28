@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <time.h>
 
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
 #include "WidgetId.h"
 
 

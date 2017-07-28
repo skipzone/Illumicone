@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "illumiconeTypes.h"
+#include "pixeltypes.h"
 #include "Widget.h"
 
 
@@ -44,7 +45,7 @@ class Pattern
 
         int pixelsPerString;
         int numStrings;
-        std::vector<std::vector<opc_pixel_t>> pixelArray;
+        std::vector<std::vector<CRGB>> pixelArray;
 
         int priority;
         int opacity;

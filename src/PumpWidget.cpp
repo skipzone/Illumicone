@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
 #include "log.h"
 #include "PumpWidget.h"
 #include "WidgetId.h"

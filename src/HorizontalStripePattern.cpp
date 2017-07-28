@@ -106,11 +106,12 @@ bool HorizontalStripePattern::update()
 
     for (auto&& stringPixels:pixelArray) {
         for (auto&& pixel:stringPixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
+            pixel = CRGB::Black;
         }
     }
+
+    // TODO 7/24/2017 ross:  We need to figure out the width first, then set the pixels.
+    //                       That will allow us to do blending more easily.
 
     if (redPositionChannel != nullptr && redPositionChannel->getIsActive()) {
         isActive = true;

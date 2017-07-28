@@ -50,7 +50,7 @@ class ParticlesPattern : public Pattern {
         std::shared_ptr<WidgetChannel> emitRateChannel;
 
         // pattern configuration
-        opc_pixel_t emitColor;
+        CRGB emitColor;
         int emitIntervalMeasmtLow;
         int emitIntervalMeasmtHigh;
         int emitIntervalLowMs;

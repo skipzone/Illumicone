@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 #include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
 #include "log.h"
 #include "Widget.h"

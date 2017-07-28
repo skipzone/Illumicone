@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
 #include "SpinnahWidget.h"
 #include "WidgetId.h"
 

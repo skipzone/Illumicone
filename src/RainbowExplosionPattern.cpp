@@ -123,9 +123,7 @@ void RainbowExplosionPattern::clearAllPixels()
 {
     for (auto&& pixels:pixelArray) {
         for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
+            pixel = CRGB::Black;
         }
     }
 }
@@ -199,9 +197,7 @@ bool RainbowExplosionPattern::update()
                 for (auto&& pixels:pixelArray) {
                     int fillLevel = (rand() + minFizzleFill) % maxFizzleFill;
                     for (int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
-                        pixels[i].r = 127;
-                        pixels[i].g = 0;
-                        pixels[i].b = 0;
+                        pixels[i] = CRGB::Maroon;
                     }
                 }
                 fizzleMeasurementTimeoutMs = nowMs + fizzleMeasurementTimeoutPeriodMs;
@@ -212,9 +208,7 @@ bool RainbowExplosionPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 255;
-                    pixels[i].g = 0;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Red;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -228,9 +222,7 @@ bool RainbowExplosionPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 255;
-                    pixels[i].g = 127;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Orange;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -244,9 +236,7 @@ bool RainbowExplosionPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 255;
-                    pixels[i].g = 255;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Yellow;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -260,9 +250,7 @@ bool RainbowExplosionPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 0;
-                    pixels[i].g = 255;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Green;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -276,9 +264,7 @@ bool RainbowExplosionPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 0;
-                    pixels[i].g = 0;
-                    pixels[i].b = 255;
+                    pixels[i] = CRGB::Blue;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -292,9 +278,7 @@ bool RainbowExplosionPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 75;
-                    pixels[i].g = 0;
-                    pixels[i].b = 130;
+                    pixels[i] = CRGB::Indigo;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -308,9 +292,7 @@ bool RainbowExplosionPattern::update()
             fillPosition = max(fillPosition - fillStepSize, 0);
             for (int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 148;
-                    pixels[i].g = 0;
-                    pixels[i].b = 211;
+                    pixels[i] = CRGB::Violet;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -322,9 +304,7 @@ bool RainbowExplosionPattern::update()
         case PatternState::endExplosion:
             for (auto&& pixels:pixelArray) {
                 for (auto&& pixel:pixels) {
-                    pixel.r = 0;
-                    pixel.g = 0;
-                    pixel.b = 0;
+                    pixel = CRGB::Black;
                 }
             }
             state = PatternState::fizzle;

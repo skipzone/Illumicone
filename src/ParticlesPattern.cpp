@@ -54,7 +54,7 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
     if (patternConfig["emitColorBlueValue"].is_number()) {
         emitColor.b = patternConfig["emitColorBlueValue"].int_value();
     }
-    if (emitColor.r == 0 && emitColor.g == 0 && emitColor.b == 0) {
+    if (emitColor == CRGB(CRGB::Black)) {
         logMsg(LOG_ERR, "No emit color values are specified in " + name + " pattern configuration.");
         return false;
     }
@@ -167,7 +167,7 @@ bool ParticlesPattern::moveParticles()
                     stringPixels[i] = stringPixels[i + 1];
                 }
             }
-            stringPixels[i].r = stringPixels[i].g = stringPixels[i].b = 0;
+            stringPixels[i] = CRGB::Black;
         }
     }
 

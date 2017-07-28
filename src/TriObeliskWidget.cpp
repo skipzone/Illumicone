@@ -18,7 +18,7 @@
 #include <string>
 
 #include "TriObeliskWidget.h"
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
 #include "WidgetId.h"
 
 using namespace std;

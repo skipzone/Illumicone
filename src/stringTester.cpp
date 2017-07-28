@@ -15,19 +15,18 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ConfigReader.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <iostream>
+
+#include "ConfigReader.h"
 #include "illumiconeTypes.h"
+#include "pixeltypes.h"
 
 using namespace std;
-
-
-static const opc_pixel_t black = {0, 0, 0};
 
 
 int main(int argc, char **argv)
@@ -38,7 +37,7 @@ int main(int argc, char **argv)
     }
     string jsonFileName(argv[1]);
     unsigned int stringNum = atoi(argv[2]);
-    opc_pixel_t testColor;
+    CRGB testColor;
     testColor.r = atoi(argv[3]);
     testColor.g = atoi(argv[4]);
     testColor.b = atoi(argv[5]);
@@ -82,7 +81,7 @@ int main(int argc, char **argv)
     // Set the pixel data.
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         unsigned int colOffset = col * numberOfPixelsPerString * 3;
-        opc_pixel_t pixelColor = (stringNum == 0 || col == stringNum - 1) ? testColor : black;
+        CRGB pixelColor = (stringNum == 0 || col == stringNum - 1) ? testColor : CRGB::Black;
         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
             unsigned int pixelOffset = colOffset + row * 3;
             opcData[pixelOffset] = pixelColor.r;
