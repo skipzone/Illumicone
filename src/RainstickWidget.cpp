@@ -18,7 +18,7 @@
 #include <string>
 
 #include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
 #include "log.h"
 #include "RainstickWidget.h"

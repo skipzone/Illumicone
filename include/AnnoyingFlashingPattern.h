@@ -23,8 +23,7 @@
 #include "Pattern.h"
 #include "WidgetId.h"
 
-#include "pixelset.h"
-#include <vector>
+#include "illumiconePixelTypes.h"
 
 
 class ConfigReader;
@@ -55,9 +54,10 @@ class AnnoyingFlashingPattern : public Pattern {
         int activationThreshold;
         time_t flashingTimeoutSeconds;
         time_t timeExceededThreshold;
+        bool disableFlashing;
 
-        std::vector<CPixelView<CHSV>> hsvPixelStrings;
+        HsvConePixels hsvConePixels;
 
-        void goInactive();
+        bool goInactive();
 };
 

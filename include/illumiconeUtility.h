@@ -15,10 +15,6 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdint.h>
-
 
 unsigned int getNowMs();
 
-// XY is used in two-dimensional filter functions.  See colorutils.cpp ported from FastLED.
-uint16_t XY(uint8_t, uint8_t);

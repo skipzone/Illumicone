@@ -21,6 +21,7 @@
 #include "AnnoyingFlashingPattern.h"
 #include "ConfigReader.h"
 #include "hsv2rgb.h"
+#include "illumiconePixelUtility.h"
 #include "lib8tion.h"
 #include "log.h"
 #include "Pattern.h"
@@ -38,20 +39,13 @@ AnnoyingFlashingPattern::AnnoyingFlashingPattern(const std::string& name)
 
 AnnoyingFlashingPattern::~AnnoyingFlashingPattern()
 {
-    for (auto&& pixelString : hsvPixelStrings) {
-        delete [] (CHSV*) pixelString;
-///        delete pixelString;
-///        pixelString = nullptr;
-    }
+    freeConePixels(hsvConePixels);
 };
 
 
 bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    hsvPixelStrings.resize(numStrings, CPixelView<CHSV>(nullptr, 0));
-    for (auto&& pixelString : hsvPixelStrings) {
-        pixelString.resize(new CHSV[pixelsPerString], pixelsPerString);
-    }
+    allocateConePixels(hsvConePixels, pixelsPerString, numStrings);
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
@@ -97,8 +91,12 @@ bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetI
 }
 
 
-void AnnoyingFlashingPattern::goInactive()
+bool AnnoyingFlashingPattern::goInactive()
 {
+    // If we're just now going inactive, we need to return true
+    // so that this pattern can be cleared from display.
+    bool retval = isActive;
+
     if (isActive) {
         isActive = false;
         timeExceededThreshold = 0;
@@ -109,6 +107,8 @@ void AnnoyingFlashingPattern::goInactive()
             }
         }
     }
+
+    return retval;
 }
 
 
@@ -128,22 +128,29 @@ bool AnnoyingFlashingPattern::update()
 
     // If the widget channel has gone inactive, turn off this pattern.
     if (!intensityChannel->getIsActive()) {
-        goInactive();
-        return false;
+        //logMsg(LOG_DEBUG, "channel inactive");
+        disableFlashing = false;
+        return goInactive();
     }
 
     // No change to the pattern if we haven't received a new measurement.
     if (!intensityChannel->getHasNewPositionMeasurement()) {
+        //logMsg(LOG_DEBUG, "no new measurement");
         return isActive;
     }
 
     // If the latest measurement is below the activation threshold, turn off this pattern.
     if (intensityChannel->getPosition() <= activationThreshold) {
-        goInactive();
-        return false;
+        //logMsg(LOG_DEBUG, "below activation threshold");
+        return goInactive();
     }
 
-    bool disableFlashing = false;
+    // Once flashing is disabled, it will remain disabled until the widget goes inactive.
+    if (disableFlashing) {
+        //logMsg(LOG_DEBUG, "flashing disabled");
+        return isActive;
+    }
+
     if (!isActive) {
         isActive = true;
         // The threshold was just crossed, so initialize auto-disable.
@@ -155,50 +162,19 @@ bool AnnoyingFlashingPattern::update()
         time_t now;
         time(&now);
         if (now - timeExceededThreshold >= flashingTimeoutSeconds) {
+            //logMsg(LOG_DEBUG, "disabling");
             disableFlashing = true;
+            return goInactive();
         }
     }
 
-/*
-    uint8_t redVal;
-    uint8_t greenVal;
-    uint8_t blueVal;
-    if (disableFlashing) {
-        // We'll set all the pixels to 0 intensity to make this pattern effectively transparent.
-        redVal = 0;
-        greenVal = 0;
-        blueVal = 0;
-    }
-    else {
-        redVal = rand() % 255;
-        greenVal = rand() % 255;
-        blueVal = rand() % 255;
-    }
-    for (auto&& pixels:pixelArray) {
-        for (auto&& pixel:pixels) {
-            pixel.r = redVal;  // TODO ross:  this is really blue!
-            pixel.g = greenVal;
-            pixel.b = blueVal;  // TODO ross:  this is really red!
-        }
-    }
-*/
+    //logMsg(LOG_DEBUG, "flashing the cone");
+    HsvPixel hsvColor;
+    hsvColor.h = random8();
+    hsvColor.s = hsvColor.v = 255;
+    fillSolid(hsvConePixels, hsvColor);
+    hsv2rgb(hsvConePixels, pixelArray);
 
-    CHSV hsvColor;
-    if (disableFlashing) {
-        // We'll set all the pixels to 0 intensity to make this pattern effectively transparent.
-        hsvColor.h = hsvColor.s = hsvColor.v = 0;
-    }
-    else {
-        hsvColor.h = random8();
-        hsvColor.s = hsvColor.v = 255;
-    }
-    for (auto&& pixelString : hsvPixelStrings) {
-        pixelString = hsvColor;
-    }
-    for (unsigned int i = 0; i < pixelArray.size(); ++i) {
-        hsv2rgb_rainbow((CHSV*) hsvPixelStrings[i], pixelArray[i].data(), pixelArray[i].size());
-    }
-
-    return true;
+    return isActive;
 }
 

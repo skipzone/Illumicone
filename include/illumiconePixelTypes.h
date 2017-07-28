@@ -15,16 +15,18 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
+#pragma once
+
+#include "pixelset.h"
+#include "pixeltypes.h"
 
 
-unsigned int getNowMs()
-{
-    using namespace std::chrono;
+typedef CHSV HsvPixel;
+typedef CRGB RgbPixel;
 
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
+typedef CPixelView<HsvPixel> HsvStringPixels;
+typedef CPixelView<RgbPixel> RgbStringPixels;
 
-    return nowMs;
-}
+typedef std::vector<HsvStringPixels> HsvConePixels;
+typedef std::vector<RgbStringPixels> RgbConePixels;
 

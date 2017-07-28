@@ -18,7 +18,7 @@
 #include <string>
 
 #include "EyeWidget.h"
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
 #include "log.h"
 #include "WidgetId.h"
 

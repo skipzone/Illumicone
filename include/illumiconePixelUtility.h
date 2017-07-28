@@ -15,16 +15,21 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
+#include <stdint.h>
+#include <vector>
+
+#include "illumiconePixelTypes.h"
 
 
-unsigned int getNowMs()
-{
-    using namespace std::chrono;
+bool allocateConePixels(HsvConePixels& conePixels, int pixelsPerString, int numStrings);
+void freeConePixels(HsvConePixels& conePixels);
 
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
+void fillSolid(HsvConePixels& conePixels, const HsvPixel& color);
 
-    return nowMs;
-}
+void hsv2rgb(const HsvConePixels& hsvConePixels, std::vector<std::vector<CRGB>>& pixelArray);
+
+
+// XY is used in two-dimensional filter functions.  See colorutils.cpp ported from FastLED.
+uint16_t XY(uint8_t, uint8_t);
+
 
