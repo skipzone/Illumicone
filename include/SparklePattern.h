@@ -51,7 +51,5 @@ class SparklePattern : public Pattern {
 
         int densityScaledownFactor;
         int activationThreshold;
-
-        void goInactive();
 };
 

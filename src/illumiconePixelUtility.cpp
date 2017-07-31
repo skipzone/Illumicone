@@ -36,6 +36,8 @@ bool allocateConePixels(HsvConeStrings& coneStrings, int pixelsPerString, int nu
         pixelString.resize(newStringPixels, pixelsPerString);
     }
 
+    clearAllPixels(coneStrings);
+
     return true;
 }
 
@@ -66,6 +68,13 @@ void fillSolid(HsvConeStrings& coneStrings, const HsvPixel& color)
     for (auto&& pixelString : coneStrings) {
         pixelString = color;
     }
+}
+
+
+void clearAllPixels(HsvConeStrings& coneStrings)
+{
+    HsvPixel transparent = {0, 0, 0};
+    fillSolid(coneStrings, transparent);
 }
 
 

@@ -15,15 +15,14 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef PATTERN_H
-#define PATTERN_H
+#pragma once
 
 #include <map>
 #include <string>
 #include <vector>
 
+#include "illumiconePixelTypes.h"
 #include "illumiconeTypes.h"
-#include "pixeltypes.h"
 #include "Widget.h"
 
 
@@ -32,7 +31,7 @@ class Pattern
     public:
 
         Pattern(const std::string& name);
-        virtual ~Pattern() {}
+        virtual ~Pattern();
 
         Pattern() = delete;
         Pattern(const Pattern&) = delete;
@@ -40,12 +39,14 @@ class Pattern
 
         std::string getName() { return name; }
 
+        virtual bool goInactive();
         bool init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
         virtual bool update() = 0;
 
         int pixelsPerString;
         int numStrings;
         std::vector<std::vector<CRGB>> pixelArray;
+        HsvConeStrings coneStrings;
 
         int priority;
         int opacity;
@@ -66,4 +67,3 @@ class Pattern
         virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets) = 0;
 };
 
-#endif /* PATTERN_H */

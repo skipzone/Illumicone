@@ -193,9 +193,11 @@
                     "measurement" : "position"
                 }
             ],
-            "flashingTimeoutSeconds" : 3,
-            "activationThreshold" : 200,        // 300 is a basic LED flashlight from a few feet away
-            "allStringsSameColor" : false
+            "autoDisableTimeoutMs" : 1500,      // pattern disables itself after being active for this amount of time
+            "activationThreshold" : 300,        // 300 is a basic LED flashlight from a few feet away
+            "reactivationThreshold" : 200,      // pattern re-enables itself when measurement drops below this value
+            "allStringsSameColor" : false,
+            "flashChangeIntervalMs" : 50
         },
         {   "name" : "rain",
             "enabled" : true,

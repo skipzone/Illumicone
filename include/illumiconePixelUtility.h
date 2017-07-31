@@ -28,6 +28,8 @@ void fillSolid(HsvPixelString& pixelString, const HsvPixel& color);
 void fillSolid(HsvConeStrings& coneStrings, unsigned int stringIdx, const HsvPixel& color);
 void fillSolid(HsvConeStrings& coneStrings, const HsvPixel& color);
 
+void clearAllPixels(HsvConeStrings& coneStrings);
+
 void hsv2rgb(const HsvConeStrings& coneStrings, std::vector<std::vector<CRGB>>& pixelArray);
 
 
