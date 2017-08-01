@@ -46,8 +46,10 @@ class ConfigReader
         int getNumberOfPixelsPerString();
         std::string getOpcServerIpAddress();
         std::string getPatconIpAddress();
+        std::string getPatternBlendMethod();
         bool getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods);
         int getWidgetPortNumberBase();
+
         bool getWidgetGenerateSimulatedMeasurements(const std::string& widgetName);
         int getWidgetAutoInactiveMs(const std::string& widgetName);
 

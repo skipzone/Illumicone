@@ -45,7 +45,6 @@ class Pattern
 
         int pixelsPerString;
         int numStrings;
-        //std::vector<std::vector<CRGB>> pixelArray;
         RgbConeStrings pixelArray;
         HsvConeStrings coneStrings;
 

@@ -62,12 +62,14 @@ void clearAllPixels(RgbConeStrings& coneStrings)
 }
 
 
+/*
 void hsv2rgb(const HsvConeStrings& coneStrings, std::vector<std::vector<CRGB>>& pixelArray)
 {
     for (unsigned int i = 0; i < pixelArray.size(); ++i) {
         hsv2rgb_rainbow((HsvPixel*) coneStrings[i], pixelArray[i].data(), pixelArray[i].size());
     }
 }
+*/
 
 
 void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeStrings)

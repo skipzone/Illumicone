@@ -17,11 +17,13 @@
 
 // TODO 7/31/2017 ross:  Use logMsg in place of cerr.
 
-#include "ConfigReader.h"
 #include <fstream>
-#include "illumiconeTypes.h"
 #include <iostream>
 #include <sstream>
+
+#include "ConfigReader.h"
+#include "illumiconeTypes.h"
+#include "log.h"
 
 using namespace std;
 using namespace json11;
@@ -118,6 +120,16 @@ string ConfigReader::getOpcServerIpAddress()
 string ConfigReader::getPatconIpAddress()
 {
     return configObj["patconIpAddress"].string_value();
+}
+
+
+string ConfigReader::getPatternBlendMethod()
+{
+    if (!configObj["patternBlendMethod"].is_string()) {
+        logMsg(LOG_ERR, "patternBlendMethod missing from configuration.");
+        return "";
+    }
+    return configObj["patternBlendMethod"].string_value();
 }
 
 

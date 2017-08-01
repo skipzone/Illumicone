@@ -40,6 +40,7 @@
 #include "illumiconeTypes.h"
 #include "illumiconePixelUtility.h"
 //#include "illumiconeUtility.h"
+#include "lib8tion.h"
 #include "log.h"
 #include "Pattern.h"
 #include "patternFactory.h"
@@ -54,9 +55,16 @@ using namespace std;
 // TODO 7/31/2017 ross:  Get this from config.
 constexpr char lockFilePath[] = "/tmp/patternController.lock";
 
+enum class PatternBlendMethod {
+    overlay,
+    rgbAdd,
+    rgbBlend
+};
+
 struct PatternState {
     Pattern* pattern;
-    int currentPriority;
+    int priority;
+    fract8 amountOfOverlay;
     int wantsDisplay;
 };
 
@@ -65,6 +73,7 @@ static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
 static vector<SchedulePeriod> shutoffPeriods;
 static vector<SchedulePeriod> quiescentPeriods;
+static PatternBlendMethod patternBlendMethod;
 
 static struct sockaddr_in server;
 static int sock;
@@ -75,7 +84,6 @@ static uint8_t* opcData;        // points to the data portion of opcBuffer
 static map<WidgetId, Widget*> widgets;
 static vector<PatternState*> patternStates;
 
-//static vector<vector<CRGB>> finalFrame;
 static HsvConeStrings hsvFinalFrame;
 static RgbConeStrings rgbFinalFrame;
 
@@ -211,6 +219,21 @@ bool readConfig(const string& configFileName)
         return false;
     }
 
+    string patternBlendMethodStr = config.getPatternBlendMethod();
+    if (patternBlendMethodStr == "overlay") {
+        patternBlendMethod = PatternBlendMethod::overlay;
+    }
+    else if (patternBlendMethodStr == "rgbAdd") {
+        patternBlendMethod = PatternBlendMethod::rgbAdd;
+    }
+    else if (patternBlendMethodStr == "rgbBlend") {
+        patternBlendMethod = PatternBlendMethod::rgbBlend;
+    }
+    else {
+        logMsg(LOG_ERR, "patternBlendMethod \"" + patternBlendMethodStr + "\" not recognized.");
+        return false;
+    }
+
     return true;
 }
 
@@ -324,11 +347,6 @@ void initPatterns()
             logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfig.dump());
             continue;
         }
-//        PatternId patternId = stringToPatternId(patternClassName);
-//        if (patternId == PatternId::invalid) {
-//            logMsg(LOG_ERR, "Pattern configuration has invalid pattern class name:  " + patternConfig.dump());
-//            continue;
-//        }
         Pattern* newPattern = patternFactory(patternClassName, patternName);
         if (newPattern == nullptr) {
             logMsg(LOG_ERR,
@@ -410,10 +428,11 @@ void doPatterns()
     int maxPriority = INT_MIN;
     for (auto&& patternState : patternStates) {
         patternState->wantsDisplay = patternState->pattern->update();
-        patternState->currentPriority = patternState->pattern->priority;
+        patternState->priority = patternState->pattern->priority;
+        patternState->amountOfOverlay = 128;    // patternState->pattern->amountOfOverlay;
         anyPatternIsActive |= patternState->wantsDisplay;
-        minPriority = min(patternState->currentPriority, minPriority);
-        maxPriority = max(patternState->currentPriority, maxPriority);
+        minPriority = min(patternState->priority, minPriority);
+        maxPriority = max(patternState->priority, maxPriority);
     }
 
     fillSolid(rgbFinalFrame, CRGB::Black);
@@ -425,14 +444,35 @@ void doPatterns()
         // a lower priority value denotes higher priority (0 is highest).
         for (int priority = maxPriority; priority >= minPriority; --priority) {
             for (auto&& patternState : patternStates) {
-                if (patternState->currentPriority == priority) {
+                if (patternState->priority == priority) {
                     for (unsigned int col = 0; col < numberOfStrings; col++) {
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                             // only update the value of the final frame if the pixel
                             // contains non-zero values (is on)
+                            // TODO 8/1/2017 ross:  use CRGB::Transparent instead of black
                             if (patternState->pattern->pixelArray[col][row] != CRGB(CRGB::Black)) {
-                                rgbFinalFrame[col][row] = patternState->pattern->pixelArray[col][row];
                                 anyPixelIsOn = true;
+                                switch (patternBlendMethod) {
+                                    case PatternBlendMethod::overlay:
+                                        // A higher priority pattern overrides a lower priority pattern.
+                                        rgbFinalFrame[col][row] = patternState->pattern->pixelArray[col][row];
+                                        break;
+                                    case PatternBlendMethod::rgbAdd:
+                                        // Saturating addition ignores priority, but it looks better than nblend of rgb.
+                                        rgbFinalFrame[col][row] += patternState->pattern->pixelArray[col][row];
+                                        break;
+                                    case PatternBlendMethod::rgbBlend:
+                                        // Blending rgb tends to make things look dark when combined.
+                                        if (rgbFinalFrame[col][row] != CRGB(CRGB::Black)) {
+                                            nblend(rgbFinalFrame[col][row],
+                                                   patternState->pattern->pixelArray[col][row],
+                                                   patternState->amountOfOverlay);
+                                        }
+                                        else {
+                                            rgbFinalFrame[col][row] = patternState->pattern->pixelArray[col][row];
+                                        }
+                                        break;
+                                }
                             }
                         }
                     }
@@ -496,7 +536,6 @@ int main(int argc, char **argv)
     printSchedulePeriods("Shutoff periods", shutoffPeriods);
     printSchedulePeriods("Quiescent periods", quiescentPeriods);
 
-//    finalFrame.resize(numberOfStrings, vector<CRGB>(numberOfPixelsPerString));
     if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(rgbFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
         logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");
         return(EXIT_FAILURE);
