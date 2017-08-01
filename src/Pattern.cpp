@@ -34,7 +34,8 @@ Pattern::Pattern(const std::string& name)
 
 Pattern::~Pattern()
 {
-    freeConePixels(coneStrings);
+    freeConePixels<RgbConeStrings, RgbPixel>(pixelArray);
+    freeConePixels<HsvConeStrings, HsvPixel>(coneStrings);
 }
 
 
@@ -47,11 +48,12 @@ bool Pattern::goInactive()
     if (isActive) {
         isActive = false;
         // Set all the pixels to 0 intensity to make this pattern effectively transparent.
-        for (auto&& pixels:pixelArray) {
-            for (auto&& pixel:pixels) {
-                pixel = CRGB::Black;
-            }
-        }
+//        for (auto&& pixels:pixelArray) {
+//            for (auto&& pixel:pixels) {
+//                pixel = CRGB::Black;
+//            }
+//        }
+        clearAllPixels(pixelArray);
         clearAllPixels(coneStrings);
     }
 
@@ -63,11 +65,12 @@ bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
     numStrings = config.getNumberOfStrings();
     pixelsPerString = config.getNumberOfPixelsPerString();
-    pixelArray.resize(numStrings, std::vector<CRGB>(pixelsPerString));
-    for (auto&& pixelString : pixelArray) {
-        fill_solid(pixelString.data(), pixelString.size(), CRGB::Black);
-    }
-    allocateConePixels(coneStrings, pixelsPerString, numStrings);
+//    pixelArray.resize(numStrings, std::vector<CRGB>(pixelsPerString));
+//    for (auto&& pixelString : pixelArray) {
+//        fill_solid(pixelString.data(), pixelString.size(), CRGB::Black);
+//    }
+    allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(pixelArray, numStrings, pixelsPerString);
+    allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(coneStrings, numStrings, pixelsPerString);
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 

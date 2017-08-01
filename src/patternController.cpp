@@ -38,6 +38,8 @@
 
 #include "ConfigReader.h"
 #include "illumiconeTypes.h"
+#include "illumiconePixelUtility.h"
+//#include "illumiconeUtility.h"
 #include "log.h"
 #include "Pattern.h"
 #include "patternFactory.h"
@@ -49,6 +51,7 @@
 using namespace std;
 
 
+// TODO 7/31/2017 ross:  Get this from config.
 constexpr char lockFilePath[] = "/tmp/patternController.lock";
 
 struct PatternState {
@@ -72,7 +75,9 @@ static uint8_t* opcData;        // points to the data portion of opcBuffer
 static map<WidgetId, Widget*> widgets;
 static vector<PatternState*> patternStates;
 
-static vector<vector<CRGB>> finalFrame;
+//static vector<vector<CRGB>> finalFrame;
+static HsvConeStrings hsvFinalFrame;
+static RgbConeStrings rgbFinalFrame;
 
 
 bool setUpOpcServerConnection(const string& opcServerIpAddress)
@@ -114,9 +119,9 @@ void sendOpcMessage()
         unsigned int colOffset = col * numberOfPixelsPerString * 3;
         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
             unsigned int pixelOffset = colOffset + row * 3;
-            opcData[pixelOffset] = finalFrame[col][row].r;
-            opcData[pixelOffset + 1] = finalFrame[col][row].g;
-            opcData[pixelOffset + 2] = finalFrame[col][row].b;
+            opcData[pixelOffset] = rgbFinalFrame[col][row].r;
+            opcData[pixelOffset + 1] = rgbFinalFrame[col][row].g;
+            opcData[pixelOffset + 2] = rgbFinalFrame[col][row].b;
         }
     }
 
@@ -127,27 +132,17 @@ void sendOpcMessage()
 }
 
 
-void zeroFrame()
-{
-    for (unsigned int col = 0; col < numberOfStrings; col++) {
-        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-            finalFrame[col][row] = CRGB::Black;
-        }
-    }
-}
-
-
 void turnOffAllPixels()
 {
-    zeroFrame();
+    fillSolid(rgbFinalFrame, CRGB::Black);
     sendOpcMessage();
 }
 
 
 void turnOnSafetyLights()
 {
-    zeroFrame();
-    for (auto&& stringPixels : finalFrame) {
+    fillSolid(rgbFinalFrame, CRGB::Black);
+    for (auto&& stringPixels : rgbFinalFrame) {
         // TODO ross 7/22/2017:  get the safety color from config
         stringPixels[numberOfPixelsPerString - 1] = CRGB::Magenta;
     }
@@ -157,12 +152,7 @@ void turnOnSafetyLights()
 
 void setAllPixelsToQuiescentColor()
 {
-    for (unsigned int col = 0; col < numberOfStrings; col++) {
-        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-            // TODO ross 7/22/2017:  get the quiescent color from config
-            finalFrame[col][row] = CRGB::Navy;
-        }
-    }
+    fillSolid(rgbFinalFrame, CRGB::Navy);
     sendOpcMessage();
 }
 
@@ -213,17 +203,13 @@ bool readConfig(const string& configFileName)
     }
 
     numberOfStrings = config.getNumberOfStrings();
-    logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
     numberOfPixelsPerString = config.getNumberOfPixelsPerString();
-    logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
 
     if (config.getSchedulePeriods("shutoffPeriods", shutoffPeriods)
         || config.getSchedulePeriods("quiescentPeriods", quiescentPeriods))
     {
         return false;
     }
-    printSchedulePeriods("Shutoff periods", shutoffPeriods);
-    printSchedulePeriods("Quiescent periods", quiescentPeriods);
 
     return true;
 }
@@ -430,7 +416,7 @@ void doPatterns()
         maxPriority = max(patternState->currentPriority, maxPriority);
     }
 
-    zeroFrame();
+    fillSolid(rgbFinalFrame, CRGB::Black);
 
     if (anyPatternIsActive) {
         bool anyPixelIsOn = false;
@@ -445,7 +431,7 @@ void doPatterns()
                             // only update the value of the final frame if the pixel
                             // contains non-zero values (is on)
                             if (patternState->pattern->pixelArray[col][row] != CRGB(CRGB::Black)) {
-                                finalFrame[col][row] = patternState->pattern->pixelArray[col][row];
+                                rgbFinalFrame[col][row] = patternState->pattern->pixelArray[col][row];
                                 anyPixelIsOn = true;
                             }
                         }
@@ -505,6 +491,17 @@ int main(int argc, char **argv)
 
     logMsg(LOG_INFO, "---------- patternController  starting ----------");
 
+    logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
+    logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
+    printSchedulePeriods("Shutoff periods", shutoffPeriods);
+    printSchedulePeriods("Quiescent periods", quiescentPeriods);
+
+//    finalFrame.resize(numberOfStrings, vector<CRGB>(numberOfPixelsPerString));
+    if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(rgbFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
+        logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");
+        return(EXIT_FAILURE);
+    }
+
     if (!initOpcBuffer()) {
         return(EXIT_FAILURE);
     }
@@ -516,8 +513,6 @@ int main(int argc, char **argv)
 
     initWidgets();
     initPatterns();
-
-    finalFrame.resize(numberOfStrings, vector<CRGB>(numberOfPixelsPerString));
 
     logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
 

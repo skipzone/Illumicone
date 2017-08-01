@@ -22,7 +22,66 @@
 //#include "log.h"
 
 
-bool allocateConePixels(HsvConeStrings& coneStrings, int pixelsPerString, int numStrings)
+//void fillSolid(HsvPixelString& pixelString, const HsvPixel& color)
+//{
+//    pixelString = color;
+//}
+template void fillSolid(HsvPixelString&, const HsvPixel&);
+template void fillSolid(RgbPixelString&, const RgbPixel&);
+template void fillSolid(HsvConeStrings&, const HsvPixel&);
+template void fillSolid(RgbConeStrings&, const RgbPixel&);
+
+
+//void fillSolid(HsvConeStrings& coneStrings, unsigned int stringIdx, const HsvPixel& color)
+//{
+//    coneStrings[stringIdx] = color;
+//}
+template void fillSolid(HsvConeStrings&, unsigned int, const HsvPixel&);
+template void fillSolid(RgbConeStrings&, unsigned int, const RgbPixel&);
+
+
+//void fillSolid(HsvConeStrings& coneStrings, const HsvPixel& color)
+//{
+//    for (auto&& pixelString : coneStrings) {
+//        pixelString = color;
+//    }
+//}
+
+
+void clearAllPixels(HsvConeStrings& coneStrings)
+{
+    HsvPixel transparent(0, 0, 0);
+    fillSolid(coneStrings, transparent);
+}
+
+
+void clearAllPixels(RgbConeStrings& coneStrings)
+{
+    RgbPixel transparent(0, 0, 0);
+    fillSolid(coneStrings, transparent);
+}
+
+
+void hsv2rgb(const HsvConeStrings& coneStrings, std::vector<std::vector<CRGB>>& pixelArray)
+{
+    for (unsigned int i = 0; i < pixelArray.size(); ++i) {
+        hsv2rgb_rainbow((HsvPixel*) coneStrings[i], pixelArray[i].data(), pixelArray[i].size());
+    }
+}
+
+
+void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeStrings)
+{
+    unsigned int numStrings = std::min(hsvConeStrings.size(), rgbConeStrings.size());
+    for (unsigned int i = 0; i < numStrings; ++i) {
+        unsigned int numPixels = std::min(hsvConeStrings[i].size(), rgbConeStrings[i].size());
+        hsv2rgb_rainbow((HsvPixel*) hsvConeStrings[i], (RgbPixel*) rgbConeStrings[i], numPixels);
+    }
+}
+
+
+/*
+bool allocateConePixels(HsvConeStrings& coneStrings, int numStrings, int pixelsPerString)
 {
     // Resize the colleciton of strings to match the number of strings.
     coneStrings.resize(numStrings, HsvPixelString(nullptr, 0));
@@ -40,8 +99,12 @@ bool allocateConePixels(HsvConeStrings& coneStrings, int pixelsPerString, int nu
 
     return true;
 }
+*/
+template bool allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(HsvConeStrings&, int, int);
+template bool allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(RgbConeStrings&, int, int);
 
 
+/*
 void freeConePixels(HsvConeStrings& coneStrings)
 {
     for (auto&& pixelString : coneStrings) {
@@ -49,41 +112,9 @@ void freeConePixels(HsvConeStrings& coneStrings)
         pixelString.resize(nullptr, 0);
     }
 }
-
-
-void fillSolid(HsvPixelString& pixelString, const HsvPixel& color)
-{
-    pixelString = color;
-}
-
-
-void fillSolid(HsvConeStrings& coneStrings, unsigned int stringIdx, const HsvPixel& color)
-{
-    coneStrings[stringIdx] = color;
-}
-
-
-void fillSolid(HsvConeStrings& coneStrings, const HsvPixel& color)
-{
-    for (auto&& pixelString : coneStrings) {
-        pixelString = color;
-    }
-}
-
-
-void clearAllPixels(HsvConeStrings& coneStrings)
-{
-    HsvPixel transparent = {0, 0, 0};
-    fillSolid(coneStrings, transparent);
-}
-
-
-void hsv2rgb(const HsvConeStrings& coneStrings, std::vector<std::vector<CRGB>>& pixelArray)
-{
-    for (unsigned int i = 0; i < pixelArray.size(); ++i) {
-        hsv2rgb_rainbow((HsvPixel*) coneStrings[i], pixelArray[i].data(), pixelArray[i].size());
-    }
-}
+*/
+template void freeConePixels<HsvConeStrings, HsvPixel>(HsvConeStrings&);
+template void freeConePixels<RgbConeStrings, RgbPixel>(RgbConeStrings&);
 
 
 // XY is used in two-dimensional filter functions.  See colorutils.cpp ported from FastLED.

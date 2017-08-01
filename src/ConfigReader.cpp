@@ -15,6 +15,8 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// TODO 7/31/2017 ross:  Use logMsg in place of cerr.
+
 #include "ConfigReader.h"
 #include <fstream>
 #include "illumiconeTypes.h"
@@ -127,19 +129,19 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
 
         string desc = periodConfigObj["description"].string_value();
         if (desc.empty()) {
-            cerr << "Shutoff period has no description:  " << periodConfigObj.dump() << endl;
+            cerr << "Scheduled period has no description:  " << periodConfigObj.dump() << endl;
             problemEncountered = true;
             continue;
         }
         string startTimeStr = periodConfigObj["startDateTime"].string_value();
         if (startTimeStr.empty()) {
-            cerr << "Shutoff period has no startDateTime:  " << periodConfigObj.dump() << endl;
+            cerr << "Scheduled period has no startDateTime:  " << periodConfigObj.dump() << endl;
             problemEncountered = true;
             continue;
         }
         string endTimeStr = periodConfigObj["endDateTime"].string_value();
         if (endTimeStr.empty()) {
-            cerr << "Shutoff period has no endDateTime:  " << periodConfigObj.dump() << endl;
+            cerr << "Scheduled period has no endDateTime:  " << periodConfigObj.dump() << endl;
             problemEncountered = true;
             continue;
         }
@@ -164,7 +166,7 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
         strptimeRetVal = strptime(startTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
         if (strptimeRetVal == nullptr) {
             cerr << "Unable to parse startDateTime \"" << startTimeStr << "\" for \"" << desc
-                << "\" shutoff period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
+                << "\" scheduled period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
                 << " or hh:mm:ss for daily events." << endl;
             problemEncountered = true;
             continue;
@@ -175,7 +177,7 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
         strptimeRetVal = strptime(endTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
         if (strptimeRetVal == nullptr) {
             cerr << "Unable to parse endDateTime \"" << endTimeStr << "\" for \"" << desc
-                << "\" shutoff period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
+                << "\" scheduled period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
                 << " or hh:mm:ss for daily events." << endl;
             problemEncountered = true;
             continue;
