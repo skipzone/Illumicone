@@ -886,18 +886,3 @@ inline CRGB operator%( const CRGB& p1, uint8_t d)
     return retval;
 }
 
-
-/* TODO:  remove
-/// RGB orderings, used when instantiating controllers to determine what
-/// order the controller should send RGB data out in, RGB being the default
-/// ordering.
-enum EOrder {
-    RGB=0012,
-    RBG=0021,
-    GRB=0102,
-    GBR=0120,
-    BRG=0201,
-    BGR=0210
-};
-*/
-

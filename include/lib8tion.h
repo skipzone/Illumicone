@@ -700,16 +700,8 @@ typedef q<uint16_t, 12,4> q124;
 // need to provide a function with this signature:
 //   uint32_t get_millisecond_timer();
 // that provides similar functionality.
-// You can also force use of the get_millisecond_timer function
-// by #defining USE_GET_MILLISECOND_TIMER.
-#if (defined(ARDUINO) || defined(SPARK) || defined(FASTLED_HAS_MILLIS)) && !defined(USE_GET_MILLISECOND_TIMER)
-// Forward declaration of Arduino function 'millis'.
-//uint32_t millis();
-#define GET_MILLIS millis
-#else
 uint32_t get_millisecond_timer();
 #define GET_MILLIS get_millisecond_timer
-#endif
 
 // beat16 generates a 16-bit 'sawtooth' wave at a given BPM,
 ///        with BPM specified in Q8.8 fixed-point format; e.g.

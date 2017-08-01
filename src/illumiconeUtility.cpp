@@ -28,3 +28,11 @@ unsigned int getNowMs()
     return nowMs;
 }
 
+
+// This function is used by the beat generators in FastLED's lib8tion.
+uint32_t get_millisecond_timer()
+{
+    return getNowMs();
+}
+
+
