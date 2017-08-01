@@ -29,7 +29,7 @@
     "quiescentPeriods" : [
     ],
 
-    "patternBlendMethod" : "rgbAdd",    // overlay, rgbAdd, rgbBlend, . . .
+    "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
 
     "widgets" : [
         {   "name" : "eye",
@@ -49,7 +49,7 @@
         },
         {   "name" : "rainstick",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
@@ -64,7 +64,7 @@
         },
         {   "name" : "pump",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "twister",
@@ -74,7 +74,7 @@
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",

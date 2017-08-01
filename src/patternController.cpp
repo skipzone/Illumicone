@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "ConfigReader.h"
+#include "hsv2rgb.h"
 #include "illumiconeTypes.h"
 #include "illumiconePixelUtility.h"
 //#include "illumiconeUtility.h"
@@ -58,7 +59,9 @@ constexpr char lockFilePath[] = "/tmp/patternController.lock";
 enum class PatternBlendMethod {
     overlay,
     rgbAdd,
-    rgbBlend
+    rgbBlend,
+    hsvBlend,
+    hsvHueBlend
 };
 
 struct PatternState {
@@ -73,6 +76,7 @@ static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
 static vector<SchedulePeriod> shutoffPeriods;
 static vector<SchedulePeriod> quiescentPeriods;
+static string patternBlendMethodStr;
 static PatternBlendMethod patternBlendMethod;
 
 static struct sockaddr_in server;
@@ -142,17 +146,17 @@ void sendOpcMessage()
 
 void turnOffAllPixels()
 {
-    fillSolid(rgbFinalFrame, CRGB::Black);
+    fillSolid(rgbFinalFrame, RgbPixel::Black);
     sendOpcMessage();
 }
 
 
 void turnOnSafetyLights()
 {
-    fillSolid(rgbFinalFrame, CRGB::Black);
+    fillSolid(rgbFinalFrame, RgbPixel::Black);
     for (auto&& stringPixels : rgbFinalFrame) {
         // TODO ross 7/22/2017:  get the safety color from config
-        stringPixels[numberOfPixelsPerString - 1] = CRGB::Magenta;
+        stringPixels[numberOfPixelsPerString - 1] = RgbPixel::Magenta;
     }
     sendOpcMessage();
 }
@@ -160,7 +164,7 @@ void turnOnSafetyLights()
 
 void setAllPixelsToQuiescentColor()
 {
-    fillSolid(rgbFinalFrame, CRGB::Navy);
+    fillSolid(rgbFinalFrame, RgbPixel::Navy);
     sendOpcMessage();
 }
 
@@ -219,7 +223,7 @@ bool readConfig(const string& configFileName)
         return false;
     }
 
-    string patternBlendMethodStr = config.getPatternBlendMethod();
+    patternBlendMethodStr = config.getPatternBlendMethod();
     if (patternBlendMethodStr == "overlay") {
         patternBlendMethod = PatternBlendMethod::overlay;
     }
@@ -228,6 +232,12 @@ bool readConfig(const string& configFileName)
     }
     else if (patternBlendMethodStr == "rgbBlend") {
         patternBlendMethod = PatternBlendMethod::rgbBlend;
+    }
+    else if (patternBlendMethodStr == "hsvBlend") {
+        patternBlendMethod = PatternBlendMethod::hsvBlend;
+    }
+    else if (patternBlendMethodStr == "hsvHueBlend") {
+        patternBlendMethod = PatternBlendMethod::hsvHueBlend;
     }
     else {
         logMsg(LOG_ERR, "patternBlendMethod \"" + patternBlendMethodStr + "\" not recognized.");
@@ -435,7 +445,8 @@ void doPatterns()
         maxPriority = max(patternState->priority, maxPriority);
     }
 
-    fillSolid(rgbFinalFrame, CRGB::Black);
+    clearAllPixels(rgbFinalFrame);
+    clearAllPixels(hsvFinalFrame);
 
     if (anyPatternIsActive) {
         bool anyPixelIsOn = false;
@@ -449,8 +460,8 @@ void doPatterns()
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
                             // only update the value of the final frame if the pixel
                             // contains non-zero values (is on)
-                            // TODO 8/1/2017 ross:  use CRGB::Transparent instead of black
-                            if (patternState->pattern->pixelArray[col][row] != CRGB(CRGB::Black)) {
+                            // TODO 8/1/2017 ross:  use RgbPixel::Transparent instead of black
+                            if (patternState->pattern->pixelArray[col][row] != RgbPixel(RgbPixel::Black)) {
                                 anyPixelIsOn = true;
                                 switch (patternBlendMethod) {
                                     case PatternBlendMethod::overlay:
@@ -463,13 +474,30 @@ void doPatterns()
                                         break;
                                     case PatternBlendMethod::rgbBlend:
                                         // Blending rgb tends to make things look dark when combined.
-                                        if (rgbFinalFrame[col][row] != CRGB(CRGB::Black)) {
+                                        if (rgbFinalFrame[col][row] != RgbPixel(RgbPixel::Black)) { // TODO:  use RgbPixel::Transparent
                                             nblend(rgbFinalFrame[col][row],
                                                    patternState->pattern->pixelArray[col][row],
                                                    patternState->amountOfOverlay);
                                         }
                                         else {
                                             rgbFinalFrame[col][row] = patternState->pattern->pixelArray[col][row];
+                                        }
+                                        break;
+                                    case PatternBlendMethod::hsvBlend:
+                                    case PatternBlendMethod::hsvHueBlend:
+                                        HsvPixel ffPixel = hsvFinalFrame[col][row];
+                                        HsvPixel patPixel = rgb2hsv_approximate(patternState->pattern->pixelArray[col][row]);
+                                        if (hsvFinalFrame[col][row] != HsvPixel(0, 0, 0)) {     // TODO:  use hsvTransparent
+                                            nblend(hsvFinalFrame[col][row],
+                                                   patPixel,
+                                                   patternState->amountOfOverlay);
+                                            if (patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
+                                                hsvFinalFrame[col][row].s = max(ffPixel.s, patPixel.s);
+                                                hsvFinalFrame[col][row].v = max(ffPixel.v, patPixel.v);
+                                            }
+                                        }
+                                        else {
+                                            hsvFinalFrame[col][row] = patPixel;
                                         }
                                         break;
                                 }
@@ -480,6 +508,9 @@ void doPatterns()
             }
         }
         if (anyPixelIsOn) {
+            if (patternBlendMethod == PatternBlendMethod::hsvBlend || patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
+                hsv2rgb(hsvFinalFrame, rgbFinalFrame);
+            }
             sendOpcMessage();
         }
         else {
@@ -533,8 +564,14 @@ int main(int argc, char **argv)
 
     logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
     logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
+    logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
     printSchedulePeriods("Shutoff periods", shutoffPeriods);
     printSchedulePeriods("Quiescent periods", quiescentPeriods);
+
+    if (!allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(hsvFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
+        logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");
+        return(EXIT_FAILURE);
+    }
 
     if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(rgbFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
         logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");

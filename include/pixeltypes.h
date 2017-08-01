@@ -113,6 +113,16 @@ struct CHSV {
     }
 };
 
+inline __attribute__((always_inline)) bool operator== (const CHSV& lhs, const CHSV& rhs)
+{
+    return (lhs.h == rhs.h) && (lhs.s == rhs.s) && (lhs.v == rhs.v);
+}
+
+inline __attribute__((always_inline)) bool operator!= (const CHSV& lhs, const CHSV& rhs)
+{
+    return !(lhs == rhs);
+}
+
 /// Pre-defined hue values for HSV objects
 typedef enum {
     HUE_RED = 0,

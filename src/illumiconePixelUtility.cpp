@@ -82,6 +82,18 @@ void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeString
 }
 
 
+void rgb2hsv(const RgbConeStrings& rgbConeStrings, HsvConeStrings& hsvConeStrings)
+{
+    unsigned int numStrings = std::min(hsvConeStrings.size(), rgbConeStrings.size());
+    for (unsigned int i = 0; i < numStrings; ++i) {
+        unsigned int numPixels = std::min(hsvConeStrings[i].size(), rgbConeStrings[i].size());
+        for (unsigned int j = 0; j < numPixels; ++j) {
+            hsvConeStrings[i][j] = rgb2hsv_approximate(rgbConeStrings[i][j]);
+        }
+    }
+}
+
+
 /*
 bool allocateConePixels(HsvConeStrings& coneStrings, int numStrings, int pixelsPerString)
 {

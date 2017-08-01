@@ -57,6 +57,9 @@ void clearAllPixels(RgbConeStrings& coneStrings);
 void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeStrings);
 
 
+void rgb2hsv(const RgbConeStrings& rgbConeStrings, HsvConeStrings& hsvConeStrings);
+
+
 template<typename ConeStringsType, typename PixelStringType, typename PixelType>
 bool allocateConePixels(ConeStringsType& coneStrings, int numStrings, int pixelsPerString)
 {
