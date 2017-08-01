@@ -22,30 +22,14 @@
 //#include "log.h"
 
 
-//void fillSolid(HsvPixelString& pixelString, const HsvPixel& color)
-//{
-//    pixelString = color;
-//}
 template void fillSolid(HsvPixelString&, const HsvPixel&);
 template void fillSolid(RgbPixelString&, const RgbPixel&);
 template void fillSolid(HsvConeStrings&, const HsvPixel&);
 template void fillSolid(RgbConeStrings&, const RgbPixel&);
 
 
-//void fillSolid(HsvConeStrings& coneStrings, unsigned int stringIdx, const HsvPixel& color)
-//{
-//    coneStrings[stringIdx] = color;
-//}
 template void fillSolid(HsvConeStrings&, unsigned int, const HsvPixel&);
 template void fillSolid(RgbConeStrings&, unsigned int, const RgbPixel&);
-
-
-//void fillSolid(HsvConeStrings& coneStrings, const HsvPixel& color)
-//{
-//    for (auto&& pixelString : coneStrings) {
-//        pixelString = color;
-//    }
-//}
 
 
 void clearAllPixels(HsvConeStrings& coneStrings)
@@ -60,16 +44,6 @@ void clearAllPixels(RgbConeStrings& coneStrings)
     RgbPixel transparent(0, 0, 0);
     fillSolid(coneStrings, transparent);
 }
-
-
-/*
-void hsv2rgb(const HsvConeStrings& coneStrings, std::vector<std::vector<CRGB>>& pixelArray)
-{
-    for (unsigned int i = 0; i < pixelArray.size(); ++i) {
-        hsv2rgb_rainbow((HsvPixel*) coneStrings[i], pixelArray[i].data(), pixelArray[i].size());
-    }
-}
-*/
 
 
 void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeStrings)
@@ -94,39 +68,10 @@ void rgb2hsv(const RgbConeStrings& rgbConeStrings, HsvConeStrings& hsvConeString
 }
 
 
-/*
-bool allocateConePixels(HsvConeStrings& coneStrings, int numStrings, int pixelsPerString)
-{
-    // Resize the colleciton of strings to match the number of strings.
-    coneStrings.resize(numStrings, HsvPixelString(nullptr, 0));
-
-    // Allocate the pixels for each string.
-    for (auto&& pixelString : coneStrings) {
-        HsvPixel* newStringPixels = new HsvPixel[pixelsPerString];
-        if (newStringPixels == 0) {
-            return false;
-        }
-        pixelString.resize(newStringPixels, pixelsPerString);
-    }
-
-    clearAllPixels(coneStrings);
-
-    return true;
-}
-*/
 template bool allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(HsvConeStrings&, int, int);
 template bool allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(RgbConeStrings&, int, int);
 
 
-/*
-void freeConePixels(HsvConeStrings& coneStrings)
-{
-    for (auto&& pixelString : coneStrings) {
-        delete [] (HsvPixel*) pixelString;
-        pixelString.resize(nullptr, 0);
-    }
-}
-*/
 template void freeConePixels<HsvConeStrings, HsvPixel>(HsvConeStrings&);
 template void freeConePixels<RgbConeStrings, RgbPixel>(RgbConeStrings&);
 

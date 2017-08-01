@@ -27,15 +27,21 @@
 using namespace std;
 
 
-Pattern::Pattern(const std::string& name)
-    : name(name)
+Pattern::Pattern(const std::string& name, bool usesHsvModel)
+    : usesHsvModel(usesHsvModel)
+    , name(name)
 {
 }
 
+
 Pattern::~Pattern()
 {
-    freeConePixels<RgbConeStrings, RgbPixel>(pixelArray);
-    freeConePixels<HsvConeStrings, HsvPixel>(coneStrings);
+    if (usesHsvModel) {
+        freeConePixels<HsvConeStrings, HsvPixel>(coneStrings);
+    }
+    else {
+        freeConePixels<RgbConeStrings, RgbPixel>(pixelArray);
+    }
 }
 
 
@@ -48,13 +54,12 @@ bool Pattern::goInactive()
     if (isActive) {
         isActive = false;
         // Set all the pixels to 0 intensity to make this pattern effectively transparent.
-//        for (auto&& pixels:pixelArray) {
-//            for (auto&& pixel:pixels) {
-//                pixel = CRGB::Black;
-//            }
-//        }
-        clearAllPixels(pixelArray);
-        clearAllPixels(coneStrings);
+        if (usesHsvModel) {
+            clearAllPixels(coneStrings);
+        }
+        else {
+            clearAllPixels(pixelArray);
+        }
     }
 
     return retval;
@@ -65,12 +70,13 @@ bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
     numStrings = config.getNumberOfStrings();
     pixelsPerString = config.getNumberOfPixelsPerString();
-//    pixelArray.resize(numStrings, std::vector<CRGB>(pixelsPerString));
-//    for (auto&& pixelString : pixelArray) {
-//        fill_solid(pixelString.data(), pixelString.size(), CRGB::Black);
-//    }
-    allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(pixelArray, numStrings, pixelsPerString);
-    allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(coneStrings, numStrings, pixelsPerString);
+
+    if (usesHsvModel) {
+        allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(coneStrings, numStrings, pixelsPerString);
+    }
+    else {
+        allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(pixelArray, numStrings, pixelsPerString);
+    }
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 

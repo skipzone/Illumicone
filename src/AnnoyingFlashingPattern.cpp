@@ -33,7 +33,7 @@ using namespace std;
 
 
 AnnoyingFlashingPattern::AnnoyingFlashingPattern(const std::string& name)
-    : Pattern(name)
+    : Pattern(name, true)
 {
 };
 
@@ -196,7 +196,6 @@ bool AnnoyingFlashingPattern::update()
                     fillSolid(coneStrings, i, hsvColor);
                 }
             }
-            hsv2rgb(coneStrings, pixelArray);
         }
     }
 

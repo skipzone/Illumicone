@@ -30,7 +30,7 @@ class Pattern
 {
     public:
 
-        Pattern(const std::string& name);
+        Pattern(const std::string& name, bool usesHsvModel = false);
         virtual ~Pattern();
 
         Pattern() = delete;
@@ -47,12 +47,11 @@ class Pattern
         int numStrings;
         RgbConeStrings pixelArray;
         HsvConeStrings coneStrings;
+        bool usesHsvModel;
 
         int priority;
         int opacity;
-        std::string name;
         bool isActive;
-
 
     protected:
 
@@ -61,6 +60,8 @@ class Pattern
             std::shared_ptr<WidgetChannel> widgetChannel;
             std::string measurement;
         };
+
+        std::string name;
 
         std::vector<ChannelConfiguration> getChannelConfigurations(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 

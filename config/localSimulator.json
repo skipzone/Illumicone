@@ -29,12 +29,12 @@
     "quiescentPeriods" : [
     ],
 
-    "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+    "patternBlendMethod" : "hsvBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
 
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 500
         },
         {   "name" : "spinnah",
@@ -198,7 +198,7 @@
             "autoDisableTimeoutMs" : 1500,      // pattern disables itself after being active for this amount of time
             "activationThreshold" : 300,        // 300 is a basic LED flashlight from a few feet away
             "reactivationThreshold" : 200,      // pattern re-enables itself when measurement drops below this value
-            "allStringsSameColor" : false,
+            "allStringsSameColor" : true,
             "flashChangeIntervalMs" : 50
         },
         {   "name" : "rain",
