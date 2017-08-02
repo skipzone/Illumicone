@@ -53,14 +53,13 @@ class AnnoyingFlashingPattern : public Pattern {
 
         // pattern config
         int activationThreshold;
-        time_t flashingTimeoutSeconds;
+        int reactivationThreshold;
+        unsigned int autoDisableTimeoutMs;
         bool allStringsSameColor;
+        unsigned int flashChangeIntervalMs;
 
-        time_t timeExceededThreshold;
+        unsigned int disableMs;
         bool disableFlashing;
-
-        HsvConeStrings hsvConeStrings;
-
-        bool goInactive();
+        unsigned int nextFlashChangeMs;
 };
 

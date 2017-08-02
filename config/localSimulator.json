@@ -29,6 +29,8 @@
     "quiescentPeriods" : [
     ],
 
+    "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
@@ -47,7 +49,7 @@
         },
         {   "name" : "rainstick",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
@@ -57,12 +59,12 @@
         },
         {   "name" : "triObelisk",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "pump",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "twister",
@@ -72,12 +74,12 @@
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "buckNorris",
@@ -90,7 +92,8 @@
     "patterns" : [
         {   "name" : "verticalStripes",
             "enabled" : true,
-            "priority" : 2,
+            "priority" : 6,
+            "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "RgbVerticalPattern",
             "inputs" : [
                 {   "inputName" : "redPosition",
@@ -120,7 +123,8 @@
         },
         {   "name" : "horizontalRings",
             "enabled" : true,
-            "priority" : 3,
+            "priority" : 5,
+            "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "HorizontalStripePattern",
             "inputs" : [
                 {   "inputName" : "redPosition",
@@ -150,12 +154,13 @@
         },
         {   "name" : "multicolorSparkle",
             "enabled" : true,
-            "priority" : 5,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
             "inputs" : [
                 {   "inputName" : "density",
                     "widgetName" : "triObelisk",
-                    "channelNumber" : 2,
+                    "channelNumber" : 0,
                     "measurement" : "velocity"
                 }
             ],
@@ -164,8 +169,9 @@
         },
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
-            "priority" : 6,
-            "burstingPriority" : 0,
+            "priority" : 9,
+            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "burstingPriority" : 1,
             "patternClassName" : "FillAndBurstPattern",
             "inputs" : [
                 {   "inputName" : "pressure",
@@ -184,7 +190,8 @@
         },
         {   "name" : "eyeFlash",
             "enabled" : true,
-            "priority" : 1,
+            "priority" : 2,
+            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "AnnoyingFlashingPattern",
             "inputs" : [
                 {   "inputName" : "intensity",
@@ -193,13 +200,16 @@
                     "measurement" : "position"
                 }
             ],
-            "flashingTimeoutSeconds" : 3,
-            "activationThreshold" : 200,        // 300 is a basic LED flashlight from a few feet away
-            "allStringsSameColor" : false
+            "autoDisableTimeoutMs" : 1500,      // pattern disables itself after being active for this amount of time
+            "activationThreshold" : 300,        // 300 is a basic LED flashlight from a few feet away
+            "reactivationThreshold" : 200,      // pattern re-enables itself when measurement drops below this value
+            "allStringsSameColor" : true,
+            "flashChangeIntervalMs" : 50
         },
         {   "name" : "rain",
             "enabled" : true,
-            "priority" : 4,
+            "priority" : 3,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",

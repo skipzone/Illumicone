@@ -15,11 +15,11 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <string>
+//#include <string>
 
 #include "EyeWidget.h"
 #include "illumiconeWidgetTypes.h"
-#include "log.h"
+//#include "log.h"
 #include "WidgetId.h"
 
 using namespace std;
@@ -35,28 +35,30 @@ EyeWidget::EyeWidget()
 void EyeWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
     ++stepCount;
-    if (channels[chIdx]->getIsActive()) {
-        if (stepCount < numActiveSteps) {
+    if (stepCount < numInactiveSteps) {
+        if (makeAlwaysActive) {
             channels[chIdx]->setIsActive(true);     // so that it doesn't auto inactivate
-            channels[chIdx]->setPosition(activePositionValue);
-            //logMsg(LOG_DEBUG, "position value for Eye set to " + to_string(activePositionValue));
+            channels[chIdx]->setPosition(inactivePositionValue);
+            //logMsg(LOG_DEBUG, "position value for Eye set to inactive value " + to_string(inactivePositionValue));
         }
         else {
-            stepCount = 0;
             channels[chIdx]->setIsActive(false);
-            //logMsg(LOG_DEBUG, "Eye going inactive");
-        }
-    }
-    else {
-        if (stepCount < numInactiveSteps) {
             //logMsg(LOG_DEBUG, "Eye inactive");
         }
-        else {
-            stepCount = 0;
-            channels[chIdx]->setIsActive(true);
-            channels[chIdx]->setPosition(activePositionValue);
-            //logMsg(LOG_DEBUG, "Eye going active; position value set to " + to_string(activePositionValue));
-        }
+    }
+    else if (stepCount <= (numInactiveSteps + numActiveSteps)) {
+        channels[chIdx]->setIsActive(true);     // so that it doesn't auto inactivate
+        channels[chIdx]->setPosition(activePositionValue);
+        //logMsg(LOG_DEBUG, "position value for Eye set to active value " + to_string(activePositionValue));
+    }
+    else if (stepCount <= (numInactiveSteps + numActiveSteps + numSemiActiveSteps)) {
+        channels[chIdx]->setIsActive(true);     // so that it doesn't auto inactivate
+        channels[chIdx]->setPosition(semiActivePositionValue);
+        //logMsg(LOG_DEBUG, "position value for Eye set to semi-active value " + to_string(semiActivePositionValue));
+    }
+    else {
+        stepCount = 0;
+        //logMsg(LOG_DEBUG, "Eye going inactive at next step");
     }
 }
 

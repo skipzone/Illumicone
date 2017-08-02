@@ -113,6 +113,16 @@ struct CHSV {
     }
 };
 
+inline __attribute__((always_inline)) bool operator== (const CHSV& lhs, const CHSV& rhs)
+{
+    return (lhs.h == rhs.h) && (lhs.s == rhs.s) && (lhs.v == rhs.v);
+}
+
+inline __attribute__((always_inline)) bool operator!= (const CHSV& lhs, const CHSV& rhs)
+{
+    return !(lhs == rhs);
+}
+
 /// Pre-defined hue values for HSV objects
 typedef enum {
     HUE_RED = 0,
@@ -885,19 +895,4 @@ inline CRGB operator%( const CRGB& p1, uint8_t d)
     retval.nscale8_video( d);
     return retval;
 }
-
-
-/* TODO:  remove
-/// RGB orderings, used when instantiating controllers to determine what
-/// order the controller should send RGB data out in, RGB being the default
-/// ordering.
-enum EOrder {
-    RGB=0012,
-    RBG=0021,
-    GRB=0102,
-    GBR=0120,
-    BRG=0201,
-    BGR=0210
-};
-*/
 

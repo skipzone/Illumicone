@@ -37,7 +37,11 @@
 #include <vector>
 
 #include "ConfigReader.h"
+#include "hsv2rgb.h"
 #include "illumiconeTypes.h"
+#include "illumiconePixelUtility.h"
+//#include "illumiconeUtility.h"
+#include "lib8tion.h"
 #include "log.h"
 #include "Pattern.h"
 #include "patternFactory.h"
@@ -49,11 +53,21 @@
 using namespace std;
 
 
+// TODO 7/31/2017 ross:  Get this from config.
 constexpr char lockFilePath[] = "/tmp/patternController.lock";
+
+enum class PatternBlendMethod {
+    overlay,
+    rgbAdd,
+    rgbBlend,
+    hsvBlend,
+    hsvHueBlend
+};
 
 struct PatternState {
     Pattern* pattern;
-    int currentPriority;
+    int priority;
+    fract8 amountOfOverlay;
     int wantsDisplay;
 };
 
@@ -62,6 +76,8 @@ static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
 static vector<SchedulePeriod> shutoffPeriods;
 static vector<SchedulePeriod> quiescentPeriods;
+static string patternBlendMethodStr;
+static PatternBlendMethod patternBlendMethod;
 
 static struct sockaddr_in server;
 static int sock;
@@ -72,7 +88,8 @@ static uint8_t* opcData;        // points to the data portion of opcBuffer
 static map<WidgetId, Widget*> widgets;
 static vector<PatternState*> patternStates;
 
-static vector<vector<CRGB>> finalFrame;
+static HsvConeStrings hsvFinalFrame;
+static RgbConeStrings rgbFinalFrame;
 
 
 bool setUpOpcServerConnection(const string& opcServerIpAddress)
@@ -114,9 +131,9 @@ void sendOpcMessage()
         unsigned int colOffset = col * numberOfPixelsPerString * 3;
         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
             unsigned int pixelOffset = colOffset + row * 3;
-            opcData[pixelOffset] = finalFrame[col][row].r;
-            opcData[pixelOffset + 1] = finalFrame[col][row].g;
-            opcData[pixelOffset + 2] = finalFrame[col][row].b;
+            opcData[pixelOffset] = rgbFinalFrame[col][row].r;
+            opcData[pixelOffset + 1] = rgbFinalFrame[col][row].g;
+            opcData[pixelOffset + 2] = rgbFinalFrame[col][row].b;
         }
     }
 
@@ -127,29 +144,19 @@ void sendOpcMessage()
 }
 
 
-void zeroFrame()
-{
-    for (unsigned int col = 0; col < numberOfStrings; col++) {
-        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-            finalFrame[col][row] = CRGB::Black;
-        }
-    }
-}
-
-
 void turnOffAllPixels()
 {
-    zeroFrame();
+    fillSolid(rgbFinalFrame, RgbPixel::Black);
     sendOpcMessage();
 }
 
 
 void turnOnSafetyLights()
 {
-    zeroFrame();
-    for (auto&& stringPixels : finalFrame) {
+    fillSolid(rgbFinalFrame, RgbPixel::Black);
+    for (auto&& stringPixels : rgbFinalFrame) {
         // TODO ross 7/22/2017:  get the safety color from config
-        stringPixels[numberOfPixelsPerString - 1] = CRGB::Magenta;
+        stringPixels[numberOfPixelsPerString - 1] = RgbPixel::Magenta;
     }
     sendOpcMessage();
 }
@@ -157,12 +164,7 @@ void turnOnSafetyLights()
 
 void setAllPixelsToQuiescentColor()
 {
-    for (unsigned int col = 0; col < numberOfStrings; col++) {
-        for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-            // TODO ross 7/22/2017:  get the quiescent color from config
-            finalFrame[col][row] = CRGB::Navy;
-        }
-    }
+    fillSolid(rgbFinalFrame, RgbPixel::Navy);
     sendOpcMessage();
 }
 
@@ -213,17 +215,34 @@ bool readConfig(const string& configFileName)
     }
 
     numberOfStrings = config.getNumberOfStrings();
-    logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
     numberOfPixelsPerString = config.getNumberOfPixelsPerString();
-    logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
 
     if (config.getSchedulePeriods("shutoffPeriods", shutoffPeriods)
         || config.getSchedulePeriods("quiescentPeriods", quiescentPeriods))
     {
         return false;
     }
-    printSchedulePeriods("Shutoff periods", shutoffPeriods);
-    printSchedulePeriods("Quiescent periods", quiescentPeriods);
+
+    patternBlendMethodStr = config.getPatternBlendMethod();
+    if (patternBlendMethodStr == "overlay") {
+        patternBlendMethod = PatternBlendMethod::overlay;
+    }
+    else if (patternBlendMethodStr == "rgbAdd") {
+        patternBlendMethod = PatternBlendMethod::rgbAdd;
+    }
+    else if (patternBlendMethodStr == "rgbBlend") {
+        patternBlendMethod = PatternBlendMethod::rgbBlend;
+    }
+    else if (patternBlendMethodStr == "hsvBlend") {
+        patternBlendMethod = PatternBlendMethod::hsvBlend;
+    }
+    else if (patternBlendMethodStr == "hsvHueBlend") {
+        patternBlendMethod = PatternBlendMethod::hsvHueBlend;
+    }
+    else {
+        logMsg(LOG_ERR, "patternBlendMethod \"" + patternBlendMethodStr + "\" not recognized.");
+        return false;
+    }
 
     return true;
 }
@@ -338,11 +357,6 @@ void initPatterns()
             logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfig.dump());
             continue;
         }
-//        PatternId patternId = stringToPatternId(patternClassName);
-//        if (patternId == PatternId::invalid) {
-//            logMsg(LOG_ERR, "Pattern configuration has invalid pattern class name:  " + patternConfig.dump());
-//            continue;
-//        }
         Pattern* newPattern = patternFactory(patternClassName, patternName);
         if (newPattern == nullptr) {
             logMsg(LOG_ERR,
@@ -424,36 +438,126 @@ void doPatterns()
     int maxPriority = INT_MIN;
     for (auto&& patternState : patternStates) {
         patternState->wantsDisplay = patternState->pattern->update();
-        patternState->currentPriority = patternState->pattern->priority;
+        patternState->priority = patternState->pattern->priority;
+        patternState->amountOfOverlay = patternState->pattern->opacity * 255 / 100;
         anyPatternIsActive |= patternState->wantsDisplay;
-        minPriority = min(patternState->currentPriority, minPriority);
-        maxPriority = max(patternState->currentPriority, maxPriority);
+        minPriority = min(patternState->priority, minPriority);
+        maxPriority = max(patternState->priority, maxPriority);
     }
 
-    zeroFrame();
+    clearAllPixels(rgbFinalFrame);
+    clearAllPixels(hsvFinalFrame);
 
     if (anyPatternIsActive) {
         bool anyPixelIsOn = false;
+
         // Layer the patterns into the final frame in reverse priority order
         // (i.e., lowest priority first, highest priority last).  Note that
         // a lower priority value denotes higher priority (0 is highest).
         for (int priority = maxPriority; priority >= minPriority; --priority) {
             for (auto&& patternState : patternStates) {
-                if (patternState->currentPriority == priority) {
+                if (patternState->priority == priority) {
                     for (unsigned int col = 0; col < numberOfStrings; col++) {
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
-                            // only update the value of the final frame if the pixel
-                            // contains non-zero values (is on)
-                            if (patternState->pattern->pixelArray[col][row] != CRGB(CRGB::Black)) {
-                                finalFrame[col][row] = patternState->pattern->pixelArray[col][row];
-                                anyPixelIsOn = true;
+
+                            // Figure out if the pixel is transparent, and convert
+                            // it to the required color model, if necessary.
+                            bool pixelIsTransparent;
+                            RgbPixel rgbPatPixel;
+                            HsvPixel hsvPatPixel;
+                            switch (patternBlendMethod) {
+                                case PatternBlendMethod::overlay:
+                                case PatternBlendMethod::rgbAdd:
+                                case PatternBlendMethod::rgbBlend:
+                                    if (patternState->pattern->usesHsvModel) {
+                                        // TODO:  use hsvTransparent
+                                        pixelIsTransparent = patternState->pattern->coneStrings[col][row] == HsvPixel(0, 0, 0);
+                                        if (!pixelIsTransparent) {
+                                            hsv2rgb_rainbow(patternState->pattern->coneStrings[col][row], rgbPatPixel);
+                                        }
+                                    }
+                                    else {
+                                        // TODO:  use rgbTransparent
+                                        pixelIsTransparent =
+                                            patternState->pattern->pixelArray[col][row] == RgbPixel(RgbPixel::Black);
+                                        if (!pixelIsTransparent) {
+                                            rgbPatPixel = patternState->pattern->pixelArray[col][row];
+                                        }
+                                    }
+                                    break;
+                                case PatternBlendMethod::hsvBlend:
+                                case PatternBlendMethod::hsvHueBlend:
+                                    if (patternState->pattern->usesHsvModel) {
+                                        // TODO:  use hsvTransparent
+                                        pixelIsTransparent = patternState->pattern->coneStrings[col][row] == HsvPixel(0, 0, 0);
+                                        if (!pixelIsTransparent) {
+                                            hsvPatPixel = patternState->pattern->coneStrings[col][row];
+                                        }
+                                    }
+                                    else {
+                                        // TODO:  use rgbTransparent
+                                        pixelIsTransparent =
+                                            patternState->pattern->pixelArray[col][row] == RgbPixel(RgbPixel::Black);
+                                        if (!pixelIsTransparent) {
+                                            rgb2hsv(patternState->pattern->pixelArray[col][row], hsvPatPixel);
+                                        }
+                                    }
+                                    break;
                             }
+
+                            // Blend the pattern's pixel into the final frame if it isn't transparent.
+                            if (!pixelIsTransparent) {
+                                anyPixelIsOn = true;
+                                switch (patternBlendMethod) {
+                                    case PatternBlendMethod::overlay:
+                                        // A higher priority pattern overrides a lower priority pattern.
+                                        rgbFinalFrame[col][row] = rgbPatPixel;
+                                        break;
+                                    case PatternBlendMethod::rgbAdd:
+                                        // Saturating addition ignores priority, but it looks better than nblend of rgb.
+                                        rgbFinalFrame[col][row] += rgbPatPixel;
+                                        break;
+                                    case PatternBlendMethod::rgbBlend:
+                                        // Blending rgb tends to make things look dark when combined.
+                                        // TODO:  use RgbPixel::Transparent
+                                        if (rgbFinalFrame[col][row] != RgbPixel(RgbPixel::Black)) {
+                                            nblend(rgbFinalFrame[col][row],
+                                                   rgbPatPixel,
+                                                   patternState->amountOfOverlay);
+                                        }
+                                        else {
+                                            rgbFinalFrame[col][row] = rgbPatPixel;
+                                        }
+                                        break;
+                                    case PatternBlendMethod::hsvBlend:
+                                    case PatternBlendMethod::hsvHueBlend:
+                                        HsvPixel ffPixel = hsvFinalFrame[col][row];
+                                        if (hsvFinalFrame[col][row] != HsvPixel(0, 0, 0)) {     // TODO:  use hsvTransparent
+                                            nblend(hsvFinalFrame[col][row],
+                                                   hsvPatPixel,
+                                                   patternState->amountOfOverlay);
+                                            if (patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
+                                                hsvFinalFrame[col][row].s = max(ffPixel.s, hsvPatPixel.s);
+                                                hsvFinalFrame[col][row].v = max(ffPixel.v, hsvPatPixel.v);
+                                            }
+                                        }
+                                        else {
+                                            hsvFinalFrame[col][row] = hsvPatPixel;
+                                        }
+                                        break;
+                                }
+                            }
+
                         }
                     }
                 }
             }
         }
+
         if (anyPixelIsOn) {
+            if (patternBlendMethod == PatternBlendMethod::hsvBlend || patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
+                hsv2rgb(hsvFinalFrame, rgbFinalFrame);
+            }
             sendOpcMessage();
         }
         else {
@@ -505,6 +609,22 @@ int main(int argc, char **argv)
 
     logMsg(LOG_INFO, "---------- patternController  starting ----------");
 
+    logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
+    logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
+    logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
+    printSchedulePeriods("Shutoff periods", shutoffPeriods);
+    printSchedulePeriods("Quiescent periods", quiescentPeriods);
+
+    if (!allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(hsvFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
+        logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");
+        return(EXIT_FAILURE);
+    }
+
+    if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(rgbFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
+        logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");
+        return(EXIT_FAILURE);
+    }
+
     if (!initOpcBuffer()) {
         return(EXIT_FAILURE);
     }
@@ -517,13 +637,25 @@ int main(int argc, char **argv)
     initWidgets();
     initPatterns();
 
-    finalFrame.resize(numberOfStrings, vector<CRGB>(numberOfPixelsPerString));
-
     logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
 
     time_t lastPeriodCheckTime = 0;
     bool inPeriod = false;
     string lastPeriodDesc = "";
+
+/*
+//=-=-=-=-=-=-=-=-=
+    RgbPixel rgb(255, 255, 0);
+    //RgbPixel rgb(196, 138, 0);
+    cout << "r=" << (int) rgb.r << " g=" << (int) rgb.g << " b=" << (int) rgb.b << endl;
+    HsvPixel hsv;
+    rgb2hsv(rgb, hsv);
+    cout << "h=" << (int) hsv.h << " s=" << (int) hsv.s << " v=" << (int) hsv.v << endl;
+    hsv2rgb_rainbow(hsv, rgb);
+    cout << "r=" << (int) rgb.r << " g=" << (int) rgb.g << " b=" << (int) rgb.b << endl;
+    return EXIT_SUCCESS;
+//=-=-=-=-=-=-=-=-=
+*/
 
     // ----- run loop -----
     while (true) {

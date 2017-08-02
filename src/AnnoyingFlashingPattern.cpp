@@ -22,6 +22,7 @@
 #include "ConfigReader.h"
 #include "hsv2rgb.h"
 #include "illumiconePixelUtility.h"
+#include "illumiconeUtility.h"
 #include "lib8tion.h"
 #include "log.h"
 #include "Pattern.h"
@@ -32,20 +33,21 @@ using namespace std;
 
 
 AnnoyingFlashingPattern::AnnoyingFlashingPattern(const std::string& name)
-    : Pattern(name)
+    : Pattern(name, true)
 {
 };
 
 
 AnnoyingFlashingPattern::~AnnoyingFlashingPattern()
 {
-    freeConePixels(hsvConeStrings);
 };
 
 
 bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    allocateConePixels(hsvConeStrings, pixelsPerString, numStrings);
+    nextFlashChangeMs = 0;
+
+    // ----- get pattern configuration -----
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
@@ -56,12 +58,19 @@ bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetI
     activationThreshold = patternConfig["activationThreshold"].int_value();
     logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
-    if (!patternConfig["flashingTimeoutSeconds"].is_number()) {
-        logMsg(LOG_ERR, "flashingTimeoutSeconds not specified in " + name + " pattern configuration.");
+    if (!patternConfig["reactivationThreshold"].is_number()) {
+        logMsg(LOG_ERR, "reactivationThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
-    flashingTimeoutSeconds = patternConfig["flashingTimeoutSeconds"].int_value();
-    logMsg(LOG_INFO, name + " flashingTimeoutSeconds=" + to_string(flashingTimeoutSeconds));
+    reactivationThreshold = patternConfig["reactivationThreshold"].int_value();
+    logMsg(LOG_INFO, name + " reactivationThreshold=" + to_string(reactivationThreshold));
+
+    if (!patternConfig["autoDisableTimeoutMs"].is_number()) {
+        logMsg(LOG_ERR, "autoDisableTimeoutMs not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    autoDisableTimeoutMs = patternConfig["autoDisableTimeoutMs"].int_value();
+    logMsg(LOG_INFO, name + " autoDisableTimeoutMs=" + to_string(autoDisableTimeoutMs));
 
     if (!patternConfig["allStringsSameColor"].is_bool()) {
         logMsg(LOG_ERR, "allStringsSameColor not specified in " + name + " pattern configuration.");
@@ -69,6 +78,15 @@ bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetI
     }
     allStringsSameColor = patternConfig["allStringsSameColor"].bool_value();
     logMsg(LOG_INFO, name + " allStringsSameColor=" + to_string(allStringsSameColor));
+
+    if (!patternConfig["flashChangeIntervalMs"].is_number()) {
+        logMsg(LOG_ERR, "flashChangeIntervalMs not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    flashChangeIntervalMs = patternConfig["flashChangeIntervalMs"].int_value();
+    logMsg(LOG_INFO, name + " flashChangeIntervalMs=" + to_string(flashChangeIntervalMs));
+
+    // ----- get input channels -----
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
@@ -98,97 +116,88 @@ bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetI
 }
 
 
-bool AnnoyingFlashingPattern::goInactive()
-{
-    // If we're just now going inactive, we need to return true
-    // so that this pattern can be cleared from display.
-    bool retval = isActive;
-
-    if (isActive) {
-        isActive = false;
-        timeExceededThreshold = 0;
-        // Set all the pixels to 0 intensity to make this pattern effectively transparent.
-        for (auto&& pixels:pixelArray) {
-            for (auto&& pixel:pixels) {
-                pixel = CRGB::Black;
-            }
-        }
-    }
-
-    return retval;
-}
-
-
 bool AnnoyingFlashingPattern::update()
 {
-    // TODO:  The frequency of the flashing is determined by the frequency at which the widget
-    //        sends measurements. Instead, the frequency should be determined here in the pattern.
-    //        Also, when this pattern disables itself because it has flashed for flashingTimeoutSeconds,
-    //        it should not re-enable itself immediately after the widget goes inactive or the
-    //        measurement drops below the threshold.  Instead, it should wait for some predetermined
-    //        period of time before becoming enabled again.
-
     // Don't do anything if no input channel was assigned.
     if (intensityChannel == nullptr) {
         return false;
     }
 
-    // If the widget channel has gone inactive, turn off this pattern.
+    unsigned int nowMs = getNowMs();
+
+    // If the widget channel has gone inactive, turn off this pattern but allow
+    // it to become active again immediatelly if the next measurement crosses
+    // the activation threshold.
     if (!intensityChannel->getIsActive()) {
         //logMsg(LOG_DEBUG, "channel inactive");
-        disableFlashing = false;
+        if (disableFlashing) {
+            logMsg(LOG_INFO, "Re-enabling " + name
+                             + " because " + intensityChannel->getName() + " has gone inactive.");
+            disableFlashing = false;
+        }
         return goInactive();
     }
 
-    // No change to the pattern if we haven't received a new measurement.
-    if (!intensityChannel->getHasNewPositionMeasurement()) {
-        //logMsg(LOG_DEBUG, "no new measurement");
-        return isActive;
+    if (intensityChannel->getHasNewPositionMeasurement()) {
+
+        int intensityMeasmt = intensityChannel->getPosition();
+
+        // Once flashing is disabled, it will remain disabled until the widget goes
+        // inactive or the current measurement is below the reactivation theshold.
+        if (disableFlashing) {
+            if (intensityMeasmt < reactivationThreshold) {
+                logMsg(LOG_INFO, "Re-enabling " + name
+                                 + " because the last intensity measurement (" + to_string(intensityMeasmt)
+                                 + ") crossed the reactivation threshold (" + to_string(reactivationThreshold) + ").");
+                disableFlashing = false;
+            }
+            return false;
+        }
+
+        // If the latest measurement is below the activation threshold, turn off this pattern.
+        if (intensityMeasmt <= activationThreshold) {
+            //logMsg(LOG_DEBUG, "below activation threshold");
+            return goInactive();
+        }
+
+        // If the threshold was just crossed, initialize auto-disable and start flashing.
+        if (!isActive) {
+            //logMsg(LOG_DEBUG, "activation threshold crossed");
+            isActive = true;
+            disableMs = nowMs + autoDisableTimeoutMs;
+            nextFlashChangeMs = nowMs;
+        }
     }
 
-    // If the latest measurement is below the activation threshold, turn off this pattern.
-    if (intensityChannel->getPosition() <= activationThreshold) {
-        //logMsg(LOG_DEBUG, "below activation threshold");
-        return goInactive();
-    }
+    if (isActive) {
 
-    // Once flashing is disabled, it will remain disabled until the widget goes inactive.
-    if (disableFlashing) {
-        //logMsg(LOG_DEBUG, "flashing disabled");
-        return isActive;
-    }
-
-    if (!isActive) {
-        isActive = true;
-        // The threshold was just crossed, so initialize auto-disable.
-        time(&timeExceededThreshold);
-    }
-    else {
         // If we've been above the threshold for too long, automatically disable
         // this pattern so that it doesn't continually override other patterns.
-        time_t now;
-        time(&now);
-        if (now - timeExceededThreshold >= flashingTimeoutSeconds) {
-            //logMsg(LOG_DEBUG, "disabling");
+        if ((int) (nowMs - disableMs) >= 0) {
+            logMsg(LOG_INFO, "Disabling " + name
+                             + " because it has been active for " + to_string(autoDisableTimeoutMs) + " ms.");
             disableFlashing = true;
             return goInactive();
         }
-    }
 
-    //logMsg(LOG_DEBUG, "flashing the cone");
-    HsvPixel hsvColor;
-    hsvColor.s = hsvColor.v = 255;
-    if (allStringsSameColor) {
-        hsvColor.h = random8();
-        fillSolid(hsvConeStrings, hsvColor);
-    }
-    else {
-        for (unsigned int i = 0; i < numStrings; ++i) {
-            hsvColor.h = random8();
-            fillSolid(hsvConeStrings, i, hsvColor);
+        // Change the flash color if it is time to do so.
+        if ((int) (nowMs - nextFlashChangeMs) >= 0) {
+            nextFlashChangeMs = nowMs + flashChangeIntervalMs;
+            //logMsg(LOG_DEBUG, "flashing the cone");
+            HsvPixel hsvColor;
+            hsvColor.s = hsvColor.v = 255;
+            if (allStringsSameColor) {
+                hsvColor.h = random8();
+                fillSolid(coneStrings, hsvColor);
+            }
+            else {
+                for (unsigned int i = 0; i < numStrings; ++i) {
+                    hsvColor.h = random8();
+                    fillSolid(coneStrings, i, hsvColor);
+                }
+            }
         }
     }
-    hsv2rgb(hsvConeStrings, pixelArray);
 
     return isActive;
 }

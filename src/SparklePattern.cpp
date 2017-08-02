@@ -85,20 +85,6 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 }
 
 
-void SparklePattern::goInactive()
-{
-    if (isActive) {
-        isActive = false;
-        // Set all the pixels to 0 intensity to make this pattern effectively transparent.
-        for (auto&& pixels:pixelArray) {
-            for (auto&& pixel:pixels) {
-                pixel = CRGB::Black;
-            }
-        }
-    }
-}
-
-
 bool SparklePattern::update()
 {
     // TODO:  The frequency of the sparkling is determined by the frequency at which the widget

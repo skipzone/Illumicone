@@ -22,59 +22,86 @@
 //#include "log.h"
 
 
-bool allocateConePixels(HsvConeStrings& coneStrings, int pixelsPerString, int numStrings)
-{
-    // Resize the colleciton of strings to match the number of strings.
-    coneStrings.resize(numStrings, HsvPixelString(nullptr, 0));
+template void fillSolid(HsvPixelString&, const HsvPixel&);
+template void fillSolid(RgbPixelString&, const RgbPixel&);
+template void fillSolid(HsvConeStrings&, const HsvPixel&);
+template void fillSolid(RgbConeStrings&, const RgbPixel&);
 
-    // Allocate the pixels for each string.
-    for (auto&& pixelString : coneStrings) {
-        HsvPixel* newStringPixels = new HsvPixel[pixelsPerString];
-        if (newStringPixels == 0) {
-            return false;
+
+template void fillSolid(HsvConeStrings&, unsigned int, const HsvPixel&);
+template void fillSolid(RgbConeStrings&, unsigned int, const RgbPixel&);
+
+
+void clearAllPixels(HsvConeStrings& coneStrings)
+{
+    HsvPixel transparent(0, 0, 0);
+    fillSolid(coneStrings, transparent);
+}
+
+
+void clearAllPixels(RgbConeStrings& coneStrings)
+{
+    RgbPixel transparent(0, 0, 0);
+    fillSolid(coneStrings, transparent);
+}
+
+
+void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeStrings)
+{
+    unsigned int numStrings = std::min(hsvConeStrings.size(), rgbConeStrings.size());
+    for (unsigned int i = 0; i < numStrings; ++i) {
+        unsigned int numPixels = std::min(hsvConeStrings[i].size(), rgbConeStrings[i].size());
+        hsv2rgb_rainbow((HsvPixel*) hsvConeStrings[i], (RgbPixel*) rgbConeStrings[i], numPixels);
+    }
+}
+
+
+void rgb2hsv(const RgbPixel& rgb, HsvPixel& hsv)
+{
+    // algorithm from http://www.javascripter.net/faq/rgb2hsv.htm on 8/1/2017
+
+    int rgbMin = std::min(std::min(rgb.r, rgb.g), rgb.b);
+    int rgbMax = std::max(std::max(rgb.r, rgb.g), rgb.b);
+
+    int delta = rgbMax - rgbMin;
+
+    hsv.v = rgbMax;
+
+    // black, white, and shades of gray
+    if (delta == 0) {
+        hsv.h = 0;                  // hue doesn't matter because saturation is 0
+        hsv.s = 0;
+        return;
+    }
+
+    // colors
+    // TODO 8/1/2017 ross:  probably need to speed this up with integer math
+    float d   = (rgb.r == rgbMin) ? rgb.g - rgb.b : ((rgb.b == rgbMin) ? rgb.r - rgb.g : rgb.b - rgb.r);
+    float sex = (rgb.r == rgbMin) ? 3             : ((rgb.b == rgbMin) ? 1             : 5);
+    float hDegrees = 60 * (sex - d / (rgbMax - rgbMin));
+    hsv.h = hDegrees / 360.0 * 256;
+    hsv.s = (rgbMax - rgbMin) * 255 / rgbMax;
+}
+
+
+void rgb2hsv(const RgbConeStrings& rgbConeStrings, HsvConeStrings& hsvConeStrings)
+{
+    unsigned int numStrings = std::min(hsvConeStrings.size(), rgbConeStrings.size());
+    for (unsigned int i = 0; i < numStrings; ++i) {
+        unsigned int numPixels = std::min(hsvConeStrings[i].size(), rgbConeStrings[i].size());
+        for (unsigned int j = 0; j < numPixels; ++j) {
+            rgb2hsv(rgbConeStrings[i][j], hsvConeStrings[i][j]);
         }
-        pixelString.resize(newStringPixels, pixelsPerString);
-    }
-
-    return true;
-}
-
-
-void freeConePixels(HsvConeStrings& coneStrings)
-{
-    for (auto&& pixelString : coneStrings) {
-        delete [] (HsvPixel*) pixelString;
-        pixelString.resize(nullptr, 0);
     }
 }
 
 
-void fillSolid(HsvPixelString& pixelString, const HsvPixel& color)
-{
-    pixelString = color;
-}
+template bool allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(HsvConeStrings&, int, int);
+template bool allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(RgbConeStrings&, int, int);
 
 
-void fillSolid(HsvConeStrings& coneStrings, unsigned int stringIdx, const HsvPixel& color)
-{
-    coneStrings[stringIdx] = color;
-}
-
-
-void fillSolid(HsvConeStrings& coneStrings, const HsvPixel& color)
-{
-    for (auto&& pixelString : coneStrings) {
-        pixelString = color;
-    }
-}
-
-
-void hsv2rgb(const HsvConeStrings& coneStrings, std::vector<std::vector<CRGB>>& pixelArray)
-{
-    for (unsigned int i = 0; i < pixelArray.size(); ++i) {
-        hsv2rgb_rainbow((HsvPixel*) coneStrings[i], pixelArray[i].data(), pixelArray[i].size());
-    }
-}
+template void freeConePixels<HsvConeStrings, HsvPixel>(HsvConeStrings&);
+template void freeConePixels<RgbConeStrings, RgbPixel>(RgbConeStrings&);
 
 
 // XY is used in two-dimensional filter functions.  See colorutils.cpp ported from FastLED.

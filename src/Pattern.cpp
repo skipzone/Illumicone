@@ -19,6 +19,7 @@
 
 #include "colorutils.h"
 #include "ConfigReader.h"
+#include "illumiconePixelUtility.h"
 #include "json11.hpp"
 #include "log.h"
 #include "Pattern.h"
@@ -26,9 +27,42 @@
 using namespace std;
 
 
-Pattern::Pattern(const std::string& name)
-    : name(name)
+Pattern::Pattern(const std::string& name, bool usesHsvModel)
+    : usesHsvModel(usesHsvModel)
+    , name(name)
 {
+}
+
+
+Pattern::~Pattern()
+{
+    if (usesHsvModel) {
+        freeConePixels<HsvConeStrings, HsvPixel>(coneStrings);
+    }
+    else {
+        freeConePixels<RgbConeStrings, RgbPixel>(pixelArray);
+    }
+}
+
+
+bool Pattern::goInactive()
+{
+    // If we're just now going inactive, we need to return true
+    // so that this pattern can be cleared from display.
+    bool retval = isActive;
+
+    if (isActive) {
+        isActive = false;
+        // Set all the pixels to 0 intensity to make this pattern effectively transparent.
+        if (usesHsvModel) {
+            clearAllPixels(coneStrings);
+        }
+        else {
+            clearAllPixels(pixelArray);
+        }
+    }
+
+    return retval;
 }
 
 
@@ -36,9 +70,12 @@ bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
     numStrings = config.getNumberOfStrings();
     pixelsPerString = config.getNumberOfPixelsPerString();
-    pixelArray.resize(numStrings, std::vector<CRGB>(pixelsPerString));
-    for (auto&& pixelString : pixelArray) {
-        fill_solid(pixelString.data(), pixelString.size(), CRGB::Black);
+
+    if (usesHsvModel) {
+        allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(coneStrings, numStrings, pixelsPerString);
+    }
+    else {
+        allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(pixelArray, numStrings, pixelsPerString);
     }
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
@@ -50,7 +87,12 @@ bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
     priority = patternConfig["priority"].int_value();
     logMsg(LOG_INFO, name + " priority=" + to_string(priority));
 
-    opacity = 100;
+    if (!patternConfig["opacity"].is_number()) {
+        logMsg(LOG_ERR, "opacity not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    opacity = patternConfig["opacity"].int_value();
+    logMsg(LOG_INFO, name + " opacity=" + to_string(opacity));
 
     return initPattern(config, widgets);
 }

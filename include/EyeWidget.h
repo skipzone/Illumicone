@@ -35,10 +35,14 @@ class EyeWidget : public Widget
     private:
 
         // for generating simulated measurements
+        constexpr static bool makeAlwaysActive = true;
         constexpr static unsigned int eyeSimulationUpdateIntervalMs = 100;
         constexpr static unsigned int numActiveSteps = 30;
+        constexpr static unsigned int numSemiActiveSteps = 20;
         constexpr static unsigned int numInactiveSteps = 50;
-        constexpr static int activePositionValue = 201;
+        constexpr static int activePositionValue = 301;
+        constexpr static int semiActivePositionValue = 201;
+        constexpr static int inactivePositionValue = 199;
         unsigned int stepCount;
 };
 

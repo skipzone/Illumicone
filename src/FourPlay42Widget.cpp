@@ -29,7 +29,7 @@ FourPlay42Widget::FourPlay42Widget()
     simulationUpdateIntervalMs[0] = 100;
     simulationUpdateIntervalMs[1] = 200;
     simulationUpdateIntervalMs[2] = 400;
-    simulationUpdateIntervalMs[3] = 50;
+    simulationUpdateIntervalMs[3] = 500;
 }
 
 
