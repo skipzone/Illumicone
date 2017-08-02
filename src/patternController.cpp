@@ -439,7 +439,7 @@ void doPatterns()
     for (auto&& patternState : patternStates) {
         patternState->wantsDisplay = patternState->pattern->update();
         patternState->priority = patternState->pattern->priority;
-        patternState->amountOfOverlay = 128;    // patternState->pattern->amountOfOverlay;
+        patternState->amountOfOverlay = patternState->pattern->opacity * 255 / 100;
         anyPatternIsActive |= patternState->wantsDisplay;
         minPriority = min(patternState->priority, minPriority);
         maxPriority = max(patternState->priority, maxPriority);

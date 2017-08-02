@@ -87,7 +87,12 @@ bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
     priority = patternConfig["priority"].int_value();
     logMsg(LOG_INFO, name + " priority=" + to_string(priority));
 
-    opacity = 100;
+    if (!patternConfig["opacity"].is_number()) {
+        logMsg(LOG_ERR, "opacity not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    opacity = patternConfig["opacity"].int_value();
+    logMsg(LOG_INFO, name + " opacity=" + to_string(opacity));
 
     return initPattern(config, widgets);
 }
