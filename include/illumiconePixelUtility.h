@@ -57,6 +57,7 @@ void clearAllPixels(RgbConeStrings& coneStrings);
 void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeStrings);
 
 
+void rgb2hsv(const RgbPixel& rgb, HsvPixel& hsv);
 void rgb2hsv(const RgbConeStrings& rgbConeStrings, HsvConeStrings& hsvConeStrings);
 
 

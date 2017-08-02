@@ -499,7 +499,7 @@ void doPatterns()
                                         pixelIsTransparent =
                                             patternState->pattern->pixelArray[col][row] == RgbPixel(RgbPixel::Black);
                                         if (!pixelIsTransparent) {
-                                            hsvPatPixel = rgb2hsv_approximate(patternState->pattern->pixelArray[col][row]);
+                                            rgb2hsv(patternState->pattern->pixelArray[col][row], hsvPatPixel);
                                         }
                                     }
                                     break;
@@ -642,6 +642,20 @@ int main(int argc, char **argv)
     time_t lastPeriodCheckTime = 0;
     bool inPeriod = false;
     string lastPeriodDesc = "";
+
+/*
+//=-=-=-=-=-=-=-=-=
+    RgbPixel rgb(255, 255, 0);
+    //RgbPixel rgb(196, 138, 0);
+    cout << "r=" << (int) rgb.r << " g=" << (int) rgb.g << " b=" << (int) rgb.b << endl;
+    HsvPixel hsv;
+    rgb2hsv(rgb, hsv);
+    cout << "h=" << (int) hsv.h << " s=" << (int) hsv.s << " v=" << (int) hsv.v << endl;
+    hsv2rgb_rainbow(hsv, rgb);
+    cout << "r=" << (int) rgb.r << " g=" << (int) rgb.g << " b=" << (int) rgb.b << endl;
+    return EXIT_SUCCESS;
+//=-=-=-=-=-=-=-=-=
+*/
 
     // ----- run loop -----
     while (true) {

@@ -210,8 +210,8 @@ void hsv2rgb_rainbow( const CHSV& hsv, CRGB& rgb)
     // colors.
     // Level Y1 is a moderate boost, the default.
     // Level Y2 is a strong boost.
-    const uint8_t Y1 = 1;
-    const uint8_t Y2 = 0;
+    const uint8_t Y1 = 0;
+    const uint8_t Y2 = 1;
     
     // G2: Whether to divide all greens by two.
     // Depends GREATLY on your particular LEDs

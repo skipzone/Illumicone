@@ -56,13 +56,41 @@ void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeString
 }
 
 
+void rgb2hsv(const RgbPixel& rgb, HsvPixel& hsv)
+{
+    // algorithm from http://www.javascripter.net/faq/rgb2hsv.htm on 8/1/2017
+
+    int rgbMin = std::min(std::min(rgb.r, rgb.g), rgb.b);
+    int rgbMax = std::max(std::max(rgb.r, rgb.g), rgb.b);
+
+    int delta = rgbMax - rgbMin;
+
+    hsv.v = rgbMax;
+
+    // black, white, and shades of gray
+    if (delta == 0) {
+        hsv.h = 0;                  // hue doesn't matter because saturation is 0
+        hsv.s = 0;
+        return;
+    }
+
+    // colors
+    // TODO 8/1/2017 ross:  probably need to speed this up with integer math
+    float d   = (rgb.r == rgbMin) ? rgb.g - rgb.b : ((rgb.b == rgbMin) ? rgb.r - rgb.g : rgb.b - rgb.r);
+    float sex = (rgb.r == rgbMin) ? 3             : ((rgb.b == rgbMin) ? 1             : 5);
+    float hDegrees = 60 * (sex - d / (rgbMax - rgbMin));
+    hsv.h = hDegrees / 360.0 * 256;
+    hsv.s = (rgbMax - rgbMin) * 255 / rgbMax;
+}
+
+
 void rgb2hsv(const RgbConeStrings& rgbConeStrings, HsvConeStrings& hsvConeStrings)
 {
     unsigned int numStrings = std::min(hsvConeStrings.size(), rgbConeStrings.size());
     for (unsigned int i = 0; i < numStrings; ++i) {
         unsigned int numPixels = std::min(hsvConeStrings[i].size(), rgbConeStrings[i].size());
         for (unsigned int j = 0; j < numPixels; ++j) {
-            hsvConeStrings[i][j] = rgb2hsv_approximate(rgbConeStrings[i][j]);
+            rgb2hsv(rgbConeStrings[i][j], hsvConeStrings[i][j]);
         }
     }
 }
