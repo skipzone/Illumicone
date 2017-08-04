@@ -17,6 +17,45 @@
 
 #include <chrono>
 
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/file.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "illumiconeUtility.h"
+
+
+using namespace std;
+
+
+int acquireProcessLock(const string& lockFilePath)
+{
+    int fd = open(lockFilePath.c_str(), O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd >= 0) {
+        if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
+            return fd;
+        }
+        else {
+            if (errno == EWOULDBLOCK) {
+                close(fd);
+                fprintf(stderr, "Another process has locked %s.\n", lockFilePath.c_str());
+                return -1;
+            }
+            else {
+                close(fd);
+                fprintf(stderr, "Unable to lock %s.  Error %d:  %s\n", lockFilePath.c_str(), errno, strerror(errno));
+                return -1;
+            }
+        }
+    }
+    else {
+        fprintf(stderr, "Unable to create or open %s.  Error %d:  %s\n", lockFilePath.c_str(), errno, strerror(errno));
+        return -1;
+    }
+}
+
 
 unsigned int getNowMs()
 {

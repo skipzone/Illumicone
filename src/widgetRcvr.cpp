@@ -1,24 +1,39 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <thread>
-#include <unistd.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <RF24/RF24.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-#include <sys/file.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <time.h>
 
 #include "ConfigReader.h"
+#include "illumiconeUtility.h"
 #include "illumiconeWidgetTypes.h"
+#include "log.h"
 #include "WidgetId.h"
 
 
@@ -26,10 +41,11 @@ using namespace std;
 
 
 // TODO 8/3/2017 ross:  Get this from config.
-constexpr char lockFilePath[] = "/tmp/widgetRcvr.lock";
+static string lockFilePath = "/tmp/widgetRcvr.lock";
 
 static ConfigReader config;
 static string patconIpAddress;
+static unsigned int widgetPortNumberBase;
 
 static struct sockaddr_in widgetSockAddr[16];
 static int widgetSock[16];
@@ -71,43 +87,16 @@ constexpr uint8_t txMaxRetries = 15;            // max retries (0-15)
 constexpr rf24_crclength_e crcLength = RF24_CRC_16;
 
 
-/***********
- * Helpers *
- ***********/
-
-const string getTimestamp()
-{
-    using namespace std::chrono;
-
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    int ms = epochMs.count() % 1000;
-    time_t now = epochMs.count() / 1000;
-
-    struct tm tmStruct = *localtime(&now);
-    char buf[20];
-    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmStruct);
-
-    stringstream sstr;
-    sstr << buf << "." << setfill('0') << setw(3) << ms << ":  ";
-
-    string str = sstr.str();
-    return str;
-}
-
-
 /*********************
  * UDP Communication *
  *********************/
 
 bool openUdpPort(WidgetId widgetId)
 {
-    // TODO 6/12/2017 ross:  Get this value from config.
-    constexpr static unsigned int widgetPortNumberBase = 4200;
-
     unsigned int widgetIdNumber = widgetIdToInt(widgetId);
     unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
 
-    cout << "Creating and binding socket for widget " << widgetIdNumber << endl;
+    logMsg(LOG_INFO, "Creating and binding socket for " + widgetIdToString(intToWidgetId(widgetIdNumber)));
 
     memset(&widgetSockAddr[widgetIdNumber], 0, sizeof(struct sockaddr_in));
 
@@ -116,16 +105,22 @@ bool openUdpPort(WidgetId widgetId)
     widgetSockAddr[widgetIdNumber].sin_port = htons(0);
 
     if ((widgetSock[widgetIdNumber] = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        perror("Failed to create socket");
+        int errNum = errno;
+        logMsg(LOG_ERR,
+               "Failed to create socket for " + widgetIdToString(intToWidgetId(widgetIdNumber))
+               + ".  " + string(strerror(errNum)) + " (" + to_string(errNum) + ")");
         return false;
     }
 
     if (::bind(widgetSock[widgetIdNumber], (struct sockaddr *) &widgetSockAddr[widgetIdNumber], sizeof(struct sockaddr_in)) < 0) {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
+        int errNum = errno;
+        logMsg(LOG_ERR,
+               "bind failed for " + widgetIdToString(intToWidgetId(widgetIdNumber))
+               + ".  " + string(strerror(errNum)) + " (" + to_string(errNum) + ")");
+        return false;
     }
 
-    cout << "Setting address to " << patconIpAddress << ":" << portNumber << endl;
+    logMsg(LOG_INFO, "Setting address to " + patconIpAddress + ":" + to_string(portNumber));
 
     inet_pton(AF_INET, patconIpAddress.c_str(), &widgetSockAddr[widgetIdNumber].sin_addr.s_addr);
     widgetSockAddr[widgetIdNumber].sin_port = htons(portNumber);
@@ -144,14 +139,12 @@ bool sendUdp(const UdpPayload& payload)
                                     sizeof(struct sockaddr_in));
 
     if (bytesSentCount != sizeof(payload)) {
-        cerr << getTimestamp()
-            << "UPD payload size is " << sizeof(payload)
-            << " but " << bytesSentCount
-            << " bytes were sent."
-            << endl;
+        logMsg(LOG_ERR,
+               "UPD payload size is " + to_string(sizeof(payload))
+               + " but " + to_string(bytesSentCount) + " bytes were sent.");
         return false;
     }
-    //cout << "Sent " << bytesSentCount << " byte payload via UDP" << endl;
+    //logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
 
     return true;
 }
@@ -164,21 +157,19 @@ bool sendUdp(const UdpPayload& payload)
 void handleStressTestPayload(const StressTestPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize != sizeof(StressTestPayload)) {
-        cerr << getTimestamp()
-            << "Got StressTestPayload payload with size " << payloadSize
-            << " but size " << sizeof(StressTestPayload)
-            << " was expected." << endl;
+        logMsg(LOG_ERR,
+               "Got StressTestPayload payload with size " + to_string(payloadSize)
+               + " but size " + to_string(sizeof(StressTestPayload)) + " was expected.");
         return;
     }
 
-    cout << getTimestamp() << "Got stress test payload;"
-        << " Id = " << (int) payload->widgetHeader.id
-        << ", " << string(payload->widgetHeader.isActive ? "active  " : "inactive")
-        << ", ch = " << (int) payload->widgetHeader.channel
-        << ", seq = " << payload->payloadNum
-        << ", fails = " << payload->numTxFailures
-        << " (" << payload->numTxFailures * 100 / payload->payloadNum << "% )"
-        << endl;
+    logMsg(LOG_INFO,
+           "Got stress test payload; Id = " + to_string((int) payload->widgetHeader.id)
+           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
+           + ", ch = " + to_string((int) payload->widgetHeader.channel)
+           + ", seq = " + to_string(payload->payloadNum)
+           + ", fails = " + to_string(payload->numTxFailures)
+           + " (" + to_string(payload->numTxFailures * 100 / payload->payloadNum) + "% )");
 
     UdpPayload udpPayload;
     udpPayload.id       = payload->widgetHeader.id;
@@ -194,20 +185,18 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
 void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize != sizeof(PositionVelocityPayload)) {
-        cerr << getTimestamp()
-            << "Got PositionVelocityPayload payload with size " << payloadSize
-            << " but size " << sizeof(PositionVelocityPayload)
-            << " was expected." << endl;
+        logMsg(LOG_ERR,
+               "Got PositionVelocityPayload payload with size " + to_string(payloadSize)
+               + " but size " + to_string(sizeof(PositionVelocityPayload)) + " was expected.");
         return;
     }
 
-    cout << getTimestamp() << "Got position+velocity payload;"
-        << " Id = " << (int) payload->widgetHeader.id
-        << ", " << string(payload->widgetHeader.isActive ? "active  " : "inactive")
-        << ", ch = " << (int) payload->widgetHeader.channel
-        << ", position = " << payload->position
-        << ", velocity = " << payload->velocity
-        << endl;
+    logMsg(LOG_INFO,
+           "Got Got position+velocity payload; Id = " + to_string((int) payload->widgetHeader.id)
+           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
+           + ", ch = " + to_string((int) payload->widgetHeader.channel)
+           + ", position = " + to_string(payload->position)
+           + ", velocity = " + to_string(payload->velocity));
 
     UdpPayload udpPayload;
     udpPayload.id       = payload->widgetHeader.id;
@@ -223,24 +212,23 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
 void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize < (1 + sizeof(int16_t))) {
-        cerr << getTimestamp()
-            << "Got MeasurementVectorPayload without any data." << endl;
+        logMsg(LOG_ERR, "Got MeasurementVectorPayload without any data.");
         return;
     }
+    // TODO 8/3/2017 ross:  might be a good idea to make sure payloadSize is odd
 
     int numMeasurements = (payloadSize - 1) / sizeof(int16_t);
 
-    cout << getTimestamp() << "Got measurement vector payload;"
-        << " Id = " << (int) payload->widgetHeader.id
-        << ", " << string(payload->widgetHeader.isActive ? "active  " : "inactive")
-        << ", ch = " << (int) payload->widgetHeader.channel
-        << ", numMeasurements = " << numMeasurements
-        << endl;
-
-    cout << "Measurements:" << endl;
+    logMsg(LOG_INFO,
+           "Got measurement vector payload; Id = " + to_string((int) payload->widgetHeader.id)
+           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
+           + ", ch = " + to_string((int) payload->widgetHeader.channel)
+           + ", numMeasurements = " + to_string(numMeasurements));
+    stringstream sstr;
     for (int i = 0; i < numMeasurements; ++i) {
-        cout << setfill(' ') << setw(6) << payload->measurements[i] << endl;
+        sstr << "  " << setfill(' ') << setw(6) << payload->measurements[i];
     }
+    logMsg(LOG_INFO, "Measurements:" + sstr.str());
 
     // The rainstick widget sends 7 position measurements.  We'll map them to
     // channels 0 through 6.
@@ -261,25 +249,24 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
 void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize < 2) {
-        cerr << getTimestamp()
-            << "Got CustomPayload without any data." << endl;
+        logMsg(LOG_ERR, + "Got CustomPayload without any data.");
         return;
     }
 
     int bufLen = payloadSize - 1;
 
-    cout << getTimestamp() << "Got custom payload;"
-        << " Id = " << (int) payload->widgetHeader.id
-        << ", " << string(payload->widgetHeader.isActive ? "active  " : "inactive")
-        << ", ch = " << (int) payload->widgetHeader.channel
-        << ", bufLen = " << bufLen
-        << endl;
-
-    cout << "Contents:" << endl;
+    logMsg(LOG_INFO,
+           "Got custom payload; Id = " + to_string((int) payload->widgetHeader.id)
+           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
+           + ", ch = " + to_string((int) payload->widgetHeader.channel)
+           + ", bufLen = " + to_string(bufLen));
+    stringstream sstr;
     for (int i = 0; i < bufLen; ++i) {
-        cout << hex << (int) payload->buf[i] << " ";
+        sstr << hex << (int) payload->buf[i] << " ";
     }
-    cout << endl;
+    logMsg(LOG_INFO, "Contents:  " + sstr.str());
+
+    // TODO 8/3/2017 ross:  Do transformation for contortOMatic here.
 }
 
 
@@ -298,54 +285,40 @@ bool readConfig(const string& configFileName)
         return false;
     }
 
+    widgetPortNumberBase = config.getWidgetPortNumberBase();
+    if (widgetPortNumberBase == 0) {
+        return false;
+    }
+
     return true;
 }
 
 
-int acquireProcessLock()
+bool openUdpPorts()
 {
-    int fd = open(lockFilePath, O_CREAT);
-    if (fd >= 0) {
-        if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
-            return fd;
-        }
-        else {
-            if (errno == EWOULDBLOCK) {
-                // Another process has the file locked.
-                return -1;
-            }
-            else {
-                fprintf(stderr, "Unable to lock %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
-                return -1;
-            }
-        }
-    }
-    else {
-        fprintf(stderr, "Unable to create or open %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
-        return -1;
-    }
+    bool retval = 
+           openUdpPort(WidgetId::eye)
+        && openUdpPort(WidgetId::spinnah)
+        && openUdpPort(WidgetId::bells)
+        && openUdpPort(WidgetId::rainstick)
+        && openUdpPort(WidgetId::schroedersPlaything)
+        && openUdpPort(WidgetId::triObelisk)
+        && openUdpPort(WidgetId::pump)
+        && openUdpPort(WidgetId::contortOMatic)
+        && openUdpPort(WidgetId::fourPlay42)
+        && openUdpPort(WidgetId::fourPlay43)
+        && openUdpPort(WidgetId::buckNorris);
+
+    return retval;
 }
 
 
-void openUdpPorts()
+bool configureRadio()
 {
-    openUdpPort(WidgetId::eye);
-    openUdpPort(WidgetId::spinnah);
-    openUdpPort(WidgetId::bells);
-    openUdpPort(WidgetId::rainstick);
-    openUdpPort(WidgetId::schroedersPlaything);
-    openUdpPort(WidgetId::triObelisk);
-    openUdpPort(WidgetId::pump);
-    openUdpPort(WidgetId::contortOMatic);
-    openUdpPort(WidgetId::fourPlay42);
-    openUdpPort(WidgetId::fourPlay43);
-    openUdpPort(WidgetId::buckNorris);
-}
-
-
-void configureRadio()
-{
-    radio.begin();
+    if (!radio.begin()) {
+        logMsg(LOG_ERR, "radio.begin failed.");
+        return false;
+    }
 
     radio.setPALevel(rfPowerLevel);
     radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
@@ -360,6 +333,8 @@ void configureRadio()
     }
 
     radio.printDetails();
+
+    return true;
 }
 
 
@@ -373,11 +348,11 @@ void runLoop()
 
             unsigned int payloadSize = radio.getDynamicPayloadSize();
             if (payloadSize == 0) {
-                cerr << getTimestamp() << "Got invalid packet (payloadSize = 0)." << endl;
+                logMsg(LOG_ERR, "Got invalid packet (payloadSize = 0).");
                 continue;
             }
             if (payloadSize > maxPayloadSize) {
-                cerr << getTimestamp() << "Got unsupported payload size " << payloadSize << endl;
+                logMsg(LOG_ERR, "Got unsupported payload size " + to_string(payloadSize));
                 // RF24 is supposed to do a Flush_RX command and return 0 for
                 // the size if an invalid payload length is detected.  It
                 // apparently didn't do that.  Who knows what we're supposed
@@ -391,6 +366,8 @@ void runLoop()
 
             uint8_t payload[payloadSize];
             radio.read(payload, payloadSize);
+
+            stringstream sstr;
 
             switch(pipeNum) {
 
@@ -408,14 +385,13 @@ void runLoop()
 
                 case 3:
                 case 4:
-                    cerr << getTimestamp()
-                        << "Got payload with size " << payloadSize
-                        << " via unsupported pipe " << (int) pipeNum
-                        << ".  Contents:" << endl;
                     for (int i = 0; i < maxPayloadSize; ++i) {
-                        cerr << hex << (int) payload[i] << " ";
+                        sstr << hex << (int) payload[i] << " ";
                     }
-                    cerr << endl;
+                    logMsg(LOG_ERR,
+                           "Got payload with size " + to_string(payloadSize)
+                           + " via unsupported pipe " + to_string((int) pipeNum)
+                           + ".  Contents:  " + sstr.str());
                     break;
 
                 case 5:
@@ -423,13 +399,12 @@ void runLoop()
                     break;
 
                 default:
-                    cerr << getTimestamp()
-                        << "pipeNum is " << (int) pipeNum 
-                        << ", which should never happen!  Payload contents:" << endl;
                     for (int i = 0; i < maxPayloadSize; ++i) {
-                        cerr << hex << (int) payload[i] << " ";
+                        sstr << hex << (int) payload[i] << " ";
                     }
-                    cerr << endl;
+                    logMsg(LOG_ERR,
+                           "pipeNum is " + to_string((int) pipeNum)
+                           + ", which should never happen!  Payload contents:  " + sstr.str());
             }
         }
 
@@ -451,15 +426,19 @@ int main(int argc, char** argv)
         return(EXIT_FAILURE);
     }
 
-    if (acquireProcessLock() < 0) {
+    if (acquireProcessLock(lockFilePath) < 0) {
         exit(EXIT_FAILURE);
     }
 
     logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
 
-    openUdpPorts();
+    if (!openUdpPorts()) {
+        exit(EXIT_FAILURE);
+    }
 
-    configureRadio();
+    if (!configureRadio()) {
+        exit(EXIT_FAILURE);
+    }
 
     radio.startListening();
 
