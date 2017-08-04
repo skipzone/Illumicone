@@ -417,13 +417,12 @@ int main(int argc, char** argv)
     cout << getTimestamp() << "---------- widgetRcvr starting ----------" << endl;
 
     openUdpPort(WidgetId::eye);
-    openUdpPort(WidgetId::shirleysWeb);
+    openUdpPort(WidgetId::spinnah);
     openUdpPort(WidgetId::bells);
     openUdpPort(WidgetId::rainstick);
     openUdpPort(WidgetId::schroedersPlaything);
     openUdpPort(WidgetId::triObelisk);
-    openUdpPort(WidgetId::squawkBox);
-    openUdpPort(WidgetId::plunger);
+    openUdpPort(WidgetId::pump);
     openUdpPort(WidgetId::contortOMatic);
     openUdpPort(WidgetId::fourPlay42);
     openUdpPort(WidgetId::fourPlay43);
