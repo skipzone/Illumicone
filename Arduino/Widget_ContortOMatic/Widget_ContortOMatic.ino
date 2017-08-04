@@ -164,6 +164,10 @@ void gatherMeasurements()
 void sendMeasurements()
 {
   // TODO 6/22/2017 ross:  Send the pad-is-touched data as a bit field instead of one byte per pad.
+  //                       Use CustomPayload.  The channel number should indicate the type of payload:
+  //                       touch bitfield (0), threshold info., etc.  For ch. 0, isActive should be
+  //                       true if any pads are touched.
+
   // First byte of payload is the nubmer of cap sense pins.  The remainder
   // of the bits are 1 if the corresponding pad is touched, 0 if not.
   payload.buf[0] = numCapSensePins;

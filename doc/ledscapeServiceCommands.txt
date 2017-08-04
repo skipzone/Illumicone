@@ -1,0 +1,6 @@
+These are the commands to start and stop the LEDscape service:
+
+sudo systemctl start ledscape.service
+
+sudo systemctl stop ledscape.service
+
