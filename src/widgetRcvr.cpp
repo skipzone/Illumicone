@@ -6,9 +6,7 @@
 #include <thread>
 #include <unistd.h>
 
-
 #include <arpa/inet.h>
-///#include <netdb.h>
 #include <netinet/in.h>
 #include <RF24/RF24.h>
 #include <stdlib.h>
@@ -19,6 +17,7 @@
 #include <sys/types.h>
 #include <time.h>
 
+#include "ConfigReader.h"
 #include "illumiconeWidgetTypes.h"
 #include "WidgetId.h"
 
@@ -26,14 +25,14 @@
 using namespace std;
 
 
-static struct sockaddr_in widgetSockAddr[16];
-static int widgetSock[16];
-
+// TODO 8/3/2017 ross:  Get this from config.
 constexpr char lockFilePath[] = "/tmp/widgetRcvr.lock";
 
-// TODO 7/9/2017 ross:  Get this from the JSON config.
-//static const string patconIpAddress = "192.168.69.101";
-static const string patconIpAddress = "192.168.69.12";  // can't get the goddamn static ip address to work on ic-patcon
+static ConfigReader config;
+static string patconIpAddress;
+
+static struct sockaddr_in widgetSockAddr[16];
+static int widgetSock[16];
 
 
 
@@ -288,6 +287,21 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
  * Initialization, Run Loop, and Entry Point *
  *********************************************/
 
+bool readConfig(const string& configFileName)
+{
+    if (!config.readConfigurationFile(configFileName)) {
+        return false;
+    }
+
+    patconIpAddress = config.getPatconIpAddress();
+    if (patconIpAddress.empty()) {
+        return false;
+    }
+
+    return true;
+}
+
+
 int acquireProcessLock()
 {
     int fd = open(lockFilePath, O_CREAT);
@@ -310,6 +324,22 @@ int acquireProcessLock()
         fprintf(stderr, "Unable to create or open %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
         return -1;
     }
+}
+
+
+void openUdpPorts()
+{
+    openUdpPort(WidgetId::eye);
+    openUdpPort(WidgetId::spinnah);
+    openUdpPort(WidgetId::bells);
+    openUdpPort(WidgetId::rainstick);
+    openUdpPort(WidgetId::schroedersPlaything);
+    openUdpPort(WidgetId::triObelisk);
+    openUdpPort(WidgetId::pump);
+    openUdpPort(WidgetId::contortOMatic);
+    openUdpPort(WidgetId::fourPlay42);
+    openUdpPort(WidgetId::fourPlay43);
+    openUdpPort(WidgetId::buckNorris);
 }
 
 
@@ -411,22 +441,23 @@ void runLoop()
 
 int main(int argc, char** argv)
 {
+    // Read configuration from the JSON file specified on the command line.
+    if (argc != 2) {
+        cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
+        return 2;
+    }
+    string configFileName(argv[1]);
+    if (!readConfig(configFileName)) {
+        return(EXIT_FAILURE);
+    }
+
     if (acquireProcessLock() < 0) {
         exit(EXIT_FAILURE);
     }
-    cout << getTimestamp() << "---------- widgetRcvr starting ----------" << endl;
 
-    openUdpPort(WidgetId::eye);
-    openUdpPort(WidgetId::spinnah);
-    openUdpPort(WidgetId::bells);
-    openUdpPort(WidgetId::rainstick);
-    openUdpPort(WidgetId::schroedersPlaything);
-    openUdpPort(WidgetId::triObelisk);
-    openUdpPort(WidgetId::pump);
-    openUdpPort(WidgetId::contortOMatic);
-    openUdpPort(WidgetId::fourPlay42);
-    openUdpPort(WidgetId::fourPlay43);
-    openUdpPort(WidgetId::buckNorris);
+    logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
+
+    openUdpPorts();
 
     configureRadio();
 

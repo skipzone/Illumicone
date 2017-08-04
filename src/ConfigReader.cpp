@@ -119,6 +119,10 @@ string ConfigReader::getOpcServerIpAddress()
 
 string ConfigReader::getPatconIpAddress()
 {
+    if (!configObj["patconIpAddress"].is_string()) {
+        logMsg(LOG_ERR, "patconIpAddress missing from configuration.");
+        return "";
+    }
     return configObj["patconIpAddress"].string_value();
 }
 
