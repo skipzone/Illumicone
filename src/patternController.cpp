@@ -40,7 +40,7 @@
 #include "hsv2rgb.h"
 #include "illumiconeTypes.h"
 #include "illumiconePixelUtility.h"
-//#include "illumiconeUtility.h"
+#include "illumiconeUtility.h"
 #include "lib8tion.h"
 #include "log.h"
 #include "Pattern.h"
