@@ -141,7 +141,7 @@ bool sendUdp(const UdpPayload& payload)
     if (bytesSentCount != sizeof(payload)) {
         logMsg(LOG_ERR,
                "UPD payload size is " + to_string(sizeof(payload))
-               + " but " + to_string(bytesSentCount) + " bytes were sent.");
+               + ", but " + to_string(bytesSentCount) + " bytes were sent.");
         return false;
     }
     //logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
@@ -154,6 +154,33 @@ bool sendUdp(const UdpPayload& payload)
  * Payload Handlers *
  ********************/
 
+void handleContortOMaticTouchDataPayload(const ContortOMaticTouchDataPayload* payload)
+{
+    // Send the pad-is-touched bitfield as a position measurement on channel 0.
+    UdpPayload udpPayload;
+    udpPayload.id       = payload->widgetHeader.id;
+    udpPayload.channel  = 0;
+    udpPayload.isActive = payload->widgetHeader.isActive;
+    udpPayload.position = payload->padIsTouchedBitfield;
+    udpPayload.velocity = 0;
+    sendUdp(udpPayload);
+}
+
+
+void handleContortOMaticCalibrationDataPayload(const ContortOMaticCalibrationDataPayload* payload)
+{
+    // The pattern isn't interested in the calibration data.
+    // We just log it here for future reference.
+    unsigned int padNumOffset = payload->setNum == 0 ? 0 : 8;
+    stringstream sstr;
+    for (unsigned int i = 0; i < 8; ++i) {
+        sstr << "  " << to_string(i + padNumOffset) << ": "
+             << setfill(' ') << setw(6) << payload->capSenseReferenceValues[i];
+    }
+    logMsg(LOG_INFO, "Cap sense reference values:" + sstr.str());
+}
+
+
 void handleContortOMaticPayload(const CustomPayload* payload, unsigned int payloadSize)
 {
     switch (payload->widgetHeader.channel) {          // channel is actually payload subtype
@@ -161,39 +188,20 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
             if (payloadSize != sizeof(ContortOMaticTouchDataPayload)) {
                 logMsg(LOG_ERR,
                        "Got ContortOMaticTouchDataPayload payload with size " + to_string(payloadSize)
-                       + " but size " + to_string(sizeof(ContortOMaticTouchDataPayload)) + " was expected.");
+                       + ", but size " + to_string(sizeof(ContortOMaticTouchDataPayload)) + " was expected.");
                 return;
             }
-            // Send the pad-is-touched bitfield as a position measurement on channel 0.
-            ContortOMaticTouchDataPayload* touchDataPayload
-                = reinterpret_cast<ContortOMaticTouchDataPayload*> payload;
-            UdpPayload udpPayload;
-            udpPayload.id       = touchDataPayload->widgetHeader.id;
-            udpPayload.channel  = 0;
-            udpPayload.isActive = touchDataPayload->widgetHeader.isActive;
-            udpPayload.position = touchDataPayload->padIsTouchedBitfield;
-            udpPayload.velocity = 0;
-            sendUdp(udpPayload);
+            handleContortOMaticTouchDataPayload(reinterpret_cast<const ContortOMaticTouchDataPayload*>(payload));
             break;
 
         case 1:
             if (payloadSize != sizeof(ContortOMaticCalibrationDataPayload)) {
                 logMsg(LOG_ERR,
                        "Got ContortOMaticCalibrationDataPayload payload with size " + to_string(payloadSize)
-                       + " but size " + to_string(sizeof(ContortOMaticCalibrationDataPayload)) + " was expected.");
+                       + ", but size " + to_string(sizeof(ContortOMaticCalibrationDataPayload)) + " was expected.");
                 return;
             }
-            // The pattern isn't interested in the calibration data.
-            // We just log it here for future reference.
-            ContortOMaticCalibrationDataPayload* calibrationDataPayload
-                = reinterpret_cast<ContortOMaticCalibrationDataPayload*> payload;
-            unsigned int padNumOffset = calibrationDataPayload.setNum == 0 ? 0 : 8;
-            stringstream sstr;
-            for (unsigned int i = 0; i < numMeasurements; ++i) {
-                sstr << "  " << to_string(i + padNumOffset) << ": "
-                     << setfill(' ') << setw(6) << calibrationDataPayload->capSenseReferenceValues[i];
-            }
-            logMsg(LOG_INFO, "Cap sense reference values:" + sstr.str());
+            handleContortOMaticCalibrationDataPayload(reinterpret_cast<const ContortOMaticCalibrationDataPayload*>(payload));
             break;
 
         default:
@@ -209,7 +217,7 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
     if (payloadSize != sizeof(StressTestPayload)) {
         logMsg(LOG_ERR,
                "Got StressTestPayload payload with size " + to_string(payloadSize)
-               + " but size " + to_string(sizeof(StressTestPayload)) + " was expected.");
+               + ", but size " + to_string(sizeof(StressTestPayload)) + " was expected.");
         return;
     }
 
@@ -237,7 +245,7 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
     if (payloadSize != sizeof(PositionVelocityPayload)) {
         logMsg(LOG_ERR,
                "Got PositionVelocityPayload payload with size " + to_string(payloadSize)
-               + " but size " + to_string(sizeof(PositionVelocityPayload)) + " was expected.");
+               + ", but size " + to_string(sizeof(PositionVelocityPayload)) + " was expected.");
         return;
     }
 
