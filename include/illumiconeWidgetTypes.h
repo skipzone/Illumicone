@@ -27,6 +27,17 @@
 #pragma pack(push)
 #pragma pack(1)
 
+
+// UDP to the pattern controller
+struct UdpPayload {
+    uint8_t id;
+    uint8_t channel;
+    uint8_t isActive;
+    int16_t position;
+    int16_t velocity;
+};
+
+
 union WidgetHeader {
   struct {
     uint8_t id       : 4;
@@ -35,6 +46,9 @@ union WidgetHeader {
   };
   uint8_t raw;
 };
+
+
+// ----- standard payloads -----
 
 // pipe 0
 struct StressTestPayload {
@@ -62,14 +76,22 @@ struct CustomPayload {
     uint8_t      buf[31];
 };
 
-// UDP to the pattern controller
-struct UdpPayload {
-    uint8_t id;
-    uint8_t channel;
-    uint8_t isActive;
-    int16_t position;
-    int16_t velocity;
+
+// ----- custom payloads (always sent on pipe 5) -----
+
+// channel 0 carries touch data payloads
+struct ContortOMaticTouchDataPayload {
+    WidgetHeader widgetHeader;
+    uint16_t padIsTouchedBitfield;
 };
+
+// channel 1 carries calibration data payloads
+struct ContortOMaticCalibrationDataPayload {
+    WidgetHeader widgetHeader;
+    uint8_t setNum;                         // 0 for pads 0-7, 1 for pads 8-15
+    uint16_t capSenseReferenceValues[8];
+};
+
 
 #pragma pack(pop)
 

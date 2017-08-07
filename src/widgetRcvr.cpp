@@ -154,6 +154,56 @@ bool sendUdp(const UdpPayload& payload)
  * Payload Handlers *
  ********************/
 
+void handleContortOMaticPayload(const CustomPayload* payload, unsigned int payloadSize)
+{
+    switch (payload->widgetHeader.channel) {          // channel is actually payload subtype
+        case 0:
+            if (payloadSize != sizeof(ContortOMaticTouchDataPayload)) {
+                logMsg(LOG_ERR,
+                       "Got ContortOMaticTouchDataPayload payload with size " + to_string(payloadSize)
+                       + " but size " + to_string(sizeof(ContortOMaticTouchDataPayload)) + " was expected.");
+                return;
+            }
+            // Send the pad-is-touched bitfield as a position measurement on channel 0.
+            ContortOMaticTouchDataPayload* touchDataPayload
+                = reinterpret_cast<ContortOMaticTouchDataPayload*> payload;
+            UdpPayload udpPayload;
+            udpPayload.id       = touchDataPayload->widgetHeader.id;
+            udpPayload.channel  = 0;
+            udpPayload.isActive = touchDataPayload->widgetHeader.isActive;
+            udpPayload.position = touchDataPayload->padIsTouchedBitfield;
+            udpPayload.velocity = 0;
+            sendUdp(udpPayload);
+            break;
+
+        case 1:
+            if (payloadSize != sizeof(ContortOMaticCalibrationDataPayload)) {
+                logMsg(LOG_ERR,
+                       "Got ContortOMaticCalibrationDataPayload payload with size " + to_string(payloadSize)
+                       + " but size " + to_string(sizeof(ContortOMaticCalibrationDataPayload)) + " was expected.");
+                return;
+            }
+            // The pattern isn't interested in the calibration data.
+            // We just log it here for future reference.
+            ContortOMaticCalibrationDataPayload* calibrationDataPayload
+                = reinterpret_cast<ContortOMaticCalibrationDataPayload*> payload;
+            unsigned int padNumOffset = calibrationDataPayload.setNum == 0 ? 0 : 8;
+            stringstream sstr;
+            for (unsigned int i = 0; i < numMeasurements; ++i) {
+                sstr << "  " << to_string(i + padNumOffset) << ": "
+                     << setfill(' ') << setw(6) << calibrationDataPayload->capSenseReferenceValues[i];
+            }
+            logMsg(LOG_INFO, "Cap sense reference values:" + sstr.str());
+            break;
+
+        default:
+            logMsg(LOG_ERR,
+                   "Got ContortOMatic payload on channel " + to_string(payload->widgetHeader.channel)
+                   + ", but there is no payload subtype assigned to that channel.");
+    }
+}
+
+
 void handleStressTestPayload(const StressTestPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize != sizeof(StressTestPayload)) {
@@ -217,7 +267,7 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
     }
     // TODO 8/3/2017 ross:  might be a good idea to make sure payloadSize is odd
 
-    int numMeasurements = (payloadSize - 1) / sizeof(int16_t);
+    unsigned int numMeasurements = (payloadSize - 1) / sizeof(int16_t);
 
     logMsg(LOG_INFO,
            "Got measurement vector payload; Id = " + to_string((int) payload->widgetHeader.id)
@@ -225,23 +275,22 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
            + ", ch = " + to_string((int) payload->widgetHeader.channel)
            + ", numMeasurements = " + to_string(numMeasurements));
     stringstream sstr;
-    for (int i = 0; i < numMeasurements; ++i) {
+    for (unsigned int i = 0; i < numMeasurements; ++i) {
         sstr << "  " << setfill(' ') << setw(6) << payload->measurements[i];
     }
     logMsg(LOG_INFO, "Measurements:" + sstr.str());
 
-    // The rainstick widget sends 7 position measurements.  We'll map them to
-    // channels 0 through 6.
-    if (payload->widgetHeader.id == widgetIdToInt(WidgetId::rainstick)) {
-        for (unsigned int i = 0; i < 7; ++i) {
-            UdpPayload udpPayload;
-            udpPayload.id       = payload->widgetHeader.id;
-            udpPayload.channel  = i;
-            udpPayload.isActive = payload->widgetHeader.isActive;
-            udpPayload.position = payload->measurements[i];
-            udpPayload.velocity = 0;
-            sendUdp(udpPayload);
-        }
+    // Map the measurements to position measurements on the channel
+    // corresponding to the measurement's position in the array.
+    for (unsigned int i = 0; i < numMeasurements; ++i) {
+        UdpPayload udpPayload;
+        udpPayload.id       = payload->widgetHeader.id;
+        udpPayload.channel  = i;
+        udpPayload.isActive = payload->widgetHeader.isActive;
+        udpPayload.position = payload->measurements[i];
+        udpPayload.velocity = 0;
+
+        sendUdp(udpPayload);
     }
 }
 
@@ -249,11 +298,11 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
 void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize < 2) {
-        logMsg(LOG_ERR, + "Got CustomPayload without any data.");
+        logMsg(LOG_ERR, "Got CustomPayload without any data.");
         return;
     }
 
-    int bufLen = payloadSize - 1;
+    unsigned int bufLen = payloadSize - 1;
 
     logMsg(LOG_INFO,
            "Got custom payload; Id = " + to_string((int) payload->widgetHeader.id)
@@ -261,12 +310,18 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
            + ", ch = " + to_string((int) payload->widgetHeader.channel)
            + ", bufLen = " + to_string(bufLen));
     stringstream sstr;
-    for (int i = 0; i < bufLen; ++i) {
+    for (unsigned int i = 0; i < bufLen; ++i) {
         sstr << hex << (int) payload->buf[i] << " ";
     }
     logMsg(LOG_INFO, "Contents:  " + sstr.str());
 
-    // TODO 8/3/2017 ross:  Do transformation for contortOMatic here.
+    switch (intToWidgetId(payload->widgetHeader.id)) {
+        case WidgetId::contortOMatic:
+            handleContortOMaticPayload(payload, payloadSize);
+            break;
+        default:
+            logMsg(LOG_ERR, "There is no payload handler defined for widget id " + to_string((int) payload->widgetHeader.id));
+    }
 }
 
 
@@ -385,7 +440,7 @@ void runLoop()
 
                 case 3:
                 case 4:
-                    for (int i = 0; i < maxPayloadSize; ++i) {
+                    for (unsigned int i = 0; i < maxPayloadSize; ++i) {
                         sstr << hex << (int) payload[i] << " ";
                     }
                     logMsg(LOG_ERR,
@@ -399,7 +454,7 @@ void runLoop()
                     break;
 
                 default:
-                    for (int i = 0; i < maxPayloadSize; ++i) {
+                    for (unsigned int i = 0; i < maxPayloadSize; ++i) {
                         sstr << hex << (int) payload[i] << " ";
                     }
                     logMsg(LOG_ERR,
