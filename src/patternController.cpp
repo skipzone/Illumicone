@@ -40,7 +40,7 @@
 #include "hsv2rgb.h"
 #include "illumiconeTypes.h"
 #include "illumiconePixelUtility.h"
-//#include "illumiconeUtility.h"
+#include "illumiconeUtility.h"
 #include "lib8tion.h"
 #include "log.h"
 #include "Pattern.h"
@@ -54,7 +54,7 @@ using namespace std;
 
 
 // TODO 7/31/2017 ross:  Get this from config.
-constexpr char lockFilePath[] = "/tmp/patternController.lock";
+static string lockFilePath = "/tmp/widgetRcvr.lock";
 
 enum class PatternBlendMethod {
     overlay,
@@ -245,33 +245,6 @@ bool readConfig(const string& configFileName)
     }
 
     return true;
-}
-
-
-int acquireProcessLock()
-{
-    int fd = open(lockFilePath, O_CREAT, S_IRUSR | S_IWUSR);
-    if (fd >= 0) {
-        if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
-            return fd;
-        }
-        else {
-            if (errno == EWOULDBLOCK) {
-                close(fd);
-                fprintf(stderr, "Another process has locked %s.\n", lockFilePath);
-                return -1;
-            }
-            else {
-                close(fd);
-                fprintf(stderr, "Unable to lock %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
-                return -1;
-            }
-        }
-    }
-    else {
-        fprintf(stderr, "Unable to create or open %s.  Error %d:  %s\n", lockFilePath, errno, strerror(errno));
-        return -1;
-    }
 }
 
 
@@ -603,7 +576,7 @@ int main(int argc, char **argv)
     }
 
     // Make sure this is the only instance running.
-    if (acquireProcessLock() < 0) {
+    if (acquireProcessLock(lockFilePath) < 0) {
         return(EXIT_FAILURE);
     }
 

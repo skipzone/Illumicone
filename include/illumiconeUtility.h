@@ -15,6 +15,12 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cstdint>
+#include <string>
 
-unsigned int getNowMs();
+
+int acquireProcessLock(const std::string& lockFilePath);
+uint64_t getNowMs64();
+uint32_t getNowMs();
+uint32_t get_millisecond_timer();
 

@@ -17,22 +17,65 @@
 
 #include <chrono>
 
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/file.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-unsigned int getNowMs()
+#include "illumiconeUtility.h"
+
+
+using namespace std;
+
+
+int acquireProcessLock(const string& lockFilePath)
+{
+    int fd = open(lockFilePath.c_str(), O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd >= 0) {
+        if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
+            return fd;
+        }
+        else {
+            if (errno == EWOULDBLOCK) {
+                close(fd);
+                fprintf(stderr, "Another process has locked %s.\n", lockFilePath.c_str());
+                return -1;
+            }
+            else {
+                close(fd);
+                fprintf(stderr, "Unable to lock %s.  Error %d:  %s\n", lockFilePath.c_str(), errno, strerror(errno));
+                return -1;
+            }
+        }
+    }
+    else {
+        fprintf(stderr, "Unable to create or open %s.  Error %d:  %s\n", lockFilePath.c_str(), errno, strerror(errno));
+        return -1;
+    }
+}
+
+
+uint64_t getNowMs64()
 {
     using namespace std::chrono;
 
     milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
+    return epochMs.count();
+}
 
-    return nowMs;
+
+uint32_t getNowMs()
+{
+    return (uint32_t) getNowMs64();
 }
 
 
 // This function is used by the beat generators in FastLED's lib8tion.
 uint32_t get_millisecond_timer()
 {
-    return getNowMs();
+    return (uint32_t) getNowMs64();
 }
 
 

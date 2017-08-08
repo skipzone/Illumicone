@@ -59,7 +59,7 @@
         },
         {   "name" : "triObelisk",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "pump",
@@ -74,12 +74,12 @@
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "buckNorris",
@@ -203,7 +203,7 @@
             "autoDisableTimeoutMs" : 1500,      // pattern disables itself after being active for this amount of time
             "activationThreshold" : 300,        // 300 is a basic LED flashlight from a few feet away
             "reactivationThreshold" : 200,      // pattern re-enables itself when measurement drops below this value
-            "allStringsSameColor" : true,
+            "allStringsSameColor" : false,
             "flashChangeIntervalMs" : 50
         },
         {   "name" : "rain",

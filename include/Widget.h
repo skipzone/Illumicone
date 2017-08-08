@@ -64,6 +64,7 @@ class Widget
         unsigned int autoInactiveMs;
         unsigned int numChannels;
         bool generateSimulatedMeasurements;
+        // TODO 8/7/2017 ross:  These need to be sized dynamically to agree with the number of channels.
         unsigned int simulationNextUpdateMs[8];
         unsigned int simulationUpdateIntervalMs[8];
 

@@ -119,6 +119,10 @@ string ConfigReader::getOpcServerIpAddress()
 
 string ConfigReader::getPatconIpAddress()
 {
+    if (!configObj["patconIpAddress"].is_string()) {
+        logMsg(LOG_ERR, "patconIpAddress missing from configuration.");
+        return "";
+    }
     return configObj["patconIpAddress"].string_value();
 }
 
@@ -206,6 +210,10 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
 
 int ConfigReader::getWidgetPortNumberBase()
 {
+    if (!configObj["widgetPortNumberBase"].is_number()) {
+        logMsg(LOG_ERR, "widgetPortNumberBase missing from configuration.");
+        return 0;
+    }
     return configObj["widgetPortNumberBase"].int_value();
 }
 
