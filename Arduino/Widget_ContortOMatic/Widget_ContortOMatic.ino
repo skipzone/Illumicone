@@ -78,7 +78,8 @@ constexpr int capSenseThresholds[numCapSensePins] = { 20,  20,  20,  20,
 
 RF24 radio(7, 8);    // Mega:  CE on pin 7, CSN on pin 8, also uses SPI bus (SCK on 52, MISO on 50, MOSI on 51)
 
-CustomPayload payload;
+ContortOMaticTouchDataPayload touchDataPayload;
+ContortOMaticCalibrationDataPayload calibrationDataPayload;
 
 static int capSenseReferenceValues[numCapSensePins];
 static bool padIsTouched[numCapSensePins];
@@ -93,16 +94,41 @@ void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
   Serial.begin(115200);
-  printf_begin();
 #endif
+  // RF24 uses printf, so we need to call printf_begin even if we're not doing debug prints.
+  printf_begin();
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
   
-  payload.widgetHeader.id = WIDGET_ID;
-  payload.widgetHeader.isActive = false;
-  payload.widgetHeader.channel = 0;
+  touchDataPayload.widgetHeader.id = WIDGET_ID;
+  touchDataPayload.widgetHeader.channel = 0;              // channel 0 carries touch data payloads
+
+  calibrationDataPayload.widgetHeader.id = WIDGET_ID;
+  calibrationDataPayload.widgetHeader.isActive = false;
+  calibrationDataPayload.widgetHeader.channel = 1;        // channel 1 carries calibration data payloads
 
   calibrateCapSense();
+}
+
+
+void sendPayload(const void* payload, uint8_t payloadLength)
+{
+  if (!radio.write(payload, payloadLength)) {
+#ifdef LED_PIN      
+    digitalWrite(LED_PIN, HIGH);
+#endif
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("radio.write failed."));
+#endif
+  }
+  else {
+#ifdef LED_PIN      
+    digitalWrite(LED_PIN, LOW);
+#endif
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("radio.write succeeded."));
+#endif
+  }
 }
 
 
@@ -110,17 +136,33 @@ void calibrateCapSense()
 {
   Serial.println(F("Calibrating..."));
   
-  for (byte i = 0; i < numCapSensePins; ++i) {
+  for (uint8_t i = 0; i < numCapSensePins; ++i) {
     // Create reference value to account for stray
     // capacitance and capacitance of the pad.
     capSenseReferenceValues[i] = ADCTouch.read(capSensePins[i], capSenseNumSamplesForRef);
   }
 
+#ifdef ENABLE_DEBUG_PRINT
   Serial.println(F("---------- Calibration Values ----------"));
   for (byte i = 0; i < numCapSensePins; ++i) {
     Serial.print(i);
     Serial.print(":  ");
     Serial.println(capSenseReferenceValues[i]);
+  }
+#endif
+
+  // Send the calibration data to widgetRcvr for logging.
+  uint8_t capSensePinNum = 0;
+  uint8_t setNum = 0;
+  uint8_t payloadValueIdx = 0;
+  while (capSensePinNum < numCapSensePins) {
+    calibrationDataPayload.capSenseReferenceValues[payloadValueIdx++] = capSenseReferenceValues[capSensePinNum++];
+    if (payloadValueIdx == 8) {
+      calibrationDataPayload.setNum = setNum;
+      sendPayload(&calibrationDataPayload, sizeof(calibrationDataPayload));
+      ++setNum;
+      payloadValueIdx = 0; 
+    }
   }
 }
 
@@ -129,12 +171,12 @@ void gatherMeasurements()
 {
   int capSenseValues[numCapSensePins];
   
-  isActive = false;
 
   for (uint8_t i = 0; i < numCapSensePins; ++i) {
     capSenseValues[i] = ADCTouch.read(capSensePins[i], capSenseNumSamples);
   }
 
+  isActive = false;
   for (uint8_t i = 0; i < numCapSensePins; ++i) {
     int netValue = capSenseValues[i] - capSenseReferenceValues[i];
     if (netValue > capSenseThresholds[i]) {
@@ -144,6 +186,7 @@ void gatherMeasurements()
     else {
       padIsTouched[i] = false;
     }
+
 #ifdef ENABLE_DEBUG_PRINT
     Serial.print(i);
     Serial.print(":  ");
@@ -163,37 +206,16 @@ void gatherMeasurements()
 
 void sendMeasurements()
 {
-  // TODO 6/22/2017 ross:  Send the pad-is-touched data as a bit field instead of one byte per pad.
-  //                       Use CustomPayload.  The channel number should indicate the type of payload:
-  //                       touch bitfield (0), threshold info., etc.  For ch. 0, isActive should be
-  //                       true if any pads are touched.
+  touchDataPayload.padIsTouchedBitfield = 0;
 
-  // First byte of payload is the nubmer of cap sense pins.  The remainder
-  // of the bits are 1 if the corresponding pad is touched, 0 if not.
-  payload.buf[0] = numCapSensePins;
-  for (int i = 0; i < numCapSensePins; ++i) {
-      payload.buf[i + 1] = padIsTouched[i];
+  // Put the patIsTouched data into the payload's bitfield, with element 0 in the low-order bit.
+  for (int i = numCapSensePins - 1; i >= 0; --i) {
+    touchDataPayload.padIsTouchedBitfield = (touchDataPayload.padIsTouchedBitfield << 1) | padIsTouched[i];
   }
 
-  payload.widgetHeader.isActive = isActive;
+  touchDataPayload.widgetHeader.isActive = isActive;
 
-  if (!radio.write(&payload, sizeof(WidgetHeader) + numCapSensePins + 1)) {
-#ifdef LED_PIN      
-    digitalWrite(LED_PIN, HIGH);
-#endif
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("radio.write failed."));
-#endif
-  }
-  else {
-#ifdef LED_PIN      
-    digitalWrite(LED_PIN, LOW);
-#endif
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("radio.write succeeded."));
-#endif
-  }
-
+  sendPayload(&touchDataPayload, sizeof(touchDataPayload));
 }
 
 
