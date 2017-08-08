@@ -57,21 +57,25 @@ int acquireProcessLock(const string& lockFilePath)
 }
 
 
-unsigned int getNowMs()
+uint64_t getNowMs64()
 {
     using namespace std::chrono;
 
     milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
+    return epochMs.count();
+}
 
-    return nowMs;
+
+uint32_t getNowMs()
+{
+    return (uint32_t) getNowMs64();
 }
 
 
 // This function is used by the beat generators in FastLED's lib8tion.
 uint32_t get_millisecond_timer()
 {
-    return getNowMs();
+    return (uint32_t) getNowMs64();
 }
 
 

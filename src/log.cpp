@@ -15,6 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cstdint>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -30,8 +31,8 @@ using namespace std;
 
 const string getTimestamp()
 {
-    unsigned int nowMs = getNowMs();
-    int ms = nowMs % 1000;
+    uint64_t nowMs = getNowMs64();
+    uint32_t ms = nowMs % 1000;
     time_t now = nowMs / 1000;
 
     struct tm tmStruct = *localtime(&now);

@@ -20,6 +20,7 @@
 
 
 int acquireProcessLock(const std::string& lockFilePath);
-unsigned int getNowMs();
+uint64_t getNowMs64();
+uint32_t getNowMs();
 uint32_t get_millisecond_timer();
 

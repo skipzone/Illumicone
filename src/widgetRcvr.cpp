@@ -174,10 +174,9 @@ void handleContortOMaticCalibrationDataPayload(const ContortOMaticCalibrationDat
     unsigned int padNumOffset = payload->setNum == 0 ? 0 : 8;
     stringstream sstr;
     for (unsigned int i = 0; i < 8; ++i) {
-        sstr << "  " << to_string(i + padNumOffset) << ": "
-             << setfill(' ') << setw(6) << payload->capSenseReferenceValues[i];
+        sstr << " " << to_string(i + padNumOffset) << ":" << payload->capSenseReferenceValues[i];
     }
-    logMsg(LOG_INFO, "Cap sense reference values:" + sstr.str());
+    logMsg(LOG_INFO, "Cap sense reference values: " + sstr.str());
 }
 
 
@@ -319,9 +318,9 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
            + ", bufLen = " + to_string(bufLen));
     stringstream sstr;
     for (unsigned int i = 0; i < bufLen; ++i) {
-        sstr << "0x" << hex << (int) payload->buf[i] << " ";
+        sstr << " 0x" << hex << (int) payload->buf[i];
     }
-    logMsg(LOG_INFO, "Contents:  " + sstr.str());
+    logMsg(LOG_INFO, "Contents: " + sstr.str());
 
     switch (intToWidgetId(payload->widgetHeader.id)) {
         case WidgetId::contortOMatic:
@@ -449,12 +448,12 @@ void runLoop()
                 case 3:
                 case 4:
                     for (unsigned int i = 0; i < maxPayloadSize; ++i) {
-                        sstr << "0x" << hex << (int) payload[i] << " ";
+                        sstr << " 0x" << hex << (int) payload[i];
                     }
                     logMsg(LOG_ERR,
                            "Got payload with size " + to_string(payloadSize)
                            + " via unsupported pipe " + to_string((int) pipeNum)
-                           + ".  Contents:  " + sstr.str());
+                           + ".  Contents: " + sstr.str());
                     break;
 
                 case 5:
@@ -463,11 +462,11 @@ void runLoop()
 
                 default:
                     for (unsigned int i = 0; i < maxPayloadSize; ++i) {
-                        sstr << "0x" << hex << (int) payload[i] << " ";
+                        sstr << " 0x" << hex << (int) payload[i];
                     }
                     logMsg(LOG_ERR,
                            "pipeNum is " + to_string((int) pipeNum)
-                           + ", which should never happen!  Payload contents:  " + sstr.str());
+                           + ", which should never happen!  Payload contents: " + sstr.str());
             }
         }
 
@@ -494,6 +493,9 @@ int main(int argc, char** argv)
     }
 
     logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
+
+    logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
+    logMsg(LOG_INFO, "widgetPortNumberBase = " + to_string(widgetPortNumberBase));
 
     if (!openUdpPorts()) {
         exit(EXIT_FAILURE);
