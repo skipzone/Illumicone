@@ -36,12 +36,15 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 9
-#define ACTIVE_TX_INTERVAL_MS 250L
-#define INACTIVE_TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 2
 
-constexpr uint32_t gatherMeasurementsIntervalMs = 500;
+constexpr uint8_t widgetId = 9;
+
+constexpr uint32_t activeTxIntervalMs = 333L;
+constexpr uint32_t inactiveTxIntervalMs = 1000L;
+constexpr uint32_t gatherMeasurementsIntervalMs = 167L;
+constexpr uint32_t noChangeRecalibrationIntervalMs = 15L * 1000L;
+constexpr uint32_t inactiveRecalibrationIntervalMs = 60L * 1000L;
 
 constexpr uint8_t numCapSensePins = 16;
 constexpr uint8_t capSensePins[numCapSensePins] = {A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15};
@@ -83,54 +86,19 @@ ContortOMaticCalibrationDataPayload calibrationDataPayload;
 
 static int capSenseReferenceValues[numCapSensePins];
 static bool padIsTouched[numCapSensePins];
-bool isActive;
+static bool padWasTouched[numCapSensePins];
+
+static bool isActive;
+static bool wasActive;
+static uint32_t nextGatherMeasurementsMs;
+static uint32_t nextTxMs;
+static uint32_t nextNoChangeRecalibrationMs;
+static uint32_t nextInactiveRecalibrationMs;
 
 
 /******************
  * Implementation *
  ******************/
-
-void setup()
-{
-#ifdef ENABLE_DEBUG_PRINT
-  Serial.begin(115200);
-#endif
-  // RF24 uses printf, so we need to call printf_begin even if we're not doing debug prints.
-  printf_begin();
-
-  configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
-  
-  touchDataPayload.widgetHeader.id = WIDGET_ID;
-  touchDataPayload.widgetHeader.channel = 0;              // channel 0 carries touch data payloads
-
-  calibrationDataPayload.widgetHeader.id = WIDGET_ID;
-  calibrationDataPayload.widgetHeader.isActive = false;
-  calibrationDataPayload.widgetHeader.channel = 1;        // channel 1 carries calibration data payloads
-
-  calibrateCapSense();
-}
-
-
-void sendPayload(const void* payload, uint8_t payloadLength)
-{
-  if (!radio.write(payload, payloadLength)) {
-#ifdef LED_PIN      
-    digitalWrite(LED_PIN, HIGH);
-#endif
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("radio.write failed."));
-#endif
-  }
-  else {
-#ifdef LED_PIN      
-    digitalWrite(LED_PIN, LOW);
-#endif
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("radio.write succeeded."));
-#endif
-  }
-}
-
 
 void calibrateCapSense()
 {
@@ -152,6 +120,7 @@ void calibrateCapSense()
 #endif
 
   // Send the calibration data to widgetRcvr for logging.
+  calibrationDataPayload.widgetHeader.isActive = isActive;
   uint8_t capSensePinNum = 0;
   uint8_t setNum = 0;
   uint8_t payloadValueIdx = 0;
@@ -170,13 +139,14 @@ void calibrateCapSense()
 void gatherMeasurements()
 {
   int capSenseValues[numCapSensePins];
-  
 
   for (uint8_t i = 0; i < numCapSensePins; ++i) {
     capSenseValues[i] = ADCTouch.read(capSensePins[i], capSenseNumSamples);
   }
 
+  // Figure out which pads are being touched and if there have been any touch changes.
   isActive = false;
+  bool touchedSetChanged = false;
   for (uint8_t i = 0; i < numCapSensePins; ++i) {
     int netValue = capSenseValues[i] - capSenseReferenceValues[i];
     if (netValue > capSenseThresholds[i]) {
@@ -185,6 +155,10 @@ void gatherMeasurements()
     }
     else {
       padIsTouched[i] = false;
+    }
+    if (padWasTouched[i] != padIsTouched[i]) {
+      padWasTouched[i] = padIsTouched[i];
+      touchedSetChanged = true;
     }
 
 #ifdef ENABLE_DEBUG_PRINT
@@ -201,14 +175,31 @@ void gatherMeasurements()
     Serial.println(padIsTouched[i]);
 #endif
   }
+
+  // Adjust the transmission and auto-recalibration times if necessary.
+  uint32_t now = millis();
+  if (isActive) {
+    if (!wasActive) {
+      // Just went active, so transmit ASAP.
+      nextTxMs = now;
+    }
+    if (touchedSetChanged) {
+      nextNoChangeRecalibrationMs = now + noChangeRecalibrationIntervalMs;
+    }
+  }
+  else {
+    if (wasActive) {
+      nextInactiveRecalibrationMs = now + inactiveRecalibrationIntervalMs;
+    }
+  }
+  wasActive = isActive;
 }
 
 
 void sendMeasurements()
 {
-  touchDataPayload.padIsTouchedBitfield = 0;
-
   // Put the patIsTouched data into the payload's bitfield, with element 0 in the low-order bit.
+  touchDataPayload.padIsTouchedBitfield = 0;
   for (int i = numCapSensePins - 1; i >= 0; --i) {
     touchDataPayload.padIsTouchedBitfield = (touchDataPayload.padIsTouchedBitfield << 1) | padIsTouched[i];
   }
@@ -219,22 +210,73 @@ void sendMeasurements()
 }
 
 
-void loop() {
+void sendPayload(const void* payload, uint8_t payloadLength)
+{
+  if (!radio.write(payload, payloadLength)) {
+#ifdef TX_FAILURE_LED_PIN      
+    digitalWrite(TX_FAILURE_LED_PIN, HIGH);
+#endif
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("radio.write failed."));
+#endif
+  }
+  else {
+#ifdef TX_FAILURE_LED_PIN      
+    digitalWrite(TX_FAILURE_LED_PIN, LOW);
+#endif
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("radio.write succeeded."));
+#endif
+  }
+}
 
-  static int32_t lastTxMs;
-  static uint32_t lastGatherMeasurementsMs;
+
+void setup()
+{
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.begin(115200);
+#endif
+  // RF24 uses printf, so we need to call printf_begin even if we're not doing debug prints.
+  printf_begin();
+
+  configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
+  
+  touchDataPayload.widgetHeader.id = widgetId;
+  touchDataPayload.widgetHeader.channel = 0;              // channel 0 carries touch data payloads
+
+  calibrationDataPayload.widgetHeader.id = widgetId;
+  calibrationDataPayload.widgetHeader.channel = 1;        // channel 1 carries calibration data payloads
 
   uint32_t now = millis();
+  nextGatherMeasurementsMs = now;
+  nextTxMs = now;
+  nextNoChangeRecalibrationMs = now + noChangeRecalibrationIntervalMs;
+  nextInactiveRecalibrationMs = now + inactiveRecalibrationIntervalMs;
 
-  if ((int32_t) (now - lastGatherMeasurementsMs) >= 0) {
-    lastGatherMeasurementsMs += gatherMeasurementsIntervalMs;
+  calibrateCapSense();
+}
+
+
+void loop()
+{
+  uint32_t now = millis();
+
+  if ((int32_t) (now - nextGatherMeasurementsMs) >= 0) {
+    nextGatherMeasurementsMs = now + gatherMeasurementsIntervalMs;
     gatherMeasurements();
   }
 
-  if (now - lastTxMs >= (isActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
+  if ((int32_t) (now - nextTxMs) >= 0) {
+    nextTxMs = now + (isActive ? activeTxIntervalMs : inactiveTxIntervalMs);
     sendMeasurements();
-    lastTxMs = now;
   }
 
+  if ((isActive && (int32_t) (now - nextNoChangeRecalibrationMs) >= 0)
+      || (!isActive && (int32_t) (now - nextInactiveRecalibrationMs) >= 0))
+  {
+    calibrateCapSense();
+    nextNoChangeRecalibrationMs = now + noChangeRecalibrationIntervalMs;
+    nextInactiveRecalibrationMs = now + inactiveRecalibrationIntervalMs;
+  }
 }
 
