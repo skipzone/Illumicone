@@ -319,7 +319,7 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
            + ", bufLen = " + to_string(bufLen));
     stringstream sstr;
     for (unsigned int i = 0; i < bufLen; ++i) {
-        sstr << hex << (int) payload->buf[i] << " ";
+        sstr << "0x" << hex << (int) payload->buf[i] << " ";
     }
     logMsg(LOG_INFO, "Contents:  " + sstr.str());
 
@@ -449,7 +449,7 @@ void runLoop()
                 case 3:
                 case 4:
                     for (unsigned int i = 0; i < maxPayloadSize; ++i) {
-                        sstr << hex << (int) payload[i] << " ";
+                        sstr << "0x" << hex << (int) payload[i] << " ";
                     }
                     logMsg(LOG_ERR,
                            "Got payload with size " + to_string(payloadSize)
@@ -463,7 +463,7 @@ void runLoop()
 
                 default:
                     for (unsigned int i = 0; i < maxPayloadSize; ++i) {
-                        sstr << hex << (int) payload[i] << " ";
+                        sstr << "0x" << hex << (int) payload[i] << " ";
                     }
                     logMsg(LOG_ERR,
                            "pipeNum is " + to_string((int) pipeNum)
