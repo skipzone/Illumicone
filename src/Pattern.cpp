@@ -23,6 +23,8 @@
 #include "json11.hpp"
 #include "log.h"
 #include "Pattern.h"
+#include "Widget.h"
+
 
 using namespace std;
 

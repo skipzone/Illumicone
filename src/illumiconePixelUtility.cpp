@@ -15,11 +15,13 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#include <string>
+#include <string>
 
 #include "hsv2rgb.h"
 #include "illumiconePixelUtility.h"
 //#include "log.h"
+
+using namespace std;
 
 
 template void fillSolid(HsvPixelString&, const HsvPixel&);
@@ -93,6 +95,53 @@ void rgb2hsv(const RgbConeStrings& rgbConeStrings, HsvConeStrings& hsvConeString
             rgb2hsv(rgbConeStrings[i][j], hsvConeStrings[i][j]);
         }
     }
+}
+
+
+bool stringToHsvPixel(const string& hsvString, HsvPixel& hsvPixel)
+{
+    if (hsvString == "transparent") {
+        // TODO 8/8/2017 ross:  use the defined transparent color
+        hsvPixel.setHSV(0, 0, 0);
+    }
+    else if (hsvString == "black") {
+        // TODO 8/8/2017 ross:  use the defined black color
+        hsvPixel.setHSV(1, 0, 0);
+    }
+    else if (hsvString == "") {
+        // TODO 8/8/2017 ross:  use the defined white color
+        hsvPixel.setHSV(0, 255, 255);
+    }
+    else if (hsvString == "red") {
+        hsvPixel.setHSV(HUE_RED, 255, 255);
+    }
+    else if (hsvString == "orange") {
+        hsvPixel.setHSV(HUE_ORANGE, 255, 255);
+    }
+    else if (hsvString == "yellow") {
+        hsvPixel.setHSV(HUE_YELLOW, 255, 255);
+    }
+    else if (hsvString == "green") {
+        hsvPixel.setHSV(HUE_GREEN, 255, 255);
+    }
+    else if (hsvString == "aqua") {
+        hsvPixel.setHSV(HUE_AQUA, 255, 255);
+    }
+    else if (hsvString == "blue") {
+        hsvPixel.setHSV(HUE_BLUE, 255, 255);
+    }
+    else if (hsvString == "purple") {
+        hsvPixel.setHSV(HUE_PURPLE, 255, 255);
+    }
+    else if (hsvString == "pink") {
+        hsvPixel.setHSV(HUE_PINK, 255, 255);
+    }
+    else {
+        // TODO 8/8/2017 ross:  implement h,s,v string value support
+        return false;
+    }
+
+    return true;
 }
 
 

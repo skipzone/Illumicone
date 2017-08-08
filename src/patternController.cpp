@@ -429,7 +429,7 @@ void doPatterns()
         // a lower priority value denotes higher priority (0 is highest).
         for (int priority = maxPriority; priority >= minPriority; --priority) {
             for (auto&& patternState : patternStates) {
-                if (patternState->priority == priority) {
+                if (patternState->wantsDisplay && patternState->priority == priority) {
                     for (unsigned int col = 0; col < numberOfStrings; col++) {
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
 

@@ -34,7 +34,7 @@
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 500
         },
         {   "name" : "spinnah",
@@ -49,7 +49,7 @@
         },
         {   "name" : "rainstick",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
@@ -64,7 +64,7 @@
         },
         {   "name" : "pump",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "twister",
@@ -74,7 +74,7 @@
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
@@ -228,6 +228,136 @@
             "emitBatchSize" : 5,
             "emitDirectionIsUp" : false,
             "particleMoveIntervalMs" : 10
+        },
+        {   "name" : "contortOMaticSpinner",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "IndicatorRegionsPattern",
+            "inputs" : [
+                {   "inputName" : "spinnerPosition",
+                    "widgetName" : "spinnah",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "persistenceMs" : 5000,
+            "indicatorClassName" : "SimpleBlockIndicator",
+            "numberOfIndicators" : 16,
+            "indicators" : [
+                {   "index" : 0,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue"
+                },
+                {   "index" : 1,
+                    "upperLeftStringIdx" : 2,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green"
+                },
+                {   "index" : 2,
+                    "upperLeftStringIdx" : 4,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow"
+                },
+                {   "index" : 3,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red"
+                },
+                {   "index" : 4,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue"
+                },
+                {   "index" : 5,
+                    "upperLeftStringIdx" : 11,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green"
+                },
+                {   "index" : 6,
+                    "upperLeftStringIdx" : 13,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow"
+                },
+                {   "index" : 7,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red"
+                },
+                {   "index" : 8,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue"
+                },
+                {   "index" : 9,
+                    "upperLeftStringIdx" : 20,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green"
+                },
+                {   "index" : 10,
+                    "upperLeftStringIdx" : 22,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow"
+                },
+                {   "index" : 11,
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red"
+                },
+                {   "index" : 12,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue"
+                },
+                {   "index" : 13,
+                    "upperLeftStringIdx" : 29,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green"
+                },
+                {   "index" : 14,
+                    "upperLeftStringIdx" : 31,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow"
+                },
+                {   "index" : 15,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 78,
+                    "widthInStrings" : 4,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red"
+                }
+            ]
         }
     ]
 
