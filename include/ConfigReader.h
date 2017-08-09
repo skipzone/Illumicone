@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,31 @@
 class ConfigReader
 {
     public:
+
+        static bool getBoolValue(const json11::Json& jsonObj,
+                                 const std::string& name,
+                                 bool& value,
+                                 const std::string& errorMessageSuffix);
+
+        static bool getIntValue(const json11::Json& jsonObj,
+                                const std::string& name,
+                                int& value,
+                                const std::string& errorMessageSuffix,
+                                int minValue = INT_MIN,
+                                int maxValue = INT_MAX);
+
+        static bool getStringValue(const json11::Json& jsonObj,
+                                   const std::string& name,
+                                   std::string& value,
+                                   const std::string& errorMessageSuffix,
+                                   bool allowEmptyString = false);
+
+        static bool getUnsignedIntValue(const json11::Json& jsonObj,
+                                        const std::string& name,
+                                        unsigned int& value,
+                                        const std::string& errorMessageSuffix,
+                                        int minValue = INT_MIN,
+                                        int maxValue = INT_MAX);
 
         ConfigReader();
         virtual ~ConfigReader();

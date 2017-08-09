@@ -16,8 +16,11 @@
 */
 
 #include <stdlib.h>
+#include <string>
 
+#include "ConfigReader.h"
 #include "illumiconeUtility.h"
+#include "illumiconePixelUtility.h"
 #include "log.h"
 #include "IndicatorRegion.h"
 
@@ -25,64 +28,54 @@
 using namespace std;
 
 
-bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString, const Json& indicatorConfig);
+bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfig)
 {
-    if (!indicatorConfig["index"].is_number()) {
-        logMsg(LOG_ERR, "index not specified in indicator region configuration:  " + indicatorConfig.dump());
-        return false;
-    }
-    index = indicatorConfig["index"].int_value();
-
     string errMsgSuffix = " in indicator region configuration:  " + indicatorConfig.dump();
 
-    if (!indicatorConfig["upperLeftStringIdx"].is_number()) {
-        logMsg(LOG_ERR, "upperLeftStringIdx not specified" + errMsgSuffix;
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "index", index, errMsgSuffix, 0)) {
         return false;
     }
-    upperLeftStringIdx = indicatorConfig["upperLeftStringIdx"].int_value();
 
-    if (!indicatorConfig["upperLeftPixelIdx"].is_number()) {
-        logMsg(LOG_ERR, "upperLeftPixelIdx not specified" + errMsgSuffix;
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "upperLeftStringIdx", upperLeftStringIdx, errMsgSuffix)) {
         return false;
     }
-    upperLeftPixelIdx = indicatorConfig["upperLeftPixelIdx"].int_value();
 
-    if (!indicatorConfig["widthInStrings"].is_number()) {
-        logMsg(LOG_ERR, "widthInStrings not specified" + errMsgSuffix;
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "upperLeftPixelIdx", upperLeftPixelIdx, errMsgSuffix)) {
         return false;
     }
-    widthInStrings = indicatorConfig["widthInStrings"].int_value();
 
-    if (!indicatorConfig["heightInPixels"].is_number()) {
-        logMsg(LOG_ERR, "heightInPixels not specified" + errMsgSuffix;
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "widthInStrings", widthInStrings, errMsgSuffix)) {
         return false;
     }
-    heightInPixels = indicatorConfig["heightInPixels"].int_value();
+
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "heightInPixels", heightInPixels, errMsgSuffix)) {
+        return false;
+    }
 
     if (indicatorConfig["backgroundHsv"].is_string()) {
         string hsvStr = indicatorConfig["backgroundHsv"].string_value();
-        if (stringToHsvPixel(hsvStr, backgroundColor) {
+        if (stringToHsvPixel(hsvStr, backgroundColor)) {
             logMsg(LOG_ERR, "backgroundHsv value \"" + hsvStr + "\" is not valid" + errMsgSuffix);
             return false;
         }
-        else {
-            backgroundColor.stringToHsvPixel("transparent");
-        }
+    }
+    else {
+        stringToHsvPixel("transparent", backgroundColor);
     }
 
     if (indicatorConfig["foregroundHsv"].is_string()) {
         string hsvStr = indicatorConfig["foregroundHsv"].string_value();
-        if (!stringToHsvPixel(hsvStr, backgroundColor) {
+        if (!stringToHsvPixel(hsvStr, foregroundColor)) {
             logMsg(LOG_ERR, "foregroundHsv value \"" + hsvStr + "\" is not valid" + errMsgSuffix);
             return false;
         }
-        else {
-            foregroundColor.stringToHsvPixel("white");
-        }
+    }
+    else {
+        stringToHsvPixel("white", foregroundColor);
     }
 
-    this.numStrings = numStrings;
-    this.pixelsPerString = pixelsPerString;
+    this->numStrings = numStrings;
+    this->pixelsPerString = pixelsPerString;
 
     // Normalize the region's location to an actual location on the cone.
     startStringIdx = (upperLeftStringIdx % numStrings + numStrings) % numStrings;

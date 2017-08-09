@@ -29,6 +29,74 @@ using namespace std;
 using namespace json11;
 
 
+bool ConfigReader::getBoolValue(const json11::Json& jsonObj,
+                                const std::string& name,
+                                bool& value,
+                                const std::string& errorMessageSuffix)
+{
+    if (!jsonObj[name].is_bool()) {
+        logMsg(LOG_ERR, name + " is not present or is not a boolean value" + errorMessageSuffix);
+        return false;
+    }
+    value = jsonObj[name].bool_value();
+    return true;
+}
+
+
+bool ConfigReader::getIntValue(const json11::Json& jsonObj,
+                               const std::string& name,
+                               int& value,
+                               const std::string& errorMessageSuffix,
+                               int minValue,
+                               int maxValue)
+{
+    if (!jsonObj[name].is_number()) {
+        logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        return false;
+    }
+    value = jsonObj[name].int_value();
+    if (value < minValue || value > maxValue) {
+        logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                        + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getStringValue(const json11::Json& jsonObj,
+                                  const std::string& name,
+                                  string& value,
+                                  const std::string& errorMessageSuffix,
+                                  bool allowEmptyString)
+{
+    if (!jsonObj[name].is_string()) {
+        logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+        return false;
+    }
+    value = jsonObj[name].string_value();
+    if (!allowEmptyString && value.empty()) {
+        logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
+                                       const std::string& name,
+                                       unsigned int& value,
+                                       const std::string& errorMessageSuffix,
+                                       int minValue,
+                                       int maxValue)
+{
+    int i;
+    bool retval = getIntValue(jsonObj, name, i, errorMessageSuffix, minValue, maxValue);
+    value = i;
+    return retval;
+}
+
+
 ConfigReader::ConfigReader()
 {
 }

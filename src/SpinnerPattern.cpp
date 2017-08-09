@@ -15,10 +15,13 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <string>
+
 #include <stdlib.h>
 
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
+#include "IndicatorRegion.h"
 #include "log.h"
 #include "SpinnerPattern.h"
 #include "Pattern.h"
@@ -30,18 +33,18 @@ using namespace std;
 
 
 SpinnerPattern::SpinnerPattern(const std::string& name)
-    : Pattern(name)
+    : IndicatorRegionsPattern(name, true)
 {
 }
 
 
 bool SpinnerPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    if (!IndicatorRegionsPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)) {
+    if (!IndicatorRegionsPattern::initPattern(config, widgets)) {
         return false;
     }
 
-j
+
     // ----- get pattern configuration -----
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
@@ -91,15 +94,29 @@ bool SpinnerPattern::update()
         return false;
     }
 
-    unsigned int nowMs = getNowMs();
+    // Let the regions do their animations.
+    bool animationWantsDisplay = IndicatorRegionsPattern::update();
 
     if (!spinnerPositionChannel->getIsActive()) {
         //logMsg(LOG_DEBUG, "spinnerPositionChannel is inactive");
-        // TODO:  =-=-=-=-= wait for persistenceMs before going inactive
+        if (activeIndicator != nullptr) {
+            activeIndicator->turnOffImmediately();
+            activeIndicator = nullptr;
+        }
         isActive = false;
-        return isActive;
+    }
+    else if (spinnerPositionChannel->getHasNewPositionMeasurement()) {
+        if (activeIndicator != nullptr) {
+            activeIndicator->turnOffImmediately();
+            activeIndicator = nullptr;
+        }
+        unsigned int indicatorIdx = spinnerPositionChannel->getPosition() % indicatorRegions.size();
+        //logMsg(LOG_DEBUG, "indicatorIdx = " + to_string(indicatorIdx));
+        activeIndicator = indicatorRegions[indicatorIdx];
+        activeIndicator->turnOnImmediately();
+        isActive = true;
     }
 
-    return isActive;
+    return isActive | animationWantsDisplay;
 }
 

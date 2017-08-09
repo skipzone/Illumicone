@@ -27,7 +27,6 @@ class SimpleBlockIndicator : public IndicatorRegion {
         SimpleBlockIndicator() {};
         virtual ~SimpleBlockIndicator() {};
 
-        SimpleBlockIndicator() = delete;
         SimpleBlockIndicator(const SimpleBlockIndicator&) = delete;
         SimpleBlockIndicator& operator =(const SimpleBlockIndicator&) = delete;
 

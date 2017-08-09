@@ -25,6 +25,7 @@
 
 
 class ConfigReader;
+class IndicatorRegion;
 class Widget;
 
 
@@ -37,7 +38,7 @@ class SpinnerPattern : public IndicatorRegionsPattern {
 
         SpinnerPattern() = delete;
         SpinnerPattern(const SpinnerPattern&) = delete;
-        SpinnerPattern& operator =(const ParticlesPattern&) = delete;
+        SpinnerPattern& operator =(const SpinnerPattern&) = delete;
 
         virtual bool update();
 
@@ -52,5 +53,6 @@ class SpinnerPattern : public IndicatorRegionsPattern {
 
     private:
 
+        IndicatorRegion* activeIndicator;
 };
 

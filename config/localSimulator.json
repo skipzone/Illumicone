@@ -39,7 +39,7 @@
         },
         {   "name" : "spinnah",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "bells",
@@ -233,7 +233,7 @@
             "enabled" : true,
             "priority" : 2,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-            "patternClassName" : "IndicatorRegionsPattern",
+            "patternClassName" : "SpinnerPattern",
             "inputs" : [
                 {   "inputName" : "spinnerPosition",
                     "widgetName" : "spinnah",

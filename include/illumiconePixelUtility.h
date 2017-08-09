@@ -63,6 +63,8 @@ void rgb2hsv(const RgbConeStrings& rgbConeStrings, HsvConeStrings& hsvConeString
 
 bool stringToHsvPixel(const std::string& hsvString, HsvPixel& hsvPixel);
 
+void hsvPixelToString(const HsvPixel& hsvPixel, std::string& hsvString);
+
 
 template<typename ConeStringsType, typename PixelStringType, typename PixelType>
 bool allocateConePixels(ConeStringsType& coneStrings, int numStrings, int pixelsPerString)

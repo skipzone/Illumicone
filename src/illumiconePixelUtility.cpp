@@ -108,9 +108,9 @@ bool stringToHsvPixel(const string& hsvString, HsvPixel& hsvPixel)
         // TODO 8/8/2017 ross:  use the defined black color
         hsvPixel.setHSV(1, 0, 0);
     }
-    else if (hsvString == "") {
+    else if (hsvString == "white") {
         // TODO 8/8/2017 ross:  use the defined white color
-        hsvPixel.setHSV(0, 255, 255);
+        hsvPixel.setHSV(0, 0, 255);
     }
     else if (hsvString == "red") {
         hsvPixel.setHSV(HUE_RED, 255, 255);
@@ -142,6 +142,11 @@ bool stringToHsvPixel(const string& hsvString, HsvPixel& hsvPixel)
     }
 
     return true;
+}
+
+void hsvPixelToString(const HsvPixel& hsvPixel, string& hsvString)
+{
+    hsvString = to_string(hsvPixel.h) + ", " + to_string(hsvPixel.s) + ", " + to_string(hsvPixel.v);
 }
 
 

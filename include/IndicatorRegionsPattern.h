@@ -17,11 +17,13 @@
 
 #pragma once
 
+#include <vector>
 
 #include "Pattern.h"
 
 
 class ConfigReader;
+class IndicatorRegion;
 class Widget;
 
 
@@ -29,18 +31,20 @@ class IndicatorRegionsPattern : public Pattern {
 
     public:
 
-        IndicatorRegionsPattern(const std::string& name);
-        virtual ~IndicatorRegionsPattern() {};
+        IndicatorRegionsPattern(const std::string& name, bool usesHsvModel = false);
+        virtual ~IndicatorRegionsPattern();
 
         IndicatorRegionsPattern() = delete;
         IndicatorRegionsPattern(const IndicatorRegionsPattern&) = delete;
-        IndicatorRegionsPattern& operator =(const ParticlesPattern&) = delete;
+        IndicatorRegionsPattern& operator =(const IndicatorRegionsPattern&) = delete;
 
         virtual bool update();
 
     protected:
 
         virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+
+        std::vector<IndicatorRegion*> indicatorRegions;
 
     private:
 

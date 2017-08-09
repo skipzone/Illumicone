@@ -15,28 +15,52 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <string>
+
+#include "illumiconePixelUtility.h"
+#include "log.h"
 #include "SimpleBlockIndicator.h"
 
 
 using namespace std;
 
 
-virtual void SimpleBlockIndicator::turnOffImmediately()
+void SimpleBlockIndicator::turnOffImmediately()
 {
-    for (int i = startStringIdx; i <= endStringIdx; ++i) {
-        for (int j = startPixelIdx; j <= endPixelIdx; ++j) {
-            (*coneStrings)[i][j] = backgroundColor;
+    int i = startStringIdx;
+    do {
+        if (i >= numStrings) {
+            i = 0;
         }
-    }
+        int j = startPixelIdx;
+        do {
+            if (j >= pixelsPerString) {
+                j = 0;
+            }
+            (*coneStrings)[i][j] = backgroundColor;
+        } while (j++ != endPixelIdx);
+    } while (i++ != endStringIdx);
 }
 
 
-virtual void SimpleBlockIndicator::turnOnImmediately()
+void SimpleBlockIndicator::turnOnImmediately()
 {
-    for (int i = startStringIdx; i <= endStringIdx; ++i) {
-        for (int j = startPixelIdx; j <= endPixelIdx; ++j) {
-            (*coneStrings)[i][j] = foregroundColor;
+    //logMsg(LOG_DEBUG, "startStringIdx=" + to_string(startStringIdx) + ", endStringIdx=" + to_string(endStringIdx));
+    int i = startStringIdx;
+    do {
+        if (i >= numStrings) {
+            i = 0;
         }
-    }
+        int j = startPixelIdx;
+        do {
+            if (j >= pixelsPerString) {
+                j = 0;
+            }
+            //string hsvStr;
+            //hsvPixelToString(foregroundColor, hsvStr);
+            //logMsg(LOG_DEBUG, "setting (" + to_string(i) + ", " + to_string(j) + ") to " + hsvStr);
+            (*coneStrings)[i][j] = foregroundColor;
+        } while (j++ != endPixelIdx);
+    } while (i++ != endStringIdx);
 }
 

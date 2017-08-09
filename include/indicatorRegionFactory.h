@@ -15,28 +15,12 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 #include <string>
 
-#include "illumiconeWidgetTypes.h"
-#include "SpinnahWidget.h"
-#include "WidgetId.h"
-
-using namespace std;
+#include "IndicatorRegion.h"
 
 
-SpinnahWidget::SpinnahWidget()
-    : Widget(WidgetId::spinnah, 1)
-{
-    simulationUpdateIntervalMs[0] = 500;
-}
-
-
-void SpinnahWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
-{
-    channels[chIdx]->getPosition();      // make sure previous velocity has been updated
-    int newPosition = (channels[chIdx]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
-    int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
-    channels[chIdx]->setPositionAndVelocity(newPosition, newVelocity);
-    channels[chIdx]->setIsActive(true);
-}
+IndicatorRegion* indicatorRegionFactory(const std::string& indicatorClassName);
 
