@@ -43,21 +43,21 @@ $(PROGS): $(OBJS)
 widgetRcvr: widgetRcvr.cpp ConfigReader.o illumiconeUtility.o json11.o log.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
 
-stringTester: stringTester.cpp json11.o ConfigReader.o
+stringTester: stringTester.cpp json11.o log.o illumiconeUtility.o ConfigReader.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
-jsonTester: jsonTester.cpp json11.o ConfigReader.o WidgetId.o
+jsonTester: jsonTester.cpp json11.o log.o illumiconeUtility.o ConfigReader.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 clean:
 	rm -f $(OBJS) $(PROGS)
 
 clean-widgetRcvr:
-	rm -f widgetRcvr
+	rm -f widgetRcvr ConfigReader.o illumiconeUtility.o json11.o log.o WidgetId.o
 
 clean-stringTester:
-	rm -f stringTester
+	rm -f stringTester json11.o log.o illumiconeUtility.o ConfigReader.o
 
 clean-jsonTester:
-	rm -f jsonTester
+	rm -f jsonTester json11.o log.o illumiconeUtility.o ConfigReader.o WidgetId.o
 
