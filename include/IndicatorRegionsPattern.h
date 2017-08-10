@@ -17,25 +17,36 @@
 
 #pragma once
 
-#include "Widget.h"
-#include "WidgetChannel.h"
+#include <vector>
 
-class SpinnahWidget : public Widget
-{
+#include "Pattern.h"
+
+
+class ConfigReader;
+class IndicatorRegion;
+class Widget;
+
+
+class IndicatorRegionsPattern : public Pattern {
+
     public:
-        SpinnahWidget();
-        ~SpinnahWidget() {};
 
-        SpinnahWidget(const SpinnahWidget&) = delete;
-        SpinnahWidget& operator =(const SpinnahWidget&) = delete;
+        IndicatorRegionsPattern(const std::string& name, bool usesHsvModel = false);
+        virtual ~IndicatorRegionsPattern();
 
-        void updateChannelSimulatedMeasurements(unsigned int chIdx);
+        IndicatorRegionsPattern() = delete;
+        IndicatorRegionsPattern(const IndicatorRegionsPattern&) = delete;
+        IndicatorRegionsPattern& operator =(const IndicatorRegionsPattern&) = delete;
+
+        virtual bool update();
+
+    protected:
+
+        virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+
+        std::vector<IndicatorRegion*> indicatorRegions;
 
     private:
 
-        // TODO 8/7/2017 ross:  These need to be sized dynamically to agree with the number of channels.
-        bool simulationIsActive[8];
-        unsigned int simulationToggleActivityMs[8];
-        unsigned int simulationToggleActivityPeriodMs[8];
 };
 

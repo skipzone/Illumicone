@@ -15,27 +15,19 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
 
-#include "Widget.h"
-#include "WidgetChannel.h"
+#include "indicatorRegionFactory.h"
+#include "log.h"
+#include "SimpleBlockIndicator.h"
 
-class SpinnahWidget : public Widget
+
+IndicatorRegion* indicatorRegionFactory(const std::string& indicatorClassName)
 {
-    public:
-        SpinnahWidget();
-        ~SpinnahWidget() {};
+    if (indicatorClassName == "SimpleBlockIndicator") {
+        return new SimpleBlockIndicator();
+    }
 
-        SpinnahWidget(const SpinnahWidget&) = delete;
-        SpinnahWidget& operator =(const SpinnahWidget&) = delete;
-
-        void updateChannelSimulatedMeasurements(unsigned int chIdx);
-
-    private:
-
-        // TODO 8/7/2017 ross:  These need to be sized dynamically to agree with the number of channels.
-        bool simulationIsActive[8];
-        unsigned int simulationToggleActivityMs[8];
-        unsigned int simulationToggleActivityPeriodMs[8];
-};
+    logMsg(LOG_ERR, "Unsupported indicator class name \"" + indicatorClassName + ".");
+    return nullptr;
+}
 

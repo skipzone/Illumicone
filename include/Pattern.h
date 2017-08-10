@@ -23,7 +23,12 @@
 
 #include "illumiconePixelTypes.h"
 #include "illumiconeTypes.h"
-#include "Widget.h"
+#include "WidgetChannel.h"
+#include "WidgetId.h"
+
+
+class ConfigReader;
+class Widget;
 
 
 class Pattern

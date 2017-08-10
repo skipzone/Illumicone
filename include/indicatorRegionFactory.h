@@ -17,25 +17,10 @@
 
 #pragma once
 
-#include "Widget.h"
-#include "WidgetChannel.h"
+#include <string>
 
-class SpinnahWidget : public Widget
-{
-    public:
-        SpinnahWidget();
-        ~SpinnahWidget() {};
+#include "IndicatorRegion.h"
 
-        SpinnahWidget(const SpinnahWidget&) = delete;
-        SpinnahWidget& operator =(const SpinnahWidget&) = delete;
 
-        void updateChannelSimulatedMeasurements(unsigned int chIdx);
-
-    private:
-
-        // TODO 8/7/2017 ross:  These need to be sized dynamically to agree with the number of channels.
-        bool simulationIsActive[8];
-        unsigned int simulationToggleActivityMs[8];
-        unsigned int simulationToggleActivityPeriodMs[8];
-};
+IndicatorRegion* indicatorRegionFactory(const std::string& indicatorClassName);
 

@@ -29,6 +29,95 @@ using namespace std;
 using namespace json11;
 
 
+bool ConfigReader::getBoolValue(const json11::Json& jsonObj,
+                                const std::string& name,
+                                bool& value,
+                                const std::string& errorMessageSuffix)
+{
+    if (!jsonObj[name].is_bool()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a boolean value" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].bool_value();
+    return true;
+}
+
+
+bool ConfigReader::getIntValue(const json11::Json& jsonObj,
+                               const std::string& name,
+                               int& value,
+                               const std::string& errorMessageSuffix,
+                               int minValue,
+                               int maxValue)
+{
+    if (!jsonObj[name].is_number()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].int_value();
+    if (value < minValue || value > maxValue) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getStringValue(const json11::Json& jsonObj,
+                                  const std::string& name,
+                                  string& value,
+                                  const std::string& errorMessageSuffix,
+                                  bool allowEmptyString)
+{
+    if (!jsonObj[name].is_string()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].string_value();
+    if (!allowEmptyString && value.empty()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
+                                       const std::string& name,
+                                       unsigned int& value,
+                                       const std::string& errorMessageSuffix,
+                                       unsigned int minValue,
+                                       unsigned int maxValue)
+{
+    if (!jsonObj[name].is_number()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].int_value();
+    if (value < minValue || value > maxValue) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
 ConfigReader::ConfigReader()
 {
 }
@@ -134,6 +223,13 @@ string ConfigReader::getPatternBlendMethod()
         return "";
     }
     return configObj["patternBlendMethod"].string_value();
+}
+
+
+unsigned int ConfigReader::getPatternRunLoopSleepIntervalUs()
+{
+    unsigned int val;
+    return  getUnsignedIntValue(configObj, "patternRunLoopSleepIntervalUs", val, ".", 1) ? val : 0;
 }
 
 

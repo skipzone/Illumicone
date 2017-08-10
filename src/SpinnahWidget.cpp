@@ -18,6 +18,7 @@
 #include <string>
 
 #include "illumiconeWidgetTypes.h"
+#include "illumiconeUtility.h"
 #include "SpinnahWidget.h"
 #include "WidgetId.h"
 
@@ -27,13 +28,38 @@ using namespace std;
 SpinnahWidget::SpinnahWidget()
     : Widget(WidgetId::spinnah, 1)
 {
-    simulationUpdateIntervalMs[0] = 1000;
+    unsigned int nowMs = getNowMs();
+
+    for (unsigned int i = 0; i < 8; ++i) {
+        simulationToggleActivityPeriodMs[i] = 0;
+        simulationToggleActivityMs[i] = nowMs;
+        simulationIsActive[i] = true;
+    }
+
+    simulationUpdateIntervalMs[0] = 100;
+
+    simulationToggleActivityPeriodMs[0] = 5000;
 }
 
 
 void SpinnahWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    channels[chIdx]->setPositionAndVelocity(0, 120);
-    channels[chIdx]->setIsActive(true);
+    unsigned int nowMs = getNowMs();
+
+    if (simulationToggleActivityPeriodMs[chIdx] != 0 && (int) (nowMs - simulationToggleActivityMs[chIdx]) >= 0) {
+        simulationToggleActivityMs[chIdx] += simulationToggleActivityPeriodMs[chIdx];
+        simulationIsActive[chIdx] = !simulationIsActive[chIdx];
+    }
+
+    if (simulationIsActive[chIdx]) {
+        channels[chIdx]->getPosition();      // make sure previous velocity has been updated
+        int newPosition = (channels[chIdx]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
+        int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
+        channels[chIdx]->setPositionAndVelocity(newPosition, newVelocity);
+        channels[chIdx]->setIsActive(true);
+    }
+    else {
+        channels[chIdx]->setIsActive(false);
+    }
 }
 

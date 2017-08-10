@@ -16,7 +16,7 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=patternController
-OBJS=patternFactory.o WidgetId.o widgetFactory.o Widget.o WidgetChannel.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o Pattern.o AnnoyingFlashingPattern.o HorizontalStripePattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o FillAndBurstPattern.o ParticlesPattern.o json11.o ConfigReader.o log.o illumiconeUtility.o illumiconePixelUtility.o lib8tion.o colorutils.o hsv2rgb.o colorpalettes.o
+OBJS=WidgetId.o widgetFactory.o Widget.o WidgetChannel.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o patternFactory.o Pattern.o AnnoyingFlashingPattern.o FillAndBurstPattern.o HorizontalStripePattern.o IndicatorRegionsPattern.o ParticlesPattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o SpinnerPattern.o indicatorRegionFactory.o IndicatorRegion.o SimpleBlockIndicator.o json11.o ConfigReader.o log.o illumiconeUtility.o illumiconePixelUtility.o lib8tion.o colorutils.o hsv2rgb.o colorpalettes.o
 LIBS=
 
 INCLUDE=../include
@@ -43,21 +43,21 @@ $(PROGS): $(OBJS)
 widgetRcvr: widgetRcvr.cpp ConfigReader.o illumiconeUtility.o json11.o log.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
 
-stringTester: stringTester.cpp json11.o ConfigReader.o
+stringTester: stringTester.cpp json11.o log.o illumiconeUtility.o ConfigReader.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
-jsonTester: jsonTester.cpp json11.o ConfigReader.o WidgetId.o
+jsonTester: jsonTester.cpp json11.o log.o illumiconeUtility.o ConfigReader.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 clean:
 	rm -f $(OBJS) $(PROGS)
 
 clean-widgetRcvr:
-	rm -f widgetRcvr
+	rm -f widgetRcvr ConfigReader.o illumiconeUtility.o json11.o log.o WidgetId.o
 
 clean-stringTester:
-	rm -f stringTester
+	rm -f stringTester json11.o log.o illumiconeUtility.o ConfigReader.o
 
 clean-jsonTester:
-	rm -f jsonTester
+	rm -f jsonTester json11.o log.o illumiconeUtility.o ConfigReader.o WidgetId.o
 
