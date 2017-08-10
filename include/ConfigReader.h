@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <climits>
 #include <string>
 #include <vector>
 
