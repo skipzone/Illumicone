@@ -48,9 +48,6 @@ class SpinnerPattern : public IndicatorRegionsPattern {
 
         std::shared_ptr<WidgetChannel> spinnerPositionChannel;
 
-        // pattern configuration
-        unsigned int persistenceMs;
-
     private:
 
         IndicatorRegion* activeIndicator;

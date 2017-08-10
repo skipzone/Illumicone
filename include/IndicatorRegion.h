@@ -34,12 +34,12 @@ class IndicatorRegion {
         // A derived class's init must call this init before doing anything else.
         virtual bool init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfig);
 
-        // A derived class must implement runAnimation if it has animation code
-        // to execute.  runAnimation will be called frequently via the update
-        // function of an IndicatorRegionsPattern object.  It should simply
-        // return false if isAnimating is false (unless it wants to be a jackass
-        // and burn cycles).  It should return true if it has an animation in
-        // progress and wants display.
+        // A derived class must implement runAnimation if it has animation or
+        // transition code to execute.  runAnimation will be called frequently
+        // via the update function of an IndicatorRegionsPattern object.  It
+        // should simply return false if isAnimating is false (unless it wants
+        // to be a jackass and burn cycles).  It should return true if it has an
+        // animation or transition in progress and wants display.
         virtual bool runAnimation() { return false; };
 
         // A derived classe can implement whichever of these is appropriate for it.
@@ -71,6 +71,8 @@ class IndicatorRegion {
         virtual void setForegroundColor(const HsvPixel& color) { foregroundColor = color; }
 
     protected:
+
+        void fillRegion(const HsvPixel& color);
 
         HsvPixel backgroundColor;
         // TODO 8/8/2017 ross:  use std::shared_ptr instead

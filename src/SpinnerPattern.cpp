@@ -45,18 +45,6 @@ bool SpinnerPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
     }
 
 
-    // ----- get pattern configuration -----
-
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    if (!patternConfig["persistenceMs"].is_number()) {
-        logMsg(LOG_ERR, "persistenceMs not specified in " + name + " pattern configuration.");
-        return false;
-    }
-    persistenceMs = patternConfig["persistenceMs"].int_value();
-    logMsg(LOG_INFO, name + " persistenceMs=" + to_string(persistenceMs));
-
-
     // ----- get input channels -----
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
@@ -107,13 +95,15 @@ bool SpinnerPattern::update()
     }
     else if (spinnerPositionChannel->getHasNewPositionMeasurement()) {
         if (activeIndicator != nullptr) {
-            activeIndicator->turnOffImmediately();
+            //activeIndicator->turnOffImmediately();
+            activeIndicator->transitionOff();
             activeIndicator = nullptr;
         }
         unsigned int indicatorIdx = spinnerPositionChannel->getPosition() % indicatorRegions.size();
         //logMsg(LOG_DEBUG, "indicatorIdx = " + to_string(indicatorIdx));
         activeIndicator = indicatorRegions[indicatorIdx];
-        activeIndicator->turnOnImmediately();
+        //activeIndicator->turnOnImmediately();
+        activeIndicator->transitionOn();
         isActive = true;
     }
 

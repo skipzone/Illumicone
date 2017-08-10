@@ -47,7 +47,6 @@ class FillAndBurstPattern : public Pattern
     private:
 
         enum class PatternState {
-            empty = 0,
             pressurizing = 0,
             fillRed,
             fillOrange,

@@ -87,13 +87,20 @@ bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
                                        const std::string& name,
                                        unsigned int& value,
                                        const std::string& errorMessageSuffix,
-                                       int minValue,
-                                       int maxValue)
+                                       unsigned int minValue,
+                                       unsigned int maxValue)
 {
-    int i;
-    bool retval = getIntValue(jsonObj, name, i, errorMessageSuffix, minValue, maxValue);
-    value = i;
-    return retval;
+    if (!jsonObj[name].is_number()) {
+        logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        return false;
+    }
+    value = jsonObj[name].int_value();
+    if (value < minValue || value > maxValue) {
+        logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                        + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        return false;
+    }
+    return true;
 }
 
 
@@ -202,6 +209,13 @@ string ConfigReader::getPatternBlendMethod()
         return "";
     }
     return configObj["patternBlendMethod"].string_value();
+}
+
+
+unsigned int ConfigReader::getPatternRunLoopSleepIntervalUs()
+{
+    unsigned int val;
+    return  getUnsignedIntValue(configObj, "patternRunLoopSleepIntervalUs", val, ".", 1) ? val : 0;
 }
 
 

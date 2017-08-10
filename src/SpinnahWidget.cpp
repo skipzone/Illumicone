@@ -27,7 +27,7 @@ using namespace std;
 SpinnahWidget::SpinnahWidget()
     : Widget(WidgetId::spinnah, 1)
 {
-    simulationUpdateIntervalMs[0] = 500;
+    simulationUpdateIntervalMs[0] = 3000;
 }
 
 

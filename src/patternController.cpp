@@ -78,6 +78,7 @@ static vector<SchedulePeriod> shutoffPeriods;
 static vector<SchedulePeriod> quiescentPeriods;
 static string patternBlendMethodStr;
 static PatternBlendMethod patternBlendMethod;
+static unsigned int patternRunLoopSleepIntervalUs;
 
 static struct sockaddr_in server;
 static int sock;
@@ -241,6 +242,11 @@ bool readConfig(const string& configFileName)
     }
     else {
         logMsg(LOG_ERR, "patternBlendMethod \"" + patternBlendMethodStr + "\" not recognized.");
+        return false;
+    }
+
+    patternRunLoopSleepIntervalUs = config.getPatternRunLoopSleepIntervalUs();
+    if (patternRunLoopSleepIntervalUs == 0) {
         return false;
     }
 
@@ -672,8 +678,7 @@ int main(int argc, char **argv)
             doPatterns();
         }
 
-        // TODO 6/25/2017 ross:  Use an actual interval.  Set it in the JSON config.
-        usleep(5000);
+        usleep(patternRunLoopSleepIntervalUs);
     }
 
     // We should never get here, but if we do, something went wrong.

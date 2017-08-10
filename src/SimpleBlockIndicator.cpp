@@ -17,7 +17,9 @@
 
 #include <string>
 
+#include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "SimpleBlockIndicator.h"
 
@@ -25,42 +27,174 @@
 using namespace std;
 
 
+bool SimpleBlockIndicator::init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfig)
+{
+    if (!IndicatorRegion::init(numStrings, pixelsPerString, indicatorConfig)) {
+        return false;
+    }
+
+    string errMsgSuffix = " in indicator region configuration:  " + indicatorConfig.dump();
+
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "fadeIntervalMs", fadeIntervalMs, errMsgSuffix)) {
+        return false;
+    }
+
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "flashIntervalMs", flashIntervalMs, errMsgSuffix)) {
+        return false;
+    }
+
+    return true;
+}
+
+
+void SimpleBlockIndicator::makeAnimating(bool enable)
+{
+    if (enable) {
+        if (!isAnimating) {
+            state = AnimationState::flashOn;
+        }
+    }
+    else {
+        if (isAnimating) {
+            state = AnimationState::inactive;
+            if (isOn) {
+                turnOnImmediately();
+            }
+            else {
+                turnOffImmediately();
+            }
+        }
+    }
+    isAnimating = enable;
+}
+
+
+bool SimpleBlockIndicator::runAnimation()
+{
+    bool wantDisplay = true;
+
+    unsigned int nowMs = getNowMs();
+
+    float fadeValueTransition;
+
+    switch (state) {
+
+        case AnimationState::inactive:
+            wantDisplay = false;
+            break;
+
+        case AnimationState::transitionOnStart:
+        case AnimationState::transitionOffStart:
+            nextFadeChangeMs = nowMs;
+            fadeValueTransition = foregroundColor.v;
+            if (fadeValueTransition > fadeIntervalMs) {
+                fadeStepMs = 1;
+                fadeStepValue = (float) fadeValueTransition / (float) fadeIntervalMs;
+            }
+            else {
+                fadeStepMs = fadeIntervalMs / fadeValueTransition;
+                fadeStepValue = (float) fadeValueTransition / (float) (fadeIntervalMs / fadeStepMs);
+            }
+            //logMsg(LOG_DEBUG, "fadeStepMs=" + to_string(fadeStepMs) + " fadeStepValue=" + to_string(fadeStepValue));
+            if (state == AnimationState::transitionOnStart) {
+                fadeValue = 0;
+                state = AnimationState::transitionOn;
+            }
+            else {
+                fadeValue = foregroundColor.v;
+                state = AnimationState::transitionOff;
+            }
+            break;
+
+        case AnimationState::transitionOn:
+            if ((int) (nowMs - nextFadeChangeMs) >= 0) {
+                nextFadeChangeMs += fadeStepMs;
+                fadeValue += fadeStepValue;
+                if (fadeValue < foregroundColor.v) {
+                    HsvPixel color = foregroundColor;
+                    color.v = fadeValue;
+                    fillRegion(color);
+                }
+                else {
+                    fillRegion(foregroundColor);
+                    state = AnimationState::inactive;
+                }
+            }
+            break;
+
+        case AnimationState::transitionOff:
+            if ((int) (nowMs - nextFadeChangeMs) >= 0) {
+                nextFadeChangeMs += fadeStepMs;
+                fadeValue -= fadeStepValue;
+                if (fadeValue > 0) {
+                    HsvPixel color = foregroundColor;
+                    color.v = fadeValue;
+                    fillRegion(color);
+                }
+                else {
+                    fadeValue = 0;
+                    fillRegion(backgroundColor);
+                    state = AnimationState::inactive;
+                }
+            }
+            break;
+
+        case AnimationState::flashOn:
+            break;
+
+        case AnimationState::flashOnWait:
+            break;
+
+        case AnimationState::flashOff:
+            break;
+
+        case AnimationState::flashOffWait:
+            break;
+    }
+
+/*
+        unsigned int flashIntervalMs;
+        float fadeValue;
+        bool flashIsOn;
+        unsigned int nextFlashChangeMs;
+*/
+
+    return wantDisplay;
+}
+
+
+void SimpleBlockIndicator::transitionOff()
+{
+    isOn = false;
+    isAnimating = true;
+    state = AnimationState::transitionOffStart;
+}
+
+
+void SimpleBlockIndicator::transitionOn()
+{
+    isOn = true;
+    isAnimating = true;
+    state = AnimationState::transitionOnStart;
+}
+
+
 void SimpleBlockIndicator::turnOffImmediately()
 {
-    int i = startStringIdx;
-    do {
-        if (i >= numStrings) {
-            i = 0;
-        }
-        int j = startPixelIdx;
-        do {
-            if (j >= pixelsPerString) {
-                j = 0;
-            }
-            (*coneStrings)[i][j] = backgroundColor;
-        } while (j++ != endPixelIdx);
-    } while (i++ != endStringIdx);
+    isOn = false;
+    isAnimating = false;
+    state = AnimationState::inactive;
+
+    fillRegion(backgroundColor);
 }
 
 
 void SimpleBlockIndicator::turnOnImmediately()
 {
-    //logMsg(LOG_DEBUG, "startStringIdx=" + to_string(startStringIdx) + ", endStringIdx=" + to_string(endStringIdx));
-    int i = startStringIdx;
-    do {
-        if (i >= numStrings) {
-            i = 0;
-        }
-        int j = startPixelIdx;
-        do {
-            if (j >= pixelsPerString) {
-                j = 0;
-            }
-            //string hsvStr;
-            //hsvPixelToString(foregroundColor, hsvStr);
-            //logMsg(LOG_DEBUG, "setting (" + to_string(i) + ", " + to_string(j) + ") to " + hsvStr);
-            (*coneStrings)[i][j] = foregroundColor;
-        } while (j++ != endPixelIdx);
-    } while (i++ != endStringIdx);
+    isOn = true;
+    isAnimating = false;
+    state = AnimationState::inactive;
+
+    fillRegion(foregroundColor);
 }
 

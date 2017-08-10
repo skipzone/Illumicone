@@ -52,8 +52,8 @@ class ConfigReader
                                         const std::string& name,
                                         unsigned int& value,
                                         const std::string& errorMessageSuffix,
-                                        int minValue = INT_MIN,
-                                        int maxValue = INT_MAX);
+                                        unsigned int minValue = 0,
+                                        unsigned int maxValue = UINT_MAX);
 
         ConfigReader();
         virtual ~ConfigReader();
@@ -73,6 +73,7 @@ class ConfigReader
         std::string getOpcServerIpAddress();
         std::string getPatconIpAddress();
         std::string getPatternBlendMethod();
+        unsigned int getPatternRunLoopSleepIntervalUs();
         bool getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods);
         int getWidgetPortNumberBase();
 

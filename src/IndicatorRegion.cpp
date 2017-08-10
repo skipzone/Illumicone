@@ -32,7 +32,7 @@ bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString
 {
     string errMsgSuffix = " in indicator region configuration:  " + indicatorConfig.dump();
 
-    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "index", index, errMsgSuffix, 0)) {
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "index", index, errMsgSuffix)) {
         return false;
     }
 
@@ -84,5 +84,30 @@ bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString
     endPixelIdx = ((upperLeftPixelIdx + heightInPixels - 1) % pixelsPerString + pixelsPerString) % pixelsPerString;
 
     return true;
+}
+
+
+void IndicatorRegion::fillRegion(const HsvPixel& color)
+{
+    // We're doing the funky do/while stuff to support wraparound from the last
+    // string to the first string (i.e., startStringIdx > endStringIdx).
+
+    //logMsg(LOG_DEBUG, "startStringIdx=" + to_string(startStringIdx) + ", endStringIdx=" + to_string(endStringIdx));
+    int i = startStringIdx;
+    do {
+        if (i >= numStrings) {
+            i = 0;
+        }
+        int j = startPixelIdx;
+        do {
+            if (j >= pixelsPerString) {
+                j = 0;
+            }
+            //string hsvStr;
+            //hsvPixelToString(foregroundColor, hsvStr);
+            //logMsg(LOG_DEBUG, "setting (" + to_string(i) + ", " + to_string(j) + ") to " + hsvStr);
+            (*coneStrings)[i][j] = color;
+        } while (j++ != endPixelIdx);
+    } while (i++ != endStringIdx);
 }
 

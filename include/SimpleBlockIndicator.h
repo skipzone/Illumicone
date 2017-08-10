@@ -30,12 +30,43 @@ class SimpleBlockIndicator : public IndicatorRegion {
         SimpleBlockIndicator(const SimpleBlockIndicator&) = delete;
         SimpleBlockIndicator& operator =(const SimpleBlockIndicator&) = delete;
 
-        virtual void turnOffImmediately();
-        virtual void turnOnImmediately();
+        bool init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfig);
+        void makeAnimating(bool enable);
+        bool runAnimation();
+        void transitionOff();
+        void transitionOn();
+        void turnOffImmediately();
+        void turnOnImmediately();
 
     protected:
 
     private:
 
+        enum class AnimationState {
+            inactive = 0,
+            transitionOnStart,
+            transitionOn,
+            transitionOffStart,
+            transitionOff,
+            flashOn,
+            flashOnWait,
+            flashOff,
+            flashOffWait
+        };
+
+        // configuration
+        unsigned int fadeIntervalMs;
+        unsigned int flashIntervalMs;
+
+        AnimationState state;
+        unsigned int fadeStepMs;
+        float fadeStepValue;
+        float fadeValue;
+        bool flashIsOn;
+        bool isOn;
+        unsigned int nextFadeChangeMs;
+        unsigned int nextFlashChangeMs;
+
 };
+
 
