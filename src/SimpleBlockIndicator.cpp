@@ -51,7 +51,7 @@ void SimpleBlockIndicator::makeAnimating(bool enable)
 {
     if (enable) {
         if (!isAnimating) {
-            state = AnimationState::flashOn;
+            state = AnimationState::flashStart;
         }
     }
     else {
@@ -117,6 +117,7 @@ bool SimpleBlockIndicator::runAnimation()
                 }
                 else {
                     fillRegion(foregroundColor);
+                    isTransitioning = false;
                     state = AnimationState::inactive;
                 }
             }
@@ -134,30 +135,49 @@ bool SimpleBlockIndicator::runAnimation()
                 else {
                     fadeValue = 0;
                     fillRegion(backgroundColor);
+                    isTransitioning = false;
                     state = AnimationState::inactive;
                 }
             }
             break;
 
+        case AnimationState::flashStart:
+            nextFlashChangeMs = nowMs;
+            state = isOn ? AnimationState::flashOff : AnimationState::flashOn;
+            break;
+
         case AnimationState::flashOn:
+            if ((int) (nowMs - nextFlashChangeMs) >= 0) {
+                //logMsg(LOG_DEBUG, "turning flash on");
+                fillRegion(foregroundColor);
+                nextFlashChangeMs += flashIntervalMs / 2;
+                state = AnimationState::flashOnWait;
+            }
             break;
 
         case AnimationState::flashOnWait:
+            if ((int) (nowMs - nextFlashChangeMs) >= 0) {
+                state = AnimationState::flashOff;
+            }
             break;
 
         case AnimationState::flashOff:
+            if ((int) (nowMs - nextFlashChangeMs) >= 0) {
+                //logMsg(LOG_DEBUG, "turning flash off");
+                HsvPixel color = foregroundColor;
+                color.v = 0;
+                fillRegion(color);
+                nextFlashChangeMs += flashIntervalMs / 2;
+                state = AnimationState::flashOffWait;
+            }
             break;
 
         case AnimationState::flashOffWait:
+            if ((int) (nowMs - nextFlashChangeMs) >= 0) {
+                state = AnimationState::flashOn;
+            }
             break;
     }
-
-/*
-        unsigned int flashIntervalMs;
-        float fadeValue;
-        bool flashIsOn;
-        unsigned int nextFlashChangeMs;
-*/
 
     return wantDisplay;
 }
@@ -166,7 +186,8 @@ bool SimpleBlockIndicator::runAnimation()
 void SimpleBlockIndicator::transitionOff()
 {
     isOn = false;
-    isAnimating = true;
+    isAnimating = false;
+    isTransitioning = true;
     state = AnimationState::transitionOffStart;
 }
 
@@ -174,7 +195,8 @@ void SimpleBlockIndicator::transitionOff()
 void SimpleBlockIndicator::transitionOn()
 {
     isOn = true;
-    isAnimating = true;
+    isAnimating = false;
+    isTransitioning = true;
     state = AnimationState::transitionOnStart;
 }
 
@@ -183,6 +205,7 @@ void SimpleBlockIndicator::turnOffImmediately()
 {
     isOn = false;
     isAnimating = false;
+    isTransitioning = false;
     state = AnimationState::inactive;
 
     fillRegion(backgroundColor);
@@ -193,6 +216,7 @@ void SimpleBlockIndicator::turnOnImmediately()
 {
     isOn = true;
     isAnimating = false;
+    isTransitioning = false;
     state = AnimationState::inactive;
 
     fillRegion(foregroundColor);

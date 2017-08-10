@@ -48,6 +48,7 @@ class SimpleBlockIndicator : public IndicatorRegion {
             transitionOn,
             transitionOffStart,
             transitionOff,
+            flashStart,
             flashOn,
             flashOnWait,
             flashOff,
@@ -66,7 +67,6 @@ class SimpleBlockIndicator : public IndicatorRegion {
         bool isOn;
         unsigned int nextFadeChangeMs;
         unsigned int nextFlashChangeMs;
-
 };
 
 

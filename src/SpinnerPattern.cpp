@@ -106,6 +106,12 @@ bool SpinnerPattern::update()
         activeIndicator->transitionOn();
         isActive = true;
     }
+    else {
+        // If the indicator is done transitioning on and is not yet flashing, make it flash.
+        if (activeIndicator != nullptr && !activeIndicator->getIsAnimating() && !activeIndicator->getIsTransitioning()) {
+            activeIndicator->makeAnimating(true);
+        }
+    }
 
     return isActive | animationWantsDisplay;
 }

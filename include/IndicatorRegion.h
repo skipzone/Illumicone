@@ -61,6 +61,7 @@ class IndicatorRegion {
         virtual bool            getIsAnimating()          { return isAnimating; }
         virtual bool            getIsHighlighted()        { return isHighlighted; }
         virtual bool            getIsSubtle()             { return isSubtle; }
+        virtual bool            getIsTransitioning()      { return isTransitioning; }
         virtual unsigned int    getUpperLeftStringIndex() { return upperLeftStringIdx; }
         virtual unsigned int    getUpperLeftPixelIndex()  { return upperLeftPixelIdx; }
         virtual unsigned int    getWidthInStrings()       { return widthInStrings; }
@@ -85,6 +86,7 @@ class IndicatorRegion {
         bool isAnimating;
         bool isHighlighted;
         bool isSubtle;
+        bool isTransitioning;
         unsigned int numStrings;
         unsigned int pixelsPerString;
         unsigned int startPixelIdx;
