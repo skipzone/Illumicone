@@ -45,6 +45,20 @@ bool SpinnerPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
     }
 
 
+    // ----- get pattern configuration -----
+
+    auto patternConfig = config.getPatternConfigJsonObject(name);
+
+    string errMsgSuffix = " in " + name + " pattern configuration.";
+
+    if (!ConfigReader::getUnsignedIntValue(patternConfig,
+                                           "selectedBlockAnimationIntervalMs",
+                                           selectedBlockAnimationIntervalMs,
+                                           errMsgSuffix)) {
+        return false;
+    }
+
+
     // ----- get input channels -----
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
@@ -82,35 +96,38 @@ bool SpinnerPattern::update()
         return false;
     }
 
+    unsigned int nowMs = getNowMs();
+
     // Let the regions do their animations.
     bool animationWantsDisplay = IndicatorRegionsPattern::update();
 
     if (!spinnerPositionChannel->getIsActive()) {
         //logMsg(LOG_DEBUG, "spinnerPositionChannel is inactive");
         if (activeIndicator != nullptr) {
-            activeIndicator->turnOffImmediately();
-            activeIndicator = nullptr;
+            // If the widget has just gone inactive, make the final (selected) block animate for a while.
+            if (!activeIndicator->getIsAnimating()) {
+                activeIndicator->makeAnimating(true);
+                stopAnimatingMs = nowMs + selectedBlockAnimationIntervalMs;
+            }
+            else if ((int) (nowMs - stopAnimatingMs) >= 0) {
+                activeIndicator->turnOffImmediately();
+                activeIndicator = nullptr;
+            }
         }
-        isActive = false;
+        else {
+            isActive = false;
+        }
     }
     else if (spinnerPositionChannel->getHasNewPositionMeasurement()) {
         if (activeIndicator != nullptr) {
-            //activeIndicator->turnOffImmediately();
-            activeIndicator->transitionOff();
+            activeIndicator->turnOffImmediately();
             activeIndicator = nullptr;
         }
         unsigned int indicatorIdx = spinnerPositionChannel->getPosition() % indicatorRegions.size();
         //logMsg(LOG_DEBUG, "indicatorIdx = " + to_string(indicatorIdx));
         activeIndicator = indicatorRegions[indicatorIdx];
-        //activeIndicator->turnOnImmediately();
-        activeIndicator->transitionOn();
+        activeIndicator->turnOnImmediately();
         isActive = true;
-    }
-    else {
-        // If the indicator is done transitioning on and is not yet flashing, make it flash.
-        if (activeIndicator != nullptr && !activeIndicator->getIsAnimating() && !activeIndicator->getIsTransitioning()) {
-            activeIndicator->makeAnimating(true);
-        }
     }
 
     return isActive | animationWantsDisplay;

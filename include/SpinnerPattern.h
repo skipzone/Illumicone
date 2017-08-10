@@ -51,5 +51,7 @@ class SpinnerPattern : public IndicatorRegionsPattern {
     private:
 
         IndicatorRegion* activeIndicator;
+        unsigned int selectedBlockAnimationIntervalMs;
+        unsigned int stopAnimatingMs;
 };
 

@@ -35,12 +35,12 @@ bool SimpleBlockIndicator::init(unsigned int numStrings, unsigned int pixelsPerS
 
     string errMsgSuffix = " in indicator region configuration:  " + indicatorConfig.dump();
 
-    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "fadeIntervalMs", fadeIntervalMs, errMsgSuffix)) {
-        return false;
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "fadeIntervalMs", fadeIntervalMs)) {
+        fadeIntervalMs = 0;
     }
 
-    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "flashIntervalMs", flashIntervalMs, errMsgSuffix)) {
-        return false;
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "flashIntervalMs", flashIntervalMs)) {
+        flashIntervalMs = 0;
     }
 
     return true;
@@ -50,6 +50,11 @@ bool SimpleBlockIndicator::init(unsigned int numStrings, unsigned int pixelsPerS
 void SimpleBlockIndicator::makeAnimating(bool enable)
 {
     if (enable) {
+        if (flashIntervalMs == 0) {
+            logMsg(LOG_ERR, "makeAnimating(true) called, but flashIntervalMs not specified in configuration for index "
+                            + to_string(index) + ".");
+            return;
+        }
         if (!isAnimating) {
             state = AnimationState::flashStart;
         }
@@ -194,6 +199,11 @@ void SimpleBlockIndicator::transitionOff()
 
 void SimpleBlockIndicator::transitionOn()
 {
+    if (fadeIntervalMs == 0) {
+        logMsg(LOG_ERR, "makeAnimating(true) called, but fadeIntervalMs not specified in configuration for index "
+                        + to_string(index) + ".");
+        return;
+    }
     isOn = true;
     isAnimating = false;
     isTransitioning = true;

@@ -242,6 +242,7 @@
                     "measurement" : "position"
                 }
             ],
+            "selectedBlockAnimationIntervalMs" : 3000,
             "indicatorClassName" : "SimpleBlockIndicator",
             "numberOfIndicators" : 16,
             "indicators" : [
@@ -251,7 +252,7 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "blue",
-                    "fadeIntervalMs" : 1001,
+                    //"fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 1,
@@ -260,7 +261,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "green",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 2,
@@ -269,7 +269,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "yellow",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 3,
@@ -278,7 +277,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "red",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 4,
@@ -287,7 +285,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "blue",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 5,
@@ -296,7 +293,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "green",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 6,
@@ -305,7 +301,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "yellow",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 7,
@@ -314,7 +309,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "red",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 8,
@@ -323,7 +317,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "blue",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 9,
@@ -332,7 +325,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "green",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 10,
@@ -341,7 +333,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "yellow",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 11,
@@ -350,7 +341,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "red",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 12,
@@ -359,7 +349,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "blue",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 13,
@@ -368,7 +357,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "green",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 14,
@@ -377,7 +365,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "yellow",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 },
                 {   "index" : 15,
@@ -386,7 +373,6 @@
                     "widthInStrings" : 4,
                     "heightInPixels" : 20,
                     "foregroundHsv" : "red",
-                    "fadeIntervalMs" : 1001,
                     "flashIntervalMs" : 250
                 }
             ]

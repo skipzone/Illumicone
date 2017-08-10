@@ -35,7 +35,9 @@ bool ConfigReader::getBoolValue(const json11::Json& jsonObj,
                                 const std::string& errorMessageSuffix)
 {
     if (!jsonObj[name].is_bool()) {
-        logMsg(LOG_ERR, name + " is not present or is not a boolean value" + errorMessageSuffix);
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a boolean value" + errorMessageSuffix);
+        }
         return false;
     }
     value = jsonObj[name].bool_value();
@@ -51,13 +53,17 @@ bool ConfigReader::getIntValue(const json11::Json& jsonObj,
                                int maxValue)
 {
     if (!jsonObj[name].is_number()) {
-        logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        }
         return false;
     }
     value = jsonObj[name].int_value();
     if (value < minValue || value > maxValue) {
-        logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
-                        + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
         return false;
     }
     return true;
@@ -71,12 +77,16 @@ bool ConfigReader::getStringValue(const json11::Json& jsonObj,
                                   bool allowEmptyString)
 {
     if (!jsonObj[name].is_string()) {
-        logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+        }
         return false;
     }
     value = jsonObj[name].string_value();
     if (!allowEmptyString && value.empty()) {
-        logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+        }
         return false;
     }
     return true;
@@ -91,13 +101,17 @@ bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
                                        unsigned int maxValue)
 {
     if (!jsonObj[name].is_number()) {
-        logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        }
         return false;
     }
     value = jsonObj[name].int_value();
     if (value < minValue || value > maxValue) {
-        logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
-                        + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
         return false;
     }
     return true;
