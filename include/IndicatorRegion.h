@@ -25,7 +25,7 @@ class IndicatorRegion {
 
     public:
 
-        IndicatorRegion() {};
+        IndicatorRegion();
         virtual ~IndicatorRegion() {};
 
         IndicatorRegion(const IndicatorRegion&) = delete;
@@ -75,6 +75,7 @@ class IndicatorRegion {
 
         void fillRegion(const HsvPixel& color);
 
+        // configuration
         HsvPixel backgroundColor;
         // TODO 8/8/2017 ross:  use std::shared_ptr instead
         HsvConeStrings* coneStrings;
@@ -83,10 +84,6 @@ class IndicatorRegion {
         HsvPixel foregroundColor;
         unsigned int heightInPixels;
         unsigned int index;
-        bool isAnimating;
-        bool isHighlighted;
-        bool isSubtle;
-        bool isTransitioning;
         unsigned int numStrings;
         unsigned int pixelsPerString;
         unsigned int startPixelIdx;
@@ -94,6 +91,11 @@ class IndicatorRegion {
         unsigned int upperLeftStringIdx;
         unsigned int upperLeftPixelIdx;
         unsigned int widthInStrings;
+
+        bool isAnimating;
+        bool isHighlighted;
+        bool isSubtle;
+        bool isTransitioning;
 
     private:
 

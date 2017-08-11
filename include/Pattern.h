@@ -48,14 +48,15 @@ class Pattern
         bool init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
         virtual bool update() = 0;
 
+        // configuration
         int pixelsPerString;
         int numStrings;
-        RgbConeStrings pixelArray;
-        HsvConeStrings coneStrings;
         bool usesHsvModel;
-
         int priority;
         int opacity;
+
+        RgbConeStrings pixelArray;
+        HsvConeStrings coneStrings;
         bool isActive;
 
     protected:

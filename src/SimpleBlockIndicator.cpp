@@ -27,6 +27,13 @@
 using namespace std;
 
 
+SimpleBlockIndicator::SimpleBlockIndicator()
+    : state(AnimationState::inactive)
+    , isOn(false)
+{
+}
+
+
 bool SimpleBlockIndicator::init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfig)
 {
     if (!IndicatorRegion::init(numStrings, pixelsPerString, indicatorConfig)) {

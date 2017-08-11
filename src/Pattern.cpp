@@ -31,6 +31,7 @@ using namespace std;
 
 Pattern::Pattern(const std::string& name, bool usesHsvModel)
     : usesHsvModel(usesHsvModel)
+    , isActive(false)
     , name(name)
 {
 }

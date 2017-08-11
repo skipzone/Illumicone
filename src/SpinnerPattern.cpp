@@ -34,6 +34,7 @@ using namespace std;
 
 SpinnerPattern::SpinnerPattern(const std::string& name)
     : IndicatorRegionsPattern(name, true)
+    , activeIndicator(nullptr)
 {
 }
 

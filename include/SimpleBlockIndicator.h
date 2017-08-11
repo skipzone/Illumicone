@@ -24,7 +24,7 @@ class SimpleBlockIndicator : public IndicatorRegion {
 
     public:
 
-        SimpleBlockIndicator() {};
+        SimpleBlockIndicator();
         virtual ~SimpleBlockIndicator() {};
 
         SimpleBlockIndicator(const SimpleBlockIndicator&) = delete;

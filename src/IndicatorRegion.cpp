@@ -28,6 +28,15 @@
 using namespace std;
 
 
+IndicatorRegion::IndicatorRegion()
+    : isAnimating(false)
+    , isHighlighted(false)
+    , isSubtle(false)
+    , isTransitioning(false)
+{
+}
+
+
 bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfig)
 {
     string errMsgSuffix = " in indicator region configuration:  " + indicatorConfig.dump();

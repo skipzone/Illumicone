@@ -27,6 +27,7 @@ using namespace std;
 
 EyeWidget::EyeWidget()
     : Widget(WidgetId::eye, 1)
+    , stepCount(0)
 {
     simulationUpdateIntervalMs[0] = eyeSimulationUpdateIntervalMs;
 }
