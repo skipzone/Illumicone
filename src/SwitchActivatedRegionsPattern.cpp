@@ -115,14 +115,14 @@ bool SwitchActivatedRegionsPattern::update()
     else if (switchArrayChannel->getHasNewPositionMeasurement()) {
         int measmt = switchArrayChannel->getPosition();
         bool anySwitchIsOn = false;
-        for (int iSwitch = 0; iSwitch < 16 && iSwitch <= indicatorRegions.size(); ++iSwitch) {
+        for (unsigned int iSwitch = 0; iSwitch < 16 && iSwitch <= indicatorRegions.size(); ++iSwitch) {
             bool switchIsOn = measmt & (1 << iSwitch);
             IndicatorRegion* indicatorRegion = indicatorRegions[iSwitch];
             if (switchIsOn) {
                 if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {
                     logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned on");
                     activeIndicators.insert(indicatorRegion);
-                    indicatorRegion->turnOnImmediately();
+                    indicatorRegion->makeAnimating(true);
                 }
                 anySwitchIsOn = true;
             }

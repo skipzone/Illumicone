@@ -40,7 +40,7 @@
         },
         {   "name" : "spinnah",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "bells",
@@ -70,7 +70,7 @@
         },
         {   "name" : "contortOMatic",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay42",
@@ -399,16 +399,16 @@
                     "upperLeftPixelIdx" : 0,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "red",
+                    "flashIntervalMs" : 73
                 },
                 {   "index" : 1,
                     "upperLeftStringIdx" : 9,
                     "upperLeftPixelIdx" : 0,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "blue",
+                    "flashIntervalMs" : 73
                 },
                 {   "index" : 2,
                     "upperLeftStringIdx" : 18,
@@ -416,15 +416,15 @@
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
                     "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 250
+                    "flashIntervalMs" : 73
                 },
                 {   "index" : 3,
                     "upperLeftStringIdx" : 27,
                     "upperLeftPixelIdx" : 0,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "green",
+                    "flashIntervalMs" : 73
                 },
 
                 {   "index" : 4,
@@ -432,16 +432,16 @@
                     "upperLeftPixelIdx" : 15,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "red",
+                    "flashIntervalMs" : 113
                 },
                 {   "index" : 5,
                     "upperLeftStringIdx" : 9,
                     "upperLeftPixelIdx" : 15,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "blue",
+                    "flashIntervalMs" : 113
                 },
                 {   "index" : 6,
                     "upperLeftStringIdx" : 18,
@@ -449,15 +449,15 @@
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
                     "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 250
+                    "flashIntervalMs" : 113
                 },
                 {   "index" : 7,
                     "upperLeftStringIdx" : 27,
                     "upperLeftPixelIdx" : 15,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "green",
+                    "flashIntervalMs" : 113
                 },
 
                 {   "index" : 8,
@@ -465,16 +465,16 @@
                     "upperLeftPixelIdx" : 30,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "red",
+                    "flashIntervalMs" : 149
                 },
                 {   "index" : 9,
                     "upperLeftStringIdx" : 9,
                     "upperLeftPixelIdx" : 30,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "blue",
+                    "flashIntervalMs" : 149
                 },
                 {   "index" : 10,
                     "upperLeftStringIdx" : 18,
@@ -482,15 +482,15 @@
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
                     "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 250
+                    "flashIntervalMs" : 149
                 },
                 {   "index" : 11,
                     "upperLeftStringIdx" : 27,
                     "upperLeftPixelIdx" : 30,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "green",
+                    "flashIntervalMs" : 149
                 },
 
                 {   "index" : 12,
@@ -498,16 +498,16 @@
                     "upperLeftPixelIdx" : 45,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "red",
+                    "flashIntervalMs" : 181
                 },
                 {   "index" : 13,
                     "upperLeftStringIdx" : 9,
                     "upperLeftPixelIdx" : 45,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "blue",
+                    "flashIntervalMs" : 181
                 },
                 {   "index" : 14,
                     "upperLeftStringIdx" : 18,
@@ -515,15 +515,15 @@
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
                     "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 250
+                    "flashIntervalMs" : 181
                 },
                 {   "index" : 15,
                     "upperLeftStringIdx" : 27,
                     "upperLeftPixelIdx" : 45,
                     "widthInStrings" : 9,
                     "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 250
+                    "foregroundHsv" : "green",
+                    "flashIntervalMs" : 181
                 }
 
             ]
