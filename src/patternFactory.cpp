@@ -26,6 +26,7 @@
 #include "RgbVerticalPattern.h"
 #include "SparklePattern.h"
 #include "SpinnerPattern.h"
+#include "SwitchActivatedRegionsPattern.h"
 
 
 Pattern* patternFactory(const std::string& patternClassName, const std::string& patternName)
@@ -53,6 +54,9 @@ Pattern* patternFactory(const std::string& patternClassName, const std::string& 
     }
     else if (patternClassName == "SpinnerPattern") {
         return new SpinnerPattern(patternName);
+    }
+    else if (patternClassName == "SwitchActivatedRegionsPattern") {
+        return new SwitchActivatedRegionsPattern(patternName);
     }
 
     logMsg(LOG_ERR, "Unsupported pattern class name \"" + patternClassName + "\" for pattern " + patternName);

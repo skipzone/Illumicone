@@ -27,7 +27,7 @@
 //#include "SchroedersPlaythingWidget.h"
 #include "SpinnahWidget.h"
 #include "TriObeliskWidget.h"
-//#include "ContortOMaticWidget.h"
+#include "ContortOMaticWidget.h"
 #include "widgetFactory.h"
 
 
@@ -49,8 +49,8 @@ Widget* widgetFactory(WidgetId id) {
 //            return new SquawkBoxWidget;
         case WidgetId::pump:
             return new PumpWidget;
-//        case WidgetId::contortOMatic:
-//            return new ContortOMaticWidget;
+        case WidgetId::contortOMatic:
+            return new ContortOMaticWidget;
         case WidgetId::fourPlay42:
             return new FourPlay42Widget;
         case WidgetId::fourPlay43:
