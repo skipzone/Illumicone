@@ -51,13 +51,6 @@ bool SwitchActivatedRegionsPattern::initPattern(ConfigReader& config, std::map<W
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    if (!ConfigReader::getUnsignedIntValue(patternConfig,
-                                           "selectedBlockAnimationIntervalMs",
-                                           selectedBlockAnimationIntervalMs,
-                                           errMsgSuffix)) {
-        return false;
-    }
-
 
     // ----- get input channels -----
 
@@ -120,7 +113,7 @@ bool SwitchActivatedRegionsPattern::update()
             IndicatorRegion* indicatorRegion = indicatorRegions[iSwitch];
             if (switchIsOn) {
                 if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {
-                    logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned on");
+                    //logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned on");
                     activeIndicators.insert(indicatorRegion);
                     indicatorRegion->makeAnimating(true);
                 }
@@ -128,7 +121,7 @@ bool SwitchActivatedRegionsPattern::update()
             }
             else {
                 if (activeIndicators.find(indicatorRegion) != activeIndicators.end()) {
-                    logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned off");
+                    //logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned off");
                     activeIndicators.erase(indicatorRegion);
                     indicatorRegion->turnOffImmediately();
                 }

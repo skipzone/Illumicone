@@ -52,7 +52,5 @@ class SwitchActivatedRegionsPattern : public IndicatorRegionsPattern {
     private:
 
         std::unordered_set<IndicatorRegion*> activeIndicators;
-        unsigned int selectedBlockAnimationIntervalMs;
-///        unsigned int stopAnimatingMs;
 };
 
