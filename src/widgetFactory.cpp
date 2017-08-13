@@ -24,7 +24,7 @@
 #include "log.h"
 #include "PumpWidget.h"
 #include "RainstickWidget.h"
-//#include "SchroedersPlaythingWidget.h"
+#include "SchroedersPlaythingWidget.h"
 #include "SpinnahWidget.h"
 #include "TriObeliskWidget.h"
 #include "ContortOMaticWidget.h"
@@ -41,12 +41,10 @@ Widget* widgetFactory(WidgetId id) {
             return new BellsWidget;
         case WidgetId::rainstick:
             return new RainstickWidget;
-//        case WidgetId::schroedersPlaything:
-//            return new SchroedersPlaythingWidget;
+        case WidgetId::schroedersPlaything:
+            return new SchroedersPlaythingWidget;
         case WidgetId::triObelisk:
             return new TriObeliskWidget;
-//        case WidgetId::squawkBox:
-//            return new SquawkBoxWidget;
         case WidgetId::pump:
             return new PumpWidget;
         case WidgetId::contortOMatic:

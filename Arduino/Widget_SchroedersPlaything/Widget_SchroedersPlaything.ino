@@ -26,10 +26,10 @@
 */
 
 #include "illumiconeWidget.h"
-#include <MIDI.h>
+//#include <MIDI.h>
 #include "printf.h"
 
-MIDI_CREATE_DEFAULT_INSTANCE();
+//MIDI_CREATE_DEFAULT_INSTANCE();
 
 
 
@@ -37,7 +37,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 4   // change back to 5
+#define WIDGET_ID 5
 //#define TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 8
 
@@ -48,11 +48,11 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
-#define TX_PIPE_ADDRESS "2wdgt"
+#define TX_PIPE_ADDRESS "1wdgt"
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 11
+#define TX_RETRY_DELAY_MULTIPLIER 2
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
@@ -67,8 +67,9 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 
 RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
-MeasurementVectorPayload payload;
+PositionVelocityPayload payload;
 
+/*
 static bool gotNoteOn;
 static byte noteOnChannel;
 static byte noteOnPitch;
@@ -83,12 +84,14 @@ static byte pitchBend;
 static bool gotProgramChange;
 static byte programChangeChannel;
 static byte programChangeNumber;
+*/
 
 
 /******************
  * Implementation *
  ******************/
 
+/*
 // This function will be automatically called when a NoteOn is received.
 // It must be a void-returning function with the correct parameters,
 // see documentation here:
@@ -131,38 +134,78 @@ void handleProgramChange(byte in_channel, byte in_number)
   gotProgramChange = true;
   digitalWrite(LED_BUILTIN, LOW);
 }
-
+*/
 
 void setup()
 {
-
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
   
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = true;
   payload.widgetHeader.channel = 0;
 
+#ifdef TX_FAILURE_LED_PIN
+  pinMode(TX_FAILURE_LED_PIN, OUTPUT);
+#endif
+
+/*
   MIDI.setHandleNoteOn(handleNoteOn);  // Put only the name of the function
   MIDI.setHandleNoteOff(handleNoteOff);
   MIDI.setHandlePitchBend(handlePitchBend);
   MIDI.setHandleProgramChange(handleProgramChange);
+*/
 
   // Initiate MIDI communications, listen to all channels
-  MIDI.begin(MIDI_CHANNEL_OMNI);
-  
-  pinMode(LED_BUILTIN, OUTPUT);
+//  MIDI.begin(MIDI_CHANNEL_OMNI);
+
+  Serial.begin(31250);    
 }
 
 
 void loop() {
 
-  static int32_t lastTxMs;
+  static uint8_t midiMessage[3];
+  static uint8_t midiByteCount;
+  
+//  static int32_t lastTxMs;
 
-  uint32_t now = millis();
+//  uint32_t now = millis();
 
-  // Call MIDI.read the fastest you can for real-time performance.
-  MIDI.read();
+//  // Call MIDI.read the fastest you can for real-time performance.
+//  if (MIDI.read()) {
 
+  if (Serial.available()) {
+    uint8_t inByte = Serial.read();
+    if (inByte & 0x80) {
+      midiByteCount = 0;
+    }
+    midiMessage[midiByteCount++] = inByte;
+
+    if (midiByteCount == 3) {
+      midiByteCount = 0;
+
+      uint8_t messageType = (midiMessage[0] & 0x70) >> 4;
+      uint8_t channelNumber = (midiMessage[0] & 0x0f);
+
+      payload.position = messageType << 8 & channelNumber;
+      payload.velocity = midiMessage[1] << 8 & midiMessage[2];
+
+      if (!radio.write(&payload, sizeof(payload))) {
+#ifdef TX_FAILURE_LED_PIN
+        digitalWrite(TX_FAILURE_LED_PIN, HIGH);
+#endif
+      }
+      else {
+#ifdef TX_FAILURE_LED_PIN
+        digitalWrite(TX_FAILURE_LED_PIN, LOW);
+#endif
+      }
+    }
+  }
+
+
+
+/*
   if (gotNoteOn || gotNoteOff || gotPitchBend || gotProgramChange) {
 
     for (int i = 0; i < 15; ++i) {
@@ -209,6 +252,7 @@ void loop() {
     }
     
   }
+*/
 
 //  if (now - lastTxMs >= TX_INTERVAL_MS) {
 //    lastTxMs = now;

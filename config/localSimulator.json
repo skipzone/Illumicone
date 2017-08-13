@@ -40,7 +40,7 @@
         },
         {   "name" : "spinnah",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "bells",
@@ -54,7 +54,7 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
-            "enabled" : false,
+            "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
@@ -65,12 +65,12 @@
         },
         {   "name" : "pump",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "contortOMatic",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay42",
@@ -387,6 +387,156 @@
                     "widgetName" : "contortOMatic",
                     "channelNumber" : 0,
                     "measurement" : "position"
+                }
+            ],
+            "selectedBlockAnimationIntervalMs" : 3000,
+            "indicatorClassName" : "SimpleBlockIndicator",
+            "numberOfIndicators" : 16,
+            "indicators" : [
+                    //"fadeIntervalMs" : 1001,
+                {   "index" : 0,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "red",
+                    "flashIntervalMs" : 73
+                },
+                {   "index" : 1,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "blue",
+                    "flashIntervalMs" : 73
+                },
+                {   "index" : 2,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "yellow",
+                    "flashIntervalMs" : 73
+                },
+                {   "index" : 3,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "green",
+                    "flashIntervalMs" : 73
+                },
+
+                {   "index" : 4,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 15,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "red",
+                    "flashIntervalMs" : 113
+                },
+                {   "index" : 5,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 15,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "blue",
+                    "flashIntervalMs" : 113
+                },
+                {   "index" : 6,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 15,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "yellow",
+                    "flashIntervalMs" : 113
+                },
+                {   "index" : 7,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 15,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "green",
+                    "flashIntervalMs" : 113
+                },
+
+                {   "index" : 8,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 30,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "red",
+                    "flashIntervalMs" : 149
+                },
+                {   "index" : 9,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 30,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "blue",
+                    "flashIntervalMs" : 149
+                },
+                {   "index" : 10,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 30,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "yellow",
+                    "flashIntervalMs" : 149
+                },
+                {   "index" : 11,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 30,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "green",
+                    "flashIntervalMs" : 149
+                },
+
+                {   "index" : 12,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 45,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "red",
+                    "flashIntervalMs" : 181
+                },
+                {   "index" : 13,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 45,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "blue",
+                    "flashIntervalMs" : 181
+                },
+                {   "index" : 14,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 45,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "yellow",
+                    "flashIntervalMs" : 181
+                },
+                {   "index" : 15,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 45,
+                    "widthInStrings" : 9,
+                    "heightInPixels" : 15,
+                    "foregroundHsv" : "green",
+                    "flashIntervalMs" : 181
+                }
+
+            ]
+        },
+        {   "name" : "schroedersPlaything",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "MidiActivatedRegionsPattern",
+            "inputs" : [
+                {   "inputName" : "midiInput",
+                    "widgetName" : "schroedersPlaything",
+                    "channelNumber" : 0
                 }
             ],
             "selectedBlockAnimationIntervalMs" : 3000,

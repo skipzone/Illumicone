@@ -30,3 +30,48 @@ struct SchedulePeriod {
 };
 
 
+typedef enum {
+    MIDI_NOTE_OFF = 1,
+    MIDI_NOTE_ON = 2,
+    MIDI_POLYPHONIC_AFTERTOUCH = 3,
+    MIDI_CONTROL_CHANGE = 4,
+    MIDI_PROGRAM_CHANGE = 5,
+    MIDI_CHANNEL_AFTERTOUCH = 6,
+    MIDI_PITCH_WHEEL = 7
+} MidiChannelMessage_t;
+
+
+struct MidiPositionMeasurement {
+    union {
+        struct {
+            uint8_t messageType;
+            uint8_t channelNumber;
+        };
+        int16_t raw;
+    };
+};
+
+
+struct MidiVelocityMeasurement {
+    union {
+        struct {
+            union {
+                uint8_t data1;
+                uint8_t noteNumber;
+                uint8_t controllerNumber;
+                uint8_t programNumber;
+                uint8_t channelPressure;
+                uint8_t pitchL;
+            };
+            union {
+                uint8_t data2;
+                uint8_t velocity;
+                uint8_t pressure;
+                uint8_t pitchH;
+            };
+        };
+        int16_t raw;
+    };
+};
+
+

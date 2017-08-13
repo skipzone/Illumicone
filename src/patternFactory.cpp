@@ -20,6 +20,7 @@
 #include "FillAndBurstPattern.h"
 #include "HorizontalStripePattern.h"
 #include "log.h"
+#include "MidiActivatedRegionsPattern.h"
 #include "ParticlesPattern.h"
 #include "patternFactory.h"
 #include "RainbowExplosionPattern.h"
@@ -39,6 +40,9 @@ Pattern* patternFactory(const std::string& patternClassName, const std::string& 
     }
     else if (patternClassName == "HorizontalStripePattern") {
         return new HorizontalStripePattern(patternName);
+    }
+    else if (patternClassName == "MidiActivatedRegionsPattern") {
+        return new MidiActivatedRegionsPattern(patternName);
     }
     else if (patternClassName == "ParticlesPattern") {
         return new ParticlesPattern(patternName);
