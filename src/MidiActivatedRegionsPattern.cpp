@@ -106,12 +106,16 @@ string MidiActivatedRegionsPattern::midiMessageToString(MidiPositionMeasurement 
             msg = "pitch wheel, high=" + to_string(vel.pitchH) + ", low=" + to_string(vel.pitchL) + ", pitch=" + to_string(pitch);
             break;
         case MIDI_IS_SYSTEM_MESSAGE:
-            msg = "system message, type=" + to_string(pos.systemMessageType) + ", data1=" + to_string(vel.data1) + ", data2=" + to_string(vel.data2);
+            msg = "system message, type=" + to_string(pos.systemMessageType)
+                  + ", data1=" + to_string(vel.data1) + ", data2=" + to_string(vel.data2);
             break;
         default:
-            msg = "???, type=" + to_string(pos.channelMessageType) + ", data1=" + to_string(vel.data1) + ", data2=" + to_string(vel.data2);
+            msg = "???, type=" + to_string(pos.channelMessageType)
+                  + ", data1=" + to_string(vel.data1) + ", data2=" + to_string(vel.data2);
     }
-    msg += ", channel=" + to_string(pos.channelNumber) + ", l=" + to_string(pos.l) + ", h=" + to_string(pos.h) + ", raw=" + to_string(pos.raw) + ", systemMessageIndicator=" + to_string(pos.systemMessageIndicator) + ", systemMessageType=" + to_string(pos.systemMessageType);;
+    if (pos.channelMessageType != MIDI_IS_SYSTEM_MESSAGE) {
+        msg += ", channel=" + to_string(pos.channelNumber);
+    }
     return msg;
 }
 
@@ -127,6 +131,9 @@ bool MidiActivatedRegionsPattern::update()
 
     // Let the regions do their animations.
     bool animationWantsDisplay = IndicatorRegionsPattern::update();
+
+    // TODO 8/13/2017 ross:  iterate over activeIndicators, doing transitionOff for all those that are on but not transitioning.
+    //                       Also, remove those that have transitioned off in case the note-off message was missed.
 
     if (!midiInputChannel->getIsActive()) {
         //logMsg(LOG_DEBUG, "midiInputChannel is inactive");
@@ -147,32 +154,39 @@ bool MidiActivatedRegionsPattern::update()
         pos.raw = midiInputChannel->getPosition();
         vel.raw = midiInputChannel->getVelocity();
 
-        string msg = midiMessageToString(pos, vel);
-        logMsg(LOG_DEBUG, "got MIDI message:  " + msg);
-
-/*
-        bool anyNoteIsOn = false;
-        for (unsigned int iSwitch = 0; iSwitch < 16 && iSwitch <= indicatorRegions.size(); ++iSwitch) {
-            bool switchIsOn = measmt & (1 << iSwitch);
-            IndicatorRegion* indicatorRegion = indicatorRegions[iSwitch];
-            if (switchIsOn) {
-                if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {
-                    //logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned on");
-                    activeIndicators.insert(indicatorRegion);
-                    indicatorRegion->makeAnimating(true);
+        if (pos.channelMessageType == MIDI_NOTE_OFF || pos.channelMessageType == MIDI_NOTE_ON) {
+            // TODO 8/13/2017 ross:  replace magic number 36 with noteNumberOffset
+            unsigned int normalizedNoteNumber = vel.noteNumber - 36;
+            if (normalizedNoteNumber < indicatorRegions.size()) {
+                IndicatorRegion* indicatorRegion = indicatorRegions[normalizedNoteNumber];
+                if (pos.channelMessageType == MIDI_NOTE_ON && vel.velocity != 0) {
+                    if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {
+                        //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned on");
+                        activeIndicators.insert(indicatorRegion);
+                    }
+                    //indicatorRegion->transitionOn();
+                    indicatorRegion->turnOnImmediately();
+                    isActive = true;
                 }
-                anyNoteIsOn = true;
-            }
-            else {
-                if (activeIndicators.find(indicatorRegion) != activeIndicators.end()) {
-                    //logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned off");
-                    activeIndicators.erase(indicatorRegion);
+                else {
+                    if (activeIndicators.find(indicatorRegion) != activeIndicators.end()) {
+                        //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned off");
+                        activeIndicators.erase(indicatorRegion);
+                    }
                     indicatorRegion->turnOffImmediately();
                 }
             }
+            else {
+                logMsg(LOG_WARNING, name + ":  Note " + to_string(vel.noteNumber)
+                                    + " (normalized to " + to_string(normalizedNoteNumber)
+                                    + ") is out of range.");
+            }
         }
-        isActive = anyNoteIsOn;
-*/
+        // TODO 8/13/2017 ross:  Add support for pitch bend here.
+        else {
+            string msg = midiMessageToString(pos, vel);
+            logMsg(LOG_WARNING, name + ":  Unsupported MIDI message received:  " + msg);
+        }
     }
 
     return isActive | animationWantsDisplay;
