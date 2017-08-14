@@ -60,6 +60,7 @@ class IndicatorRegion {
         virtual unsigned int    getIndex()                { return index; }
         virtual bool            getIsAnimating()          { return isAnimating; }
         virtual bool            getIsHighlighted()        { return isHighlighted; }
+        virtual bool            getIsOn()                 { return isOn; }
         virtual bool            getIsSubtle()             { return isSubtle; }
         virtual bool            getIsTransitioning()      { return isTransitioning; }
         virtual unsigned int    getUpperLeftStringIndex() { return upperLeftStringIdx; }
@@ -94,6 +95,7 @@ class IndicatorRegion {
 
         bool isAnimating;
         bool isHighlighted;
+        bool isOn;
         bool isSubtle;
         bool isTransitioning;
 

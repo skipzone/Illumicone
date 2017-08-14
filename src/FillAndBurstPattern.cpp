@@ -201,7 +201,7 @@ bool FillAndBurstPattern::update()
                 // Fill the cone from the bottom up to represent the current pressure.
                 int fillLevel = pixelsPerString * (curMeasmt - lowPressureCutoff) / (burstThreshold - lowPressureCutoff);
                 for (auto&& pixels:pixelArray) {
-                    for (int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
+                    for (unsigned int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
                         pixels[i] = pressureColor;
                     }
                 }
@@ -212,7 +212,7 @@ bool FillAndBurstPattern::update()
         case PatternState::fillRed:
             priority = burstingPriority;
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Red;
                 }
@@ -226,7 +226,7 @@ bool FillAndBurstPattern::update()
 
         case PatternState::fillOrange:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Orange;
                 }
@@ -240,7 +240,7 @@ bool FillAndBurstPattern::update()
 
         case PatternState::fillYellow:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Yellow;
                 }
@@ -254,7 +254,7 @@ bool FillAndBurstPattern::update()
 
         case PatternState::fillGreen:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Green;
                 }
@@ -268,7 +268,7 @@ bool FillAndBurstPattern::update()
 
         case PatternState::fillBlue:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Blue;
                 }
@@ -282,7 +282,7 @@ bool FillAndBurstPattern::update()
 
         case PatternState::fillIndigo:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Indigo;
                 }
@@ -296,7 +296,7 @@ bool FillAndBurstPattern::update()
 
         case PatternState::fillViolet:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Violet;
                 }

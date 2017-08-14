@@ -49,7 +49,7 @@ const string getTimestamp()
 
 void logMsg(int priority, const string& message)
 {
-  if (priority <= LOG_WARNING) {
+  if (priority > LOG_WARNING) {
     cout << getTimestamp() << message << endl;
   }
   else {
