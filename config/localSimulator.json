@@ -57,7 +57,7 @@
         {   "name" : "schroedersPlaything",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
+            "autoInactiveMs" : 8000
         },
         {   "name" : "triObelisk",
             "enabled" : true,
@@ -542,139 +542,116 @@
             ],
             "selectedBlockAnimationIntervalMs" : 3000,
             "indicatorClassName" : "SimpleBlockIndicator",
-            "numberOfIndicators" : 16,
+            "numberOfIndicators" : 12,
             "indicators" : [
-                    //"fadeIntervalMs" : 1001,
+
+                // --- C1 ---
                 {   "index" : 0,
                     "upperLeftStringIdx" : 0,
-                    "upperLeftPixelIdx" : 0,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
                     "foregroundHsv" : "red",
-                    "flashIntervalMs" : 73
+                    "fadeIntervalMs" : 7000
                 },
+                // --- C#1 ---
                 {   "index" : 1,
-                    "upperLeftStringIdx" : 9,
-                    "upperLeftPixelIdx" : 0,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 73
-                },
-                {   "index" : 2,
-                    "upperLeftStringIdx" : 18,
-                    "upperLeftPixelIdx" : 0,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 73
-                },
-                {   "index" : 3,
-                    "upperLeftStringIdx" : 27,
-                    "upperLeftPixelIdx" : 0,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 73
-                },
-
-                {   "index" : 4,
-                    "upperLeftStringIdx" : 0,
-                    "upperLeftPixelIdx" : 15,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
+                    "upperLeftStringIdx" : 3,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
                     "foregroundHsv" : "red",
-                    "flashIntervalMs" : 113
+                    "fadeIntervalMs" : 7000
                 },
-                {   "index" : 5,
+                // --- D1 ---
+                {   "index" : 2,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D#1 ---
+                {   "index" : 3,
                     "upperLeftStringIdx" : 9,
-                    "upperLeftPixelIdx" : 15,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 113
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
                 },
+                // --- E1 ---
+                {   "index" : 4,
+                    "upperLeftStringIdx" : 12,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F1 ---
+                {   "index" : 5,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F#1 ---
                 {   "index" : 6,
                     "upperLeftStringIdx" : 18,
-                    "upperLeftPixelIdx" : 15,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 113
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
                 },
+                // --- G1 ---
                 {   "index" : 7,
-                    "upperLeftStringIdx" : 27,
-                    "upperLeftPixelIdx" : 15,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 113
+                    "upperLeftStringIdx" : 21,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
                 },
-
+                // --- G#1 ---
                 {   "index" : 8,
-                    "upperLeftStringIdx" : 0,
-                    "upperLeftPixelIdx" : 30,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 149
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
                 },
+                // --- A1 ---
                 {   "index" : 9,
-                    "upperLeftStringIdx" : 9,
-                    "upperLeftPixelIdx" : 30,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
                     "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 149
+                    "fadeIntervalMs" : 7000
                 },
+                // --- A#1 ---
                 {   "index" : 10,
-                    "upperLeftStringIdx" : 18,
-                    "upperLeftPixelIdx" : 30,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 149
-                },
-                {   "index" : 11,
-                    "upperLeftStringIdx" : 27,
-                    "upperLeftPixelIdx" : 30,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 149
-                },
-
-                {   "index" : 12,
-                    "upperLeftStringIdx" : 0,
-                    "upperLeftPixelIdx" : 45,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 181
-                },
-                {   "index" : 13,
-                    "upperLeftStringIdx" : 9,
-                    "upperLeftPixelIdx" : 45,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
+                    "upperLeftStringIdx" : 30,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
                     "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 181
+                    "fadeIntervalMs" : 7000
                 },
-                {   "index" : 14,
-                    "upperLeftStringIdx" : 18,
-                    "upperLeftPixelIdx" : 45,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 181
-                },
-                {   "index" : 15,
-                    "upperLeftStringIdx" : 27,
-                    "upperLeftPixelIdx" : 45,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 181
+                // --- B1 ---
+                {   "index" : 11,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "purple",
+                    "fadeIntervalMs" : 7000
                 }
 
             ]

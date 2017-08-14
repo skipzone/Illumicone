@@ -29,7 +29,6 @@ using namespace std;
 
 SimpleBlockIndicator::SimpleBlockIndicator()
     : state(AnimationState::inactive)
-    , isOn(false)
 {
 }
 

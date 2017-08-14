@@ -63,7 +63,6 @@ class SimpleBlockIndicator : public IndicatorRegion {
         unsigned int fadeStepMs;
         float fadeStepValue;
         float fadeValue;
-        bool isOn;
         unsigned int nextFadeChangeMs;
         unsigned int nextFlashChangeMs;
 };

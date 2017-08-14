@@ -16,6 +16,7 @@
 */
 
 #include <string>
+#include <vector>
 
 #include <stdlib.h>
 
@@ -132,8 +133,23 @@ bool MidiActivatedRegionsPattern::update()
     // Let the regions do their animations.
     bool animationWantsDisplay = IndicatorRegionsPattern::update();
 
-    // TODO 8/13/2017 ross:  iterate over activeIndicators, doing transitionOff for all those that are on but not transitioning.
-    //                       Also, remove those that have transitioned off in case the note-off message was missed.
+    // Tell any indicators that we just turned on to start transitioning off,
+    // thus giving them a natural decay appearance as a note decays.  Remove any
+    // indicators that have fully transitioned off from the active indicators list.
+    vector<IndicatorRegion*> inactiveIndicators;
+    for (auto&& activeIndicator : activeIndicators) {
+        if (!activeIndicator->getIsTransitioning()) {
+            if (activeIndicator->getIsOn()) {
+                activeIndicator->transitionOff();
+            }
+            else {
+                inactiveIndicators.push_back(activeIndicator);
+            }
+        }
+    }
+    for (auto&& inactiveIndicator : inactiveIndicators) {
+        activeIndicators.erase(inactiveIndicator);
+    }
 
     if (!midiInputChannel->getIsActive()) {
         //logMsg(LOG_DEBUG, "midiInputChannel is inactive");
@@ -154,6 +170,7 @@ bool MidiActivatedRegionsPattern::update()
         pos.raw = midiInputChannel->getPosition();
         vel.raw = midiInputChannel->getVelocity();
 
+        // Handle note on and note off (which is also note on with velocity 0).
         if (pos.channelMessageType == MIDI_NOTE_OFF || pos.channelMessageType == MIDI_NOTE_ON) {
             // TODO 8/13/2017 ross:  replace magic number 36 with noteNumberOffset
             unsigned int normalizedNoteNumber = vel.noteNumber - 36;
@@ -182,7 +199,9 @@ bool MidiActivatedRegionsPattern::update()
                                     + ") is out of range.");
             }
         }
+
         // TODO 8/13/2017 ross:  Add support for pitch bend here.
+
         else {
             string msg = midiMessageToString(pos, vel);
             logMsg(LOG_WARNING, name + ":  Unsupported MIDI message received:  " + msg);

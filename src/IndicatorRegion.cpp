@@ -31,6 +31,7 @@ using namespace std;
 IndicatorRegion::IndicatorRegion()
     : isAnimating(false)
     , isHighlighted(false)
+    , isOn(false)
     , isSubtle(false)
     , isTransitioning(false)
 {
