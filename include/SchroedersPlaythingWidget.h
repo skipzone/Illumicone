@@ -34,5 +34,7 @@ class SchroedersPlaythingWidget : public Widget
 
     private:
 
+        unsigned int currentNote;
+
 };
 

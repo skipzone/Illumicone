@@ -20,8 +20,8 @@
     "numberOfPixelsPerString" : 100,
 
     "patconIpAddress" : "127.0.0.1",
-    //"opcServerIpAddress": "127.0.0.1",
-    "opcServerIpAddress": "192.168.69.11",
+    "opcServerIpAddress": "127.0.0.1",
+    //"opcServerIpAddress": "192.168.69.11",
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
@@ -51,12 +51,12 @@
         },
         {   "name" : "rainstick",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 8000
         },
         {   "name" : "triObelisk",
@@ -542,9 +542,8 @@
             ],
             "selectedBlockAnimationIntervalMs" : 3000,
             "indicatorClassName" : "SimpleBlockIndicator",
-            "numberOfIndicators" : 24,
+            "numberOfIndicators" : 61,
             "indicators" : [
-
                 // --- C1 ---
                 {   "index" : 0,
                     "upperLeftStringIdx" : 0,
@@ -653,7 +652,6 @@
                     "foregroundHsv" : "purple",
                     "fadeIntervalMs" : 7000
                 },
-
                 // --- C2 ---
                 {   "index" : 12,
                     "upperLeftStringIdx" : 0,
@@ -761,8 +759,340 @@
                     "heightInPixels" : 20,
                     "foregroundHsv" : "purple",
                     "fadeIntervalMs" : 7000
+                },
+                // --- C3 ---
+                {   "index" : 24,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C#3 ---
+                {   "index" : 25,
+                    "upperLeftStringIdx" : 3,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D3 ---
+                {   "index" : 26,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D#3 ---
+                {   "index" : 27,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- E3 ---
+                {   "index" : 28,
+                    "upperLeftStringIdx" : 12,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F3 ---
+                {   "index" : 29,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F#3 ---
+                {   "index" : 30,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G3 ---
+                {   "index" : 31,
+                    "upperLeftStringIdx" : 21,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G#3 ---
+                {   "index" : 32,
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A3 ---
+                {   "index" : 33,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A#3 ---
+                {   "index" : 34,
+                    "upperLeftStringIdx" : 30,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- B3 ---
+                {   "index" : 35,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "purple",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C4 ---
+                {   "index" : 36,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C#4 ---
+                {   "index" : 37,
+                    "upperLeftStringIdx" : 3,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D4 ---
+                {   "index" : 38,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D#4 ---
+                {   "index" : 39,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- E4 ---
+                {   "index" : 40,
+                    "upperLeftStringIdx" : 12,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F4 ---
+                {   "index" : 41,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F#4 ---
+                {   "index" : 42,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G4 ---
+                {   "index" : 43,
+                    "upperLeftStringIdx" : 21,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G#4 ---
+                {   "index" : 44,
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A4 ---
+                {   "index" : 45,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A#4 ---
+                {   "index" : 46,
+                    "upperLeftStringIdx" : 30,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- B4 ---
+                {   "index" : 47,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "purple",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C5 ---
+                {   "index" : 48,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C#5 ---
+                {   "index" : 49,
+                    "upperLeftStringIdx" : 3,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D5 ---
+                {   "index" : 50,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D#5 ---
+                {   "index" : 51,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- E5 ---
+                {   "index" : 52,
+                    "upperLeftStringIdx" : 12,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F5 ---
+                {   "index" : 53,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F#5 ---
+                {   "index" : 54,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G5 ---
+                {   "index" : 55,
+                    "upperLeftStringIdx" : 21,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G#5 ---
+                {   "index" : 56,
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A5 ---
+                {   "index" : 57,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A#5 ---
+                {   "index" : 58,
+                    "upperLeftStringIdx" : 30,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- B5 ---
+                {   "index" : 59,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "purple",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C6 ---
+                {   "index" : 60,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 36,
+                    "heightInPixels" : 8,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
                 }
-
             ]
         }
     ]

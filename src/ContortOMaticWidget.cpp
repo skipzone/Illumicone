@@ -28,18 +28,25 @@ using namespace std;
 ContortOMaticWidget::ContortOMaticWidget()
     : Widget(WidgetId::contortOMatic, 1)
 {
-    simulationUpdateIntervalMs[0] = 500;
+    simulationUpdateIntervalMs[0] = 100;
 }
 
 
 void ContortOMaticWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    int newPosition = channels[chIdx]->getPreviousPosition() + 1;
-    if (newPosition > 255) {
+    int newPosition;
+    if (channels[chIdx]->getVelocity() == 0) {
         newPosition = 0;
     }
+    else {
+        newPosition = channels[chIdx]->getPreviousPosition();
+    }
+    newPosition += 13;
+    //if (newPosition > 255) {
+    //    newPosition = 0;
+    //}
     //logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
-    channels[chIdx]->setPositionAndVelocity(newPosition, 0);
+    channels[chIdx]->setPositionAndVelocity(newPosition, 1);
     channels[chIdx]->setIsActive(true);
 }
 

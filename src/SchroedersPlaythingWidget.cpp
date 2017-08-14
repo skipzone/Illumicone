@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "illumiconeTypes.h"
 #include "illumiconeWidgetTypes.h"
 #include "log.h"
 #include "SchroedersPlaythingWidget.h"
@@ -27,19 +28,28 @@ using namespace std;
 
 SchroedersPlaythingWidget::SchroedersPlaythingWidget()
     : Widget(WidgetId::schroedersPlaything, 1)
+    , currentNote(35)
 {
-    simulationUpdateIntervalMs[0] = 500;
+    simulationUpdateIntervalMs[0] = 180;
 }
 
 
 void SchroedersPlaythingWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    int newPosition = channels[chIdx]->getPreviousPosition() + 1;
-    if (newPosition > 255) {
-        newPosition = 0;
+    ++currentNote;
+    if (currentNote > 96) {
+        currentNote = 36;
     }
-    //logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
-    channels[chIdx]->setPositionAndVelocity(newPosition, 0);
+
+    MidiPositionMeasurement pos;
+    MidiVelocityMeasurement vel;
+
+    pos.channelNumber = 0;
+    pos.channelMessageType = MIDI_NOTE_ON;
+    vel.noteNumber = currentNote;
+    vel.velocity = 64;
+
+    channels[chIdx]->setPositionAndVelocity(pos.raw, vel.raw);
     channels[chIdx]->setIsActive(true);
 }
 
