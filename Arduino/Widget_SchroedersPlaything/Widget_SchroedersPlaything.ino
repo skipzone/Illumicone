@@ -26,11 +26,7 @@
 */
 
 #include "illumiconeWidget.h"
-//#include <MIDI.h>
 #include "printf.h"
-
-//MIDI_CREATE_DEFAULT_INSTANCE();
-
 
 
 /************************
@@ -38,7 +34,6 @@
  ************************/
 
 #define WIDGET_ID 5
-//#define TX_INTERVAL_MS 1000L
 //#define TX_FAILURE_LED_PIN 8
 
 
@@ -52,7 +47,7 @@
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 2
+#define TX_RETRY_DELAY_MULTIPLIER 5
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
@@ -69,72 +64,10 @@ RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 1
 
 PositionVelocityPayload payload;
 
-/*
-static bool gotNoteOn;
-static byte noteOnChannel;
-static byte noteOnPitch;
-static byte noteOnVelocity;
-static bool gotNoteOff;
-static byte noteOffChannel;
-static byte noteOffPitch;
-static byte noteOffVelocity;
-static bool gotPitchBend;
-static byte pitchBendChannel;
-static byte pitchBend;
-static bool gotProgramChange;
-static byte programChangeChannel;
-static byte programChangeNumber;
-*/
-
 
 /******************
  * Implementation *
  ******************/
-
-/*
-// This function will be automatically called when a NoteOn is received.
-// It must be a void-returning function with the correct parameters,
-// see documentation here:
-// http://arduinomidilib.fortyseveneffects.com/a00022.html
-
-
-void handleNoteOn(byte in_channel, byte in_pitch, byte in_velocity)
-{
-  noteOnChannel = in_channel;
-  noteOnPitch = in_pitch;
-  noteOnVelocity = in_velocity;
-  gotNoteOn = true;
-  digitalWrite(LED_BUILTIN, HIGH);
-}
-
-
-void handleNoteOff(byte in_channel, byte in_pitch, byte in_velocity)
-{
-  noteOffChannel = in_channel;
-  noteOffPitch = in_pitch;
-  noteOffVelocity = in_velocity;
-  gotNoteOff = true;
-  digitalWrite(LED_BUILTIN, LOW);
-}
-
-
-void handlePitchBend(byte in_channel, byte in_pitchBend)
-{
-  pitchBendChannel = in_channel;
-  pitchBend = in_pitchBend;
-  gotPitchBend = true;
-  digitalWrite(LED_BUILTIN, LOW);
-}
-
-
-void handleProgramChange(byte in_channel, byte in_number)
-{
-  programChangeChannel = in_channel;
-  programChangeNumber = in_number;
-  gotProgramChange = true;
-  digitalWrite(LED_BUILTIN, LOW);
-}
-*/
 
 void setup()
 {
@@ -148,16 +81,6 @@ void setup()
   pinMode(TX_FAILURE_LED_PIN, OUTPUT);
 #endif
 
-/*
-  MIDI.setHandleNoteOn(handleNoteOn);  // Put only the name of the function
-  MIDI.setHandleNoteOff(handleNoteOff);
-  MIDI.setHandlePitchBend(handlePitchBend);
-  MIDI.setHandleProgramChange(handleProgramChange);
-*/
-
-  // Initiate MIDI communications, listen to all channels
-//  MIDI.begin(MIDI_CHANNEL_OMNI);
-
   Serial.begin(31250);    
 }
 
@@ -166,29 +89,31 @@ void loop() {
 
   static uint8_t midiMessage[3];
   static uint8_t midiByteCount;
+  static bool gotStatusByte;
   
-//  static int32_t lastTxMs;
-
-//  uint32_t now = millis();
-
-//  // Call MIDI.read the fastest you can for real-time performance.
-//  if (MIDI.read()) {
-
+  uint8_t inByte;
   if (Serial.available()) {
-    uint8_t inByte = Serial.read();
+    inByte = Serial.read();
+    // If this is a status byte, reset the midiMessage buffer.
     if (inByte & 0x80) {
+      gotStatusByte = true;
       midiByteCount = 0;
     }
-    midiMessage[midiByteCount++] = inByte;
+    // MIDI messages that we care about are always 3 bytes long.
+    if (midiByteCount < 3) {
+      midiMessage[midiByteCount] = inByte;
+      ++midiByteCount;
+    }
 
-    if (midiByteCount == 3) {
+    // When we've received a complete MIDI message, relay it immediately.
+    if (midiByteCount == 3 && gotStatusByte) {
       midiByteCount = 0;
+      gotStatusByte = false;
 
-      uint8_t messageType = (midiMessage[0] & 0x70) >> 4;
-      uint8_t channelNumber = (midiMessage[0] & 0x0f);
-
-      payload.position = messageType << 8 & channelNumber;
-      payload.velocity = midiMessage[1] << 8 & midiMessage[2];
+      // position holds the MIDI status byte.  Velocity holds data1
+      // in the high-order byte and data2 in the low-order byte.
+      payload.position = midiMessage[0];
+      payload.velocity = ((uint16_t) midiMessage[1] << 8) | midiMessage[2];
 
       if (!radio.write(&payload, sizeof(payload))) {
 #ifdef TX_FAILURE_LED_PIN
@@ -202,64 +127,6 @@ void loop() {
       }
     }
   }
-
-
-
-/*
-  if (gotNoteOn || gotNoteOff || gotPitchBend || gotProgramChange) {
-
-    for (int i = 0; i < 15; ++i) {
-      payload.measurements[i] = 0;
-    }
-
-    if (gotNoteOn) {
-      gotNoteOn = false;
-      payload.measurements[0] = 1;
-      payload.measurements[1] = noteOnPitch;
-      payload.measurements[2] = noteOnVelocity;
-    }
-
-    if (gotNoteOff) {
-      gotNoteOff = false;
-      payload.measurements[0] = 2;
-      payload.measurements[1] = noteOffPitch;
-      payload.measurements[2] = noteOffVelocity;
-    }
-
-    if (gotPitchBend) {
-      gotPitchBend = false;
-      payload.measurements[0] = 3;
-      payload.measurements[1] = pitchBend;
-      payload.measurements[2] = 0;
-    }
-
-    if (gotProgramChange) {
-      gotProgramChange = false;
-      payload.measurements[0] = 4;
-      payload.measurements[1] = programChangeNumber;
-      payload.measurements[2] = 0;
-    }
-
-    if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * 3)) {
-#ifdef TX_FAILURE_LED_PIN
-      digitalWrite(TX_FAILURE_LED_PIN, HIGH);
-#endif
-    }
-    else {
-#ifdef TX_FAILURE_LED_PIN
-      digitalWrite(TX_FAILURE_LED_PIN, LOW);
-#endif
-    }
-    
-  }
-*/
-
-//  if (now - lastTxMs >= TX_INTERVAL_MS) {
-//    lastTxMs = now;
-//    gotNoteOn = true;
-//    noteOnPitch = 1;
-//    noteOnVelocity = 2;
-//  }
 
 }
 
