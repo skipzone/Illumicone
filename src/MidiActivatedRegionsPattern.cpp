@@ -82,7 +82,7 @@ string MidiActivatedRegionsPattern::midiMessageToString(MidiPositionMeasurement 
 {
     string msg;
     uint16_t pitch;
-    switch(pos.messageType) {
+    switch(pos.channelMessageType) {
         case MIDI_NOTE_OFF:
             msg = "note off, note=" + to_string(vel.noteNumber) + ", velocity=" + to_string(vel.velocity);
             break;
@@ -105,10 +105,13 @@ string MidiActivatedRegionsPattern::midiMessageToString(MidiPositionMeasurement 
             pitch = vel.pitchH << 8 | vel.pitchL;
             msg = "pitch wheel, high=" + to_string(vel.pitchH) + ", low=" + to_string(vel.pitchL) + ", pitch=" + to_string(pitch);
             break;
+        case MIDI_IS_SYSTEM_MESSAGE:
+            msg = "system message, type=" + to_string(pos.systemMessageType) + ", data1=" + to_string(vel.data1) + ", data2=" + to_string(vel.data2);
+            break;
         default:
-            msg = "???, type=" + to_string(pos.messageType) + ", data1=" + to_string(vel.data1) + ", data2=" + to_string(vel.data2);
+            msg = "???, type=" + to_string(pos.channelMessageType) + ", data1=" + to_string(vel.data1) + ", data2=" + to_string(vel.data2);
     }
-    msg += ", channel=" + to_string(pos.channelNumber);
+    msg += ", channel=" + to_string(pos.channelNumber) + ", l=" + to_string(pos.l) + ", h=" + to_string(pos.h) + ", raw=" + to_string(pos.raw) + ", systemMessageIndicator=" + to_string(pos.systemMessageIndicator) + ", systemMessageType=" + to_string(pos.systemMessageType);;
     return msg;
 }
 

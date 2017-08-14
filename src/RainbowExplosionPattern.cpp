@@ -196,7 +196,7 @@ bool RainbowExplosionPattern::update()
                 // Fill the cone with red from the bottom up to a random depth.
                 for (auto&& pixels:pixelArray) {
                     int fillLevel = (rand() + minFizzleFill) % maxFizzleFill;
-                    for (int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
+                    for (unsigned int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
                         pixels[i] = CRGB::Maroon;
                     }
                 }
@@ -206,7 +206,7 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillRed:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Red;
                 }
@@ -220,7 +220,7 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillOrange:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Orange;
                 }
@@ -234,7 +234,7 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillYellow:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Yellow;
                 }
@@ -248,7 +248,7 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillGreen:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Green;
                 }
@@ -262,7 +262,7 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillBlue:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Blue;
                 }
@@ -276,7 +276,7 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillIndigo:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Indigo;
                 }
@@ -290,7 +290,7 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillViolet:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
                     pixels[i] = CRGB::Violet;
                 }

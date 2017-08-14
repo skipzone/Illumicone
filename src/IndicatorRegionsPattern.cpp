@@ -56,8 +56,8 @@ bool IndicatorRegionsPattern::initPattern(ConfigReader& config, std::map<WidgetI
     // for the pattern, it msut be specified in each indicator's configuration.
     string indicatorClassName = patternConfig["indicatorClassName"].string_value();
 
-    int numberOfIndicators;
-    if (!ConfigReader::getIntValue(patternConfig, "numberOfIndicators", numberOfIndicators, errMsgSuffix, 0)) {
+    unsigned int numberOfIndicators;
+    if (!ConfigReader::getUnsignedIntValue(patternConfig, "numberOfIndicators", numberOfIndicators, errMsgSuffix, 0)) {
         return false;
     }
 
@@ -101,8 +101,8 @@ bool IndicatorRegionsPattern::initPattern(ConfigReader& config, std::map<WidgetI
             return false;
         }
 
-        int indicatorRegionIndex = newIndicatorRegion->getIndex();
-        if (indicatorRegionIndex < 0 || indicatorRegionIndex >= numberOfIndicators) {
+        unsigned int indicatorRegionIndex = newIndicatorRegion->getIndex();
+        if (indicatorRegionIndex >= numberOfIndicators) {
             logMsg(LOG_ERR, "Indicator index " + to_string(indicatorRegionIndex)
                             + " is out of bounds" + errMsgSuffix);
             return false;

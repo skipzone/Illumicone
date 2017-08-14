@@ -49,8 +49,8 @@ class Pattern
         virtual bool update() = 0;
 
         // configuration
-        int pixelsPerString;
-        int numStrings;
+        unsigned int pixelsPerString;
+        unsigned int numStrings;
         bool usesHsvModel;
         int priority;
         int opacity;

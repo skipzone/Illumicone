@@ -163,7 +163,7 @@ bool ParticlesPattern::moveParticles()
                 }
             }
             else {
-                for (i = 0; i < stringPixels.size() - 1; ++i) {
+                for (i = 0; i < (unsigned int) (stringPixels.size() - 1); ++i) {
                     stringPixels[i] = stringPixels[i + 1];
                 }
             }

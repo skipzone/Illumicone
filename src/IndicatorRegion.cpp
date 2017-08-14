@@ -102,12 +102,12 @@ void IndicatorRegion::fillRegion(const HsvPixel& color)
     // string to the first string (i.e., startStringIdx > endStringIdx).
 
     //logMsg(LOG_DEBUG, "startStringIdx=" + to_string(startStringIdx) + ", endStringIdx=" + to_string(endStringIdx));
-    int i = startStringIdx;
+    unsigned int i = startStringIdx;
     do {
         if (i >= numStrings) {
             i = 0;
         }
-        int j = startPixelIdx;
+        unsigned int j = startPixelIdx;
         do {
             if (j >= pixelsPerString) {
                 j = 0;

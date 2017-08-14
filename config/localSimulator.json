@@ -20,7 +20,8 @@
     "numberOfPixelsPerString" : 100,
 
     "patconIpAddress" : "127.0.0.1",
-    "opcServerIpAddress": "127.0.0.1",
+    //"opcServerIpAddress": "127.0.0.1",
+    "opcServerIpAddress": "192.168.69.11",
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
