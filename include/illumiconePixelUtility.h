@@ -66,6 +66,11 @@ bool stringToHsvPixel(const std::string& hsvString, HsvPixel& hsvPixel);
 void hsvPixelToString(const HsvPixel& hsvPixel, std::string& hsvString);
 
 
+bool stringToRgbPixel(const std::string& rgbString, RgbPixel& rgbPixel);
+
+void rgbPixelToString(const RgbPixel& rgbPixel, std::string& rgbString);
+
+
 template<typename ConeStringsType, typename PixelStringType, typename PixelType>
 bool allocateConePixels(ConeStringsType& coneStrings, int numStrings, int pixelsPerString)
 {

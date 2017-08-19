@@ -46,22 +46,22 @@
         },
         {   "name" : "bells",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "rainstick",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 8000
         },
         {   "name" : "triObelisk",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "pump",
@@ -161,13 +161,20 @@
             "patternClassName" : "SparklePattern",
             "inputs" : [
                 {   "inputName" : "density",
-                    "widgetName" : "triObelisk",
+                    // "widgetName" : "triObelisk",
+                    "widgetName" : "bells",
                     "channelNumber" : 0,
-                    "measurement" : "velocity"
+                    // "measurement" : "velocity"
+                    "measurement" : "position"
                 }
             ],
-            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
-            "activationThreshold" : 20          // 20 is what we used with Shirley's Web in 2016
+            // "activationThreshold" : 20          // 20 is what we used with Shirley's Web in 2016
+            // "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 100,
+            "sparkleColor" : "red"
         },
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,

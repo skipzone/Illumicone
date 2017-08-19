@@ -187,7 +187,7 @@ bool RainbowExplosionPattern::update()
             // we reset the accumulator to a random value (to get more of a random
             // explosion response) and do the rainbow explosion.
             if (accumulator > explosionThreshold) {
-                accumulator = rand() % accumulatorResetUpperLimit;
+                accumulator = random16(accumulatorResetUpperLimit);
                 fillPosition = pixelsPerString;
                 nextStepMs = nowMs;         // immediately
                 state = PatternState::fillRed;
@@ -195,7 +195,7 @@ bool RainbowExplosionPattern::update()
                 accumulator++;
                 // Fill the cone with red from the bottom up to a random depth.
                 for (auto&& pixels:pixelArray) {
-                    int fillLevel = (rand() + minFizzleFill) % maxFizzleFill;
+                    int fillLevel = (random16() + minFizzleFill) % maxFizzleFill;
                     for (unsigned int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
                         pixels[i] = CRGB::Maroon;
                     }

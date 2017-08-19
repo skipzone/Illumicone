@@ -252,7 +252,7 @@ bool ParticlesPattern::update()
 
         // Emit particles.
         for (int i = 0; i < emitBatchSize; ++i) {
-            int randStringNum = rand() % numStrings;
+            int randStringNum = random16(numStrings);
             pixelArray[randStringNum][emitDirectionIsUp ? pixelsPerString - 1 : 0] = emitColor;
         }
 

@@ -150,6 +150,63 @@ void hsvPixelToString(const HsvPixel& hsvPixel, string& hsvString)
 }
 
 
+bool stringToRgbPixel(const string& rgbString, RgbPixel& rgbPixel)
+{
+    if (rgbString == "transparent") {
+        // TODO 8/20/2017 ross:  use the defined transparent color
+        rgbPixel = RgbPixel::Black;
+    }
+    else if (rgbString == "black") {
+        rgbPixel = RgbPixel::Black;
+    }
+    else if (rgbString == "white") {
+        // TODO 8/20/2017 ross:  use the defined white color
+        rgbPixel = RgbPixel::White;
+    }
+    else if (rgbString == "red") {
+        rgbPixel = RgbPixel::Red;
+    }
+    else if (rgbString == "orange") {
+        rgbPixel = RgbPixel::Orange;
+    }
+    else if (rgbString == "yellow") {
+        rgbPixel = RgbPixel::Yellow;
+    }
+    else if (rgbString == "green") {
+        rgbPixel = RgbPixel::Green;
+    }
+    else if (rgbString == "aqua") {
+        rgbPixel = RgbPixel::Aqua;
+    }
+    else if (rgbString == "blue") {
+        rgbPixel = RgbPixel::Blue;
+    }
+    else if (rgbString == "pink") {
+        rgbPixel = RgbPixel::Pink;
+    }
+    else if (rgbString == "purple") {
+        rgbPixel = RgbPixel::Purple;
+    }
+    else if (rgbString == "magenta") {
+        rgbPixel = RgbPixel::Magenta;
+    }
+    else if (rgbString == "violet") {
+        rgbPixel = RgbPixel::Violet;
+    }
+    else {
+        // TODO 8/20/2017 ross:  implement r,g,b string value support
+        return false;
+    }
+
+    return true;
+}
+
+void rgbPixelToString(const RgbPixel& rgbPixel, string& rgbString)
+{
+    rgbString = to_string(rgbPixel.r) + ", " + to_string(rgbPixel.g) + ", " + to_string(rgbPixel.b);
+}
+
+
 template bool allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(HsvConeStrings&, int, int);
 template bool allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(RgbConeStrings&, int, int);
 

@@ -34,7 +34,10 @@ class BellsWidget : public Widget
 
     private:
 
-        int simWidth;
+        constexpr static int doStrikeAtStepNum = -1024;
+        constexpr static int stepNumAtStrike = 1024;
+
+        int simStep;
 
 };
 

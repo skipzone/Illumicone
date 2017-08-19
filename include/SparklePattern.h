@@ -49,7 +49,15 @@ class SparklePattern : public Pattern {
 
         std::shared_ptr<WidgetChannel> densityChannel;
 
+        // pattern configuration
         int densityScaledownFactor;
         int activationThreshold;
+        CRGB sparkleColor;
+        bool usePositionMeasurement;
+        bool useRandomColors;
+
+        unsigned int nextSparkleChangeMs;
+        int numPixelsPerStringToSparkle;
+        unsigned int sparkleChangeIntervalMs;
 };
 
