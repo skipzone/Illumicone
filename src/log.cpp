@@ -19,10 +19,11 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
-#include <time.h>
-#include <unistd.h>
 
 #include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "illumiconeUtility.h"
 #include "log.h"
