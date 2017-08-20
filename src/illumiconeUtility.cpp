@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "illumiconeUtility.h"
+#include "log.h"
 
 
 using namespace std;
@@ -40,18 +41,18 @@ int acquireProcessLock(const string& lockFilePath)
         else {
             if (errno == EWOULDBLOCK) {
                 close(fd);
-                fprintf(stderr, "Another process has locked %s.\n", lockFilePath.c_str());
+                //logMsg(LOG_INFO, "Another process has locked " + lockFilePath + ".");
                 return -1;
             }
             else {
                 close(fd);
-                fprintf(stderr, "Unable to lock %s.  Error %d:  %s\n", lockFilePath.c_str(), errno, strerror(errno));
+                logSysErr(LOG_ERR, "Unable to lock " + lockFilePath + ".", errno);
                 return -1;
             }
         }
     }
     else {
-        fprintf(stderr, "Unable to create or open %s.  Error %d:  %s\n", lockFilePath.c_str(), errno, strerror(errno));
+        logSysErr(LOG_ERR, "Unable to create or open " + lockFilePath + ".", errno);
         return -1;
     }
 }

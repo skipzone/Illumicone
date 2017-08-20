@@ -40,10 +40,8 @@
 using namespace std;
 
 
-// TODO 8/3/2017 ross:  Get this from config.
-static string lockFilePath = "/tmp/widgetRcvr.lock";
-
 static ConfigReader config;
+static string lockFilePath;
 static string patconIpAddress;
 static unsigned int widgetPortNumberBase;
 
@@ -340,6 +338,11 @@ bool readConfig(const string& configFileName)
         return false;
     }
 
+    lockFilePath = config.getLockFilePath("widgetRcvr");
+    if (lockFilePath.empty()) {
+        logMsg(LOG_WARNING, "There is no lock file name for widgetRcvr in configuration.");
+    }
+
     patconIpAddress = config.getPatconIpAddress();
     if (patconIpAddress.empty()) {
         return false;
@@ -486,12 +489,24 @@ int main(int argc, char** argv)
         return(EXIT_FAILURE);
     }
 
-    if (acquireProcessLock(lockFilePath) < 0) {
+    // Make sure this is the only instance running.
+    if (!lockFilePath.empty() && acquireProcessLock(lockFilePath) < 0) {
         exit(EXIT_FAILURE);
     }
 
     logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
 
+    // If the config file is really a symbolic link,
+    // add the link target to the file name we'll log.
+    string configFileNameAndTarget = configFileName;
+    char buf[512];
+    int count = readlink(configFileName.c_str(), buf, sizeof(buf));
+    if (count >= 0) {
+        buf[count] = '\0';
+        configFileNameAndTarget += string(" -> ") + buf;
+    }
+    logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
+    logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
     logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
     logMsg(LOG_INFO, "widgetPortNumberBase = " + to_string(widgetPortNumberBase));
 
