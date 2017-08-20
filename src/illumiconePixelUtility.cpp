@@ -19,7 +19,7 @@
 
 #include "hsv2rgb.h"
 #include "illumiconePixelUtility.h"
-//#include "log.h"
+#include "log.h"
 
 using namespace std;
 
@@ -137,8 +137,13 @@ bool stringToHsvPixel(const string& hsvString, HsvPixel& hsvPixel)
         hsvPixel.setHSV(HUE_PINK, 255, 255);
     }
     else {
-        // TODO 8/8/2017 ross:  implement h,s,v string value support
-        return false;
+        int h, s, v;
+        if (sscanf(hsvString.c_str(), "%u,%u,%u", &h, &s, &v) != 3) {
+            return false;
+        }
+        hsvPixel.h = h;
+        hsvPixel.s = s;
+        hsvPixel.v = v;
     }
 
     return true;
@@ -194,8 +199,13 @@ bool stringToRgbPixel(const string& rgbString, RgbPixel& rgbPixel)
         rgbPixel = RgbPixel::Violet;
     }
     else {
-        // TODO 8/20/2017 ross:  implement r,g,b string value support
-        return false;
+        int r, g, b;
+        if (sscanf(rgbString.c_str(), "%u,%u,%u", &r, &g, &b) != 3) {
+            return false;
+        }
+        rgbPixel.r = r;
+        rgbPixel.g = g;
+        rgbPixel.b = b;
     }
 
     return true;

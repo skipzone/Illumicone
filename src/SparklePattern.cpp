@@ -62,12 +62,12 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
     if (!ConfigReader::getUnsignedIntValue(patternConfig, "sparkleChangeIntervalMs", sparkleChangeIntervalMs, errMsgSuffix, 1)) {
         return false;
     }
-    logMsg(LOG_INFO, name + "sparkleChangeIntervalMs=" + to_string(sparkleChangeIntervalMs));
+    logMsg(LOG_INFO, name + " sparkleChangeIntervalMs=" + to_string(sparkleChangeIntervalMs));
 
     if (!ConfigReader::getBoolValue(patternConfig, "useRandomColors", useRandomColors, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + "useRandomColors=" + to_string(useRandomColors));
+    logMsg(LOG_INFO, name + " useRandomColors=" + to_string(useRandomColors));
 
     if (!useRandomColors) {
         string rgbStr;
@@ -78,7 +78,7 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
             logMsg(LOG_ERR, "sparkleColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
             return false;
         }
-        logMsg(LOG_INFO, name + "sparkleColor=" + rgbStr);
+        logMsg(LOG_INFO, name + " sparkleColor=" + rgbStr);
 
     }
 

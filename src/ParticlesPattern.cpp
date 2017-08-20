@@ -19,6 +19,7 @@
 
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
+#include "illumiconePixelUtility.h"
 #include "log.h"
 #include "ParticlesPattern.h"
 #include "Pattern.h"
@@ -41,87 +42,60 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
     nextMoveParticlesMs = 0;
     nextEmitParticlesMs = 0;
 
+
     // ----- get pattern configuration -----
+
+    string errMsgSuffix = " in " + name + " pattern configuration.";
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
-    if (patternConfig["emitColorRedValue"].is_number()) {
-        emitColor.r = patternConfig["emitColorRedValue"].int_value();
-    }
-    if (patternConfig["emitColorGreenValue"].is_number()) {
-        emitColor.g = patternConfig["emitColorGreenValue"].int_value();
-    }
-    if (patternConfig["emitColorBlueValue"].is_number()) {
-        emitColor.b = patternConfig["emitColorBlueValue"].int_value();
-    }
-    if (emitColor == CRGB(CRGB::Black)) {
-        logMsg(LOG_ERR, "No emit color values are specified in " + name + " pattern configuration.");
+    string rgbStr;
+    if (!ConfigReader::getStringValue(patternConfig, "emitColor", rgbStr, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name
-            + " emitColor r=" + to_string(emitColor.r)
-            + ", g=" + to_string(emitColor.g)
-            + ", b=" + to_string(emitColor.b) );
+    if (!stringToRgbPixel(rgbStr, emitColor)) {
+        logMsg(LOG_ERR, "emitColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
+        return false;
+    }
+    logMsg(LOG_INFO, name + " emitColor=" + rgbStr);
 
-    if (!patternConfig["emitIntervalMeasmtLow"].is_number()) {
-        logMsg(LOG_ERR, "emitIntervalMeasmtLow not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtLow", emitIntervalMeasmtLow, errMsgSuffix)) {
         return false;
     }
-    emitIntervalMeasmtLow = patternConfig["emitIntervalMeasmtLow"].int_value();
     logMsg(LOG_INFO, name + " emitIntervalMeasmtLow=" + to_string(emitIntervalMeasmtLow));
 
-    if (!patternConfig["emitIntervalMeasmtHigh"].is_number()) {
-        logMsg(LOG_ERR, "emitIntervalMeasmtHigh not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtHigh", emitIntervalMeasmtHigh, errMsgSuffix)) {
         return false;
     }
-    emitIntervalMeasmtHigh = patternConfig["emitIntervalMeasmtHigh"].int_value();
     logMsg(LOG_INFO, name + " emitIntervalMeasmtHigh=" + to_string(emitIntervalMeasmtHigh));
 
-    if (!patternConfig["emitIntervalLowMs"].is_number()) {
-        logMsg(LOG_ERR, "emitIntervalLowMs not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalLowMs", emitIntervalLowMs, errMsgSuffix)) {
         return false;
     }
-    emitIntervalLowMs = patternConfig["emitIntervalLowMs"].int_value();
     logMsg(LOG_INFO, name + " emitIntervalLowMs=" + to_string(emitIntervalLowMs));
 
-    if (!patternConfig["emitIntervalHighMs"].is_number()) {
-        logMsg(LOG_ERR, "emitIntervalHighMs not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalHighMs", emitIntervalHighMs, errMsgSuffix, 1)) {
         return false;
     }
-    emitIntervalHighMs = patternConfig["emitIntervalHighMs"].int_value();
     logMsg(LOG_INFO, name + " emitIntervalHighMs=" + to_string(emitIntervalHighMs));
 
-    if (!patternConfig["emitBatchSize"].is_number()) {
-        logMsg(LOG_ERR, "emitBatchSize not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitBatchSize", emitBatchSize, errMsgSuffix, 1)) {
         return false;
     }
-    emitBatchSize = patternConfig["emitBatchSize"].int_value();
     logMsg(LOG_INFO, name + " emitBatchSize=" + to_string(emitBatchSize));
 
-    if (!patternConfig["emitDirectionIsUp"].is_bool()) {
-        logMsg(LOG_ERR, "emitDirectionIsUp not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getBoolValue(patternConfig, "emitDirectionIsUp", emitDirectionIsUp, errMsgSuffix)) {
         return false;
     }
-    emitDirectionIsUp = patternConfig["emitDirectionIsUp"].bool_value();
     logMsg(LOG_INFO, name + " emitDirectionIsUp=" + to_string(emitDirectionIsUp));
 
-    if (!patternConfig["particleMoveIntervalMs"].is_number()) {
-        logMsg(LOG_ERR, "particleMoveIntervalMs not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getUnsignedIntValue(patternConfig, "particleMoveIntervalMs", particleMoveIntervalMs, errMsgSuffix, 1)) {
         return false;
     }
-    particleMoveIntervalMs = patternConfig["particleMoveIntervalMs"].int_value();
     logMsg(LOG_INFO, name + " particleMoveIntervalMs=" + to_string(particleMoveIntervalMs));
 
+
     // ----- get input channels -----
-
-    // 0:  min sound sample
-    // 1:  max sound sample
-    // 2:  sound amplitude
-    // 3:  yaw
-    // 4:  pitch
-    // 5:  roll
-    // 6:  0
-
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {

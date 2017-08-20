@@ -51,7 +51,7 @@
         },
         {   "name" : "rainstick",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
@@ -294,9 +294,7 @@
                     "measurement" : "position"
                 }
             ],
-            "emitColorRedValue" : 0,
-            "emitColorGreenValue" : 64,
-            "emitColorBlueValue" : 192,
+            "emitColor" : "0,64,192",
             "emitIntervalMeasmtLow" : 600,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
@@ -317,9 +315,7 @@
                     "measurement" : "position"
                 }
             ],
-            "emitColorRedValue" : 255,
-            "emitColorGreenValue" : 255,
-            "emitColorBlueValue" : 255,
+            "emitColor" : "white",
             "emitIntervalMeasmtLow" : 100,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
