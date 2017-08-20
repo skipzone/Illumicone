@@ -15,9 +15,14 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <algorithm>
+#include <climits>
+#include <string>
+
 #include "BellsWidget.h"
 #include "ConfigReader.h"
 #include "illumiconeWidgetTypes.h"
+#include "log.h"
 #include "WidgetId.h"
 
 using namespace std;
@@ -25,26 +30,28 @@ using namespace std;
 
 BellsWidget::BellsWidget()
     : Widget(WidgetId::bells, 1)
-    , simWidth(0)
+    , simStep(INT_MIN + stepSize)
 {
-    simulationUpdateIntervalMs[0] = 1000;
-    simulationUpdateIntervalMs[1] = 1000;
-    simulationUpdateIntervalMs[2] = 1000;
+    simulationUpdateIntervalMs[0] = 10;
+    simulationUpdateIntervalMs[1] = 10;
+    simulationUpdateIntervalMs[2] = 10;
 }
 
 
 void BellsWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    if (simWidth == 0) {
-        // TODO:  Widgets should not need to be aware of the cone dimensions (that's the pattern's job).
-        //        For now, use a reasonable constant.  Eventually, replace this with simulation file playback.
-        //simWidth = NUM_STRINGS / 3;
-        simWidth = 36 / 3;
+    simStep -= stepSize;
+    if (simStep <= doStrikeAtStepNum) {
+        simStep = stepNumAtStrike;
     }
-
-    channels[chIdx]->setPositionAndVelocity(simWidth, 0);
-    simWidth--;
-
-    channels[chIdx]->setIsActive(true);
+    if (simStep >= 0) {
+        channels[chIdx]->setPositionAndVelocity(simStep, 0);
+        channels[chIdx]->setIsActive(true);
+        //logMsg(LOG_DEBUG, channels[chIdx]->getName() + " position=" + to_string(simStep));
+    }
+    else {
+        channels[chIdx]->setPositionAndVelocity(0, 0);
+        channels[chIdx]->setIsActive(false);
+    }
 }
 

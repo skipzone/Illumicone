@@ -44,7 +44,6 @@ class Pattern
 
         std::string getName() { return name; }
 
-        virtual bool goInactive();
         bool init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
         virtual bool update() = 0;
 

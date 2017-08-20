@@ -48,27 +48,6 @@ Pattern::~Pattern()
 }
 
 
-bool Pattern::goInactive()
-{
-    // If we're just now going inactive, we need to return true
-    // so that this pattern can be cleared from display.
-    bool retval = isActive;
-
-    if (isActive) {
-        isActive = false;
-        // Set all the pixels to 0 intensity to make this pattern effectively transparent.
-        if (usesHsvModel) {
-            clearAllPixels(coneStrings);
-        }
-        else {
-            clearAllPixels(pixelArray);
-        }
-    }
-
-    return retval;
-}
-
-
 bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
     numStrings = config.getNumberOfStrings();

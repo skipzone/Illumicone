@@ -46,7 +46,7 @@
         },
         {   "name" : "bells",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "rainstick",
@@ -56,12 +56,12 @@
         },
         {   "name" : "schroedersPlaything",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 8000
         },
         {   "name" : "triObelisk",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "pump",
@@ -155,7 +155,42 @@
             "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
         {   "name" : "multicolorSparkle",
-            "enabled" : true,
+            "enabled" : false,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "useRandomColors" : true,
+            "sparkleChangeIntervalMs" : 50
+        },
+        {   "name" : "whiteSparkle",
+            "enabled" : false,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "sparkleColor" : "white"
+        },
+        {   "name" : "redSparkle",
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -166,8 +201,47 @@
                     "measurement" : "velocity"
                 }
             ],
+            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
             "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
-            "activationThreshold" : 20          // 20 is what we used with Shirley's Web in 2016
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "sparkleColor" : "red"
+        },
+        {   "name" : "greenSparkle",
+            "enabled" : false,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "triObelisk",
+                    "channelNumber" : 1,
+                    "measurement" : "velocity"
+                }
+            ],
+            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "sparkleColor" : "green"
+        },
+        {   "name" : "blueSparkle",
+            "enabled" : false,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "triObelisk",
+                    "channelNumber" : 2,
+                    "measurement" : "velocity"
+                }
+            ],
+            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "sparkleColor" : "blue"
         },
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
@@ -220,9 +294,7 @@
                     "measurement" : "position"
                 }
             ],
-            "emitColorRedValue" : 0,
-            "emitColorGreenValue" : 64,
-            "emitColorBlueValue" : 192,
+            "emitColor" : "0,64,192",
             "emitIntervalMeasmtLow" : 600,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
@@ -230,6 +302,27 @@
             "emitBatchSize" : 5,
             "emitDirectionIsUp" : false,
             "particleMoveIntervalMs" : 10
+        },
+        {   "name" : "spray",
+            "enabled" : true,
+            "priority" : 3,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "emitColor" : "white",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 8
         },
         {   "name" : "contortOMaticSpinner",
             "enabled" : true,

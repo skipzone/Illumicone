@@ -135,7 +135,8 @@ bool AnnoyingFlashingPattern::update()
                              + " because " + intensityChannel->getName() + " has gone inactive.");
             disableFlashing = false;
         }
-        return goInactive();
+        isActive = false;
+        return false;
     }
 
     if (intensityChannel->getHasNewPositionMeasurement()) {
@@ -157,7 +158,8 @@ bool AnnoyingFlashingPattern::update()
         // If the latest measurement is below the activation threshold, turn off this pattern.
         if (intensityMeasmt <= activationThreshold) {
             //logMsg(LOG_DEBUG, "below activation threshold");
-            return goInactive();
+            isActive = false;
+            return false;
         }
 
         // If the threshold was just crossed, initialize auto-disable and start flashing.
@@ -177,7 +179,8 @@ bool AnnoyingFlashingPattern::update()
             logMsg(LOG_INFO, "Disabling " + name
                              + " because it has been active for " + to_string(autoDisableTimeoutMs) + " ms.");
             disableFlashing = true;
-            return goInactive();
+            isActive = false;
+            return false;
         }
 
         // Change the flash color if it is time to do so.
