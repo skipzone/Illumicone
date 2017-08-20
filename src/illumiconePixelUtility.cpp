@@ -173,7 +173,7 @@ bool stringToRgbPixel(const string& rgbString, RgbPixel& rgbPixel)
         rgbPixel = RgbPixel::Yellow;
     }
     else if (rgbString == "green") {
-        rgbPixel = RgbPixel::Green;
+        rgbPixel = RgbPixel::Lime;
     }
     else if (rgbString == "aqua") {
         rgbPixel = RgbPixel::Aqua;

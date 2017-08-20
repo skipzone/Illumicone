@@ -30,7 +30,7 @@ using namespace std;
 
 BellsWidget::BellsWidget()
     : Widget(WidgetId::bells, 1)
-    , simStep(INT_MIN + 1)
+    , simStep(INT_MIN + stepSize)
 {
     simulationUpdateIntervalMs[0] = 10;
     simulationUpdateIntervalMs[1] = 10;
@@ -40,7 +40,7 @@ BellsWidget::BellsWidget()
 
 void BellsWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    --simStep;
+    simStep -= stepSize;
     if (simStep <= doStrikeAtStepNum) {
         simStep = stepNumAtStrike;
     }
