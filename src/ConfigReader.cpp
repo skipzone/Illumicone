@@ -188,6 +188,17 @@ Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
 }
 
 
+std::string ConfigReader::getLockFilePath(const string& serviceName)
+{
+    Json lockFilePathsObj = configObj["lockFilePaths"];
+    if (!lockFilePathsObj.is_object()) {
+        logMsg(LOG_ERR, "lockFilePaths is missing from configuration or is not a JSON object.");
+        return "";
+    }
+    return lockFilePathsObj[serviceName].string_value();
+}
+
+
 int ConfigReader::getNumberOfStrings()
 {
     return configObj["numberOfStrings"].int_value();

@@ -68,6 +68,7 @@ class ConfigReader
         json11::Json getWidgetConfigJsonObject(const std::string& widgetName);
         json11::Json getPatternConfigJsonObject(const std::string& patternName);
 
+        std::string getLockFilePath(const std::string& serviceName);
         int getNumberOfStrings();
         int getNumberOfPixelsPerString();
         std::string getOpcServerIpAddress();

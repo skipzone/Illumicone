@@ -55,7 +55,7 @@ void logMsg(int priority, const string& message)
         cout << getTimestamp() << message << endl;
     }
     else if (priority == LOG_WARNING) {
-        cerr << getTimestamp() << "///// " << message << " /////" << endl;
+        cerr << getTimestamp() << "///// Warning:  " << message << " /////" << endl;
     }
     else {
         cerr << getTimestamp() << "*** " << message << endl;
@@ -71,7 +71,7 @@ void logSysErr(int priority, const string& message, int errNum)
         cout << getTimestamp() << message << errStr << endl;
     }
     else if (priority == LOG_WARNING) {
-        cerr << getTimestamp() << "///// " << message << errStr << " /////" << endl;
+        cerr << getTimestamp() << "///// Warning:  " << message << errStr << " /////" << endl;
     }
     else {
         cerr << getTimestamp() << "*** " << message << errStr << endl;

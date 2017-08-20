@@ -111,7 +111,7 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 
         }
         else {
-            logMsg(LOG_WARNING, "Warning:  inputName '" + channelConfig.inputName
+            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }

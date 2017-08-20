@@ -67,7 +67,7 @@ bool MidiActivatedRegionsPattern::initPattern(ConfigReader& config, std::map<Wid
             midiInputChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "Warning:  inputName '" + channelConfig.inputName
+            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }

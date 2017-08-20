@@ -56,9 +56,6 @@
 using namespace std;
 
 
-// TODO 7/31/2017 ross:  Get this from config.
-static string lockFilePath = "/tmp/widgetRcvr.lock";
-
 constexpr unsigned int reinitializationSleepIntervalS = 1;
 
 enum class PatternBlendMethod {
@@ -76,7 +73,9 @@ struct PatternState {
     int wantsDisplay;
 };
 
+static string configFileName;
 static ConfigReader config;
+static string lockFilePath;
 static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
 static vector<SchedulePeriod> shutoffPeriods;
@@ -246,10 +245,15 @@ void printSchedulePeriods(const std::string& scheduleDescription, const vector<S
 }
 
 
-bool readConfig(const string& configFileName)
+bool readConfig()
 {
     if (!config.readConfigurationFile(configFileName)) {
         return false;
+    }
+
+    lockFilePath = config.getLockFilePath("patternController");
+    if (lockFilePath.empty()) {
+        logMsg(LOG_WARNING, "There is no lock file name for patternController in configuration.");
     }
 
     numberOfStrings = config.getNumberOfStrings();
@@ -476,7 +480,19 @@ bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, s
 
 bool doInitialization()
 {
+    // If the config file is really a symbolic link,
+    // add the link target to the file name we'll log.
+    string configFileNameAndTarget = configFileName;
+    char buf[512];
+    int count = readlink(configFileName.c_str(), buf, sizeof(buf));
+    if (count >= 0) {
+        buf[count] = '\0';
+        configFileNameAndTarget += string(" -> ") + buf;
+    }
+
     logMsg(LOG_INFO, "Starting initialization.");
+    logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
+    logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
     logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
     logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
     logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
@@ -703,18 +719,18 @@ int main(int argc, char **argv)
         cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
         return 2;
     }
-    string configFileName(argv[1]);
+    configFileName = argv[1];
 
     if (!registerSignalHandlers()) {
         return(EXIT_FAILURE);
     }
 
-    if (!readConfig(configFileName)) {
+    if (!readConfig()) {
         return(EXIT_FAILURE);
     }
 
     // Make sure this is the only instance running.
-    if (acquireProcessLock(lockFilePath) < 0) {
+    if (!lockFilePath.empty() && acquireProcessLock(lockFilePath) < 0) {
         return(EXIT_FAILURE);
     }
 
@@ -754,7 +770,7 @@ int main(int argc, char **argv)
             // the OPC server immediately sometimes fails.
             logMsg(LOG_INFO, "Sleeping for " + to_string(reinitializationSleepIntervalS) + " seconds.");
             sleep(reinitializationSleepIntervalS);
-            if (!readConfig(configFileName) || !doInitialization()) {
+            if (!readConfig() || !doInitialization()) {
                 return(EXIT_FAILURE);
             }
             lastPeriodCheckTime = 0;
