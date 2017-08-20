@@ -25,7 +25,7 @@ class ContortOMaticWidget : public Widget
     public:
 
         ContortOMaticWidget();
-        ~ContortOMaticWidget() {};
+        virtual ~ContortOMaticWidget() {};
 
         ContortOMaticWidget(const ContortOMaticWidget&) = delete;
         ContortOMaticWidget& operator =(const ContortOMaticWidget&) = delete;

@@ -24,7 +24,7 @@ class SpinnahWidget : public Widget
 {
     public:
         SpinnahWidget();
-        ~SpinnahWidget() {};
+        virtual ~SpinnahWidget() {};
 
         SpinnahWidget(const SpinnahWidget&) = delete;
         SpinnahWidget& operator =(const SpinnahWidget&) = delete;

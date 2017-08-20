@@ -25,7 +25,7 @@ class SchroedersPlaythingWidget : public Widget
     public:
 
         SchroedersPlaythingWidget();
-        ~SchroedersPlaythingWidget() {};
+        virtual ~SchroedersPlaythingWidget() {};
 
         SchroedersPlaythingWidget(const SchroedersPlaythingWidget&) = delete;
         SchroedersPlaythingWidget& operator =(const SchroedersPlaythingWidget&) = delete;

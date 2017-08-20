@@ -24,7 +24,7 @@ class RainstickWidget : public Widget
 {
     public:
         RainstickWidget();
-        ~RainstickWidget() {};
+        virtual ~RainstickWidget() {};
 
         RainstickWidget(const RainstickWidget&) = delete;
         RainstickWidget& operator =(const RainstickWidget&) = delete;

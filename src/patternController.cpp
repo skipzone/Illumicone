@@ -15,26 +15,29 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #include <algorithm>
-#include <arpa/inet.h>
 #include <climits>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <map>
-//#include <netinet/in.h>
 #include <sstream>
-#include <stdlib.h>
-#include <stdio.h>
 #include <string>
+#include <thread>
+#include <vector>
+
+#include <arpa/inet.h>
+//#include <netinet/in.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <thread>
 #include <time.h>
 #include <unistd.h>
-#include <vector>
 
 #include "ConfigReader.h"
 #include "hsv2rgb.h"
@@ -55,6 +58,8 @@ using namespace std;
 
 // TODO 7/31/2017 ross:  Get this from config.
 static string lockFilePath = "/tmp/widgetRcvr.lock";
+
+constexpr unsigned int reinitializationSleepIntervalS = 1;
 
 enum class PatternBlendMethod {
     overlay,
@@ -92,8 +97,29 @@ static vector<PatternState*> patternStates;
 static HsvConeStrings hsvFinalFrame;
 static RgbConeStrings rgbFinalFrame;
 
+static bool gotReinitSignal;
 
-bool setUpOpcServerConnection(const string& opcServerIpAddress)
+
+void signalHandler(int signum)
+{
+    logMsg(LOG_INFO, "Received signal " + to_string(signum));
+    if (signum == SIGUSR1) {
+        gotReinitSignal = true;
+    }
+}
+
+
+bool registerSignalHandlers()
+{
+    if (signal(SIGUSR1, signalHandler) == SIG_ERR) {
+        logMsg(LOG_ERR, "Unable to register handler for SIGUSR1.");
+        return false;
+    }
+    return true;
+}
+
+
+bool openOpcServerConnection(const string& opcServerIpAddress)
 {
     sock = socket(AF_INET, SOCK_STREAM, 0);
     server.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
@@ -102,10 +128,21 @@ bool setUpOpcServerConnection(const string& opcServerIpAddress)
 
     logMsg(LOG_INFO, "Connecting to OPC server at " + opcServerIpAddress + "...");
     if (connect(sock, (struct sockaddr *) &server, sizeof(server)) < 0) {
-        logMsg(LOG_ERR, "SOMETHING'S FUCKY: couldn't connect to opc-server!");
+        logSysErr(LOG_ERR, "Unable to connect to opc-server.", errno);
         return false;
     }
 
+    return true;
+}
+
+
+bool closeOpcServerConnection()
+{
+    logMsg(LOG_INFO, "Disconnecting from OPC server...");
+    if (disconnectx(sock, SAE_ASSOCID_ANY, SAE_CONNID_ANY) != 0) {
+        logSysErr(LOG_ERR, "Unable to disconnect from opc-server.", errno);
+        return false;
+    }
     return true;
 }
 
@@ -277,6 +314,15 @@ bool initOpcBuffer()
 }
 
 
+void freeOpcBuffer()
+{
+    delete [] opcBuffer;
+    opcBuffer = nullptr;
+    opcBufferSize = 0;
+    opcData = nullptr;
+}
+
+
 void initWidgets()
 {
     logMsg(LOG_INFO, "Initializing widgets...");
@@ -317,6 +363,17 @@ void initWidgets()
 }
 
 
+void tearDownWidgets()
+{
+    logMsg(LOG_INFO, "Tearing down widgets...");
+    for (auto&& widget : widgets) {
+        logMsg(LOG_DEBUG, "deleting " + widgetIdToString(widget.first));
+        delete widget.second;
+    }
+    widgets.clear();
+}
+
+
 void initPatterns()
 {
     logMsg(LOG_INFO, "Initializing patterns...");
@@ -354,6 +411,17 @@ void initPatterns()
         newPatternState->pattern = newPattern;
         patternStates.emplace_back(newPatternState);
     }
+}
+
+
+void tearDownPatterns()
+{
+    logMsg(LOG_INFO, "Tearing down patterns...");
+    for (auto&& patternState : patternStates) {
+        delete patternState->pattern;
+        patternState->pattern = nullptr;
+    }
+    patternStates.clear();
 }
 
 
@@ -403,6 +471,65 @@ bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, s
     }
 
     return false;
+}
+
+
+bool doInitialization()
+{
+    logMsg(LOG_INFO, "Starting initialization.");
+    logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
+    logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
+    logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
+    printSchedulePeriods("Shutoff periods", shutoffPeriods);
+    printSchedulePeriods("Quiescent periods", quiescentPeriods);
+
+    if (!allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(hsvFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
+        logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");
+        return false;
+    }
+
+    if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(rgbFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
+        logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");
+        return false;
+    }
+
+    if (!initOpcBuffer()) {
+        return false;
+    }
+
+    // open socket, connect with opc-server
+    if (!openOpcServerConnection(config.getOpcServerIpAddress())) {
+        return false;
+    }
+
+    initWidgets();
+    initPatterns();
+
+    logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
+
+    return true;
+}
+
+
+bool doTeardown()
+{
+    logMsg(LOG_INFO, "Starting teardown.");
+
+    tearDownPatterns();
+    tearDownWidgets();
+
+    if (!closeOpcServerConnection()) {
+        return false;
+    }
+
+    freeOpcBuffer();
+
+    freeConePixels<HsvConeStrings, HsvPixel>(hsvFinalFrame);
+    freeConePixels<RgbConeStrings, RgbPixel>(rgbFinalFrame);
+
+    logMsg(LOG_INFO, "Teardown done.");
+
+    return true;
 }
 
 
@@ -571,12 +698,17 @@ void doPatterns()
 
 int main(int argc, char **argv)
 {
-    // Read configuration from the JSON file specified on the command line.
+    // The configuration comes from the JSON file specified on the command line.
     if (argc != 2) {
         cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
         return 2;
     }
     string configFileName(argv[1]);
+
+    if (!registerSignalHandlers()) {
+        return(EXIT_FAILURE);
+    }
+
     if (!readConfig(configFileName)) {
         return(EXIT_FAILURE);
     }
@@ -588,36 +720,9 @@ int main(int argc, char **argv)
 
     logMsg(LOG_INFO, "---------- patternController  starting ----------");
 
-    logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
-    logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
-    logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
-    printSchedulePeriods("Shutoff periods", shutoffPeriods);
-    printSchedulePeriods("Quiescent periods", quiescentPeriods);
-
-    if (!allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(hsvFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
-        logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");
+    if (!doInitialization()) {
         return(EXIT_FAILURE);
     }
-
-    if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(rgbFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
-        logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");
-        return(EXIT_FAILURE);
-    }
-
-    if (!initOpcBuffer()) {
-        return(EXIT_FAILURE);
-    }
-
-    // open socket, connect with opc-server
-    if (!setUpOpcServerConnection(config.getOpcServerIpAddress())) {
-        return(EXIT_FAILURE);
-    }
-
-    initWidgets();
-    initPatterns();
-
-    logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
-
     time_t lastPeriodCheckTime = 0;
     bool inPeriod = false;
     string lastPeriodDesc = "";
@@ -638,6 +743,25 @@ int main(int argc, char **argv)
 
     // ----- run loop -----
     while (true) {
+
+        if (gotReinitSignal) {
+            logMsg(LOG_INFO, "---------- Reinitializing... ----------");
+            turnOnSafetyLights();
+            if (!doTeardown()) {
+                return(EXIT_FAILURE);
+            }
+            // Sleep for a little bit because reconnecting to
+            // the OPC server immediately sometimes fails.
+            logMsg(LOG_INFO, "Sleeping for " + to_string(reinitializationSleepIntervalS) + " seconds.");
+            sleep(reinitializationSleepIntervalS);
+            if (!readConfig(configFileName) || !doInitialization()) {
+                return(EXIT_FAILURE);
+            }
+            lastPeriodCheckTime = 0;
+            inPeriod = false;
+            lastPeriodDesc = "";
+            gotReinitSignal = false;
+        }
 
         // Give the widgets a chance to update their simulated measurements.
         for (auto&& widget : widgets) {

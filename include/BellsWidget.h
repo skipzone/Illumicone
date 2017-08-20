@@ -25,7 +25,7 @@ class BellsWidget : public Widget
     public:
 
         BellsWidget();
-        ~BellsWidget() {};
+        virtual ~BellsWidget() {};
 
         BellsWidget(const BellsWidget&) = delete;
         BellsWidget& operator =(const BellsWidget&) = delete;

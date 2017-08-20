@@ -105,18 +105,16 @@ bool openUdpPort(WidgetId widgetId)
     widgetSockAddr[widgetIdNumber].sin_port = htons(0);
 
     if ((widgetSock[widgetIdNumber] = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        int errNum = errno;
-        logMsg(LOG_ERR,
-               "Failed to create socket for " + widgetIdToString(intToWidgetId(widgetIdNumber))
-               + ".  " + string(strerror(errNum)) + " (" + to_string(errNum) + ")");
+        logSysErr(LOG_ERR,
+                  "Failed to create socket for " + widgetIdToString(intToWidgetId(widgetIdNumber)) + ".",
+                  errno);
         return false;
     }
 
     if (::bind(widgetSock[widgetIdNumber], (struct sockaddr *) &widgetSockAddr[widgetIdNumber], sizeof(struct sockaddr_in)) < 0) {
-        int errNum = errno;
-        logMsg(LOG_ERR,
-               "bind failed for " + widgetIdToString(intToWidgetId(widgetIdNumber))
-               + ".  " + string(strerror(errNum)) + " (" + to_string(errNum) + ")");
+        logSysErr(LOG_ERR,
+                  "bind failed for " + widgetIdToString(intToWidgetId(widgetIdNumber)) + ".",
+                  errno);
         return false;
     }
 

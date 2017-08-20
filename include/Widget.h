@@ -75,5 +75,6 @@ class Widget
         pthread_t udpRxThread;
         int sockfd;
         struct sockaddr_in servaddr;
+        bool stopUdpRxPolling;
 };
 

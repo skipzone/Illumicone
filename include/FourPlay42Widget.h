@@ -25,7 +25,7 @@ class FourPlay42Widget : public Widget
     public:
 
         FourPlay42Widget();
-        ~FourPlay42Widget() {};
+        virtual ~FourPlay42Widget() {};
 
         FourPlay42Widget(const FourPlay42Widget&) = delete;
         FourPlay42Widget& operator =(const FourPlay42Widget&) = delete;

@@ -25,7 +25,7 @@ class TriObeliskWidget : public Widget
     public:
 
         TriObeliskWidget();
-        ~TriObeliskWidget() {};
+        virtual ~TriObeliskWidget() {};
 
         TriObeliskWidget(const TriObeliskWidget&) = delete;
         TriObeliskWidget& operator =(const TriObeliskWidget&) = delete;

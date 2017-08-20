@@ -16,6 +16,8 @@
 */
 
 {
+    "lockFilePath" : "/tmp/widgetRcvr.lock",
+
     "numberOfStrings" : 36,
     "numberOfPixelsPerString" : 100,
 

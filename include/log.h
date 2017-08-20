@@ -24,3 +24,5 @@
 
 const std::string getTimestamp();
 void logMsg(int priority, const std::string& message);
+void logSysErr(int priority, const std::string& message, int errNum);
+
