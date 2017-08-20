@@ -25,7 +25,7 @@ class PumpWidget : public Widget
     public:
 
         PumpWidget();
-        ~PumpWidget() {};
+        virtual ~PumpWidget() {};
 
         PumpWidget(const PumpWidget&) = delete;
         PumpWidget& operator =(const PumpWidget&) = delete;

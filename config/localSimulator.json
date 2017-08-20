@@ -16,6 +16,11 @@
 */
 
 {
+    "lockFilePaths" : {
+        "patternController" : "/tmp/patternController.lock",
+        "widgetRcvr" : "/tmp/widgetRcvr.lock"
+    },
+
     "numberOfStrings" : 36,
     "numberOfPixelsPerString" : 100,
 

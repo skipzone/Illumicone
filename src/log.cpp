@@ -22,6 +22,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <stdio.h>
+
 #include "illumiconeUtility.h"
 #include "log.h"
 
@@ -49,12 +51,30 @@ const string getTimestamp()
 
 void logMsg(int priority, const string& message)
 {
-  if (priority > LOG_WARNING) {
-    cout << getTimestamp() << message << endl;
-  }
-  else {
-    cerr << getTimestamp() << message << endl;
-  }
+    if (priority > LOG_WARNING) {
+        cout << getTimestamp() << message << endl;
+    }
+    else if (priority == LOG_WARNING) {
+        cerr << getTimestamp() << "///// Warning:  " << message << " /////" << endl;
+    }
+    else {
+        cerr << getTimestamp() << "*** " << message << endl;
+    }
 }
 
+
+void logSysErr(int priority, const string& message, int errNum)
+{
+    string errStr = "  " + string(strerror(errNum)) + " (" + to_string(errNum) + ")";
+
+    if (priority > LOG_WARNING) {
+        cout << getTimestamp() << message << errStr << endl;
+    }
+    else if (priority == LOG_WARNING) {
+        cerr << getTimestamp() << "///// Warning:  " << message << errStr << " /////" << endl;
+    }
+    else {
+        cerr << getTimestamp() << "*** " << message << errStr << endl;
+    }
+}
 

@@ -123,14 +123,14 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
             pressureChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "Warning:  inputName '" + channelConfig.inputName
+            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
         logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_ERR, "Warning:  " + name + " supports only position measurements, but the input configuration for "
+            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }

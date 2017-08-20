@@ -25,7 +25,7 @@ class EyeWidget : public Widget
 {
     public:
         EyeWidget();
-        ~EyeWidget() {};
+        virtual ~EyeWidget() {};
 
         EyeWidget(const EyeWidget&) = delete;
         EyeWidget& operator = (const EyeWidget&) = delete;
