@@ -63,6 +63,7 @@ Widget::~Widget()
         close(sockfd); 					            // close the UDP socket
 
         logMsg(LOG_DEBUG, "Waiting for UDP rx thread termination for " + widgetIdToString(id));
+        pthread_cancel(udpRxThread); 	            // kill the rx thread
         pthread_join(udpRxThread, NULL); 	        // wait for the rx thread to terminate
     }
 }

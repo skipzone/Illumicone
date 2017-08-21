@@ -84,8 +84,8 @@ static string patternBlendMethodStr;
 static PatternBlendMethod patternBlendMethod;
 static unsigned int patternRunLoopSleepIntervalUs;
 
-static struct sockaddr_in server;
-static int sock;
+static struct sockaddr_in opcServerSockaddr;
+static int opcServerSocketFd;
 static uint8_t* opcBuffer;      // points to the buffer used for sending messages to the OPC server
 static size_t opcBufferSize;
 static uint8_t* opcData;        // points to the data portion of opcBuffer
@@ -120,13 +120,14 @@ bool registerSignalHandlers()
 
 bool openOpcServerConnection(const string& opcServerIpAddress)
 {
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    server.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
-    server.sin_family = AF_INET;
-    server.sin_port = htons(7890);
+    opcServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
+
+    opcServerSockaddr.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
+    opcServerSockaddr.sin_family = AF_INET;
+    opcServerSockaddr.sin_port = htons(7890);
 
     logMsg(LOG_INFO, "Connecting to OPC server at " + opcServerIpAddress + "...");
-    if (connect(sock, (struct sockaddr *) &server, sizeof(server)) < 0) {
+    if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) < 0) {
         logSysErr(LOG_ERR, "Unable to connect to opc-server.", errno);
         return false;
     }
@@ -138,8 +139,9 @@ bool openOpcServerConnection(const string& opcServerIpAddress)
 bool closeOpcServerConnection()
 {
     logMsg(LOG_INFO, "Disconnecting from OPC server...");
-    if (disconnectx(sock, SAE_ASSOCID_ANY, SAE_CONNID_ANY) != 0) {
-        logSysErr(LOG_ERR, "Unable to disconnect from opc-server.", errno);
+    ///if (disconnectx(opcServerSocketFd, SAE_ASSOCID_ANY, SAE_CONNID_ANY) != 0) {
+    if (close(opcServerSocketFd) != 0) {
+        logSysErr(LOG_ERR, "Unable to close connection to opc-server.", errno);
         return false;
     }
     return true;
@@ -177,7 +179,7 @@ void sendOpcMessage()
     //dumpOpcBuffer(opcBuffer);
 
     // send to OPC server over network connection
-    send(sock, opcBuffer, opcBufferSize, 0);
+    send(opcServerSocketFd, opcBuffer, opcBufferSize, 0);
 }
 
 
