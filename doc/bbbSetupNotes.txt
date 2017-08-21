@@ -71,6 +71,10 @@
         instead:  sudo timedatectl set-timezone America/Boise
 
 
+- Install psmisc to get the killall utility.
+
+    sudo apt-get install psmisc
+
 - Install git flow.
 
     sudo apt-get install git-flow
