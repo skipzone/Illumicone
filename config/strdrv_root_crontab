@@ -22,5 +22,6 @@
 # m h  dom mon dow   command
 
 # restart ledscape.service periodically because it gets fucked up sometimes.
-49 19 * * *  systemctl try-restart ledscape.service
-01 06 * * *  systemctl try-restart ledscape.service
+# (remember that the times here are MDT!)
+49 20 * * *  systemctl try-restart ledscape.service
+01 07 * * *  systemctl try-restart ledscape.service
