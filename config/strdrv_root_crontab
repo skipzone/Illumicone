@@ -23,5 +23,5 @@
 
 # restart ledscape.service periodically because it gets fucked up sometimes.
 # (remember that the times here are MDT!)
-49 20 * * *  systemctl try-restart ledscape.service
+59 19 * * *  systemctl try-restart ledscape.service
 01 07 * * *  systemctl try-restart ledscape.service

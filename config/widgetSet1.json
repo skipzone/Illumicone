@@ -34,7 +34,7 @@
     "shutoffPeriods" : [
         {   "description" : "Burning Man daytime shutoff",
             "startDateTime" : "07:00:00",   // 06:00 PDT
-            "endDateTime" : "20:50:00"      // 19:50 PDT
+            "endDateTime" : "20:00:00"      // 19:00 PDT
         }
     ],
 
