@@ -192,5 +192,5 @@ bool RgbVerticalPattern::update()
         }
     }
 
-    return true;
+    return isActive;
 }

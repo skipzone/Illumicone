@@ -66,7 +66,7 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
-            "enabled" : true,
+            "enabled" : false,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 8000
         },
@@ -91,7 +91,7 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
-            "enabled" : true,
+            "enabled" : false,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
@@ -141,17 +141,17 @@
             "patternClassName" : "HorizontalStripePattern",
             "inputs" : [
                 {   "inputName" : "redPosition",
-                    "widgetName" : "fourPlay43",
+                    "widgetName" : "triObelisk",
                     "channelNumber" : 0,
                     "measurement" : "position"
                 },
                 {   "inputName" : "greenPosition",
-                    "widgetName" : "fourPlay43",
+                    "widgetName" : "triObelisk",
                     "channelNumber" : 1,
                     "measurement" : "position"
                 },
                 {   "inputName" : "bluePosition",
-                    "widgetName" : "fourPlay43",
+                    "widgetName" : "triObelisk",
                     "channelNumber" : 2,
                     "measurement" : "position"
                 },
@@ -201,7 +201,7 @@
             "sparkleColor" : "white"
         },
         {   "name" : "redSparkle",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -219,7 +219,7 @@
             "sparkleColor" : "red"
         },
         {   "name" : "greenSparkle",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -237,7 +237,7 @@
             "sparkleColor" : "green"
         },
         {   "name" : "blueSparkle",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
