@@ -27,6 +27,7 @@
 #include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
 #include "log.h"
+#include "QueuedWidgetChannel.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
@@ -34,10 +35,11 @@
 using namespace std;
 
 
-Widget::Widget(WidgetId id, unsigned int numChannels)
+Widget::Widget(WidgetId id, unsigned int numChannels, bool useQueuedChannels)
     : id(id)
     , numChannels(numChannels)
     , stopUdpRxPolling(false)
+    , useQueuedChannels(useQueuedChannels)
 {
     unsigned int nowMs = getNowMs();
 
@@ -82,7 +84,12 @@ bool Widget::init(ConfigReader& config)
     }
 
     for (unsigned int i = 0; i < numChannels; ++i) {
-        channels.push_back(make_shared<WidgetChannel>(i, this, autoInactiveMs));
+        if (useQueuedChannels) {
+            channels.push_back(make_shared<QueuedWidgetChannel>(i, this, autoInactiveMs));
+        }
+        else {
+            channels.push_back(make_shared<WidgetChannel>(i, this, autoInactiveMs));
+        }
     }
 
     if (!generateSimulatedMeasurements) {

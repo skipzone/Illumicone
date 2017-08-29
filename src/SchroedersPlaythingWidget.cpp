@@ -27,7 +27,7 @@ using namespace std;
 
 
 SchroedersPlaythingWidget::SchroedersPlaythingWidget()
-    : Widget(WidgetId::schroedersPlaything, 1)
+    : Widget(WidgetId::schroedersPlaything, 1, true)
     , currentNote(35)
 {
     simulationUpdateIntervalMs[0] = 180;

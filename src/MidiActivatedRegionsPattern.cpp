@@ -163,48 +163,50 @@ bool MidiActivatedRegionsPattern::update()
         isActive = false;
     }
 
-    else if (midiInputChannel->getHasNewPositionMeasurement() && midiInputChannel->getHasNewVelocityMeasurement()) {
+    else {
+        while (midiInputChannel->getHasNewPositionMeasurement() && midiInputChannel->getHasNewVelocityMeasurement()) {
 
-        MidiPositionMeasurement pos;
-        MidiVelocityMeasurement vel;
-        pos.raw = midiInputChannel->getPosition();
-        vel.raw = midiInputChannel->getVelocity();
+            MidiPositionMeasurement pos;
+            MidiVelocityMeasurement vel;
+            pos.raw = midiInputChannel->getPosition();
+            vel.raw = midiInputChannel->getVelocity();
 
-        // Handle note on and note off (which is also note on with velocity 0).
-        if (pos.channelMessageType == MIDI_NOTE_OFF || pos.channelMessageType == MIDI_NOTE_ON) {
-            // TODO 8/13/2017 ross:  replace magic number 36 with noteNumberOffset
-            unsigned int normalizedNoteNumber = vel.noteNumber - 36;
-            if (normalizedNoteNumber < indicatorRegions.size()) {
-                IndicatorRegion* indicatorRegion = indicatorRegions[normalizedNoteNumber];
-                if (pos.channelMessageType == MIDI_NOTE_ON && vel.velocity != 0) {
-                    if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {
-                        //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned on");
-                        activeIndicators.insert(indicatorRegion);
+            // Handle note on and note off (which is also note on with velocity 0).
+            if (pos.channelMessageType == MIDI_NOTE_OFF || pos.channelMessageType == MIDI_NOTE_ON) {
+                // TODO 8/13/2017 ross:  replace magic number 36 with noteNumberOffset
+                unsigned int normalizedNoteNumber = vel.noteNumber - 36;
+                if (normalizedNoteNumber < indicatorRegions.size()) {
+                    IndicatorRegion* indicatorRegion = indicatorRegions[normalizedNoteNumber];
+                    if (pos.channelMessageType == MIDI_NOTE_ON && vel.velocity != 0) {
+                        if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {
+                            //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned on");
+                            activeIndicators.insert(indicatorRegion);
+                        }
+                        //indicatorRegion->transitionOn();
+                        indicatorRegion->turnOnImmediately();
+                        isActive = true;
                     }
-                    //indicatorRegion->transitionOn();
-                    indicatorRegion->turnOnImmediately();
-                    isActive = true;
+                    else {
+                        if (activeIndicators.find(indicatorRegion) != activeIndicators.end()) {
+                            //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned off");
+                            activeIndicators.erase(indicatorRegion);
+                        }
+                        indicatorRegion->turnOffImmediately();
+                    }
                 }
                 else {
-                    if (activeIndicators.find(indicatorRegion) != activeIndicators.end()) {
-                        //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned off");
-                        activeIndicators.erase(indicatorRegion);
-                    }
-                    indicatorRegion->turnOffImmediately();
+                    logMsg(LOG_WARNING, name + ":  Note " + to_string(vel.noteNumber)
+                                        + " (normalized to " + to_string(normalizedNoteNumber)
+                                        + ") is out of range.");
                 }
             }
+
+            // TODO 8/13/2017 ross:  Add support for pitch bend here.
+
             else {
-                logMsg(LOG_WARNING, name + ":  Note " + to_string(vel.noteNumber)
-                                    + " (normalized to " + to_string(normalizedNoteNumber)
-                                    + ") is out of range.");
+                string msg = midiMessageToString(pos, vel);
+                logMsg(LOG_WARNING, name + ":  Unsupported MIDI message received:  " + msg);
             }
-        }
-
-        // TODO 8/13/2017 ross:  Add support for pitch bend here.
-
-        else {
-            string msg = midiMessageToString(pos, vel);
-            logMsg(LOG_WARNING, name + ":  Unsupported MIDI message received:  " + msg);
         }
     }
 
