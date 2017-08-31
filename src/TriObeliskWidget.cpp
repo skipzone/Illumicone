@@ -18,7 +18,9 @@
 #include <string>
 
 #include "TriObeliskWidget.h"
+#include "illumiconeUtility.h"
 #include "illumiconeWidgetTypes.h"
+#include "log.h"
 #include "WidgetId.h"
 
 using namespace std;
@@ -27,18 +29,54 @@ using namespace std;
 TriObeliskWidget::TriObeliskWidget()
     : Widget(WidgetId::triObelisk, 3)
 {
+    unsigned int nowMs = getNowMs();
+
+    for (unsigned int i = 0; i < 8; ++i) {
+        simulationToggleActivityPeriodMs[i] = 0;
+        simulationToggleActivityMs[i] = nowMs;
+        simulationIsActive[i] = true;
+    }
+
     simulationUpdateIntervalMs[0] = 200;
     simulationUpdateIntervalMs[1] = 400;
     simulationUpdateIntervalMs[2] = 50;
+
+    simulationToggleActivityPeriodMs[0] = 0;    //2500;
+    simulationToggleActivityPeriodMs[0] = 0;    //5000;
+    simulationToggleActivityPeriodMs[0] = 0;    //7500;
+
+    minPosition[0] = -1000;
+    minPosition[1] = -1000;
+    minPosition[2] = -1000;
+
+    maxPosition[0] = 1000;
+    maxPosition[1] = 1000;
+    maxPosition[2] = 1000;
 }
 
 
 void TriObeliskWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    channels[chIdx]->getPosition();             // make sure previous velocity has been updated
-    int newPosition = (channels[chIdx]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
-    int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
-    channels[chIdx]->setPositionAndVelocity(newPosition, newVelocity);
-    channels[chIdx]->setIsActive(true);
+    unsigned int nowMs = getNowMs();
+
+    if (simulationToggleActivityPeriodMs[chIdx] != 0 && (int) (nowMs - simulationToggleActivityMs[chIdx]) >= 0) {
+        simulationToggleActivityMs[chIdx] += simulationToggleActivityPeriodMs[chIdx];
+        simulationIsActive[chIdx] = !simulationIsActive[chIdx];
+    }
+
+    if (simulationIsActive[chIdx]) {
+        channels[chIdx]->getPosition();             // make sure previous velocity has been updated
+        int newPosition = (channels[chIdx]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
+        if (newPosition > maxPosition[chIdx]) {
+            newPosition = minPosition[chIdx];
+        }
+        //logMsg(LOG_DEBUG, "chIdx=" + to_string(chIdx) + ", newPosition=" + to_string(newPosition));
+        int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
+        channels[chIdx]->setPositionAndVelocity(newPosition, newVelocity);
+        channels[chIdx]->setIsActive(true);
+    }
+    else {
+        channels[chIdx]->setIsActive(false);
+    }
 }
 

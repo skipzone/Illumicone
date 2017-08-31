@@ -34,5 +34,11 @@ class TriObeliskWidget : public Widget
 
     private:
 
+        // TODO 8/7/2017 ross:  These need to be sized dynamically to agree with the number of channels.
+        bool simulationIsActive[8];
+        unsigned int simulationToggleActivityMs[8];
+        unsigned int simulationToggleActivityPeriodMs[8];
+        int minPosition[8];
+        int maxPosition[8];
 };
 

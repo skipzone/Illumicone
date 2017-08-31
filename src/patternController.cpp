@@ -581,6 +581,7 @@ void doPatterns()
         for (int priority = maxPriority; priority >= minPriority; --priority) {
             for (auto&& patternState : patternStates) {
                 if (patternState->wantsDisplay && patternState->priority == priority) {
+                    //logMsg(LOG_DEBUG, patternState->pattern->getName() + " wants display.");
                     for (unsigned int col = 0; col < numberOfStrings; col++) {
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
 
@@ -679,6 +680,7 @@ void doPatterns()
         }
 
         if (anyPixelIsOn) {
+            //logMsg(LOG_DEBUG, "a pixel is on");
             if (patternBlendMethod == PatternBlendMethod::hsvBlend || patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
                 hsv2rgb(hsvFinalFrame, rgbFinalFrame);
             }
@@ -797,18 +799,18 @@ int main(int argc, char **argv)
             string periodDesc;
             if (timeIsInPeriod(now, shutoffPeriods, periodDesc)) {
                 inPeriod = true;
-                if (periodDesc != lastPeriodDesc) {
+//                if (periodDesc != lastPeriodDesc) {
                     lastPeriodDesc = periodDesc;
                     logMsg(LOG_INFO, "In \"" + periodDesc + "\" shutoff period.");
-                }
+//                }
                 turnOffAllPixels();
             }
             else if (timeIsInPeriod(now, quiescentPeriods, periodDesc)) {
                 inPeriod = true;
-                if (periodDesc != lastPeriodDesc) {
+//                if (periodDesc != lastPeriodDesc) {
                     lastPeriodDesc = periodDesc;
                     logMsg(LOG_INFO, "In \"" + periodDesc + "\" quiescent period.");
-                }
+//                }
                 setAllPixelsToQuiescentColor();
             }
             else {
