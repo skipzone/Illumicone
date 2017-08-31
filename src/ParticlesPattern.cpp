@@ -158,6 +158,8 @@ bool ParticlesPattern::update()
 
     // We'll return the previous activity state so that the final
     // frame will be displayed as this pattern goes inactive.
+    // TODO 8/29/2017 ross:  This wasActive thing is unnecessary.  When the pattern goes inactive, its frame will be ignored,
+    //                       essentially turning off the display of it.
     bool wasActive = isActive;
 
     unsigned int nowMs = getNowMs();
