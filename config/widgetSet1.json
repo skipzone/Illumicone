@@ -238,7 +238,7 @@
             "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "cyan"
+            "sparkleColor" : "aqua"
         },
         {   "name" : "blueSparkle",
             "enabled" : true,
