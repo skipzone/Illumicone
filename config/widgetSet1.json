@@ -42,13 +42,13 @@
     ],
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
-    "patternRunLoopSleepIntervalUs" : 500,
+    "patternRunLoopSleepIntervalUs" : 5000,
 
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 500
+            "autoInactiveMs" : 10000
         },
         {   "name" : "spinnah",
             "enabled" : true,
@@ -218,7 +218,7 @@
             "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "red"
+            "sparkleColor" : "magenta"
         },
         {   "name" : "greenSparkle",
             "enabled" : true,
@@ -238,7 +238,7 @@
             "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "green"
+            "sparkleColor" : "cyan"
         },
         {   "name" : "blueSparkle",
             "enabled" : true,
@@ -258,7 +258,7 @@
             "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "blue"
+            "sparkleColor" : "yellow"
         },
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
@@ -292,7 +292,7 @@
                     "measurement" : "position"
                 }
             ],
-            "autoDisableTimeoutMs" : 1500,      // pattern disables itself after being active for this amount of time
+            "autoDisableTimeoutMs" : 5000,      // pattern disables itself after being active for this amount of time
             "activationThreshold" : 300,        // 300 is a basic LED flashlight from a few feet away
             "reactivationThreshold" : 200,      // pattern re-enables itself when measurement drops below this value
             "allStringsSameColor" : false,
