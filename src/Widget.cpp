@@ -200,7 +200,8 @@ void Widget::updateSimulatedMeasurements()
 
     for (unsigned int i = 0; i < numChannels; ++i) {
         if (simulationUpdateIntervalMs[i] > 0 && (int) (nowMs - simulationNextUpdateMs[i]) >= 0) {
-            simulationNextUpdateMs[i] = nowMs + simulationUpdateIntervalMs[i];
+            ///simulationNextUpdateMs[i] = nowMs + simulationUpdateIntervalMs[i];
+            simulationNextUpdateMs[i] += simulationUpdateIntervalMs[i];
             updateChannelSimulatedMeasurements(i);
         }
     }

@@ -27,6 +27,7 @@ using namespace std;
 
 PumpWidget::PumpWidget()
     : Widget(WidgetId::pump, 1)
+    , pressurizing(true)
 {
     simulationUpdateIntervalMs[0] = 10;
 }
@@ -34,13 +35,22 @@ PumpWidget::PumpWidget()
 
 void PumpWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    int newPosition = channels[chIdx]->getPreviousPosition() + 1;
-    if (newPosition > 1023) {
-        newPosition = 0;
+    int newPosition = channels[chIdx]->getPosition();
+    if (pressurizing) { 
+        ++newPosition;
+        if (newPosition >= maxPosition) {
+            pressurizing = false;
+        }
     }
-    //if (newPosition % 10 == 0) {
-    //    logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
-    //}
+    else {
+        --newPosition;
+        if (newPosition <= 0) {
+            pressurizing = true;
+        }
+    }
+    if (newPosition % 10 == 0) {
+        logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    }
     channels[chIdx]->setPositionAndVelocity(newPosition, 0);
     channels[chIdx]->setIsActive(true);
 }

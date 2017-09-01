@@ -212,8 +212,10 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
-            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "activationThreshold" : 20,                 // 20 is what we used with Shirley's Web in 2016
+            "deactivationThreshold" : 300,
+            "numGoodMeasurementsForReactivation" : 10,
+            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "sparkleColor" : "red"
@@ -230,8 +232,10 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
-            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "activationThreshold" : 20,                 // 20 is what we used with Shirley's Web in 2016
+            "deactivationThreshold" : 300,
+            "numGoodMeasurementsForReactivation" : 10,
+            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "sparkleColor" : "green"
@@ -248,8 +252,10 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
-            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "activationThreshold" : 20,                 // 20 is what we used with Shirley's Web in 2016
+            "deactivationThreshold" : 300,
+            "numGoodMeasurementsForReactivation" : 10,
+            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "sparkleColor" : "blue"
@@ -269,9 +275,8 @@
             ],
             "lowPressureCutoff" : 150,
             "burstThreshold" : 400,
-            "pressureColorRedValue" : 96,
-            "pressureColorGreenValue" : 0,
-            "pressureColorBlueValue" : 0,
+            "pressurizationColor" : "96,0,0",
+            "depressurizationColor" : "32,64,0",
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalMs" : 20
         },

@@ -784,6 +784,7 @@ int main(int argc, char **argv)
         }
 
         // Give the widgets a chance to update their simulated measurements.
+        //logMsg(LOG_DEBUG, "Updating simulated measurements.");
         for (auto&& widget : widgets) {
             widget.second->updateSimulatedMeasurements();
         }
