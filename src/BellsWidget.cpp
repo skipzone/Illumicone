@@ -15,77 +15,43 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
-#include <iostream>
+#include <algorithm>
+#include <climits>
 #include <string>
-//#include <thread>
-#include <time.h>
-///#include <vector>
 
 #include "BellsWidget.h"
 #include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
+#include "log.h"
 #include "WidgetId.h"
 
 using namespace std;
 
-static int simWidth;
 
 BellsWidget::BellsWidget()
     : Widget(WidgetId::bells, 1)
+    , simStep(INT_MIN + stepSize)
 {
-    for (unsigned int i = 0; i < 8; ++i) {
-        updateIntervalMs[i] = 0;
-        lastUpdateMs[i] = 0;
-    }
-
-    updateIntervalMs[0] = 1000;
-    updateIntervalMs[1] = 1000;
-    updateIntervalMs[2] = 1000;
-    updateIntervalMs[3] = 0;
-    updateIntervalMs[4] = 0;
-    updateIntervalMs[5] = 0;
-    updateIntervalMs[6] = 0;
-    updateIntervalMs[7] = 0;
-
-    simWidth = 0;
+    simulationUpdateIntervalMs[0] = 10;
+    simulationUpdateIntervalMs[1] = 10;
+    simulationUpdateIntervalMs[2] = 10;
 }
 
 
-bool BellsWidget::moveData()
+void BellsWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    if (!generateSimulatedMeasurements) {
-        return true;
+    simStep -= stepSize;
+    if (simStep <= doStrikeAtStepNum) {
+        simStep = stepNumAtStrike;
     }
-
-    using namespace std::chrono;
-
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
-
-    //cout << "---------- nowMs = " << nowMs << endl;
-
-    for (unsigned int i = 0; i < numChannels; ++i) {
-        //cout << "checking channel " << i << endl;
-        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            //cout << "updating channel " << i << endl;
-            lastUpdateMs[i] = nowMs;
-
-            if (simWidth == 0) {
-                // TODO:  Widgets should not need to be aware of the cone dimensions (that's the pattern's job).
-                //        For now, use a reasonable constant.  Eventually, replace this with simulation file playback.
-                //simWidth = NUM_STRINGS / 3;
-                simWidth = 36 / 3;
-            }
-
-            channels[i]->setPositionAndVelocity(simWidth, 0);
-            simWidth--;
-
-            channels[i]->setIsActive(true);
-            //cout << "updated channel " << i << endl;
-        }
+    if (simStep >= 0) {
+        channels[chIdx]->setPositionAndVelocity(simStep, 0);
+        channels[chIdx]->setIsActive(true);
+        //logMsg(LOG_DEBUG, channels[chIdx]->getName() + " position=" + to_string(simStep));
     }
-
-    return true;
+    else {
+        channels[chIdx]->setPositionAndVelocity(0, 0);
+        channels[chIdx]->setIsActive(false);
+    }
 }
 

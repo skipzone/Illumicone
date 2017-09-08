@@ -27,14 +27,19 @@
 class RainbowExplosionPattern : public Pattern
 {
     public:
-        RainbowExplosionPattern();
+
+        RainbowExplosionPattern(const std::string& name);
         ~RainbowExplosionPattern() {};
 
+        RainbowExplosionPattern() = delete;
         RainbowExplosionPattern(const RainbowExplosionPattern&) = delete;
         RainbowExplosionPattern& operator =(const RainbowExplosionPattern&) = delete;
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    protected:
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 
     private:
 

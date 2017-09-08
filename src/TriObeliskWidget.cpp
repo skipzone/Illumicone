@@ -15,18 +15,12 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
-#include <iostream>
-///#include <fstream>
-///#include <regex>
 #include <string>
-//#include <thread>
-#include <time.h>
-///#include <vector>
 
 #include "TriObeliskWidget.h"
-#include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconeUtility.h"
+#include "illumiconeWidgetTypes.h"
+#include "log.h"
 #include "WidgetId.h"
 
 using namespace std;
@@ -35,40 +29,54 @@ using namespace std;
 TriObeliskWidget::TriObeliskWidget()
     : Widget(WidgetId::triObelisk, 3)
 {
+    unsigned int nowMs = getNowMs();
+
     for (unsigned int i = 0; i < 8; ++i) {
-        updateIntervalMs[i] = 0;
-        lastUpdateMs[i] = 0;
+        simulationToggleActivityPeriodMs[i] = 0;
+        simulationToggleActivityMs[i] = nowMs;
+        simulationIsActive[i] = true;
     }
 
-    updateIntervalMs[0] = 200;
-    updateIntervalMs[1] = 400;
-    updateIntervalMs[2] = 50;
+    simulationUpdateIntervalMs[0] = 200;
+    simulationUpdateIntervalMs[1] = 400;
+    simulationUpdateIntervalMs[2] = 50;
+
+    simulationToggleActivityPeriodMs[0] = 0;    //2500;
+    simulationToggleActivityPeriodMs[0] = 0;    //5000;
+    simulationToggleActivityPeriodMs[0] = 0;    //7500;
+
+    minPosition[0] = -1000;
+    minPosition[1] = -1000;
+    minPosition[2] = -1000;
+
+    maxPosition[0] = 1000;
+    maxPosition[1] = 1000;
+    maxPosition[2] = 1000;
 }
 
 
-bool TriObeliskWidget::moveData()
+void TriObeliskWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    if (!generateSimulatedMeasurements) {
-        return true;
+    unsigned int nowMs = getNowMs();
+
+    if (simulationToggleActivityPeriodMs[chIdx] != 0 && (int) (nowMs - simulationToggleActivityMs[chIdx]) >= 0) {
+        simulationToggleActivityMs[chIdx] += simulationToggleActivityPeriodMs[chIdx];
+        simulationIsActive[chIdx] = !simulationIsActive[chIdx];
     }
 
-    using namespace std::chrono;
-
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
-
-    for (unsigned int i = 0; i < numChannels; ++i) {
-        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            lastUpdateMs[i] = nowMs;
-            channels[i]->getPosition();      // make sure previous velocity has been updated
-            int newPosition = (channels[i]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
-            int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
-            //cout << "newPosition=" << newPosition << ", newVelocity=" << newVelocity << endl;
-            channels[i]->setPositionAndVelocity(newPosition, newVelocity);
-            channels[i]->setIsActive(true);
+    if (simulationIsActive[chIdx]) {
+        channels[chIdx]->getPosition();             // make sure previous velocity has been updated
+        int newPosition = (channels[chIdx]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
+        if (newPosition > maxPosition[chIdx]) {
+            newPosition = minPosition[chIdx];
         }
+        //logMsg(LOG_DEBUG, "chIdx=" + to_string(chIdx) + ", newPosition=" + to_string(newPosition));
+        int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
+        channels[chIdx]->setPositionAndVelocity(newPosition, newVelocity);
+        channels[chIdx]->setIsActive(true);
     }
-
-    return true;
+    else {
+        channels[chIdx]->setIsActive(false);
+    }
 }
 

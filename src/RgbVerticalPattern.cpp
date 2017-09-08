@@ -28,21 +28,14 @@
 using namespace std;
 
 
-RgbVerticalPattern::RgbVerticalPattern()
-    : Pattern("rgbVertical")
+RgbVerticalPattern::RgbVerticalPattern(const std::string& name)
+    : Pattern(name)
 {
 }
 
 
-bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
-    opacity = 90;
-
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-
     rPos = 0;
     gPos = 0;
     bPos = 0;
@@ -91,14 +84,14 @@ bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Wi
             widthChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_ERR, "Warning:  inputName '" + channelConfig.inputName
+            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
         logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_ERR, "Warning:  " + name + " supports only position measurements, but the input configuration for "
+            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }
@@ -114,11 +107,12 @@ bool RgbVerticalPattern::update()
     // clear pixel data
     for (auto&& pixels:pixelArray) {
         for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
+            pixel = CRGB::Black;
         }
     }
+
+    // TODO 7/24/2017 ross:  We need to figure out the width first, then set the pixels.
+    //                       That will allow us to do blending more easily.
 
     // TODO 6/13/2017 ross:  If we kept the previous position and didn't clear it above, maybe we would have to do
     //                       this only if redPositionChannel->getHasNewPositionMeasurement() && redPositionChannel->getIsActive().
@@ -198,5 +192,5 @@ bool RgbVerticalPattern::update()
         }
     }
 
-    return true;
+    return isActive;
 }

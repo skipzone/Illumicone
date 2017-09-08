@@ -20,20 +20,21 @@
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-class PlungerWidget : public Widget
+class SchroedersPlaythingWidget : public Widget
 {
     public:
-        PlungerWidget();
-        ~PlungerWidget() {};
 
-        PlungerWidget(const PlungerWidget&) = delete;
-        PlungerWidget& operator =(const PlungerWidget&) = delete;
+        SchroedersPlaythingWidget();
+        virtual ~SchroedersPlaythingWidget() {};
 
-        bool moveData();
+        SchroedersPlaythingWidget(const SchroedersPlaythingWidget&) = delete;
+        SchroedersPlaythingWidget& operator =(const SchroedersPlaythingWidget&) = delete;
+
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
+        unsigned int currentNote;
+
 };
 

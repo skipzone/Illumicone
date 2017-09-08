@@ -30,65 +30,60 @@ struct SchedulePeriod {
 };
 
 
-// structure to hold Open Pixel Control pixel data
-typedef struct _opc_pixel_ {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-} opc_pixel_t;
+typedef enum {
+    MIDI_NOTE_OFF = 0,
+    MIDI_NOTE_ON,
+    MIDI_POLYPHONIC_AFTERTOUCH,
+    MIDI_CONTROL_CHANGE,
+    MIDI_PROGRAM_CHANGE,
+    MIDI_CHANNEL_AFTERTOUCH,
+    MIDI_PITCH_WHEEL,
+    MIDI_IS_SYSTEM_MESSAGE
+} MidiChannelMessage_t;
 
 
-/*******************
- * Widget Payloads *
- *******************/
-
-#pragma pack(push)
-#pragma pack(1)
-
-union WidgetHeader {
-  struct {
-    uint8_t id       : 4;
-    bool    isActive : 1;
-    uint8_t channel  : 3;
-  };
-  uint8_t raw;
+struct MidiPositionMeasurement {
+    union {
+        struct {
+            union {
+                uint8_t l;
+                struct {
+                    uint8_t channelNumber : 4;
+                    uint8_t channelMessageType : 3;
+                    uint8_t : 1;
+                };
+                struct {
+                    uint8_t systemMessageType : 4;
+                    uint8_t systemMessageIndicator : 4;    // all 1s if system message
+                };
+            };
+            uint8_t h;
+        };
+        int16_t raw;
+    };
 };
 
-// pipe 0
-struct StressTestPayload {
-    WidgetHeader widgetHeader;
-    uint32_t     payloadNum;
-    uint32_t     numTxFailures;
-};
 
-// pipe 1
-struct PositionVelocityPayload {
-    WidgetHeader widgetHeader;
-    int16_t      position;
-    int16_t      velocity;
+struct MidiVelocityMeasurement {
+    union {
+        struct {
+            union {
+                uint8_t data2;
+                uint8_t velocity;
+                uint8_t pressure;
+                uint8_t pitchH;
+            };
+            union {
+                uint8_t data1;
+                uint8_t noteNumber;
+                uint8_t controllerNumber;
+                uint8_t programNumber;
+                uint8_t channelPressure;
+                uint8_t pitchL;
+            };
+        };
+        int16_t raw;
+    };
 };
-
-// pipe 2
-struct MeasurementVectorPayload {
-    WidgetHeader widgetHeader;
-    int16_t      measurements[15];
-};
-
-// pipe 5
-struct CustomPayload {
-    WidgetHeader widgetHeader;
-    uint8_t      buf[31];
-};
-
-// UDP to the pattern controller
-struct UdpPayload {
-    uint8_t id;
-    uint8_t channel;
-    uint8_t isActive;
-    int16_t position;
-    int16_t velocity;
-};
-
-#pragma pack(pop)
 
 

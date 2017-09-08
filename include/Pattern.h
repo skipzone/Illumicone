@@ -15,42 +15,48 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef PATTERN_H
-#define PATTERN_H
+#pragma once
 
 #include <map>
 #include <string>
 #include <vector>
 
+#include "illumiconePixelTypes.h"
 #include "illumiconeTypes.h"
-#include "Widget.h"
+#include "WidgetChannel.h"
+#include "WidgetId.h"
+
+
+class ConfigReader;
+class Widget;
 
 
 class Pattern
 {
     public:
 
-        Pattern(const std::string name);
-        virtual ~Pattern() {}
+        Pattern(const std::string& name, bool usesHsvModel = false);
+        virtual ~Pattern();
 
         Pattern() = delete;
         Pattern(const Pattern&) = delete;
         Pattern& operator =(const Pattern&) = delete;
 
-        int pixelsPerString;
-        int numStrings;
-        std::vector<std::vector<opc_pixel_t>> pixelArray;
-
-        int priority;
-        int opacity;
-        std::string name;
-        bool isActive;
-
         std::string getName() { return name; }
 
-        virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority) = 0;
-
+        bool init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
         virtual bool update() = 0;
+
+        // configuration
+        unsigned int pixelsPerString;
+        unsigned int numStrings;
+        bool usesHsvModel;
+        int priority;
+        int opacity;
+
+        RgbConeStrings pixelArray;
+        HsvConeStrings coneStrings;
+        bool isActive;
 
     protected:
 
@@ -60,7 +66,10 @@ class Pattern
             std::string measurement;
         };
 
+        std::string name;
+
         std::vector<ChannelConfiguration> getChannelConfigurations(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+
+        virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets) = 0;
 };
 
-#endif /* PATTERN_H */

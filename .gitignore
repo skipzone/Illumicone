@@ -1,12 +1,8 @@
-PatternController
-PatternController.dSYM
-GpioTester
-GpioTester.dSYM
-WidgetSimulator
-WidgetSimulator.dSYM
+patternController
+stringTester
 widgetRcvr
 jsonTester
-jsonTester.dSYM
+*.dSYM
 *.o
 .*.swp
 *~
@@ -16,3 +12,5 @@ cscope.out
 database/log*
 database/*.pdf
 database/sql*.sql
+database/widgetRcvr.out*
+config/activeConfig.json

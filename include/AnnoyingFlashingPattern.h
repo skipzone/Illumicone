@@ -23,6 +23,8 @@
 #include "Pattern.h"
 #include "WidgetId.h"
 
+#include "illumiconePixelTypes.h"
+
 
 class ConfigReader;
 class Widget;
@@ -32,23 +34,32 @@ class AnnoyingFlashingPattern : public Pattern {
 
     public:
 
-        AnnoyingFlashingPattern();
-        ~AnnoyingFlashingPattern() {};
+        AnnoyingFlashingPattern(const std::string& name);
+        ~AnnoyingFlashingPattern();
 
+        AnnoyingFlashingPattern() = delete;
         AnnoyingFlashingPattern(const AnnoyingFlashingPattern&) = delete;
         AnnoyingFlashingPattern& operator =(const AnnoyingFlashingPattern&) = delete;
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    protected:
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 
     private:
 
         std::shared_ptr<WidgetChannel> intensityChannel;
 
+        // pattern config
         int activationThreshold;
-        time_t flashingTimeoutSeconds;
-        time_t timeExceededThreshold;
+        int reactivationThreshold;
+        unsigned int autoDisableTimeoutMs;
+        bool allStringsSameColor;
+        unsigned int flashChangeIntervalMs;
 
-        void goInactive();
+        unsigned int disableMs;
+        bool disableFlashing;
+        unsigned int nextFlashChangeMs;
 };
 

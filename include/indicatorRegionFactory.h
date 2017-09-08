@@ -17,23 +17,10 @@
 
 #pragma once
 
-#include "Widget.h"
-#include "WidgetChannel.h"
+#include <string>
 
-class ShirleysWebWidget : public Widget
-{
-    public:
-        ShirleysWebWidget();
-        ~ShirleysWebWidget() {};
+#include "IndicatorRegion.h"
 
-        ShirleysWebWidget(const ShirleysWebWidget&) = delete;
-        ShirleysWebWidget& operator =(const ShirleysWebWidget&) = delete;
 
-        bool moveData();
-
-    private:
-
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
-};
+IndicatorRegion* indicatorRegionFactory(const std::string& indicatorClassName);
 

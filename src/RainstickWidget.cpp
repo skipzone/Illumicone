@@ -15,13 +15,11 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
-#include <iostream>
 #include <string>
-#include <time.h>
 
 #include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "RainstickWidget.h"
 
@@ -31,44 +29,39 @@ using namespace std;
 RainstickWidget::RainstickWidget()
     : Widget(WidgetId::rainstick, 7)
 {
-    for (unsigned int i = 0; i < 8; ++i) {
-        updateIntervalMs[i] = 0;
-        lastUpdateMs[i] = 0;
-    }
-
-    updateIntervalMs[2] = 10;
+    simulationUpdateIntervalMs[2] = 10;
 }
 
 
-bool RainstickWidget::moveData()
+void RainstickWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    if (!generateSimulatedMeasurements) {
-        return true;
+    // Make sure previous position and velocity have been
+    // updated in case the pattern hasn't read them.
+    channels[chIdx]->getPosition();
+
+    int newPosition = channels[chIdx]->getPreviousPosition();
+    if (!simulatedPositionGoingDown) {
+        if (newPosition < 1023) {
+            ++newPosition;
+        }
+        else {
+            simulatedPositionGoingDown = true;
+        }
     }
-
-    using namespace std::chrono;
-
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
-
-    for (unsigned int i = 0; i < numChannels; ++i) {
-        if (updateIntervalMs[i] > 0 && (int) (nowMs - lastUpdateMs[i]) > updateIntervalMs[i]) {
-            lastUpdateMs[i] = nowMs;
-            channels[i]->getPosition();      // make sure previous position and velocity have been updated in case the pattern hasn't read them
-            int newPosition = channels[i]->getPreviousPosition() + 1;
-            //logMsg(LOG_DEBUG, "RainstickWidget::moveData:  newPosition=" + to_string(newPosition));
-            if (newPosition > 1023) {
-                newPosition = 0;
-            }
-            if (newPosition % 100 == 0) {
-                logMsg(LOG_DEBUG, channels[i]->getName() + " newPosition=" + to_string(newPosition));
-            }
-            channels[i]->setPositionAndVelocity(newPosition, 0);
-            channels[i]->setIsActive(true);
+    else {
+        if (newPosition > 0) {
+            --newPosition;
+        }
+        else {
+            simulatedPositionGoingDown = false;
         }
     }
 
-    return true;
-}
+    //if (newPosition % 100 == 0) {
+    //    logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    //}
 
+    channels[chIdx]->setPositionAndVelocity(newPosition, 0);
+    channels[chIdx]->setIsActive(true);
+}
 

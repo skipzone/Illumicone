@@ -15,6 +15,32 @@ load kernel module automatically or whatever
 save and reboot
 
 
+Use the static IP address 192.168.69.102
+----------------------------------------
+
+At some point in the past, the only modifications needed were to
+/etc/network/interfaces:
+
+    auto eth0
+    iface eth0 inet static
+        address 192.168.69.102
+        netmask 255.255.255.0
+        gateway 192.168.69.1
+
+At present, even with that change to interfaces, dhcpd5 will still use DHCP to
+get a second address for eth0.  To stop that from happening, the static
+address must be configured in /etc/dhcpcd.conf (note the extra "c" in the file
+name) by adding this:
+
+    # Use a static IP address on the Illumicone network.
+    interface eth0
+        static ip_address=192.168.69.102/24
+        static routers=192.168.69.1
+        static domain_name_servers=192.168.69.1 8.8.8.8
+
+(At least we're not having to deal with fucking connman.)
+
+
 Install git-flow, clone the Illumicone project, init git flow, pull current feature
 -----------------------------------------------------------------------------------
 sudo apt-get install git-flow
@@ -24,8 +50,11 @@ cd Illumicone/
 git flow init
 git flow feature pull origin ContortOMatic
 
+
 Install RF24
 ------------
+Use tmrh20's fork of RF24.  This is the same one we use for the widget Arduinos.
 cd ~/devl
+git clone https://github.com/nRF24/RF24.git
 sudo make install -B
 

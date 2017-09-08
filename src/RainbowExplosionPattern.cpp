@@ -15,11 +15,10 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
-#include <iostream>
-#include <time.h>
+#include <stdlib.h>
 
 #include "ConfigReader.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "Pattern.h"
 #include "RainbowExplosionPattern.h"
@@ -30,21 +29,14 @@
 using namespace std;
 
 
-RainbowExplosionPattern::RainbowExplosionPattern()
-    : Pattern("rainbowExplosion")
+RainbowExplosionPattern::RainbowExplosionPattern(const std::string& name)
+    : Pattern(name)
 {
 }
 
 
-bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
-    opacity = 100;
-
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
-
     state = PatternState::fizzle;
     accumulator = 0;
 
@@ -111,14 +103,14 @@ bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetI
             intensityChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "Warning:  inputName '" + channelConfig.inputName
+            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
         logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_ERR, "Warning:  " + name + " supports only position measurements, but the input configuration for "
+            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }
@@ -131,9 +123,7 @@ void RainbowExplosionPattern::clearAllPixels()
 {
     for (auto&& pixels:pixelArray) {
         for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
+            pixel = CRGB::Black;
         }
     }
 }
@@ -146,9 +136,7 @@ bool RainbowExplosionPattern::update()
         return false;
     }
 
-    std::chrono::milliseconds epochMs =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
+    unsigned int nowMs = getNowMs();
 
     // If we're in one of the explosion states and it isn't time
     // to do the next step, just return that we're active.
@@ -199,7 +187,7 @@ bool RainbowExplosionPattern::update()
             // we reset the accumulator to a random value (to get more of a random
             // explosion response) and do the rainbow explosion.
             if (accumulator > explosionThreshold) {
-                accumulator = rand() % accumulatorResetUpperLimit;
+                accumulator = random16(accumulatorResetUpperLimit);
                 fillPosition = pixelsPerString;
                 nextStepMs = nowMs;         // immediately
                 state = PatternState::fillRed;
@@ -207,11 +195,9 @@ bool RainbowExplosionPattern::update()
                 accumulator++;
                 // Fill the cone with red from the bottom up to a random depth.
                 for (auto&& pixels:pixelArray) {
-                    int fillLevel = (rand() + minFizzleFill) % maxFizzleFill;
-                    for (int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
-                        pixels[i].r = 127;
-                        pixels[i].g = 0;
-                        pixels[i].b = 0;
+                    int fillLevel = (random16() + minFizzleFill) % maxFizzleFill;
+                    for (unsigned int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
+                        pixels[i] = CRGB::Maroon;
                     }
                 }
                 fizzleMeasurementTimeoutMs = nowMs + fizzleMeasurementTimeoutPeriodMs;
@@ -220,11 +206,9 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillRed:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 255;
-                    pixels[i].g = 0;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Red;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -236,11 +220,9 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillOrange:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 255;
-                    pixels[i].g = 127;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Orange;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -252,11 +234,9 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillYellow:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 255;
-                    pixels[i].g = 255;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Yellow;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -268,11 +248,9 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillGreen:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 0;
-                    pixels[i].g = 255;
-                    pixels[i].b = 0;
+                    pixels[i] = CRGB::Green;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -284,11 +262,9 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillBlue:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 0;
-                    pixels[i].g = 0;
-                    pixels[i].b = 255;
+                    pixels[i] = CRGB::Blue;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -300,11 +276,9 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillIndigo:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 75;
-                    pixels[i].g = 0;
-                    pixels[i].b = 130;
+                    pixels[i] = CRGB::Indigo;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -316,11 +290,9 @@ bool RainbowExplosionPattern::update()
 
         case PatternState::fillViolet:
             fillPosition = max(fillPosition - fillStepSize, 0);
-            for (int i = fillPosition; i < pixelsPerString; i++) {
+            for (unsigned int i = fillPosition; i < pixelsPerString; i++) {
                 for (auto&& pixels:pixelArray) {
-                    pixels[i].r = 148;
-                    pixels[i].g = 0;
-                    pixels[i].b = 211;
+                    pixels[i] = CRGB::Violet;
                 }
             }
             nextStepMs = nowMs + fillStepIntervalMs;
@@ -332,9 +304,7 @@ bool RainbowExplosionPattern::update()
         case PatternState::endExplosion:
             for (auto&& pixels:pixelArray) {
                 for (auto&& pixel:pixels) {
-                    pixel.r = 0;
-                    pixel.g = 0;
-                    pixel.b = 0;
+                    pixel = CRGB::Black;
                 }
             }
             state = PatternState::fizzle;

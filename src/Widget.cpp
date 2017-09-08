@@ -24,7 +24,8 @@
 #include <unistd.h>
 
 #include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
@@ -36,27 +37,51 @@ using namespace std;
 Widget::Widget(WidgetId id, unsigned int numChannels)
     : id(id)
     , numChannels(numChannels)
+    , stopUdpRxPolling(false)
 {
+    unsigned int nowMs = getNowMs();
+
+    for (unsigned int i = 0; i < 8; ++i) {
+        simulationUpdateIntervalMs[i] = 0;      // disabled for channel
+        simulationNextUpdateMs[i] = nowMs;      // start doing updates immediately if enabled
+    }
 }
 
 
 Widget::~Widget()
 {
-    pthread_join(udpRxThread, NULL); 	// close the thread
-    close(sockfd); 					// close UDP socket
+    if (!generateSimulatedMeasurements) {
+
+        stopUdpRxPolling = true;
+
+        // We need to close the UDP socket before waiting for the rx thread to
+        // terminate because the recvfrom call blocks until a message is
+        // received or an error occurs.  Closing the socket will cause a file
+        // descriptor error, thus allowing the thread to figure out it needs to
+        // terminate.
+        logMsg(LOG_DEBUG, "closing UDP socket for " + widgetIdToString(id));
+        close(sockfd); 					            // close the UDP socket
+
+        logMsg(LOG_DEBUG, "Waiting for UDP rx thread termination for " + widgetIdToString(id));
+        pthread_cancel(udpRxThread); 	            // kill the rx thread
+        pthread_join(udpRxThread, NULL); 	        // wait for the rx thread to terminate
+    }
 }
 
 
 bool Widget::init(ConfigReader& config)
 {
-    generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(id);
-    autoInactiveMs = config.getWidgetAutoInactiveMs(id);
+    string widgetName = widgetIdToString(id);
+
+    generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(widgetName);
+
+    autoInactiveMs = config.getWidgetAutoInactiveMs(widgetName);
 
     if (autoInactiveMs != 0) {
         logMsg(LOG_INFO, "autoInactiveMs=" + to_string(autoInactiveMs) + " for " + widgetIdToString(id));
     }
 
-    for (int i = 0; i < numChannels; ++i) {
+    for (unsigned int i = 0; i < numChannels; ++i) {
         channels.push_back(make_shared<WidgetChannel>(i, this, autoInactiveMs));
     }
 
@@ -84,39 +109,6 @@ std::vector<std::shared_ptr<WidgetChannel>> Widget::getChannels()
 {
     return channels;
 }
-
-
-//bool Widget::getIsActive()
-//{
-//    for (auto&& channel : channels) {
-//        if (channel->getIsActive()) {
-//            return true;
-//        }
-//    }
-//    return false;
-//}
-
-
-//bool Widget::getHasNewPositionMeasurement()
-//{
-//    for (auto&& channel : channels) {
-//        if (channel->getHasNewPositionMeasurement()) {
-//            return true;
-//        }
-//    }
-//    return false;
-//}
-
-
-//bool Widget::getHasNewVelocityMeasurement()
-//{
-//    for (auto&& channel : channels) {
-//        if (channel->getHasNewVelocityMeasurement()) {
-//            return true;
-//        }
-//    }
-//    return false;
-//}
 
 
 void Widget::startUdpRxThread()
@@ -154,7 +146,7 @@ void Widget::pollForUdpRx()
     struct sockaddr_in cliaddr;
     UdpPayload payload;
 
-	while (true)
+	while (!stopUdpRxPolling)
 	{
 		len = sizeof(cliaddr);
 		ssize_t rxByteCount = recvfrom(sockfd,
@@ -163,6 +155,11 @@ void Widget::pollForUdpRx()
                                        0,
                                        (struct sockaddr *) &cliaddr,
                                        &len);
+
+        if (rxByteCount < 0) {
+            logSysErr(LOG_ERR, "Error receiving UDP message for " + widgetIdToString(id) + ".", errno);
+            continue;
+        }
 
         logMsg(LOG_INFO, 
             "got UDP payload; length = " + to_string(rxByteCount)
@@ -182,6 +179,7 @@ void Widget::pollForUdpRx()
         }
 	}
 
+    logMsg(LOG_INFO, "UDP message polling for " + widgetIdToString(id) + " stopped.");
 };
 
 
@@ -189,5 +187,23 @@ void* Widget::udpRxThreadEntry(void* widgetObj)
 {
 	((Widget *) widgetObj)->pollForUdpRx();
     return nullptr;
+}
+
+
+void Widget::updateSimulatedMeasurements()
+{
+    if (!generateSimulatedMeasurements) {
+        return;
+    }
+
+    unsigned int nowMs = getNowMs();
+
+    for (unsigned int i = 0; i < numChannels; ++i) {
+        if (simulationUpdateIntervalMs[i] > 0 && (int) (nowMs - simulationNextUpdateMs[i]) >= 0) {
+            ///simulationNextUpdateMs[i] = nowMs + simulationUpdateIntervalMs[i];
+            simulationNextUpdateMs[i] += simulationUpdateIntervalMs[i];
+            updateChannelSimulatedMeasurements(i);
+        }
+    }
 }
 

@@ -15,15 +15,17 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
-//#include <stdlib.h>
-//#include <stdio.h>
+
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
+#include "illumiconeUtility.h"
 #include "log.h"
 
 
@@ -32,13 +34,12 @@ using namespace std;
 
 const string getTimestamp()
 {
-    using namespace std::chrono;
+    uint64_t nowMs = getNowMs64();
+    uint32_t ms = nowMs % 1000;
+    time_t now = nowMs / 1000;
 
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    int ms = epochMs.count() % 1000;
-    time_t now = epochMs.count() / 1000;
-
-    struct tm tmStruct = *localtime(&now);
+    struct tm result;
+    struct tm tmStruct = *localtime_r(&now, &result);
     char buf[20];
     std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmStruct);
 
@@ -52,12 +53,30 @@ const string getTimestamp()
 
 void logMsg(int priority, const string& message)
 {
-  if (priority <= LOG_WARNING) {
-    cout << getTimestamp() << message << endl;
-  }
-  else {
-    cerr << getTimestamp() << message << endl;
-  }
+    if (priority > LOG_WARNING) {
+        cout << getTimestamp() << message << endl;
+    }
+    else if (priority == LOG_WARNING) {
+        cerr << getTimestamp() << "///// Warning:  " << message << " /////" << endl;
+    }
+    else {
+        cerr << getTimestamp() << "*** " << message << endl;
+    }
 }
 
+
+void logSysErr(int priority, const string& message, int errNum)
+{
+    string errStr = "  " + string(strerror(errNum)) + " (" + to_string(errNum) + ")";
+
+    if (priority > LOG_WARNING) {
+        cout << getTimestamp() << message << errStr << endl;
+    }
+    else if (priority == LOG_WARNING) {
+        cerr << getTimestamp() << "///// Warning:  " << message << errStr << " /////" << endl;
+    }
+    else {
+        cerr << getTimestamp() << "*** " << message << errStr << endl;
+    }
+}
 

@@ -32,22 +32,35 @@ class SparklePattern : public Pattern {
 
     public:
 
-        SparklePattern();
+        SparklePattern(const std::string& name);
         ~SparklePattern() {};
 
+        SparklePattern() = delete;
         SparklePattern(const SparklePattern&) = delete;
         SparklePattern& operator =(const SparklePattern&) = delete;
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    protected:
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 
     private:
 
         std::shared_ptr<WidgetChannel> densityChannel;
 
+        // pattern configuration
         int densityScaledownFactor;
         int activationThreshold;
+        int deactivationThreshold;
+        unsigned int numGoodMeasurementsForReactivation;
+        CRGB sparkleColor;
+        bool usePositionMeasurement;
+        bool useRandomColors;
 
-        void goInactive();
+        unsigned int goodMeasurementCount;
+        unsigned int nextSparkleChangeMs;
+        int numPixelsPerStringToSparkle;
+        unsigned int sparkleChangeIntervalMs;
 };
 

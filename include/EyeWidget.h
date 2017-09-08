@@ -15,32 +15,34 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef EYE_WIDGET_H
-#define EYE_WIDGET_H
+#pragma once
 
 #include "Widget.h"
 #include "WidgetChannel.h"
+
 
 class EyeWidget : public Widget
 {
     public:
         EyeWidget();
-        ~EyeWidget() {};
+        virtual ~EyeWidget() {};
 
         EyeWidget(const EyeWidget&) = delete;
         EyeWidget& operator = (const EyeWidget&) = delete;
 
-        bool moveData();
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
         // for generating simulated measurements
-        constexpr static unsigned int updateIntervalMs = 100;
+        constexpr static bool makeAlwaysActive = true;
+        constexpr static unsigned int eyeSimulationUpdateIntervalMs = 100;
         constexpr static unsigned int numActiveSteps = 30;
+        constexpr static unsigned int numSemiActiveSteps = 20;
         constexpr static unsigned int numInactiveSteps = 50;
-        constexpr static int activePositionValue = 201;
+        constexpr static int activePositionValue = 301;
+        constexpr static int semiActivePositionValue = 201;
+        constexpr static int inactivePositionValue = 199;
         unsigned int stepCount;
-        unsigned int lastUpdateMs;
 };
 
-#endif /* EYE_WIDGET_H */

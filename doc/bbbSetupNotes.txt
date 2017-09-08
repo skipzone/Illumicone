@@ -18,14 +18,26 @@
 - Set the host name to ic-patcon by changing all occurrences of "beaglebone"
   to "ic-patcon" in /etc/hostname and /etc/hosts.
 
-- Assign the static IP address for ic-patcon by making the eth0 section of
-  /etc/network/interfaces look like this:
+- Assign the static IP address for ic-patcon.  jessie uses that fucking connman,
+  so use this:
+
+    sudo connmanctl services
+
+  Note which service is ethernet_hexshit_cable.  Then,
+
+    sudo connmanctl config ethernet_hexshit_cable --ipv4 manual 192.168.69.101 255.255.255.0 192.168.69.1 --nameservers 192.168.69.1 8.8.8.8
+  
+  Your ssh connection will go away because the address change will be immediate.
+
+  The old way of modifying the eth0 section of /etc/network/interfaces doesn't
+  work anymore.  For reference, here is what we used to use:
 
     auto eth0
     iface eth0 inet static
-    address 192.168.69.101
-    netmask 255.255.255.0
-    gateway 192.168.69.0
+        address 192.168.69.101
+        netmask 255.255.255.0
+        network 192.168.69.0   <-- not sure if this is needed
+        gateway 192.168.69.1
 
 - Reboot then log in as illumicone.
 
@@ -58,6 +70,10 @@
         But, the output from timedatectl looks correct.  Try this command
         instead:  sudo timedatectl set-timezone America/Boise
 
+
+- Install psmisc to get the killall utility.
+
+    sudo apt-get install psmisc
 
 - Install git flow.
 

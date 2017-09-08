@@ -46,16 +46,14 @@ class Widget
 
         virtual bool init(ConfigReader& config);
 
-        virtual bool moveData() = 0;
-
         virtual std::shared_ptr<WidgetChannel> getChannel(unsigned int channelIdx);
         virtual std::vector<std::shared_ptr<WidgetChannel>> getChannels();
 
-//        virtual bool getIsActive();
-//        virtual bool getHasNewPositionMeasurement();
-//        virtual bool getHasNewVelocityMeasurement();
-
         static void* udpRxThreadEntry(void* widgetObj);
+
+        void updateSimulatedMeasurements();
+        virtual void updateChannelSimulatedMeasurements(unsigned int chIdx) {};
+
 
     protected:
 
@@ -63,9 +61,12 @@ class Widget
 
         const WidgetId id;
         std::vector<std::shared_ptr<WidgetChannel>> channels;
-        bool generateSimulatedMeasurements;
         unsigned int autoInactiveMs;
         unsigned int numChannels;
+        bool generateSimulatedMeasurements;
+        // TODO 8/7/2017 ross:  These need to be sized dynamically to agree with the number of channels.
+        unsigned int simulationNextUpdateMs[8];
+        unsigned int simulationUpdateIntervalMs[8];
 
     private:
 
@@ -74,5 +75,6 @@ class Widget
         pthread_t udpRxThread;
         int sockfd;
         struct sockaddr_in servaddr;
+        bool stopUdpRxPolling;
 };
 

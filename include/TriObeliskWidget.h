@@ -23,17 +23,22 @@
 class TriObeliskWidget : public Widget
 {
     public:
+
         TriObeliskWidget();
-        ~TriObeliskWidget() {};
+        virtual ~TriObeliskWidget() {};
 
         TriObeliskWidget(const TriObeliskWidget&) = delete;
         TriObeliskWidget& operator =(const TriObeliskWidget&) = delete;
 
-        bool moveData();
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
+        // TODO 8/7/2017 ross:  These need to be sized dynamically to agree with the number of channels.
+        bool simulationIsActive[8];
+        unsigned int simulationToggleActivityMs[8];
+        unsigned int simulationToggleActivityPeriodMs[8];
+        int minPosition[8];
+        int maxPosition[8];
 };
 

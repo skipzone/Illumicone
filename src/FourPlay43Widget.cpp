@@ -15,18 +15,9 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <chrono>
-#include <iostream>
-///#include <fstream>
-///#include <regex>
-#include <string>
-//#include <thread>
-#include <time.h>
-///#include <vector>
-
 #include "FourPlay43Widget.h"
 #include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconeWidgetTypes.h"
 #include "WidgetId.h"
 
 using namespace std;
@@ -35,47 +26,19 @@ using namespace std;
 FourPlay43Widget::FourPlay43Widget()
     : Widget(WidgetId::fourPlay43, 4)
 {
-    for (unsigned int i = 0; i < 8; ++i) {
-        updateIntervalMs[i] = 0;
-        lastUpdateMs[i] = 0;
-    }
-
-    updateIntervalMs[0] = 20;
-    updateIntervalMs[1] = 40;
-    updateIntervalMs[2] = 80;
-    updateIntervalMs[3] = 50;
-    updateIntervalMs[4] = 0;
-    updateIntervalMs[5] = 0;
-    updateIntervalMs[6] = 0;
-    updateIntervalMs[7] = 0;
+    simulationUpdateIntervalMs[0] = 20;
+    simulationUpdateIntervalMs[1] = 40;
+    simulationUpdateIntervalMs[2] = 80;
+    simulationUpdateIntervalMs[3] = 50;
 }
 
 
-bool FourPlay43Widget::moveData()
+void FourPlay43Widget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    if (!generateSimulatedMeasurements) {
-        return true;
-    }
-
-    using namespace std::chrono;
-
-    milliseconds epochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
-
-    //cout << "---------- nowMs = " << nowMs << endl;
-
-    for (unsigned int i = 0; i < numChannels; ++i) {
-        if (updateIntervalMs[i] > 0 && nowMs - lastUpdateMs[i] > updateIntervalMs[i]) {
-            lastUpdateMs[i] = nowMs;
-            channels[i]->getPosition();      // make sure previous velocity has been updated
-            int newPosition = (channels[i]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
-            int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
-            //cout << "newPosition=" << newPosition << ", newVelocity=" << newVelocity << endl;
-            channels[i]->setPositionAndVelocity(newPosition, newVelocity);
-            channels[i]->setIsActive(true);
-        }
-    }
-
-    return true;
+    channels[chIdx]->getPosition();      // make sure previous velocity has been updated
+    int newPosition = (channels[chIdx]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget
+    int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
+    channels[chIdx]->setPositionAndVelocity(newPosition, newVelocity);
+    channels[chIdx]->setIsActive(true);
 }
 

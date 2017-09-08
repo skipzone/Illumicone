@@ -89,6 +89,9 @@ union WidgetHeader {
   uint8_t raw;
 };
 
+
+// ----- standard payloads -----
+
 // pipe 0
 struct StressTestPayload {
   WidgetHeader widgetHeader;
@@ -113,6 +116,22 @@ struct MeasurementVectorPayload {
 struct CustomPayload {
   WidgetHeader widgetHeader;
   uint8_t      buf[31];
+};
+
+
+// ----- custom payloads (always sent on pipe 5) -----
+
+// channel 0 carries touch data payloads
+struct ContortOMaticTouchDataPayload {
+    WidgetHeader widgetHeader;
+    uint16_t padIsTouchedBitfield;
+};
+
+// channel 1 carries calibration data payloads
+struct ContortOMaticCalibrationDataPayload {
+    WidgetHeader widgetHeader;
+    uint8_t setNum;                         // 0 for pads 0-7, 1 for pads 8-15
+    uint16_t capSenseReferenceValues[8];
 };
 
 

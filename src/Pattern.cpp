@@ -17,17 +17,66 @@
 
 #include <iostream>
 
+#include "colorutils.h"
 #include "ConfigReader.h"
+#include "illumiconePixelUtility.h"
 #include "json11.hpp"
 #include "log.h"
 #include "Pattern.h"
+#include "Widget.h"
+
 
 using namespace std;
 
 
-Pattern::Pattern(const std::string name)
-    : name(name)
+Pattern::Pattern(const std::string& name, bool usesHsvModel)
+    : usesHsvModel(usesHsvModel)
+    , isActive(false)
+    , name(name)
 {
+}
+
+
+Pattern::~Pattern()
+{
+    if (usesHsvModel) {
+        freeConePixels<HsvConeStrings, HsvPixel>(coneStrings);
+    }
+    else {
+        freeConePixels<RgbConeStrings, RgbPixel>(pixelArray);
+    }
+}
+
+
+bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+{
+    numStrings = config.getNumberOfStrings();
+    pixelsPerString = config.getNumberOfPixelsPerString();
+
+    if (usesHsvModel) {
+        allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(coneStrings, numStrings, pixelsPerString);
+    }
+    else {
+        allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(pixelArray, numStrings, pixelsPerString);
+    }
+
+    auto patternConfig = config.getPatternConfigJsonObject(name);
+
+    if (!patternConfig["priority"].is_number()) {
+        logMsg(LOG_ERR, "priority not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    priority = patternConfig["priority"].int_value();
+    logMsg(LOG_INFO, name + " priority=" + to_string(priority));
+
+    if (!patternConfig["opacity"].is_number()) {
+        logMsg(LOG_ERR, "opacity not specified in " + name + " pattern configuration.");
+        return false;
+    }
+    opacity = patternConfig["opacity"].int_value();
+    logMsg(LOG_INFO, name + " opacity=" + to_string(opacity));
+
+    return initPattern(config, widgets);
 }
 
 
@@ -38,7 +87,7 @@ std::vector<Pattern::ChannelConfiguration> Pattern::getChannelConfigurations(
     std::vector<ChannelConfiguration> channelConfigs;
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
-    if (patternConfig["patternName"].string_value() != name) {
+    if (patternConfig["name"].string_value() != name) {
         logMsg(LOG_ERR, name + " not found in patterns configuration section.");
         return channelConfigs;
     }

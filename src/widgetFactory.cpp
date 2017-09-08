@@ -15,45 +15,40 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
 
 #include "BellsWidget.h"
 //#include "BuckNorrisWidget.h"
 #include "EyeWidget.h"
 #include "FourPlay42Widget.h"
 #include "FourPlay43Widget.h"
-#include "PlungerWidget.h"
+#include "log.h"
+#include "PumpWidget.h"
 #include "RainstickWidget.h"
-//#include "SchroedersPlaythingWidget.h"
-#include "ShirleysWebWidget.h"
-//#include "SquawkBoxWidget.h"
+#include "SchroedersPlaythingWidget.h"
+#include "SpinnahWidget.h"
 #include "TriObeliskWidget.h"
-//#include "ContortOMaticWidget.h"
-#include "WidgetId.h"
+#include "ContortOMaticWidget.h"
+#include "widgetFactory.h"
 
 
-using namespace std;
-
-
-static Widget* widgetFactory(WidgetId id) { switch (id) {
+Widget* widgetFactory(WidgetId id) {
+    switch (id) {
         case WidgetId::eye:
             return new EyeWidget;
-        case WidgetId::shirleysWeb:
-            return new ShirleysWebWidget;
+        case WidgetId::spinnah:
+            return new SpinnahWidget;
         case WidgetId::bells:
             return new BellsWidget;
         case WidgetId::rainstick:
             return new RainstickWidget;
-//        case WidgetId::schroedersPlaything:
-//            return new SchroedersPlaythingWidget;
+        case WidgetId::schroedersPlaything:
+            return new SchroedersPlaythingWidget;
         case WidgetId::triObelisk:
             return new TriObeliskWidget;
-//        case WidgetId::squawkBox:
-//            return new SquawkBoxWidget;
-        case WidgetId::plunger:
-            return new PlungerWidget;
-//        case WidgetId::contortOMatic:
-//            return new ContortOMaticWidget;
+        case WidgetId::pump:
+            return new PumpWidget;
+        case WidgetId::contortOMatic:
+            return new ContortOMaticWidget;
         case WidgetId::fourPlay42:
             return new FourPlay42Widget;
         case WidgetId::fourPlay43:
@@ -61,7 +56,7 @@ static Widget* widgetFactory(WidgetId id) { switch (id) {
 //        case WidgetId::buckNorris:
 //            return new BuckNorrisWidget;
         default:
-            cerr << "SOMETHING'S FUCKY: WidgetFactory id" << endl;
+            logMsg(LOG_ERR, "Unsupported id passed to widgetFactory.");
             return nullptr;
     }
 }

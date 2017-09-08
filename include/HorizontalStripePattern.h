@@ -31,14 +31,19 @@ class Widget;
 class HorizontalStripePattern : public Pattern
 {
     public:
-        HorizontalStripePattern();
+
+        HorizontalStripePattern(const std::string& name);
         ~HorizontalStripePattern() {};
 
+        HorizontalStripePattern() = delete;
         HorizontalStripePattern(const HorizontalStripePattern&) = delete;
         HorizontalStripePattern& operator =(const HorizontalStripePattern&) = delete;
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority);
         bool update();
+
+    protected:
+
+        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
 
     private:
 
@@ -51,6 +56,7 @@ class HorizontalStripePattern : public Pattern
         std::shared_ptr<WidgetChannel> bluePositionChannel;
         std::shared_ptr<WidgetChannel> widthChannel;
 
+        int widthPos;
         int rPos;
         int gPos;
         int bPos;

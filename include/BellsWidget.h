@@ -23,17 +23,22 @@
 class BellsWidget : public Widget
 {
     public:
+
         BellsWidget();
-        ~BellsWidget() {};
+        virtual ~BellsWidget() {};
 
         BellsWidget(const BellsWidget&) = delete;
         BellsWidget& operator =(const BellsWidget&) = delete;
 
-        bool moveData();
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
-        unsigned int lastUpdateMs[8];
-        unsigned int updateIntervalMs[8];
+        constexpr static int doStrikeAtStepNum = -2048;
+        constexpr static int stepNumAtStrike = 1024;
+        constexpr static int stepSize = 10;
+
+        int simStep;
+
 };
 

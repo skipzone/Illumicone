@@ -15,14 +15,107 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ConfigReader.h"
+// TODO 7/31/2017 ross:  Use logMsg in place of cerr.
+
 #include <fstream>
-#include "illumiconeTypes.h"
 #include <iostream>
 #include <sstream>
 
+#include "ConfigReader.h"
+#include "illumiconeTypes.h"
+#include "log.h"
+
 using namespace std;
 using namespace json11;
+
+
+bool ConfigReader::getBoolValue(const json11::Json& jsonObj,
+                                const std::string& name,
+                                bool& value,
+                                const std::string& errorMessageSuffix)
+{
+    if (!jsonObj[name].is_bool()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a boolean value" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].bool_value();
+    return true;
+}
+
+
+bool ConfigReader::getIntValue(const json11::Json& jsonObj,
+                               const std::string& name,
+                               int& value,
+                               const std::string& errorMessageSuffix,
+                               int minValue,
+                               int maxValue)
+{
+    if (!jsonObj[name].is_number()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].int_value();
+    if (value < minValue || value > maxValue) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getStringValue(const json11::Json& jsonObj,
+                                  const std::string& name,
+                                  string& value,
+                                  const std::string& errorMessageSuffix,
+                                  bool allowEmptyString)
+{
+    if (!jsonObj[name].is_string()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].string_value();
+    if (!allowEmptyString && value.empty()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
+                                       const std::string& name,
+                                       unsigned int& value,
+                                       const std::string& errorMessageSuffix,
+                                       unsigned int minValue,
+                                       unsigned int maxValue)
+{
+    if (!jsonObj[name].is_number()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].int_value();
+    if (value < minValue || value > maxValue) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
 
 
 ConfigReader::ConfigReader()
@@ -73,9 +166,8 @@ Json ConfigReader::getJsonObject()
 }
 
 
-Json ConfigReader::getWidgetConfigJsonObject(WidgetId widgetId)
+Json ConfigReader::getWidgetConfigJsonObject(const std::string& widgetName)
 {
-    string widgetName = widgetIdToString(widgetId);
     for (auto& widgetConfigObj : configObj["widgets"].array_items()) {
         if (widgetConfigObj["name"].string_value() == widgetName) {
             return widgetConfigObj;
@@ -88,11 +180,22 @@ Json ConfigReader::getWidgetConfigJsonObject(WidgetId widgetId)
 Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
 {
     for (auto& patternConfigObj : configObj["patterns"].array_items()) {
-        if (patternConfigObj["patternName"].string_value() == patternName) {
+        if (patternConfigObj["name"].string_value() == patternName) {
             return patternConfigObj;
         }
     }
     return Json("{}");
+}
+
+
+std::string ConfigReader::getLockFilePath(const string& serviceName)
+{
+    Json lockFilePathsObj = configObj["lockFilePaths"];
+    if (!lockFilePathsObj.is_object()) {
+        logMsg(LOG_ERR, "lockFilePaths is missing from configuration or is not a JSON object.");
+        return "";
+    }
+    return lockFilePathsObj[serviceName].string_value();
 }
 
 
@@ -116,7 +219,28 @@ string ConfigReader::getOpcServerIpAddress()
 
 string ConfigReader::getPatconIpAddress()
 {
+    if (!configObj["patconIpAddress"].is_string()) {
+        logMsg(LOG_ERR, "patconIpAddress missing from configuration.");
+        return "";
+    }
     return configObj["patconIpAddress"].string_value();
+}
+
+
+string ConfigReader::getPatternBlendMethod()
+{
+    if (!configObj["patternBlendMethod"].is_string()) {
+        logMsg(LOG_ERR, "patternBlendMethod missing from configuration.");
+        return "";
+    }
+    return configObj["patternBlendMethod"].string_value();
+}
+
+
+unsigned int ConfigReader::getPatternRunLoopSleepIntervalUs()
+{
+    unsigned int val;
+    return  getUnsignedIntValue(configObj, "patternRunLoopSleepIntervalUs", val, ".", 1) ? val : 0;
 }
 
 
@@ -128,19 +252,19 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
 
         string desc = periodConfigObj["description"].string_value();
         if (desc.empty()) {
-            cerr << "Shutoff period has no description:  " << periodConfigObj.dump() << endl;
+            cerr << "Scheduled period has no description:  " << periodConfigObj.dump() << endl;
             problemEncountered = true;
             continue;
         }
         string startTimeStr = periodConfigObj["startDateTime"].string_value();
         if (startTimeStr.empty()) {
-            cerr << "Shutoff period has no startDateTime:  " << periodConfigObj.dump() << endl;
+            cerr << "Scheduled period has no startDateTime:  " << periodConfigObj.dump() << endl;
             problemEncountered = true;
             continue;
         }
         string endTimeStr = periodConfigObj["endDateTime"].string_value();
         if (endTimeStr.empty()) {
-            cerr << "Shutoff period has no endDateTime:  " << periodConfigObj.dump() << endl;
+            cerr << "Scheduled period has no endDateTime:  " << periodConfigObj.dump() << endl;
             problemEncountered = true;
             continue;
         }
@@ -165,7 +289,7 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
         strptimeRetVal = strptime(startTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
         if (strptimeRetVal == nullptr) {
             cerr << "Unable to parse startDateTime \"" << startTimeStr << "\" for \"" << desc
-                << "\" shutoff period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
+                << "\" scheduled period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
                 << " or hh:mm:ss for daily events." << endl;
             problemEncountered = true;
             continue;
@@ -176,7 +300,7 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
         strptimeRetVal = strptime(endTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
         if (strptimeRetVal == nullptr) {
             cerr << "Unable to parse endDateTime \"" << endTimeStr << "\" for \"" << desc
-                << "\" shutoff period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
+                << "\" scheduled period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
                 << " or hh:mm:ss for daily events." << endl;
             problemEncountered = true;
             continue;
@@ -193,59 +317,26 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
 
 int ConfigReader::getWidgetPortNumberBase()
 {
+    if (!configObj["widgetPortNumberBase"].is_number()) {
+        logMsg(LOG_ERR, "widgetPortNumberBase missing from configuration.");
+        return 0;
+    }
     return configObj["widgetPortNumberBase"].int_value();
 }
 
 
-bool ConfigReader::getWidgetGenerateSimulatedMeasurements(WidgetId widgetId)
+bool ConfigReader::getWidgetGenerateSimulatedMeasurements(const std::string& widgetName)
 {
-    Json widgetConfig = getWidgetConfigJsonObject(widgetId);
+    Json widgetConfig = getWidgetConfigJsonObject(widgetName);
     return widgetConfig["generateSimulatedMeasurements"].bool_value();
 }
 
 
-int ConfigReader::getWidgetAutoInactiveMs(WidgetId widgetId)
+int ConfigReader::getWidgetAutoInactiveMs(const std::string& widgetName)
 {
-    Json widgetConfig = getWidgetConfigJsonObject(widgetId);
+    Json widgetConfig = getWidgetConfigJsonObject(widgetName);
     // If autoInactiveMs isn't present, the value returned will
     // be zero, which disables the auto-inactive feature.
     return widgetConfig["autoInactiveMs"].int_value();
 }
-
-
-/* =-=-=-=-=-=-=-=-=
-
-    for (auto& autoShutoffPeriod : json["autoShutoffPeriods"].array_items()) {
-        cout << "autoShutoffPeriod:  " << autoShutoffPeriod["description"].string_value() << endl;
-        cout << "    startDate:  " << autoShutoffPeriod["startDate"].string_value() << endl;
-        cout << "    startTime:  " << autoShutoffPeriod["startTime"].string_value() << endl;
-        cout << "      endDate:  " << autoShutoffPeriod["endDate"].string_value() << endl;
-        cout << "      endTime:  " << autoShutoffPeriod["endTime"].string_value() << endl;
-    }
-
-    for (auto& quiescentModePeriod : json["quiescentModePeriods"].array_items()) {
-        cout << "quiescentModePeriod:  " << quiescentModePeriod["description"].string_value() << endl;
-        cout << "      startDate:  " << quiescentModePeriod["startDate"].string_value() << endl;
-        cout << "      startTime:  " << quiescentModePeriod["startTime"].string_value() << endl;
-        cout << "        endDate:  " << quiescentModePeriod["endDate"].string_value() << endl;
-        cout << "        endTime:  " << quiescentModePeriod["endTime"].string_value() << endl;
-        cout << "    idlePattern:  " << quiescentModePeriod["idlePatternName"].string_value() << endl;
-    }
-
-    for (auto& widget : json["widgets"].array_items()) {
-        cout << "widget:  " << widget.string_value() << endl;
-    }
-
-    for (auto& pattern : json["patterns"].array_items()) {
-        cout << "pattern:  " << pattern["patternName"].string_value() << endl;
-        for (auto& input : pattern["inputs"].array_items()) {
-            cout << "    input:  " << input["inputName"].string_value() << endl;
-            cout << "        widget:  " << input["widgetName"].string_value() << endl;
-            cout << "        channel:  " << input["channelNumber"].int_value() << endl;
-            cout << "        measurement:  " << input["measurement"].string_value() << endl;
-        }
-    }
-
-*/
-
 

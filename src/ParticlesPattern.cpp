@@ -15,11 +15,11 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <algorithm>
-#include <chrono>
-#include <iostream>
+#include <stdlib.h>
 
 #include "ConfigReader.h"
+#include "illumiconeUtility.h"
+#include "illumiconePixelUtility.h"
 #include "log.h"
 #include "ParticlesPattern.h"
 #include "Pattern.h"
@@ -30,105 +30,72 @@
 using namespace std;
 
 
-ParticlesPattern::ParticlesPattern()
-    : Pattern("particles")
+ParticlesPattern::ParticlesPattern(const std::string& name)
+    : Pattern(name)
 {
-};
+}
 
 
-bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
-    opacity = 100;
     numRotationsNeededToClearParticles = 0;
     nextMoveParticlesMs = 0;
     nextEmitParticlesMs = 0;
 
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
 
     // ----- get pattern configuration -----
 
+    string errMsgSuffix = " in " + name + " pattern configuration.";
+
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
-    if (patternConfig["emitColorRedValue"].is_number()) {
-        emitColor.r = patternConfig["emitColorRedValue"].int_value();
-    }
-    if (patternConfig["emitColorGreenValue"].is_number()) {
-        emitColor.g = patternConfig["emitColorGreenValue"].int_value();
-    }
-    if (patternConfig["emitColorBlueValue"].is_number()) {
-        emitColor.b = patternConfig["emitColorBlueValue"].int_value();
-    }
-    if (emitColor.r == 0 && emitColor.g == 0 && emitColor.b == 0) {
-        logMsg(LOG_ERR, "No emit color values are specified in " + name + " pattern configuration.");
+    string rgbStr;
+    if (!ConfigReader::getStringValue(patternConfig, "emitColor", rgbStr, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name
-            + " emitColor r=" + to_string(emitColor.r)
-            + ", g=" + to_string(emitColor.g)
-            + ", b=" + to_string(emitColor.b) );
+    if (!stringToRgbPixel(rgbStr, emitColor)) {
+        logMsg(LOG_ERR, "emitColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
+        return false;
+    }
+    logMsg(LOG_INFO, name + " emitColor=" + rgbStr);
 
-    if (!patternConfig["emitIntervalMeasmtLow"].is_number()) {
-        logMsg(LOG_ERR, "emitIntervalMeasmtLow not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtLow", emitIntervalMeasmtLow, errMsgSuffix)) {
         return false;
     }
-    emitIntervalMeasmtLow = patternConfig["emitIntervalMeasmtLow"].int_value();
     logMsg(LOG_INFO, name + " emitIntervalMeasmtLow=" + to_string(emitIntervalMeasmtLow));
 
-    if (!patternConfig["emitIntervalMeasmtHigh"].is_number()) {
-        logMsg(LOG_ERR, "emitIntervalMeasmtHigh not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtHigh", emitIntervalMeasmtHigh, errMsgSuffix)) {
         return false;
     }
-    emitIntervalMeasmtHigh = patternConfig["emitIntervalMeasmtHigh"].int_value();
     logMsg(LOG_INFO, name + " emitIntervalMeasmtHigh=" + to_string(emitIntervalMeasmtHigh));
 
-    if (!patternConfig["emitIntervalLowMs"].is_number()) {
-        logMsg(LOG_ERR, "emitIntervalLowMs not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalLowMs", emitIntervalLowMs, errMsgSuffix)) {
         return false;
     }
-    emitIntervalLowMs = patternConfig["emitIntervalLowMs"].int_value();
     logMsg(LOG_INFO, name + " emitIntervalLowMs=" + to_string(emitIntervalLowMs));
 
-    if (!patternConfig["emitIntervalHighMs"].is_number()) {
-        logMsg(LOG_ERR, "emitIntervalHighMs not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalHighMs", emitIntervalHighMs, errMsgSuffix, 1)) {
         return false;
     }
-    emitIntervalHighMs = patternConfig["emitIntervalHighMs"].int_value();
     logMsg(LOG_INFO, name + " emitIntervalHighMs=" + to_string(emitIntervalHighMs));
 
-    if (!patternConfig["emitBatchSize"].is_number()) {
-        logMsg(LOG_ERR, "emitBatchSize not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "emitBatchSize", emitBatchSize, errMsgSuffix, 1)) {
         return false;
     }
-    emitBatchSize = patternConfig["emitBatchSize"].int_value();
     logMsg(LOG_INFO, name + " emitBatchSize=" + to_string(emitBatchSize));
 
-    if (!patternConfig["emitDirectionIsUp"].is_bool()) {
-        logMsg(LOG_ERR, "emitDirectionIsUp not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getBoolValue(patternConfig, "emitDirectionIsUp", emitDirectionIsUp, errMsgSuffix)) {
         return false;
     }
-    emitDirectionIsUp = patternConfig["emitDirectionIsUp"].bool_value();
     logMsg(LOG_INFO, name + " emitDirectionIsUp=" + to_string(emitDirectionIsUp));
 
-    if (!patternConfig["particleMoveIntervalMs"].is_number()) {
-        logMsg(LOG_ERR, "particleMoveIntervalMs not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getUnsignedIntValue(patternConfig, "particleMoveIntervalMs", particleMoveIntervalMs, errMsgSuffix, 1)) {
         return false;
     }
-    particleMoveIntervalMs = patternConfig["particleMoveIntervalMs"].int_value();
     logMsg(LOG_INFO, name + " particleMoveIntervalMs=" + to_string(particleMoveIntervalMs));
 
+
     // ----- get input channels -----
-
-    // 0:  min sound sample
-    // 1:  max sound sample
-    // 2:  sound amplitude
-    // 3:  yaw
-    // 4:  pitch
-    // 5:  roll
-    // 6:  0
-
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
@@ -142,14 +109,14 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
             emitRateChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "Warning:  inputName '" + channelConfig.inputName
+            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
         logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_WARNING, "Warning:  " + name + " supports only position measurements, but the input configuration for "
+            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }
@@ -170,11 +137,11 @@ bool ParticlesPattern::moveParticles()
                 }
             }
             else {
-                for (i = 0; i < stringPixels.size() - 1; ++i) {
+                for (i = 0; i < (unsigned int) (stringPixels.size() - 1); ++i) {
                     stringPixels[i] = stringPixels[i + 1];
                 }
             }
-            stringPixels[i].r = stringPixels[i].g = stringPixels[i].b = 0;
+            stringPixels[i] = CRGB::Black;
         }
     }
 
@@ -191,11 +158,11 @@ bool ParticlesPattern::update()
 
     // We'll return the previous activity state so that the final
     // frame will be displayed as this pattern goes inactive.
+    // TODO 8/29/2017 ross:  This wasActive thing is unnecessary.  When the pattern goes inactive, its frame will be ignored,
+    //                       essentially turning off the display of it.
     bool wasActive = isActive;
 
-    std::chrono::milliseconds epochMs =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-    unsigned int nowMs = epochMs.count();
+    unsigned int nowMs = getNowMs();
 
     // Move the existing particles if it is time to do so.
     if (isActive && (int) (nowMs - nextMoveParticlesMs) >= 0) {
@@ -261,7 +228,7 @@ bool ParticlesPattern::update()
 
         // Emit particles.
         for (int i = 0; i < emitBatchSize; ++i) {
-            int randStringNum = rand() % numStrings;
+            int randStringNum = random16(numStrings);
             pixelArray[randStringNum][emitDirectionIsUp ? pixelsPerString - 1 : 0] = emitColor;
         }
 

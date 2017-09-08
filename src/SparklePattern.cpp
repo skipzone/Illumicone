@@ -16,9 +16,13 @@
 */
 
 #include <algorithm>
+#include <climits>
 #include <iostream>
 
 #include "ConfigReader.h"
+#include "illumiconeUtility.h"
+#include "illumiconePixelUtility.h"
+#include "lib8tion.h"
 #include "log.h"
 #include "Pattern.h"
 #include "SparklePattern.h"
@@ -29,40 +33,70 @@
 using namespace std;
 
 
-SparklePattern::SparklePattern()
-    : Pattern("sparkle")
+SparklePattern::SparklePattern(const std::string& name)
+    : Pattern(name)
 {
 };
 
 
-bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets, int priority)
+bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
-    this->priority = priority;
-    opacity = 100;
+    nextSparkleChangeMs = 0;
 
-    pixelArray.resize(numStrings, std::vector<opc_pixel_t>(pixelsPerString));
+
+    // ----- get pattern configuration -----
+
+    string errMsgSuffix = " in " + name + " pattern configuration.";
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
-    if (!patternConfig["activationThreshold"].is_number()) {
-        logMsg(LOG_ERR, "activationThreshold not specified in " + name + " pattern configuration.");
+    if (!ConfigReader::getIntValue(patternConfig, "activationThreshold", activationThreshold, errMsgSuffix)) {
         return false;
     }
-    activationThreshold = patternConfig["activationThreshold"].int_value();
     logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
-    if (!patternConfig["densityScaledownFactor"].is_number()) {
-        logMsg(LOG_ERR, "densityScaledownFactor not specified in " + name + " pattern configuration.");
-        return false;
+    if (!ConfigReader::getIntValue(patternConfig, "deactivationThreshold", deactivationThreshold, errMsgSuffix)) {
+        deactivationThreshold = INT_MAX;
     }
-    densityScaledownFactor = patternConfig["densityScaledownFactor"].int_value();
-    if (densityScaledownFactor == 0) {
-        logMsg(LOG_ERR, "densityScaledownFactor is zero in " + name + " pattern configuration.");
+    logMsg(LOG_INFO, name + " deactivationThreshold=" + to_string(deactivationThreshold));
+
+    if (!ConfigReader::getUnsignedIntValue(patternConfig, "numGoodMeasurementsForReactivation", numGoodMeasurementsForReactivation, errMsgSuffix)) {
+        numGoodMeasurementsForReactivation = 0;
+    }
+    logMsg(LOG_INFO, name + " numGoodMeasurementsForReactivation=" + to_string(numGoodMeasurementsForReactivation));
+    // Start out with the good measurement count satisified.
+    goodMeasurementCount = numGoodMeasurementsForReactivation;
+
+    if (!ConfigReader::getIntValue(patternConfig, "densityScaledownFactor", densityScaledownFactor, errMsgSuffix, 1)) {
         return false;
     }
     logMsg(LOG_INFO, name + " densityScaledownFactor=" + to_string(densityScaledownFactor));
+
+    if (!ConfigReader::getUnsignedIntValue(patternConfig, "sparkleChangeIntervalMs", sparkleChangeIntervalMs, errMsgSuffix, 1)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " sparkleChangeIntervalMs=" + to_string(sparkleChangeIntervalMs));
+
+    if (!ConfigReader::getBoolValue(patternConfig, "useRandomColors", useRandomColors, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " useRandomColors=" + to_string(useRandomColors));
+
+    if (!useRandomColors) {
+        string rgbStr;
+        if (!ConfigReader::getStringValue(patternConfig, "sparkleColor", rgbStr, errMsgSuffix)) {
+            return false;
+        }
+        if (!stringToRgbPixel(rgbStr, sparkleColor)) {
+            logMsg(LOG_ERR, "sparkleColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
+            return false;
+        }
+        logMsg(LOG_INFO, name + " sparkleColor=" + rgbStr);
+
+    }
+
+
+    // ----- get input channel -----
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
@@ -73,46 +107,36 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
     for (auto&& channelConfig : channelConfigs) {
 
         if (channelConfig.inputName == "density") {
+            if (channelConfig.measurement == "velocity") {
+                usePositionMeasurement = false;
+            }
+            else if (channelConfig.measurement == "position") {
+                usePositionMeasurement = true;
+            }
+            else {
+                logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
+                return false;
+            }
             densityChannel = channelConfig.widgetChannel;
+            logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
+                             + (usePositionMeasurement ? " position measurement for " : " velocity measurement for ")
+                             + channelConfig.inputName);
+
         }
         else {
-            logMsg(LOG_WARNING, "Warning:  inputName '" + channelConfig.inputName
+            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
-        if (channelConfig.measurement != "velocity") {
-            logMsg(LOG_WARNING, "Warning:  " + name + " supports only velocity measurements, but the input configuration for "
-                + channelConfig.inputName + " doesn't specify velocity.");
-        }
     }
 
     return true;
 }
 
 
-void SparklePattern::goInactive()
-{
-    if (isActive) {
-        isActive = false;
-        // Set all the pixels to 0 intensity to make this pattern effectively transparent.
-        for (auto&& pixels:pixelArray) {
-            for (auto&& pixel:pixels) {
-                pixel.r = 0;
-                pixel.g = 0;
-                pixel.b = 0;
-            }
-        }
-    }
-}
-
-
 bool SparklePattern::update()
 {
-    // TODO:  The frequency of the sparkling is determined by the frequency at which the widget
-    //        sends measurements. Instead, the frequency should be determined here in the pattern.
-
     // Don't do anything if no input channel was assigned.
     if (densityChannel == nullptr) {
         return false;
@@ -120,49 +144,81 @@ bool SparklePattern::update()
 
     // If the widget channel has gone inactive, turn off this pattern.
     if (!densityChannel->getIsActive()) {
-        goInactive();
+        isActive = false;
         return false;
     }
 
-    // No change to the pattern if we haven't received a new measurement.
-    if (!densityChannel->getHasNewVelocityMeasurement()) {
-        return isActive;
-    }
+    unsigned int nowMs = getNowMs();
 
-    int curVel = densityChannel->getVelocity();
+    if ((usePositionMeasurement && densityChannel->getHasNewPositionMeasurement())
+        || (!usePositionMeasurement && densityChannel->getHasNewVelocityMeasurement()))
+    {
+        int curMeasmt = usePositionMeasurement ? densityChannel->getPosition() : densityChannel->getVelocity();
 
-    // If the latest measurement is below the activation threshold, turn off this pattern.
-    if (curVel <= activationThreshold) {
-        //cout << curVel << " is below sparkle activation threshold " << activationThreshold << endl;
-        goInactive();
-        return false;
-    }
-
-    isActive = true;
-
-    float sparkePercentage = min((float) curVel / (float) densityScaledownFactor, (float) 1);
-    int numPixelsPerStringToSparkle = sparkePercentage * (float) pixelsPerString;
-
-    //cout << "curVel: " << curVel << endl;
-    //cout << "sparkePercentage: " << sparkePercentage << endl;
-    //cout << "numPixelsPerStringToSparkle: " << numPixelsPerStringToSparkle << endl;
-
-    // Set approximately numPixelsPerStringToSparkle to a random color in each string.
-    // ("Approximately" because we could select the same pixel twice.)
-    for (auto&& pixels:pixelArray) {
-        for (auto&& pixel:pixels) {
-            pixel.r = 0;
-            pixel.g = 0;
-            pixel.b = 0;
+        // If the latest measurement is below the activation threshold, turn off this pattern.
+        if (curMeasmt <= activationThreshold) {
+            //logMsg(LOG_DEBUG, to_string(curMeasmt) + " is below sparkle activation threshold " + to_string(activationThreshold));
+            isActive = false;
+            return false;
         }
-        for (int i = 0; i < numPixelsPerStringToSparkle; i++) {
-            int randPos = rand() % pixelsPerString;
-            pixels[randPos].r = rand() % 255;
-            pixels[randPos].g = rand() % 255;
-            pixels[randPos].b = rand() % 255;
+
+        // If the latest measurement is above the deactivation threshold, turn off this pattern.
+        if (curMeasmt > deactivationThreshold) {
+            //logMsg(LOG_DEBUG, to_string(curMeasmt) + " is above sparkle deactivation threshold "
+            //                  + to_string(deactivationThreshold));
+            goodMeasurementCount = 0;
+            isActive = false;
+            return false;
+        }
+
+        // If we haven't received enough good measurements after deactivation, stay inactive.
+        // (This is a workaround for TriObelisk sending crap velocity data when a wheel is
+        // spun counterclockwise.  The crap data cause the cone to frantically flash.  Although
+        // pleasing to participants, the flashing dominates the cone and obscures everything else.)
+        if (++goodMeasurementCount < numGoodMeasurementsForReactivation) {
+            //logMsg(LOG_DEBUG, to_string(goodMeasurementCount) + " of " + to_string(numGoodMeasurementsForReactivation)
+            //                  + " good measurements received for reactivation.");
+            isActive = false;
+            return false;
+        }
+        // It wouldn't overflow for, like, fucking forever, but we'll prevent
+        // that from happening because defensive programming 'n shit.
+        goodMeasurementCount = numGoodMeasurementsForReactivation;
+
+        if (!isActive) {
+            isActive = true;
+            nextSparkleChangeMs = nowMs;
+        }
+
+        float sparkePercentage = min((float) curMeasmt / (float) densityScaledownFactor, (float) 1);
+        numPixelsPerStringToSparkle = sparkePercentage * (float) pixelsPerString;
+
+        //logMsg(LOG_DEBUG, "curMeasmt=" + to_string(curMeasmt)
+        //                  + ", sparkePercentage=" + to_string(sparkePercentage)
+        //                  + ", numPixelsPerStringToSparkle=" + to_string(numPixelsPerStringToSparkle));
+    }
+
+    if (isActive && (int) (nowMs - nextSparkleChangeMs) >= 0) {
+        nextSparkleChangeMs = nowMs + sparkleChangeIntervalMs;
+
+        // Turn on approximately numPixelsPerStringToSparkle in each string
+        // ("approximately" because we could select the same pixel twice).
+        for (auto&& pixelString : pixelArray) {
+            fillSolid(pixelString, RgbPixel::Black);
+            for (int i = 0; i < numPixelsPerStringToSparkle; i++) {
+                int randPos = random16(pixelsPerString);
+                if (useRandomColors) {
+                    pixelString[randPos].r = random8();
+                    pixelString[randPos].g = random8();
+                    pixelString[randPos].b = random8();
+                }
+                else {
+                    pixelString[randPos] = sparkleColor;
+                }
+            }
         }
     }
 
-    return true;
+    return isActive;
 }
 
