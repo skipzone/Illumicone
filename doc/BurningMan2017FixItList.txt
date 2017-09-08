@@ -1,0 +1,88 @@
+Burning Man 2017 On-Playa Fix-It Items
+--------------------------------------
+
+[ ]
+TriObelisk sends shit velocity values when wheel spins counterclockwise.  The
+oscillation between positive and negative values is what causes the flashing
+that people like.
+
+If this is fixed, maybe modify the sparkle pattern to accept hue and
+saturation inputs, and assign the TriObelisk wheels accordingly.
+
+
+
+[N]
+Contort-O-Matic pads aren't working--except for the one green section at the
+top of the cone.
+
+Can't fix.  We think moisture got absorbed into the foam pad and messed up its
+dialectric characteristics.
+
+
+
+[X]
+The entire cone occasionally goes black for a second or so.  This may be due to
+a problem with OPC message delivery.
+
+Update:  It appears that shutoff mode is being entered sporadically for one
+second.
+
+Fixed.  Thou shalt not call a non-re-entrant time function from multiple
+threads.
+
+
+
+[X]
+Four-Play-4-3 (closes to TriObelisk, assigned to horizontal rings) red, green,
+and width wheels are not working well.
+
+Magnets were missing from first wheel.  Wire was broken on connector that plugs
+into widget controller board.  One Hall effect sensor of Wheel #2 (#3?) had been
+pulled back into the tube.
+
+
+
+[X]
+Clear shutoff and quiescent period lists when reinitializing.
+
+
+
+[X]
+Maybe have pump's pattern change to green after explosion.  Would still show
+pressure, but would not explode while green.  Reset to red after pressure
+decreases below lower threshold.
+
+
+
+[X]
+Ironing board was destroyed the night before (or day when) we went out to
+install the keyboard.  Shit.
+
+DLaw fixed it up nice.  Unfortunately, the dust killed more than half the keys
+a day after we placed the widget.
+
+
+
+[ ]
+Pump needs to be more robust.
+
+Pump's leather cup was inverted on Monday night (Tuesday ~3 AM, actually), and
+the top cap was loose.  Fixed during Joule visit.
+
+Pump box was completely detatched from the ground Monday morning.  People are
+brutalizing the thing.  We need to make it stronger and maybe write on it "Pump
+gently, not like I pump your mother."
+
+Saturday:  Pump is done.  The top cap's hole is worn oval, and the shaft has
+come unscrewed from the cup.
+
+
+
+[ ]
+More than half of the keys of Schroeder's Plaything no longer work.  The
+whiteouts the day after we placed the keyboard are the likely cause.  (The
+keyboard sat outside at camp for almost a week with no problem.)
+
+
+
+

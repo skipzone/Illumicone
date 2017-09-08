@@ -42,13 +42,13 @@
     ],
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
-    "patternRunLoopSleepIntervalUs" : 5000,
+    "patternRunLoopSleepIntervalUs" : 500,
 
     "widgets" : [
         {   "name" : "eye",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 10000
+            "autoInactiveMs" : 500
         },
         {   "name" : "spinnah",
             "enabled" : true,
@@ -66,7 +66,7 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
-            "enabled" : true,
+            "enabled" : false,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 8000
         },
@@ -91,7 +91,7 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
-            "enabled" : true,
+            "enabled" : false,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
@@ -141,17 +141,17 @@
             "patternClassName" : "HorizontalStripePattern",
             "inputs" : [
                 {   "inputName" : "redPosition",
-                    "widgetName" : "fourPlay43",
+                    "widgetName" : "triObelisk",
                     "channelNumber" : 0,
                     "measurement" : "position"
                 },
                 {   "inputName" : "greenPosition",
-                    "widgetName" : "fourPlay43",
+                    "widgetName" : "triObelisk",
                     "channelNumber" : 1,
                     "measurement" : "position"
                 },
                 {   "inputName" : "bluePosition",
-                    "widgetName" : "fourPlay43",
+                    "widgetName" : "triObelisk",
                     "channelNumber" : 2,
                     "measurement" : "position"
                 },
@@ -201,7 +201,7 @@
             "sparkleColor" : "white"
         },
         {   "name" : "redSparkle",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -212,16 +212,14 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,                 // 20 is what we used with Shirley's Web in 2016
-            "deactivationThreshold" : 300,
-            "numGoodMeasurementsForReactivation" : 10,
-            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "magenta"
+            "sparkleColor" : "red"
         },
         {   "name" : "greenSparkle",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -232,16 +230,14 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,                 // 20 is what we used with Shirley's Web in 2016
-            "deactivationThreshold" : 300,
-            "numGoodMeasurementsForReactivation" : 10,
-            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "aqua"
+            "sparkleColor" : "green"
         },
         {   "name" : "blueSparkle",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -252,13 +248,11 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,                 // 20 is what we used with Shirley's Web in 2016
-            "deactivationThreshold" : 300,
-            "numGoodMeasurementsForReactivation" : 10,
-            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "yellow"
+            "sparkleColor" : "blue"
         },
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
@@ -275,8 +269,9 @@
             ],
             "lowPressureCutoff" : 150,
             "burstThreshold" : 400,
-            "pressurizationColor" : "96,0,0",
-            "depressurizationColor" : "32,64,0",
+            "pressureColorRedValue" : 96,
+            "pressureColorGreenValue" : 0,
+            "pressureColorBlueValue" : 0,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalMs" : 20
         },
@@ -292,7 +287,7 @@
                     "measurement" : "position"
                 }
             ],
-            "autoDisableTimeoutMs" : 5000,      // pattern disables itself after being active for this amount of time
+            "autoDisableTimeoutMs" : 1500,      // pattern disables itself after being active for this amount of time
             "activationThreshold" : 300,        // 300 is a basic LED flashlight from a few feet away
             "reactivationThreshold" : 200,      // pattern re-enables itself when measurement drops below this value
             "allStringsSameColor" : false,

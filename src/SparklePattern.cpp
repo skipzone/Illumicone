@@ -16,6 +16,7 @@
 */
 
 #include <algorithm>
+#include <climits>
 #include <iostream>
 
 #include "ConfigReader.h"
@@ -53,6 +54,18 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
         return false;
     }
     logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
+
+    if (!ConfigReader::getIntValue(patternConfig, "deactivationThreshold", deactivationThreshold, errMsgSuffix)) {
+        deactivationThreshold = INT_MAX;
+    }
+    logMsg(LOG_INFO, name + " deactivationThreshold=" + to_string(deactivationThreshold));
+
+    if (!ConfigReader::getUnsignedIntValue(patternConfig, "numGoodMeasurementsForReactivation", numGoodMeasurementsForReactivation, errMsgSuffix)) {
+        numGoodMeasurementsForReactivation = 0;
+    }
+    logMsg(LOG_INFO, name + " numGoodMeasurementsForReactivation=" + to_string(numGoodMeasurementsForReactivation));
+    // Start out with the good measurement count satisified.
+    goodMeasurementCount = numGoodMeasurementsForReactivation;
 
     if (!ConfigReader::getIntValue(patternConfig, "densityScaledownFactor", densityScaledownFactor, errMsgSuffix, 1)) {
         return false;
@@ -149,6 +162,29 @@ bool SparklePattern::update()
             return false;
         }
 
+        // If the latest measurement is above the deactivation threshold, turn off this pattern.
+        if (curMeasmt > deactivationThreshold) {
+            //logMsg(LOG_DEBUG, to_string(curMeasmt) + " is above sparkle deactivation threshold "
+            //                  + to_string(deactivationThreshold));
+            goodMeasurementCount = 0;
+            isActive = false;
+            return false;
+        }
+
+        // If we haven't received enough good measurements after deactivation, stay inactive.
+        // (This is a workaround for TriObelisk sending crap velocity data when a wheel is
+        // spun counterclockwise.  The crap data cause the cone to frantically flash.  Although
+        // pleasing to participants, the flashing dominates the cone and obscures everything else.)
+        if (++goodMeasurementCount < numGoodMeasurementsForReactivation) {
+            //logMsg(LOG_DEBUG, to_string(goodMeasurementCount) + " of " + to_string(numGoodMeasurementsForReactivation)
+            //                  + " good measurements received for reactivation.");
+            isActive = false;
+            return false;
+        }
+        // It wouldn't overflow for, like, fucking forever, but we'll prevent
+        // that from happening because defensive programming 'n shit.
+        goodMeasurementCount = numGoodMeasurementsForReactivation;
+
         if (!isActive) {
             isActive = true;
             nextSparkleChangeMs = nowMs;
@@ -183,6 +219,6 @@ bool SparklePattern::update()
         }
     }
 
-    return true;
+    return isActive;
 }
 

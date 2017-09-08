@@ -19,6 +19,7 @@
 
 #include "ConfigReader.h"
 #include "FillAndBurstPattern.h"
+#include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
 #include "log.h"
 #include "Pattern.h"
@@ -43,69 +44,76 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
 
     state = PatternState::pressurizing;
 
+
+    // ----- get pattern configuration -----
+
+    string errMsgSuffix = " in " + name + " pattern configuration.";
+
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["burstingPriority"].is_number()) {
-        logMsg(LOG_ERR, "burstingPriority not specified in " + name + " pattern configuration.");
+        logMsg(LOG_ERR, "burstingPriority not specified" + errMsgSuffix);
         return false;
     }
     burstingPriority = patternConfig["burstingPriority "].int_value();
     logMsg(LOG_INFO, name + " burstingPriority=" + to_string(burstingPriority));
 
     if (!patternConfig["lowPressureCutoff"].is_number()) {
-        logMsg(LOG_ERR, "lowPressureCutoff not specified in " + name + " pattern configuration.");
+        logMsg(LOG_ERR, "lowPressureCutoff not specified" + errMsgSuffix);
         return false;
     }
     lowPressureCutoff = patternConfig["lowPressureCutoff"].int_value();
     logMsg(LOG_INFO, name + " lowPressureCutoff=" + to_string(lowPressureCutoff));
     if (lowPressureCutoff <= 0) {
-        logMsg(LOG_ERR, "lowPressureCutoff is zero or less in " + name + " pattern configuration.");
+        logMsg(LOG_ERR, "lowPressureCutoff is zero or less" + errMsgSuffix);
         return false;
     }
 
     if (!patternConfig["burstThreshold"].is_number()) {
-        logMsg(LOG_ERR, "burstThreshold not specified in " + name + " pattern configuration.");
+        logMsg(LOG_ERR, "burstThreshold not specified" + errMsgSuffix);
         return false;
     }
     burstThreshold = patternConfig["burstThreshold"].int_value();
     logMsg(LOG_INFO, name + " burstThreshold=" + to_string(burstThreshold));
     if (burstThreshold <= 0) {
-        logMsg(LOG_ERR, "burstThreshold is zero or less in " + name + " pattern configuration.");
+        logMsg(LOG_ERR, "burstThreshold is zero or less" + errMsgSuffix);
         return false;
     }
 
     if (lowPressureCutoff >= burstThreshold) {
-        logMsg(LOG_ERR, "lowPressureCutoff must be lower than the burstThreshold in " + name + " pattern configuration.");
+        logMsg(LOG_ERR, "lowPressureCutoff must be lower than the burstThreshold" + errMsgSuffix);
         return false;
     }
 
-    if (patternConfig["pressureColorRedValue"].is_number()) {
-        pressureColor.r = patternConfig["pressureColorRedValue"].int_value();
-    }
-    if (patternConfig["pressureColorGreenValue"].is_number()) {
-        pressureColor.g = patternConfig["pressureColorGreenValue"].int_value();
-    }
-    if (patternConfig["pressureColorBlueValue"].is_number()) {
-        pressureColor.b = patternConfig["pressureColorBlueValue"].int_value();
-    }
-    if (pressureColor == CRGB(CRGB::Black)) {
-        logMsg(LOG_ERR, "No pressure color values are specified in " + name + " pattern configuration.");
+    string rgbStr;
+
+    if (!ConfigReader::getStringValue(patternConfig, "pressurizationColor", rgbStr, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name
-            + " pressureColor r=" + to_string(pressureColor.r)
-            + ", g=" + to_string(pressureColor.g)
-            + ", b=" + to_string(pressureColor.b) );
+    if (!stringToRgbPixel(rgbStr, pressurizationColor)) {
+        logMsg(LOG_ERR, "pressurizationColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
+        return false;
+    }
+    logMsg(LOG_INFO, name + " pressurizationColor=" + rgbStr);
+
+    if (!ConfigReader::getStringValue(patternConfig, "depressurizationColor", rgbStr, errMsgSuffix)) {
+        return false;
+    }
+    if (!stringToRgbPixel(rgbStr, depressurizationColor)) {
+        logMsg(LOG_ERR, "depressurizationColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
+        return false;
+    }
+    logMsg(LOG_INFO, name + " depressurizationColor=" + rgbStr);
 
     if (!patternConfig["fillStepSize"].is_number()) {
-        logMsg(LOG_ERR, "fillStepSize not specified in " + name + " pattern configuration.");
+        logMsg(LOG_ERR, "fillStepSize not specified" + errMsgSuffix);
         return false;
     }
     fillStepSize = patternConfig["fillStepSize"].int_value();
     logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
 
     if (!patternConfig["fillStepIntervalMs"].is_number()) {
-        logMsg(LOG_ERR, "fillStepIntervalMs not specified in " + name + " pattern configuration.");
+        logMsg(LOG_ERR, "fillStepIntervalMs not specified" + errMsgSuffix);
         return false;
     }
     fillStepIntervalMs = patternConfig["fillStepIntervalMs"].int_value();
@@ -176,20 +184,15 @@ bool FillAndBurstPattern::update()
                 return isActive;
             }
   
-            clearAllPixels();
-
             curMeasmt = pressureChannel->getPosition();
             if (curMeasmt <= lowPressureCutoff) {
-                if (isActive) {
-                    isActive = false;
-                    // We'll return true this time so that the pressure level
-                    // we might have just displayed will get turned off.
-                    return true;
-                }
+                isActive = false;
                 return false;
             }
 
             isActive = true;
+
+            clearAllPixels();
 
             // Start bursting if we're past the maximum pressure.
             if (curMeasmt > burstThreshold) {
@@ -202,7 +205,7 @@ bool FillAndBurstPattern::update()
                 int fillLevel = pixelsPerString * (curMeasmt - lowPressureCutoff) / (burstThreshold - lowPressureCutoff);
                 for (auto&& pixels:pixelArray) {
                     for (unsigned int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
-                        pixels[i] = pressureColor;
+                        pixels[i] = pressurizationColor;
                     }
                 }
             }
@@ -311,9 +314,6 @@ bool FillAndBurstPattern::update()
             priority = fillingPriority;
             clearAllPixels();
             state = PatternState::depressurizing;
-            // We'll return true this time so that the last burst color
-            // will get turned off.  But, the pattern is going inactive.
-            isActive = false;
             break;
 
         case PatternState::depressurizing:
@@ -328,12 +328,25 @@ bool FillAndBurstPattern::update()
                 if (pressureChannel->getHasNewPositionMeasurement()) {
                     curMeasmt = pressureChannel->getPosition();
                     if (curMeasmt <= lowPressureCutoff) {
+                        isActive = false;
                         state = PatternState::pressurizing;
+                    }
+                    else {
+                        // Fill the cone from the bottom up to represent the current pressure.
+                        clearAllPixels();
+                        int fillLevel = curMeasmt >= burstThreshold
+                                      ? pixelsPerString
+                                      : pixelsPerString * (curMeasmt - lowPressureCutoff) / (burstThreshold - lowPressureCutoff);
+                        for (auto&& pixels:pixelArray) {
+                            for (unsigned int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
+                                pixels[i] = depressurizationColor;
+                            }
+                        }
                     }
                 }
             }
             break;
     }
 
-    return true;
+    return isActive;
 }

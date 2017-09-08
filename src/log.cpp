@@ -38,7 +38,8 @@ const string getTimestamp()
     uint32_t ms = nowMs % 1000;
     time_t now = nowMs / 1000;
 
-    struct tm tmStruct = *localtime(&now);
+    struct tm result;
+    struct tm tmStruct = *localtime_r(&now, &result);
     char buf[20];
     std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmStruct);
 

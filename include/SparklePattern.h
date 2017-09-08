@@ -52,10 +52,13 @@ class SparklePattern : public Pattern {
         // pattern configuration
         int densityScaledownFactor;
         int activationThreshold;
+        int deactivationThreshold;
+        unsigned int numGoodMeasurementsForReactivation;
         CRGB sparkleColor;
         bool usePositionMeasurement;
         bool useRandomColors;
 
+        unsigned int goodMeasurementCount;
         unsigned int nextSparkleChangeMs;
         int numPixelsPerStringToSparkle;
         unsigned int sparkleChangeIntervalMs;

@@ -261,6 +261,8 @@ bool readConfig()
     numberOfStrings = config.getNumberOfStrings();
     numberOfPixelsPerString = config.getNumberOfPixelsPerString();
 
+    shutoffPeriods.clear();
+    quiescentPeriods.clear();
     if (config.getSchedulePeriods("shutoffPeriods", shutoffPeriods)
         || config.getSchedulePeriods("quiescentPeriods", quiescentPeriods))
     {
@@ -433,23 +435,27 @@ void tearDownPatterns()
 
 bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, string& periodDescription)
 {
+
     // For daily events, we need a tm structure containing the current
     // time so that we can set a daily event's date to today.
-    struct tm tmNowTime = *localtime(&now);
+    struct tm result1;
+    struct tm tmNowTime = *localtime_r(&now, &result1);
 
     for (auto&& schedulePeriod : schedulePeriods) {
         if (schedulePeriod.isDaily) {
             // Modify the start and end times so that they occur today.
-            struct tm tmStartTimeToday = *localtime(&schedulePeriod.startTime);
-            struct tm tmEndTimeToday = *localtime(&schedulePeriod.endTime);
+            struct tm result2;
+            struct tm tmStartTimeToday = *localtime_r(&schedulePeriod.startTime, &result2);
+            struct tm result3;
+            struct tm tmEndTimeToday = *localtime_r(&schedulePeriod.endTime, &result3);
             tmStartTimeToday.tm_year = tmEndTimeToday.tm_year = tmNowTime.tm_year;
             tmStartTimeToday.tm_mon = tmEndTimeToday.tm_mon = tmNowTime.tm_mon;
             tmStartTimeToday.tm_mday = tmEndTimeToday.tm_mday = tmNowTime.tm_mday;
             tmStartTimeToday.tm_isdst = tmEndTimeToday.tm_isdst = tmNowTime.tm_isdst;
             time_t startTimeToday = mktime(&tmStartTimeToday);
             time_t endTimeToday = mktime(&tmEndTimeToday);
-            //cout << "desc=" << schedulePeriod.description << ", now=" << now << ", startTime="
-            //    << startTimeToday << ", endTime=" << endTimeToday << endl;
+            logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
+                              + to_string(startTimeToday) + ", endTime=" + to_string(endTimeToday));
             // Periods that span midnight have an end time that is numerically less
             // than the start time (which actually occurs on the previous day).
             if (endTimeToday < startTimeToday) {
@@ -467,8 +473,8 @@ bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, s
         }
         else {
             // This is a one-time event.
-            //cout << "desc=" << schedulePeriod.description << ", now=" << now << ", startTime="
-            //    << schedulePeriod.startTime << ", endTime=" << schedulePeriod.endTime << endl;
+            logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
+                              + to_string(schedulePeriod.startTime) + ", endTime=" + to_string(schedulePeriod.endTime));
             if (now >= schedulePeriod.startTime && now <= schedulePeriod.endTime) {
                 periodDescription = schedulePeriod.description;
                 return true;
@@ -581,6 +587,7 @@ void doPatterns()
         for (int priority = maxPriority; priority >= minPriority; --priority) {
             for (auto&& patternState : patternStates) {
                 if (patternState->wantsDisplay && patternState->priority == priority) {
+                    //logMsg(LOG_DEBUG, patternState->pattern->getName() + " wants display.");
                     for (unsigned int col = 0; col < numberOfStrings; col++) {
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
 
@@ -679,6 +686,7 @@ void doPatterns()
         }
 
         if (anyPixelIsOn) {
+            //logMsg(LOG_DEBUG, "a pixel is on");
             if (patternBlendMethod == PatternBlendMethod::hsvBlend || patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
                 hsv2rgb(hsvFinalFrame, rgbFinalFrame);
             }
@@ -782,6 +790,7 @@ int main(int argc, char **argv)
         }
 
         // Give the widgets a chance to update their simulated measurements.
+        //logMsg(LOG_DEBUG, "Updating simulated measurements.");
         for (auto&& widget : widgets) {
             widget.second->updateSimulatedMeasurements();
         }
@@ -797,18 +806,18 @@ int main(int argc, char **argv)
             string periodDesc;
             if (timeIsInPeriod(now, shutoffPeriods, periodDesc)) {
                 inPeriod = true;
-                if (periodDesc != lastPeriodDesc) {
+//                if (periodDesc != lastPeriodDesc) {
                     lastPeriodDesc = periodDesc;
                     logMsg(LOG_INFO, "In \"" + periodDesc + "\" shutoff period.");
-                }
+//                }
                 turnOffAllPixels();
             }
             else if (timeIsInPeriod(now, quiescentPeriods, periodDesc)) {
                 inPeriod = true;
-                if (periodDesc != lastPeriodDesc) {
+//                if (periodDesc != lastPeriodDesc) {
                     lastPeriodDesc = periodDesc;
                     logMsg(LOG_INFO, "In \"" + periodDesc + "\" quiescent period.");
-                }
+//                }
                 setAllPixelsToQuiescentColor();
             }
             else {
