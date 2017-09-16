@@ -1,68 +1,5 @@
-Raspberry Pi Setup for Illumicone - 6/22/2017
-
-These notes are not from the original setup done in 2016.  Rather, they are
-notes that I'm writing as I set up another Raspberry Pi to run widgetRcvr for widget
-firmware development.
-
-
-Use raspi-config to enable SPI on boot
---------------------------------------
-sudo raspi-config 
-advanced options
-A6 SPI
-enable
-load kernel module automatically or whatever
-save and reboot
-
-
-Use the static IP address 192.168.69.102
-----------------------------------------
-
-At some point in the past, the only modifications needed were to
-/etc/network/interfaces:
-
-    auto eth0
-    iface eth0 inet static
-        address 192.168.69.102
-        netmask 255.255.255.0
-        gateway 192.168.69.1
-
-At present, even with that change to interfaces, dhcpd5 will still use DHCP to
-get a second address for eth0.  To stop that from happening, the static
-address must be configured in /etc/dhcpcd.conf (note the extra "c" in the file
-name) by adding this:
-
-    # Use a static IP address on the Illumicone network.
-    interface eth0
-        static ip_address=192.168.69.102/24
-        static routers=192.168.69.1
-        static domain_name_servers=192.168.69.1 8.8.8.8
-
-(At least we're not having to deal with fucking connman.)
-
-
-Install git-flow, clone the Illumicone project, init git flow, pull current feature
------------------------------------------------------------------------------------
-sudo apt-get install git-flow
-cd ~/devl
-git clone https://github.com/skipzone/Illumicone.git
-cd Illumicone/
-git flow init
-git flow feature pull origin ContortOMatic
-
-
-Install RF24
-------------
-Use tmrh20's fork of RF24.  This is the same one we use for the widget Arduinos.
-cd ~/devl
-git clone https://github.com/nRF24/RF24.git
-sudo make install -B
-
-
-================================================================================
-
-
 9/13/2017 -- Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
+
 
 0.  Write the image to a micro-SD card.
 
@@ -133,7 +70,8 @@ sudo make install -B
         Mountain
 
     If using the local console (HDMI and keyboard), it would be a good idea to
-    change the keyboard to a US layout.
+    change the keyboard to a US layout.  It would also be a good idea to
+    change the Wi-Fi country.
 
 
 9.  Install required and useful packages.
@@ -217,7 +155,7 @@ sudo make install -B
 
     sudo apt-get install ntp
 
-    Merge the differences between ~/devl/Illumicone/config/ntp.conf and
+    Merge the differences between ~/devl/Illumicone/config/ntp_server.conf and
     /etc/ntp.conf.
 
 
@@ -241,12 +179,14 @@ sudo make install -B
     cd Illumicone
     git flow init
     cd src
-    make
     Make sure USE_SPI_DEV is enabled in widgetRcvr.cpp.
     make widgetRcvr
+    make
     cd ../config
     ln -s someConfig.json activeConfig.json
     git config --global core.editor "vim"
+    cp ~/devl/Illumicone/config/vimrc ~/.vimrc
+
 
 16.  Set up Wi-Fi to access the development network.
 
@@ -283,12 +223,82 @@ sudo make install -B
         key_mgmt=NONE
 
 
-17.  Assign the static IP address for ic-widpatcon.
+17.  Assign static IP address 192.168.69.103 for ic-widpatcon on wired network.
 
+    Add this to /etc/dhcpcd.conf (note the extra "c" in the file name):
+        # Use a static IP address on the Illumicone network.
+        interface eth0
+        static ip_address=192.168.69.103/24
+        static routers=192.168.69.1
+        static domain_name_servers=192.168.69.1 8.8.8.8
 
 
 18.  Set up illumicone's crontab.
 
+    crontab ~/devl/Illumicone/config/widpatcon_crontab
 
+
+
+================================================================================
+
+Raspberry Pi Setup for Illumicone - 6/22/2017
+
+These notes are not from the original setup done in 2016.  Rather, they are
+notes that I'm writing as I set up another Raspberry Pi to run widgetRcvr for widget
+firmware development.
+
+
+Use raspi-config to enable SPI on boot
+--------------------------------------
+sudo raspi-config 
+advanced options
+A6 SPI
+enable
+load kernel module automatically or whatever
+save and reboot
+
+
+Use the static IP address 192.168.69.102
+----------------------------------------
+
+At some point in the past, the only modifications needed were to
+/etc/network/interfaces:
+
+    auto eth0
+    iface eth0 inet static
+        address 192.168.69.102
+        netmask 255.255.255.0
+        gateway 192.168.69.1
+
+At present, even with that change to interfaces, dhcpd5 will still use DHCP to
+get a second address for eth0.  To stop that from happening, the static
+address must be configured in /etc/dhcpcd.conf (note the extra "c" in the file
+name) by adding this:
+
+    # Use a static IP address on the Illumicone network.
+    interface eth0
+        static ip_address=192.168.69.102/24
+        static routers=192.168.69.1
+        static domain_name_servers=192.168.69.1 8.8.8.8
+
+(At least we're not having to deal with fucking connman.)
+
+
+Install git-flow, clone the Illumicone project, init git flow, pull current feature
+-----------------------------------------------------------------------------------
+sudo apt-get install git-flow
+cd ~/devl
+git clone https://github.com/skipzone/Illumicone.git
+cd Illumicone/
+git flow init
+git flow feature pull origin ContortOMatic
+
+
+Install RF24
+------------
+Use tmrh20's fork of RF24.  This is the same one we use for the widget Arduinos.
+cd ~/devl
+git clone https://github.com/nRF24/RF24.git
+sudo make install -B
 
 
