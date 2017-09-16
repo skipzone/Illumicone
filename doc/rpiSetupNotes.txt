@@ -161,7 +161,7 @@ sudo make install -B
     make widgetRcvr
     cd ../config
     ln -s someConfig.json activeConfig.json
-
+    git config --global core.editor "vim"
 
 12.  Set up Wi-Fi to access the development network.
 
