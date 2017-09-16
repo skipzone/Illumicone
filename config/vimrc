@@ -1,0 +1,144 @@
+"-------------------------------------------------------------------------------
+" From http://www.abbeyworkshop.com/howto/osx/osxVim/index.html on 12/20/2008:
+
+" set our tabs to four spaces
+set ts=4
+"arduino set ts=2
+
+" turn syntax highlighting on by default
+syntax on
+
+" set auto-indenting on for programming
+set ai
+
+" turn off compatibility with the old vi
+set nocompatible
+
+" turn on the "visual bell" - which is much quieter than the "audio blink"
+set vb
+
+" do not highlight words when searching for them. it's distracting.
+"set nohlsearch
+
+" automatically show matching brackets. works like it does in bbedit.
+set showmatch
+
+" do NOT put a carriage return at the end of the last line! if you are programming
+" for the web the default will cause http headers to be sent. that's bad.
+set binary noeol
+
+" make that backspace key work the way it should
+set backspace=indent,eol,start
+"-------------------------------------------------------------------------------
+
+
+"-------------------------------------------------------------------------------
+"Stuff from /media/c/Program\ Files/Vim/_vimrc
+
+" Only do this part when compiled with support for autocommands.
+if has("autocmd")
+
+ " In text files, always limit the width of text to 78 characters
+ autocmd BufRead *.txt set tw=78
+
+ augroup cprog
+  " Remove all cprog autocommands
+  au!
+
+  " When starting to edit a file:
+  "   For C and C++ files set formatting of comments and set C-indenting on.
+  "   For other files switch it off.
+  "   Don't change the order, it's important that the line with * comes first.
+  autocmd FileType *      set formatoptions=tcql nocindent comments&
+"""  autocmd FileType c,cpp  set formatoptions=croql cindent comments=sr:/*,mb:*,el:*/,://
+  autocmd FileType c,cpp  set formatoptions=croql comments=sr:/*,mb:*,el:*/,://
+ augroup END
+
+ augroup gzip
+  " Remove all gzip autocommands
+  au!
+
+  " Enable editing of gzipped files
+  " set binary mode before reading the file
+  autocmd BufReadPre,FileReadPre	*.gz,*.bz2 set bin
+  autocmd BufReadPost,FileReadPost	*.gz call GZIP_read("gunzip")
+  autocmd BufReadPost,FileReadPost	*.bz2 call GZIP_read("bunzip2")
+  autocmd BufWritePost,FileWritePost	*.gz call GZIP_write("gzip")
+  autocmd BufWritePost,FileWritePost	*.bz2 call GZIP_write("bzip2")
+  autocmd FileAppendPre			*.gz call GZIP_appre("gunzip")
+  autocmd FileAppendPre			*.bz2 call GZIP_appre("bunzip2")
+  autocmd FileAppendPost		*.gz call GZIP_write("gzip")
+  autocmd FileAppendPost		*.bz2 call GZIP_write("bzip2")
+
+  " After reading compressed file: Uncompress text in buffer with "cmd"
+  fun! GZIP_read(cmd)
+    let ch_save = &ch
+    set ch=2
+    execute "'[,']!" . a:cmd
+    set nobin
+    let &ch = ch_save
+    execute ":doautocmd BufReadPost " . expand("%:r")
+  endfun
+
+  " After writing compressed file: Compress written file with "cmd"
+  fun! GZIP_write(cmd)
+    if rename(expand("<afile>"), expand("<afile>:r")) == 0
+      execute "!" . a:cmd . " <afile>:r"
+    endif
+  endfun
+
+  " Before appending to compressed file: Uncompress file with "cmd"
+  fun! GZIP_appre(cmd)
+    execute "!" . a:cmd . " <afile>"
+    call rename(expand("<afile>:r"), expand("<afile>"))
+  endfun
+
+ augroup END
+
+ " This is disabled, because it changes the jumplist.  Can't use CTRL-O to go
+ " back to positions in previous files more than once.
+ if 0
+  " When editing a file, always jump to the last cursor position.
+  " This must be after the uncompress commands.
+   autocmd BufReadPost * if line("'\"") && line("'\"") <= line("$") | exe "normal `\"" | endif
+ endif
+
+endif " has("autocmd")
+"-------------------------------------------------------------------------------
+
+
+"-------------------------------------------------------------------------------
+"Ross's custom stuff
+
+behave xterm
+
+set selectmode=mouse
+set mousehide
+
+""set gfn=HE_TERMINAL:h8
+"set gfn=Lucida_Console:h8
+""" 8/27/2011:  Setting co and lines breaks scrolling in the terminal after exiting vi.
+"""set co=132
+"""set lines=48
+
+set smartindent
+set shiftwidth=4
+"arduino set shiftwidth=2
+set expandtab
+
+" Turn off the annoying incremental search while the pattern is being typed.
+set noincsearch
+
+set bs=2		" allow backspacing over everything in insert mode
+
+set backup		" keep a backup file
+set viminfo='20,\"50	" read/write a .viminfo file, don't store more
+			" than 50 lines of registers
+set history=50		" keep 50 lines of command line history
+
+set ruler		" show the cursor position all the time
+
+set hlsearch	" turn on search highlighting
+
+"-------------------------------------------------------------------------------
+

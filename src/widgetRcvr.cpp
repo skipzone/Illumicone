@@ -405,6 +405,7 @@ bool configureRadio()
         radio.openReadingPipe(i, readPipeAddresses[i]);
     }
 
+    logMsg(LOG_INFO, "Radio configuration details:");
     radio.printDetails();
 
     return true;
@@ -413,11 +414,17 @@ bool configureRadio()
 
 void runLoop()
 {
+    time_t lastDataReceivedTime;
+    time(&lastDataReceivedTime);
+    time_t noDataReceivedMessageIntervalS = 1;
+    time_t noDataReceivedMessageTime = 0;
 
     while (1) {
 
         uint8_t pipeNum;
         while(radio.available(&pipeNum)) {
+
+            time(&lastDataReceivedTime);
 
             unsigned int payloadSize = radio.getDynamicPayloadSize();
             if (payloadSize == 0) {
@@ -481,6 +488,21 @@ void runLoop()
             }
         }
 
+        time_t now;
+        time(&now);
+        if (now != noDataReceivedMessageTime) {
+            time_t noDataReceivedIntervalS = now - lastDataReceivedTime;
+            if (noDataReceivedIntervalS >= noDataReceivedMessageIntervalS
+                && noDataReceivedIntervalS % noDataReceivedMessageIntervalS == 0)
+            {
+                logMsg(LOG_INFO, "No widget data received for " + to_string(noDataReceivedIntervalS) + " seconds.");
+                noDataReceivedMessageTime = now;
+                if (noDataReceivedMessageIntervalS <= 32) {
+                    noDataReceivedMessageIntervalS *= 2;
+                }
+            }
+        }
+
         // There are no payloads to process, so give other threads a chance to run.
         this_thread::yield();
     }
@@ -529,6 +551,7 @@ int main(int argc, char** argv)
     }
 
     radio.startListening();
+    logMsg(LOG_INFO, "Now listening for widget data.");
 
     runLoop();
     
