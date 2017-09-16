@@ -55,11 +55,20 @@ static int widgetSock[16];
  * Radio Configuration *
  ***********************/
 
+#define RF24_SPI_DEV
+
+#ifdef RF24_SPI_DEV
+// RF24 radio(<ce_pin>, <a>*10+<b>) for spi device at /dev/spidev<a>.<b>
+// See http://pi.gadgetoid.com/pinout
+RF24 radio(25, 0);
+#else
 // Radio CE Pin, CSN Pin, SPI Speed
 // See http://www.airspayce.com/mikem/bcm2835/group__constants.html#ga63c029bd6500167152db4e57736d0939
 // and the related enumerations for pin information.  (That's some pretty useful shit right there, Maynard.)
 // Raspberry Pi B+:  CE connected to GPIO25 on J8-22, CSN connected to CE0
+#error oh shit!
 RF24 radio(RPI_BPLUS_GPIO_J8_22, RPI_BPLUS_GPIO_J8_24, BCM2835_SPI_SPEED_8MHZ);
+#endif
 
 // We're using dynamic payload size, but we still need to know what the largest can be.
 constexpr uint8_t maxPayloadSize = 32;
