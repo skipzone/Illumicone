@@ -119,17 +119,21 @@ sudo make install -B
     Follow the bouncing ball.
 
 
-7.  Use raspi-config to enable SPI on boot
-
-    sudo raspi-config 
-        5 Interfacing Options
-        P4 SPI
-        enable
-
-
-8.  Create .bash_aliases
+7.  Create .bash_aliases
 
     on development system:  scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-widpatcon.local:.bash_aliases
+
+
+8.  Set the time zone.
+
+    sudo raspi-config
+        4 Localisation Options
+        I2 Change Timezone
+        US
+        Mountain
+
+    If using the local console (HDMI and keyboard), it would be a good idea to
+    change the keyboard to a US layout.
 
 
 9.  Install required and useful packages.
@@ -139,7 +143,85 @@ sudo make install -B
     (psmisc gives us the killall utility.)
 
 
-10.  Install RF24
+10.  Set up I2C.
+
+    sudo apt-get install python-smbus i2c-tools
+
+    sudo raspi-config
+        5 Interfacing Options
+        P5 I2C
+        Yes (to enable the ARM I2C interface)
+    Reboot.
+
+    Make illumicone a member of the i2c group.
+        sudo usermod -aG i2c illumicone
+    Log out and back in.
+
+    Check if I2C is working:
+        i2cdetect -y 1
+
+
+11. Set up SPI.
+
+    sudo raspi-config
+        5 Interfacing Options
+        P4 SPI
+        Yes (to enable the SPI interface)
+    Reboot.
+
+    Make illumicone a member of the spi group.
+        sudo usermod -aG spi illumicone
+    Log out and back in.
+
+
+12.  Set up the RTC.
+
+    Add the appropriate line to the end of /boot/config.txt:
+        dtoverlay=i2c-rtc,ds1307
+        or
+        dtoverlay=i2c-rtc,pcf8523
+        or
+        dtoverlay=i2c-rtc,ds3231
+    Reboot.
+
+    Check if RTC is present:
+        i2cdetect -y 1
+        Look for UU at address 0x68.
+
+    Disable the fake hwclock.
+        sudo apt-get -y remove fake-hwclock
+        sudo update-rc.d -f fake-hwclock remove
+
+    Comment out these three lines in /lib/udev/hwclock-set:
+        #if [ -e /run/systemd/system ] ; then
+        # exit 0
+        #fi
+    Also may need to comment out the two lines with --systz.  Adafruit (where
+    these steps came from) says nothing about that, but Durham's "Raspberry Pi
+    2 in a Pieshell" says to do that.
+
+    Set the system time (UTC), or allow it to be set from a network source.
+        sudo date --set="2017-09-16 02:44:38"
+
+    Write the current system time to the RTC:
+        sudo hwclock -w
+
+    To read the time directly from the RTC (with debug output):
+        sudo hwclock -D -r
+
+    To copy the time from the clock module to the system clock:
+        sudo hwclock -s
+
+
+13.  Set up NTP server.
+
+    sudo apt-get install ntp
+
+    Merge the differences between ~/devl/Illumicone/config/ntp.conf and
+    /etc/ntp.conf.
+
+
+14.  Install RF24
 
     Use tmrh20's fork of RF24.  This is the same one we use for the widget Arduinos.
 
@@ -147,10 +229,12 @@ sudo make install -B
     cd devl
     git clone https://github.com/nRF24/RF24.git
     cd RF24
-    sudo make install -B
+    ./configure --driver=SPIDEV  (this allows widgetRcvr to be run without sudo)
+    make
+    sudo make install
 
 
-11.  Set up the Illumicone project.
+15.  Set up the Illumicone project.
 
     cd ~/devl
     git clone https://github.com/skipzone/Illumicone
@@ -158,12 +242,13 @@ sudo make install -B
     git flow init
     cd src
     make
+    Make sure USE_SPI_DEV is enabled in widgetRcvr.cpp.
     make widgetRcvr
     cd ../config
     ln -s someConfig.json activeConfig.json
     git config --global core.editor "vim"
 
-12.  Set up Wi-Fi to access the development network.
+16.  Set up Wi-Fi to access the development network.
 
     To see what networks are visible:
         sudo iwlist wlan0 scan
@@ -198,13 +283,12 @@ sudo make install -B
         key_mgmt=NONE
 
 
-x.  Assign the static IP address for ic-widpatcon.
+17.  Assign the static IP address for ic-widpatcon.
 
 
-x.  Set up time zone, NTP, RTC, and NTP server.
 
+18.  Set up illumicone's crontab.
 
-x.  Set up illumicone's crontab.
 
 
 
