@@ -27,7 +27,7 @@ using namespace std;
 
 
 SchroedersPlaythingWidget::SchroedersPlaythingWidget()
-    : Widget(WidgetId::schroedersPlaything, 1)
+    : Widget(WidgetId::schroedersPlaything, 1, true)
     , currentNote(35)
 {
     simulationUpdateIntervalMs[0] = 180;
@@ -51,5 +51,7 @@ void SchroedersPlaythingWidget::updateChannelSimulatedMeasurements(unsigned int 
 
     channels[chIdx]->setPositionAndVelocity(pos.raw, vel.raw);
     channels[chIdx]->setIsActive(true);
+
+    logMsg(LOG_DEBUG, "added MIDI_NOTE_ON message for note " + to_string(currentNote));
 }
 

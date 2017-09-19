@@ -1,3 +1,274 @@
+9/13/2017 -- Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
+
+
+0.  Write the image to a micro-SD card.
+
+    diskutil list
+    diskutil unmountDisk /dev/diskN
+    sudo dd bs=1m if=2017-09-07-raspbian-stretch-lite.img of=/dev/rdiskN
+    diskutil unmountDisk /dev/diskN
+
+    It appears that the file system will be expanded automatically upon first
+    boot.
+
+
+1.  Create a file named ssh on the boot partition.
+
+    The easiest way is to boot the RPi with an HDMI monitor connected.  User is
+    pi, password is raspberry.  Otherwise, use a Linux VM to access the boot
+    partition and create the file.
+    
+    sudo touch /boot/ssh
+    sudo reboot
+
+
+2.  Update everything.
+
+    sudo apt-get update
+    sudo apt-get upgrade
+
+
+3.  Create user illumicone and add it to the sudo group.
+
+    sudo adduser illumicone
+    sudo adduser illumicone sudo
+
+
+4.  Change user pi's password to be the same as illumicone's.
+
+    passwd
+
+
+5.  Set up ssh keys.
+
+    on development system:  scp ~/.ssh/id_rsa.pub illumicone@raspberrypi.local:myrsa.pub
+
+    mkdir .ssh
+    cd .ssh
+    ssh-keygen
+    mv ../myrsa.pub authorized_keys
+    chmod 600 authorized_keys
+
+
+6.  Use raspi-config to change the host name to ic-widpatcon.
+
+    sudo raspi-config 
+    Follow the bouncing ball.
+
+
+7.  Create .bash_aliases
+
+    on development system:  scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-widpatcon.local:.bash_aliases
+
+
+8.  Set the time zone.
+
+    sudo raspi-config
+        4 Localisation Options
+        I2 Change Timezone
+        US
+        Mountain
+
+    If using the local console (HDMI and keyboard), it would be a good idea to
+    change the keyboard to a US layout.  It would also be a good idea to
+    change the Wi-Fi country.
+
+
+9.  Install required and useful packages.
+
+    sudo apt-get install vim psmisc git git-flow
+
+    (psmisc gives us the killall utility.)
+
+
+10.  Set up I2C.
+
+    sudo apt-get install python-smbus i2c-tools
+
+    sudo raspi-config
+        5 Interfacing Options
+        P5 I2C
+        Yes (to enable the ARM I2C interface)
+    Reboot.
+
+    Make illumicone a member of the i2c group.
+        sudo usermod -aG i2c illumicone
+    Log out and back in.
+
+    Check if I2C is working:
+        i2cdetect -y 1
+
+
+11. Set up SPI.
+
+    sudo raspi-config
+        5 Interfacing Options
+        P4 SPI
+        Yes (to enable the SPI interface)
+    Reboot.
+
+    Make illumicone a member of the spi group.
+        sudo usermod -aG spi illumicone
+    Log out and back in.
+
+
+12.  Set up the RTC.
+
+    Add these lines to the end of /boot/config.txt, then un-commentout the
+    one that matches the installed RTC module:
+        #dtoverlay=i2c-rtc,ds1307
+        #dtoverlay=i2c-rtc,ds3231
+        #dtoverlay=i2c-rtc,pcf8523
+        #dtoverlay=i2c-rtc,pcf8563
+    Reboot.
+
+    Check if RTC is present:
+        i2cdetect -y 1
+        Look for UU at address 0x68.
+
+    Disable the fake hwclock.
+        sudo apt-get -y remove fake-hwclock
+        sudo update-rc.d -f fake-hwclock remove
+
+    Comment out these three lines in /lib/udev/hwclock-set:
+        #if [ -e /run/systemd/system ] ; then
+        # exit 0
+        #fi
+    Also may need to comment out the two lines with --systz.  Adafruit (where
+    these steps came from) says nothing about that, but Durham's "Raspberry Pi
+    2 in a Pieshell" says to do that.
+
+    Set the system time (UTC), or allow it to be set from a network source.
+        sudo date --set="2017-09-16 02:44:38"
+
+    Write the current system time to the RTC:
+        sudo hwclock -w
+
+    To read the time directly from the RTC (with debug output):
+        sudo hwclock -D -r
+
+    To copy the time from the clock module to the system clock:
+        sudo hwclock -s
+
+
+13.  If using the Sunfounder PCF8563 RTC module with DS18B20 temperature
+     sensor, enable 1-Wire support.
+
+    Add this line to /boot/config.txt:
+        dtoverlay=w1-gpio
+    Reboot.
+
+    Use lsmod to verify that the w1-gpio and w1-therm modules are loaded.
+
+    Look in /sys/bus/w1/devices for a directory name starting with 28-xxx,
+    where xxx is the serial number of the DS18B20 device.  Example:
+        illumicone@ic-widpatcon:~ $ ls /sys/bus/w1/devices
+        28-0416b35037ff  w1_bus_master1
+
+    To read the device, Use cat to read the w1_slave file in the directory.
+        illumicone@ic-widpatcon:~ $ cat /sys/bus/w1/devices/28-0416b35037ff/w1_slave 
+        f8 01 4b 46 1f ff 1f 10 d1 : crc=d1 YES
+        f8 01 4b 46 1f ff 1f 10 d1 t=31500
+
+    t is the temperature in degrees C * 1000.  So, in the above example, the
+    temperature is 31.5 C (88.7 F).
+
+
+14.  Set up NTP server.
+
+    sudo apt-get install ntp
+
+    Merge the differences between ~/devl/Illumicone/config/ntp_server.conf and
+    /etc/ntp.conf.
+
+
+15.  Install RF24
+
+    Use tmrh20's fork of RF24.  This is the same one we use for the widget Arduinos.
+
+    mkdir devl
+    cd devl
+    git clone https://github.com/nRF24/RF24.git
+    cd RF24
+    ./configure --driver=SPIDEV  (this allows widgetRcvr to be run without sudo)
+    make
+    sudo make install
+
+
+16.  Set up the Illumicone project.
+
+    cd ~/devl
+    git clone https://github.com/skipzone/Illumicone
+    cd Illumicone
+    git flow init
+    cd src
+    Make sure USE_SPI_DEV is enabled in widgetRcvr.cpp.
+    make widgetRcvr
+    make
+    cd ../config
+    ln -s someConfig.json activeConfig.json
+    git config --global core.editor "vim"
+    cp ~/devl/Illumicone/config/vimrc ~/.vimrc
+
+
+17.  Set up Wi-Fi to access the development network.
+
+    Use raspi-config to set the country.
+        4 Localisation Options
+        I4 Change Wi-Fi Country
+        US
+
+    To see what networks are visible:
+        sudo iwlist wlan0 scan
+
+    Add this to /etc/wpa_supplicant/wpa_supplicant.conf:
+        network={
+                ssid="thessid"
+                psk="thepassword"
+        }
+
+    Use ifconfig to see if the connection was successful.
+
+    wpa-supplicant should notice the change.  If it doesn't, try this:
+        sudo wpa_cli reconfigure
+    If that doesn't work, reboot.
+
+    Another way to do this is to use the wpa_passphrase utility:
+        wpa_passphrase "thessid" "thepassword" | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
+    Then, edit wpa_supplicant.conf and removed the commented-out password.
+
+    This might help with hidden networks:
+        scan_ssid=1
+
+    Add this when configuring multiple networks:
+        priority=1
+        id_str="networkOne"
+        ...
+        priority=2
+        id_str="networkTwo"
+
+    For unsecured networks, use this instead of psk:
+        key_mgmt=NONE
+
+
+18.  Assign static IP address 192.168.69.103 for ic-widpatcon on wired network.
+
+    Add this to /etc/dhcpcd.conf (note the extra "c" in the file name):
+        # Use a static IP address on the Illumicone network.
+        interface eth0
+        static ip_address=192.168.69.103/24
+        static routers=192.168.69.1
+        static domain_name_servers=192.168.69.1 8.8.8.8
+
+
+19.  Set up illumicone's crontab.
+
+    crontab ~/devl/Illumicone/config/widpatcon_crontab
+
+
+
+================================================================================
+
 Raspberry Pi Setup for Illumicone - 6/22/2017
 
 These notes are not from the original setup done in 2016.  Rather, they are
@@ -57,4 +328,5 @@ Use tmrh20's fork of RF24.  This is the same one we use for the widget Arduinos.
 cd ~/devl
 git clone https://github.com/nRF24/RF24.git
 sudo make install -B
+
 

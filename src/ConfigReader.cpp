@@ -244,6 +244,14 @@ unsigned int ConfigReader::getPatternRunLoopSleepIntervalUs()
 }
 
 
+unsigned int ConfigReader::getRadioPollingLoopSleepIntervalUs()
+{
+    unsigned int val;
+    return  getUnsignedIntValue(configObj, "radioPollingLoopSleepIntervalUs", val, ".", 1) ? val : 0;
+}
+
+
+
 bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods)
 {
     bool problemEncountered = false;

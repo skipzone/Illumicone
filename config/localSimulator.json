@@ -25,8 +25,9 @@
     "numberOfPixelsPerString" : 100,
 
     "patconIpAddress" : "127.0.0.1",
-    "opcServerIpAddress": "127.0.0.1",
-    //"opcServerIpAddress": "192.168.69.11",
+    //"opcServerIpAddress": "127.0.0.1",
+    "opcServerIpAddress": "192.168.69.12",
+    //"opcServerIpAddress": "192.168.76.124",
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
@@ -37,6 +38,8 @@
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
     "patternRunLoopSleepIntervalUs" : 500,
+
+    "radioPollingLoopSleepIntervalUs" : 1000,
 
     "widgets" : [
         {   "name" : "eye",
@@ -51,12 +54,12 @@
         },
         {   "name" : "bells",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "rainstick",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
@@ -66,7 +69,7 @@
         },
         {   "name" : "triObelisk",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "pump",
@@ -194,8 +197,8 @@
             "sparkleChangeIntervalMs" : 50,
             "sparkleColor" : "white"
         },
-        {   "name" : "redSparkle",
-            "enabled" : false,
+        {   "name" : "magentaSparkle",
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -207,13 +210,15 @@
                 }
             ],
             "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "deactivationThreshold" : 300,
+            "numGoodMeasurementsForReactivation" : 10,
             "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "red"
+            "sparkleColor" : "magenta"
         },
-        {   "name" : "greenSparkle",
-            "enabled" : false,
+        {   "name" : "aquaSparkle",
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -225,13 +230,15 @@
                 }
             ],
             "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "deactivationThreshold" : 300,
+            "numGoodMeasurementsForReactivation" : 10,
             "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "green"
+            "sparkleColor" : "aqua"
         },
-        {   "name" : "blueSparkle",
-            "enabled" : false,
+        {   "name" : "yellowSparkle",
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -243,10 +250,12 @@
                 }
             ],
             "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "deactivationThreshold" : 300,
+            "numGoodMeasurementsForReactivation" : 10,
             "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "blue"
+            "sparkleColor" : "yellow"
         },
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
@@ -629,8 +638,8 @@
         },
         {   "name" : "schroedersPlaything",
             "enabled" : true,
-            "priority" : 2,
-            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "priority" : 1,
+            "opacity" : 100,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "MidiActivatedRegionsPattern",
             "inputs" : [
                 {   "inputName" : "midiInput",

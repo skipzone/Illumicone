@@ -35,7 +35,7 @@ class Widget
 {
     public:
 
-        Widget(WidgetId id, unsigned int numChannels);
+        Widget(WidgetId id, unsigned int numChannels, bool useQueuedChannels = false);
         virtual ~Widget();
 
         Widget() = delete;
@@ -76,5 +76,7 @@ class Widget
         int sockfd;
         struct sockaddr_in servaddr;
         bool stopUdpRxPolling;
+
+        bool useQueuedChannels;
 };
 
