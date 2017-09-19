@@ -173,7 +173,7 @@ bool MidiActivatedRegionsPattern::update()
                && midiInputChannel->getHasNewVelocityMeasurement())
         {
             ++midiMessageCount;
-            logMsg(LOG_DEBUG, "processing MIDI message #" + to_string(midiMessageCount));
+            //logMsg(LOG_DEBUG, "processing MIDI message #" + to_string(midiMessageCount));
 
             MidiPositionMeasurement pos;
             MidiVelocityMeasurement vel;

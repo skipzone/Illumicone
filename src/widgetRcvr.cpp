@@ -40,10 +40,10 @@
 
 using namespace std;
 
-
 static ConfigReader config;
 static string lockFilePath;
 static string patconIpAddress;
+static unsigned int radioPollingLoopSleepIntervalUs;
 static unsigned int widgetPortNumberBase;
 
 static struct sockaddr_in widgetSockAddr[16];
@@ -358,6 +358,8 @@ bool readConfig(const string& configFileName)
         return false;
     }
 
+    radioPollingLoopSleepIntervalUs = config.getRadioPollingLoopSleepIntervalUs();
+
     widgetPortNumberBase = config.getWidgetPortNumberBase();
     if (widgetPortNumberBase == 0) {
         return false;
@@ -503,8 +505,10 @@ void runLoop()
             }
         }
 
-        // There are no payloads to process, so give other threads a chance to run.
-        this_thread::yield();
+        // There are no payloads to process, so give other threads a chance to
+        // run.  Also, don't hammmer on the SPI interface too hard (and drive
+        // up cpu usage) by polling for data too often.
+        usleep(radioPollingLoopSleepIntervalUs);
     }
 }
 
@@ -540,6 +544,7 @@ int main(int argc, char** argv)
     logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
     logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
     logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
+    logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = " + to_string(radioPollingLoopSleepIntervalUs));
     logMsg(LOG_INFO, "widgetPortNumberBase = " + to_string(widgetPortNumberBase));
 
     if (!openUdpPorts()) {
