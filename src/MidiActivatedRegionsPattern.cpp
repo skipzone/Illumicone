@@ -165,6 +165,7 @@ bool MidiActivatedRegionsPattern::update()
 
     else {
         while (midiInputChannel->getHasNewPositionMeasurement() && midiInputChannel->getHasNewVelocityMeasurement()) {
+            //logMsg(LOG_DEBUG, "there is a new MIDI message");
 
             MidiPositionMeasurement pos;
             MidiVelocityMeasurement vel;
@@ -176,6 +177,7 @@ bool MidiActivatedRegionsPattern::update()
                 // TODO 8/13/2017 ross:  replace magic number 36 with noteNumberOffset
                 unsigned int normalizedNoteNumber = vel.noteNumber - 36;
                 if (normalizedNoteNumber < indicatorRegions.size()) {
+                    //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " is in range");
                     IndicatorRegion* indicatorRegion = indicatorRegions[normalizedNoteNumber];
                     if (pos.channelMessageType == MIDI_NOTE_ON && vel.velocity != 0) {
                         if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {

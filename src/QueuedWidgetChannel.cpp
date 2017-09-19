@@ -38,7 +38,8 @@ int QueuedWidgetChannel::getPosition()
         prevPosition = position;
         position = positionQueue.front();
         positionQueue.pop();
-        hasNewPositionMeasurement = positionQueue.empty();
+        hasNewPositionMeasurement = !positionQueue.empty();
+        //logMsg(LOG_DEBUG, "positionQueue.size() returns " + to_string(positionQueue.size()) + ", .empty() returns " + to_string(positionQueue.empty()) + ", hasNewPositionMeasurement=" + to_string(hasNewPositionMeasurement));
     }
     measmtQueueMutex.unlock();
     return position;
@@ -52,7 +53,8 @@ int QueuedWidgetChannel::getVelocity()
         prevVelocity = velocity;
         velocity = velocityQueue.front();
         velocityQueue.pop();
-        hasNewPositionMeasurement = velocityQueue.empty();
+        hasNewVelocityMeasurement = !velocityQueue.empty();
+        //logMsg(LOG_DEBUG, "velocityQueue.size() returns " + to_string(velocityQueue.size()) + ", .empty() returns " + to_string(velocityQueue.empty()) + ", hasNewVelocityMeasurement=" + to_string(hasNewVelocityMeasurement));
     }
     measmtQueueMutex.unlock();
     return velocity;

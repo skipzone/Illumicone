@@ -179,7 +179,9 @@ void sendOpcMessage()
     //dumpOpcBuffer(opcBuffer);
 
     // send to OPC server over network connection
+    //logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
     send(opcServerSocketFd, opcBuffer, opcBufferSize, 0);
+    ////logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
 }
 
 
@@ -567,6 +569,7 @@ void doPatterns()
     int minPriority = INT_MAX;
     int maxPriority = INT_MIN;
     for (auto&& patternState : patternStates) {
+        //logMsg(LOG_DEBUG, "calling update for " + patternState->pattern->getName());
         patternState->wantsDisplay = patternState->pattern->update();
         patternState->priority = patternState->pattern->priority;
         patternState->amountOfOverlay = patternState->pattern->opacity * 255 / 100;
@@ -579,6 +582,8 @@ void doPatterns()
     clearAllPixels(hsvFinalFrame);
 
     if (anyPatternIsActive) {
+        //logMsg(LOG_DEBUG, "a pattern is active");
+
         bool anyPixelIsOn = false;
 
         // Layer the patterns into the final frame in reverse priority order
@@ -700,6 +705,7 @@ void doPatterns()
         timeWentIdle = 0;
     }
     else {
+        //logMsg(LOG_DEBUG, "no pattern is active");
         if (!doIdlePattern) {
             // Turn on the safety lights until the idle pattern takes over.
             turnOnSafetyLights();
