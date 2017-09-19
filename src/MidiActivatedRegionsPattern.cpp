@@ -164,8 +164,16 @@ bool MidiActivatedRegionsPattern::update()
     }
 
     else {
-        while (midiInputChannel->getHasNewPositionMeasurement() && midiInputChannel->getHasNewVelocityMeasurement()) {
-            //logMsg(LOG_DEBUG, "there is a new MIDI message");
+        // We'll process a limited number of MIDI messages so that we don't
+        // completely block pattern updates and displays if the widget sends
+        // a message storm or starts chattering incessantly like some people.
+        unsigned int midiMessageCount = 0;
+        while (midiMessageCount < maxMidiMessagesPerPatternUpdate
+               && midiInputChannel->getHasNewPositionMeasurement()
+               && midiInputChannel->getHasNewVelocityMeasurement())
+        {
+            ++midiMessageCount;
+            logMsg(LOG_DEBUG, "processing MIDI message #" + to_string(midiMessageCount));
 
             MidiPositionMeasurement pos;
             MidiVelocityMeasurement vel;

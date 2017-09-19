@@ -52,6 +52,8 @@ class MidiActivatedRegionsPattern : public IndicatorRegionsPattern {
 
     private:
 
+        constexpr static unsigned int maxMidiMessagesPerPatternUpdate = 20;  // note on and off for all 10 fingers 
+
         std::string midiMessageToString(MidiPositionMeasurement pos, MidiVelocityMeasurement vel);
 
         std::unordered_set<IndicatorRegion*> activeIndicators;
