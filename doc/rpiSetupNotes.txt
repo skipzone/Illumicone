@@ -114,12 +114,12 @@
 
 12.  Set up the RTC.
 
-    Add the appropriate line to the end of /boot/config.txt:
-        dtoverlay=i2c-rtc,ds1307
-        or
-        dtoverlay=i2c-rtc,pcf8523
-        or
-        dtoverlay=i2c-rtc,ds3231
+    Add these lines to the end of /boot/config.txt, then un-commentout the
+    one that matches the installed RTC module:
+        #dtoverlay=i2c-rtc,ds1307
+        #dtoverlay=i2c-rtc,ds3231
+        #dtoverlay=i2c-rtc,pcf8523
+        #dtoverlay=i2c-rtc,pcf8563
     Reboot.
 
     Check if RTC is present:
@@ -151,7 +151,30 @@
         sudo hwclock -s
 
 
-13.  Set up NTP server.
+13.  If using the Sunfounder PCF8563 RTC module with DS18B20 temperature
+     sensor, enable 1-Wire support.
+
+    Add this line to /boot/config.txt:
+        dtoverlay=w1-gpio
+    Reboot.
+
+    Use lsmod to verify that the w1-gpio and w1-therm modules are loaded.
+
+    Look in /sys/bus/w1/devices for a directory name starting with 28-xxx,
+    where xxx is the serial number of the DS18B20 device.  Example:
+        illumicone@ic-widpatcon:~ $ ls /sys/bus/w1/devices
+        28-0416b35037ff  w1_bus_master1
+
+    To read the device, Use cat to read the w1_slave file in the directory.
+        illumicone@ic-widpatcon:~ $ cat /sys/bus/w1/devices/28-0416b35037ff/w1_slave 
+        f8 01 4b 46 1f ff 1f 10 d1 : crc=d1 YES
+        f8 01 4b 46 1f ff 1f 10 d1 t=31500
+
+    t is the temperature in degrees C * 1000.  So, in the above example, the
+    temperature is 31.5 C (88.7 F).
+
+
+14.  Set up NTP server.
 
     sudo apt-get install ntp
 
@@ -159,7 +182,7 @@
     /etc/ntp.conf.
 
 
-14.  Install RF24
+15.  Install RF24
 
     Use tmrh20's fork of RF24.  This is the same one we use for the widget Arduinos.
 
@@ -172,7 +195,7 @@
     sudo make install
 
 
-15.  Set up the Illumicone project.
+16.  Set up the Illumicone project.
 
     cd ~/devl
     git clone https://github.com/skipzone/Illumicone
@@ -188,7 +211,7 @@
     cp ~/devl/Illumicone/config/vimrc ~/.vimrc
 
 
-16.  Set up Wi-Fi to access the development network.
+17.  Set up Wi-Fi to access the development network.
 
     Use raspi-config to set the country.
         4 Localisation Options
@@ -228,7 +251,7 @@
         key_mgmt=NONE
 
 
-17.  Assign static IP address 192.168.69.103 for ic-widpatcon on wired network.
+18.  Assign static IP address 192.168.69.103 for ic-widpatcon on wired network.
 
     Add this to /etc/dhcpcd.conf (note the extra "c" in the file name):
         # Use a static IP address on the Illumicone network.
@@ -238,7 +261,7 @@
         static domain_name_servers=192.168.69.1 8.8.8.8
 
 
-18.  Set up illumicone's crontab.
+19.  Set up illumicone's crontab.
 
     crontab ~/devl/Illumicone/config/widpatcon_crontab
 
