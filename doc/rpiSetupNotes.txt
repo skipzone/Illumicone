@@ -190,6 +190,11 @@
 
 16.  Set up Wi-Fi to access the development network.
 
+    Use raspi-config to set the country.
+        4 Localisation Options
+        I4 Change Wi-Fi Country
+        US
+
     To see what networks are visible:
         sudo iwlist wlan0 scan
 

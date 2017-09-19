@@ -63,6 +63,7 @@
 
         # On Illumicone's LAN, ic-widcon has the RTC and is an NTP server.
         server 192.168.69.102
+        server 192.168.69.103
 
     sudo rm /etc/localtime; sudo ln -s /usr/share/zoneinfo/America/Boise /etc/localtime
 
