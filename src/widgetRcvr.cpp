@@ -418,7 +418,7 @@ void runLoop()
 {
     time_t lastDataReceivedTime;
     time(&lastDataReceivedTime);
-    time_t noDataReceivedMessageIntervalS = 1;
+    time_t noDataReceivedMessageIntervalS = 2;
     time_t noDataReceivedMessageTime = 0;
 
     while (1) {
@@ -427,7 +427,7 @@ void runLoop()
         while(radio.available(&pipeNum)) {
 
             time(&lastDataReceivedTime);
-            noDataReceivedMessageIntervalS = 1;
+            noDataReceivedMessageIntervalS = 2;
 
             unsigned int payloadSize = radio.getDynamicPayloadSize();
             if (payloadSize == 0) {
