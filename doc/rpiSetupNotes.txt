@@ -266,8 +266,19 @@
     crontab ~/devl/Illumicone/config/widpatcon_crontab
 
 
+================================================================================
+
+raspbian-shrink is a nice script for shrinking an RPi (or BBB) image file.  It
+runs fine under Ubuntu 14.04.  You can get it here:
+
+    https://github.com/aoakley/cotswoldjam.git
+
+
+Or, use the skipzone fork to get a fix for the extra space between "83" and
+"Linux" in fdisk output on Ubuntu 14.04.3.
 
 ================================================================================
+
 
 Raspberry Pi Setup for Illumicone - 6/22/2017
 
