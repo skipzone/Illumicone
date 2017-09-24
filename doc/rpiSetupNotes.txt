@@ -157,6 +157,7 @@
     Add this line to /boot/config.txt:
         dtoverlay=w1-gpio
     Reboot.
+    (May also be able to do this through raspi-config.)
 
     Use lsmod to verify that the w1-gpio and w1-therm modules are loaded.
 
