@@ -1,3 +1,203 @@
+9/24/2017 -- Set up ic-strdrv on a BeagleBone Green using Debian Jessie
+
+
+0.  Write the image to a micro-SD card.
+
+    diskutil list
+    diskutil unmountDisk /dev/diskN
+    sudo dd bs=1m if=bone-debian-8.7-iot-armhf-2017-03-19-4gb.img of=/dev/rdiskN
+    diskutil unmountDisk /dev/diskN
+
+
+1.  Write the image to the on-board flash.
+
+    Boot from the micro-SD card, ssh to beaglebone.local, and log in as
+    debian/temppwd.
+
+    Enable the following line in /boot/uEnv.txt:
+        ##enable Generic eMMC Flasher:
+        ##make sure, these tools are installed: dosfstools rsync
+        cmdline=init=/opt/scripts/tools/eMMC/init-eMMC-flasher-v3.sh
+
+    Reboot from the on-board flash.  The 4 user LEDs will flash in succession
+    while the image is being written.  When complete, the LEDs will be off,
+    and the board will be powered down automatically.  This can take up to ten
+    minutes.
+
+    Removed the micro-SD card and reboot from the on-board flash.
+
+    It would be a good idea to erase the micro-SD card so that you don't
+    accidentially boot from it and wipe out the setup in the on-board flash.
+
+
+2.  Update everything.
+
+    Boot from the micro-SD card.
+
+    sudo apt-get update
+    sudo apt-get upgrade
+
+    Reboot.
+
+
+3.  Create user illumicone and add it to the sudo group.
+
+    sudo adduser illumicone
+    sudo adduser illumicone sudo
+
+
+4.  Change user debian's password to be the same as illumicone's.
+
+    passwd
+
+    Remove the "default username:password" line from /etc/issue and
+    /etc/issue.net.
+
+
+5.  Set up ssh keys.
+
+    on development system:  scp ~/.ssh/id_rsa.pub illumicone@beaglebone.local:myrsa.pub
+
+    mkdir .ssh
+    cd .ssh
+    ssh-keygen
+    mv ../myrsa.pub authorized_keys
+    chmod 600 authorized_keys
+
+
+6.  Set the host name to ic-strdrv.
+
+    Change all occurrences of "beaglebone" to "ic-strdrv" in /etc/hostname and
+    /etc/hosts.
+
+    Reboot.
+
+
+7.  Create .bash_aliases
+
+    on development system:  scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-strdrv.local:.bash_aliases
+
+
+8.  Set up time zone and NTP.
+
+    sudo apt-get install ntp
+
+    Add this above the existing server lines in /etc/ntp.conf:
+
+        # On Illumicone's LAN, ic-widcon has the RTC and is an NTP server.
+        server 192.168.69.102
+        server 192.168.69.103
+
+    sudo timedatectl set-timezone America/Boise
+
+
+9.  Install required and useful packages.
+
+    sudo apt-get install psmisc git-flow
+
+    (psmisc gives us the killall utility.)
+
+
+10.  Set up the Illumicone project.
+
+    mkdir devl
+    cd ~/devl
+    git clone https://github.com/skipzone/Illumicone
+    cd Illumicone
+    git flow init
+    cp ~/devl/Illumicone/config/vimrc ~/.vimrc
+    git config --global core.editor "vim"
+
+
+11.  Disable HDMI.
+
+    The BeagleBone Green does not have HDMI, so this step should not be
+    necessary (per Yona Appletree, https://devhub.io/repos/Yona-Appletree-LEDscape).
+    For the record and in case a BBB is used instead, enable this line in
+    /boot/uEnv.txt to disable HDMI:
+        ##BeagleBone Black: HDMI (Audio/Video) disabled:
+        dtb=am335x-boneblack-emmc-overlay.dtb
+
+
+12.  Set up LEDscape.
+
+        cd devl
+        git clone git://github.com/Yona-Appletree/LEDscape
+        cd LEDscape
+
+sudo cp /boot/dtbs/$(uname -r)/am335x-bonegreen.dtb{,.original}
+
+cd /opt/source/dtb-4.4-ti/src/arm
+sudo debian
+cp am335x-bonegreen.dts am335x-bonegreen.dts.original
+Disable remoteproc and enable uio in am335x-bonegreen.dts:
+    Enable this line:  #include "am33xx-pruss-uio.dtsi"
+    Comment out this line:  /* #include "am33xx-pruss-rproc.dtsi" */
+Fix the name of the device tree compiler (dtc) in Makefile.
+    cp Makefile Makefile.original
+    Make this edit:
+        #DTC ?= /usr/bin/dtc-v4.1.x
+        DTC ?= /usr/bin/dtc
+make src/arm/am335x-bonegreen.dtb
+sudo cp src/arm/am335x-bonegreen.dtb /boot/dtbs/4.4.54-ti-r93/
+exit
+cd
+sudo cp /etc/modprobe.d/pruss-blacklist.conf pruss-blacklist.conf.original
+Replace this line in /etc/modprobe.d/pruss-blacklist.conf:
+    blacklist uio_pruss
+with these:
+    blacklist pruss
+    blacklist pruss_intc
+    blacklist pru-rproc
+
+Cross your fingers and reboot.
+
+Check:
+    lsmod | grep uio
+Output should be:
+uio_pruss       4928 0
+uio_pdrv_genirq 3539 0
+uio             8822 2 uio_pruss,uio_pdrv_genirq
+
+
+This is the wrong output:
+illumicone@ic-strdrv:~$ lsmod | grep uio
+uio_pdrv_genirq         3923  0 
+uio                    10524  1 uio_pdrv_genirq
+
+
+=-=-=-=-=-=-=-=
+Wheezy only?  Not necessary on Jessie?  Is Jessie even compatible with LEDscape?
+        sudo cp /boot/dtbs/$(uname -r)/am335x-bonegreen.dtb{,.originalBeforeLEDscape}
+
+cp am335x-boneblack.dtb /boot/dtbs/$(uname -r)/ 
+cp am335x-green.dtb /boot/dtbs/$(uname -r)/ 
+modprobe uio_pruss  
+vi /boot/uEnv.txt
+reboot
+
+- sudo cp am335x-boneblack.dtb /boot/dtbs/3.8.13-bone79/
+
+- sudo modprobe -v uio_pruss
+
+- sudo reboot
+
+=-=-=-=-=-=-=-=
+
+- make
+
+- sudo ./install-service.sh
+
+
+
+
+
+x.  Assign static IP address 192.168.69.100 for ic-strdrv on wired network.
+
+
+================================================================================
+
+
 7/8/2017 - Set up ic-patcon with new jessie image
 =================================================
 
@@ -71,7 +271,6 @@
         But, the output from timedatectl looks correct.  Try this command
         instead:  sudo timedatectl set-timezone America/Boise
 
-
 - Install psmisc to get the killall utility.
 
     sudo apt-get install psmisc
@@ -86,16 +285,12 @@
 
     git clone https://github.com/skipzone/Illumicone
 
-
-
-
 - If using an SD card larger than 4 GB, expand the partition then reboot
   immediately afterward.
 
     (May need to do "git pull" in /opt/scripts/tools.)
 
     /opt/scripts/tools/grow_partition.sh
-
 
 
 
