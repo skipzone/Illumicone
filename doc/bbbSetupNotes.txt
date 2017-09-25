@@ -1,5 +1,5 @@
 9/24/2017 -- Set up ic-strdrv on a BeagleBone Green using Debian Jessie
-
+=======================================================================
 
 0.  Write the image to a micro-SD card.
 
@@ -137,6 +137,8 @@
             blacklist pruss
             blacklist pruss_intc
             blacklist pru-rproc
+        If the file doesn't exist, create it, and populate it with the three
+        lines above.
 
     Reboot.
 
@@ -159,8 +161,8 @@
         git clone git://github.com/Yona-Appletree/LEDscape
         cd LEDscape
 
-    Fix a bug in join_multicast_group_on_all_ifaces(...) in opc-server.c by
-    changing this:
+    Fix a bug in join_multicast_group_on_all_ifaces in opc-server.c by changing
+    this:
         while ( cursor != NULL ) {
             if ( cursor->ifa_addr->sa_family == AF_INET
                 && !(cursor->ifa_flags & IFF_LOOPBACK)
@@ -169,6 +171,11 @@
             if ( cursor->ifa_addr != NULL   // ifa_addr can be null for some interfaces
                 && cursor->ifa_addr->sa_family == AF_INET
                 && !(cursor->ifa_flags & IFF_LOOPBACK)
+
+    While you're at it, fix the problem of not seeing opc-server messages
+    promptly in the system log by adding this fflush call after each printf
+    call (and after any mutex release but before any sleep) in render_thread:
+        fflush(stdout);
 
     sudo cp ~/devl/Illumicone/config/ledscape-config.json /etc/
     cp ~/devl/Illumicone/config/rgb-123-v3-3to10.json pru/mappings/
@@ -190,9 +197,17 @@
         systemctl status ledscape.service
 
     Output from the service (opc-server, actually) will appear in
-    /var/log/syslog and /var/log/daemon.log.  The fps_info messages seem to be
-    written to the log in batches every 5-7 minutes.
+    /var/log/syslog and /var/log/daemon.log.  The messages will appear in
+    batches every 5-7 minutes if you didn't add the fflush calls as suggested
+    above.
 
+    Alternatively, you can use journalctl to view the output.
+        sudo adduser illumicone systemd-journal
+        Log out/in.
+        To see all entries (with less-style pagination), starting with oldest:
+            journalctl _SYSTEMD_UNIT=ledscape.service
+        To see current entries as they are written:
+            journalctl -f _SYSTEMD_UNIT=ledscape.service
 
 13.  Fix the bug in /etc/rsyslog.conf.
 
@@ -214,7 +229,10 @@
     Note which service is ethernet_hexshit_cable.
     sudo connmanctl config ethernet_hexshit_cable --ipv4 manual 192.168.69.101 255.255.255.0 192.168.69.1 --nameservers 192.168.69.1 8.8.8.8
   
-    Your ssh connection will go away because the address change will be immediate.
+    Your ssh connection will go away because the address change will be
+    immediate.  So, it is best to do this step when ic-strdrv is on the
+    illumicone network because you won't be able to reconnect to it and
+    shut it down nicely otherwise.
 
 
 15.  Write the image to the on-board flash.
