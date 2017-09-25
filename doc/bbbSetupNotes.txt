@@ -3,16 +3,221 @@
 
 0.  Write the image to a micro-SD card.
 
+    Download and uncompress this image (newer ones don't support uio_pruss,
+    which is needed by LEDscape to talk to the PRUs):
+        https://debian.beagleboard.org/images/bone-debian-8.6-iot-armhf-2016-11-06-4gb.img.xz
+
     diskutil list
     diskutil unmountDisk /dev/diskN
-    sudo dd bs=1m if=bone-debian-8.7-iot-armhf-2017-03-19-4gb.img of=/dev/rdiskN
+    sudo dd bs=1m if=bone-debian-8.6-iot-armhf-2016-11-06-4gb.img of=/dev/rdiskN
     diskutil unmountDisk /dev/diskN
 
 
-1.  Write the image to the on-board flash.
+1.  Update everything.
 
     Boot from the micro-SD card, ssh to beaglebone.local, and log in as
     debian/temppwd.
+
+    sudo apt-get update
+    sudo apt-get upgrade
+
+    Reboot.
+
+
+2.  Create user illumicone and add it to the sudo group.
+
+    sudo adduser illumicone
+    sudo adduser illumicone sudo
+
+
+3.  Change user debian's password to be the same as illumicone's.
+
+    passwd
+
+    Remove the "default username:password" line from /etc/issue and
+    /etc/issue.net.
+
+    log in as illumicone
+
+
+4.  Set up ssh keys.
+
+    on development system:  scp ~/.ssh/id_rsa.pub illumicone@beaglebone.local:myrsa.pub
+
+    mkdir .ssh
+    cd .ssh
+    ssh-keygen
+    mv ../myrsa.pub authorized_keys
+    chmod 600 authorized_keys
+
+
+5.  Set the host name to ic-strdrv.
+
+    Change all occurrences of "beaglebone" to "ic-strdrv" in /etc/hostname and
+    /etc/hosts.
+
+    Reboot.
+
+
+6.  Create .bash_aliases
+
+    on development system:  scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-strdrv.local:.bash_aliases
+
+
+7.  Set up time zone and NTP.
+
+    sudo apt-get install ntp
+
+    Add this above the existing server lines in /etc/ntp.conf:
+
+        # On Illumicone's LAN, ic-widcon has the RTC and is an NTP server.
+        server 192.168.69.102
+        server 192.168.69.103
+
+    sudo timedatectl set-timezone America/Boise
+
+
+8.  Install required and useful packages.
+
+    sudo apt-get install psmisc git-flow
+
+    (psmisc gives us the killall utility.)
+
+
+9.  Set up the Illumicone project.
+
+    cd
+    mkdir devl
+    cd devl
+    git clone https://github.com/skipzone/Illumicone.git
+    cd Illumicone
+    git flow init
+        Take all defaults.
+    cp ~/devl/Illumicone/config/vimrc ~/.vimrc
+    git config --global core.editor "vim"
+
+
+10.  Disable HDMI.
+
+    The BeagleBone Green does not have HDMI, so this step should not be
+    necessary (per Yona Appletree, https://devhub.io/repos/Yona-Appletree-LEDscape).
+    For the record and in case a BBB is used instead, enable this line in
+    /boot/uEnv.txt to disable HDMI:
+        ##BeagleBone Black: HDMI (Audio/Video) disabled:
+        dtb=am335x-boneblack-emmc-overlay.dtb
+    Note that the dts and dtb file names in the next step will need to be
+    am335x-boneblack-emmc-overlay instead of am335x-bonegreen.
+
+
+11.  Enable uio_pruss (interface to PRUs).
+
+    Back up existing compiled device tree file.
+        sudo cp /boot/dtbs/$(uname -r)/am335x-bonegreen.dtb{,.original}
+
+    Modify device tree to enable pruss.
+        cd /opt/source/dtb-4.4-ti/src/arm
+        su debian
+        cp am335x-bonegreen.dts am335x-bonegreen.dts.original
+        Disable remoteproc and enable uio in am335x-bonegreen.dts.
+            Enable this line:  #include "am33xx-pruss-uio.dtsi"
+            Comment out this line:  /* #include "am33xx-pruss-rproc.dtsi" */
+
+    Compile device tree and copy to boot directory.
+        cd /opt/source/dtb-4.4-ti
+        sudo ln -s /usr/bin/dtc /usr/bin/dtc-v4.1.x
+        make src/arm/am335x-bonegreen.dtb
+        sudo cp src/arm/am335x-bonegreen.dtb /boot/dtbs/4.4.30-ti-r64/
+        exit
+
+    Put remoteproc on module blacklist.
+        sudo cp /etc/modprobe.d/pruss-blacklist.conf pruss-blacklist.conf.original
+        Replace this line in /etc/modprobe.d/pruss-blacklist.conf:
+            blacklist uio_pruss
+        with these:
+            blacklist pruss
+            blacklist pruss_intc
+            blacklist pru-rproc
+
+    Reboot.
+
+    Check:
+        lsmod | grep uio
+    Output should be:
+        uio_pruss       4928 0
+        uio_pdrv_genirq 3539 0
+        uio             8822 2 uio_pruss,uio_pdrv_genirq
+    This is the wrong output:
+        illumicone@ic-strdrv:~$ lsmod | grep uio
+        uio_pdrv_genirq         3923  0 
+        uio                    10524  1 uio_pdrv_genirq
+
+
+12.  Set up LEDscape.
+
+    Get Yona Appletree's fork.
+        cd ~/devl
+        git clone git://github.com/Yona-Appletree/LEDscape
+        cd LEDscape
+
+    Fix a bug in join_multicast_group_on_all_ifaces(...) in opc-server.c by
+    changing this:
+        while ( cursor != NULL ) {
+            if ( cursor->ifa_addr->sa_family == AF_INET
+                && !(cursor->ifa_flags & IFF_LOOPBACK)
+    to this:
+        while ( cursor != NULL ) {
+            if ( cursor->ifa_addr != NULL   // ifa_addr can be null for some interfaces
+                && cursor->ifa_addr->sa_family == AF_INET
+                && !(cursor->ifa_flags & IFF_LOOPBACK)
+
+    sudo cp ~/devl/Illumicone/config/ledscape-config.json /etc/
+    cp ~/devl/Illumicone/config/rgb-123-v3-3to10.json pru/mappings/
+
+    If the third port of the RGB-123 board has been fixed, omit the above copy
+    of rgb-123-v3-3to10.json.  Also, modify and commit ledscape-config.json so
+    that it points to the original mapping.  Finally, update this document.
+
+    make
+
+    Install the service.
+        sudo ./install-service.sh
+
+    Use these commands to stop and start the service:
+        sudo systemctl stop ledscape.service
+        sudo systemctl start ledscape.service
+
+    You can see if the service is running with this:
+        systemctl status ledscape.service
+
+    Output from the service (opc-server, actually) will appear in
+    /var/log/syslog and /var/log/daemon.log.  The fps_info messages seem to be
+    written to the log in batches every 5-7 minutes.
+
+
+13.  Fix the bug in /etc/rsyslog.conf.
+
+    A bug in the rsyslog config causes /dev/xconsole buffer to fill up.  See
+    https://raspberrypi.stackexchange.com/questions/47781/what-is-action-17
+
+    Comment out these lines in /etc/rsyslog.conf:
+        #daemon.*;mail.*;\
+        #        news.err;\
+        #        *.=debug;*.=info;\
+        #        *.=notice;*.=warn       |/dev/xconsole
+
+    sudo systemctl restart rsyslog.service
+
+
+14.  Assign static IP address 192.168.69.100 for ic-strdrv on wired network.
+
+    sudo connmanctl services
+    Note which service is ethernet_hexshit_cable.
+    sudo connmanctl config ethernet_hexshit_cable --ipv4 manual 192.168.69.101 255.255.255.0 192.168.69.1 --nameservers 192.168.69.1 8.8.8.8
+  
+    Your ssh connection will go away because the address change will be immediate.
+
+
+15.  Write the image to the on-board flash.
 
     Enable the following line in /boot/uEnv.txt:
         ##enable Generic eMMC Flasher:
@@ -26,173 +231,8 @@
 
     Removed the micro-SD card and reboot from the on-board flash.
 
-    It would be a good idea to erase the micro-SD card so that you don't
-    accidentially boot from it and wipe out the setup in the on-board flash.
-
-
-2.  Update everything.
-
-    Boot from the micro-SD card.
-
-    sudo apt-get update
-    sudo apt-get upgrade
-
-    Reboot.
-
-
-3.  Create user illumicone and add it to the sudo group.
-
-    sudo adduser illumicone
-    sudo adduser illumicone sudo
-
-
-4.  Change user debian's password to be the same as illumicone's.
-
-    passwd
-
-    Remove the "default username:password" line from /etc/issue and
-    /etc/issue.net.
-
-
-5.  Set up ssh keys.
-
-    on development system:  scp ~/.ssh/id_rsa.pub illumicone@beaglebone.local:myrsa.pub
-
-    mkdir .ssh
-    cd .ssh
-    ssh-keygen
-    mv ../myrsa.pub authorized_keys
-    chmod 600 authorized_keys
-
-
-6.  Set the host name to ic-strdrv.
-
-    Change all occurrences of "beaglebone" to "ic-strdrv" in /etc/hostname and
-    /etc/hosts.
-
-    Reboot.
-
-
-7.  Create .bash_aliases
-
-    on development system:  scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-strdrv.local:.bash_aliases
-
-
-8.  Set up time zone and NTP.
-
-    sudo apt-get install ntp
-
-    Add this above the existing server lines in /etc/ntp.conf:
-
-        # On Illumicone's LAN, ic-widcon has the RTC and is an NTP server.
-        server 192.168.69.102
-        server 192.168.69.103
-
-    sudo timedatectl set-timezone America/Boise
-
-
-9.  Install required and useful packages.
-
-    sudo apt-get install psmisc git-flow
-
-    (psmisc gives us the killall utility.)
-
-
-10.  Set up the Illumicone project.
-
-    mkdir devl
-    cd ~/devl
-    git clone https://github.com/skipzone/Illumicone
-    cd Illumicone
-    git flow init
-    cp ~/devl/Illumicone/config/vimrc ~/.vimrc
-    git config --global core.editor "vim"
-
-
-11.  Disable HDMI.
-
-    The BeagleBone Green does not have HDMI, so this step should not be
-    necessary (per Yona Appletree, https://devhub.io/repos/Yona-Appletree-LEDscape).
-    For the record and in case a BBB is used instead, enable this line in
-    /boot/uEnv.txt to disable HDMI:
-        ##BeagleBone Black: HDMI (Audio/Video) disabled:
-        dtb=am335x-boneblack-emmc-overlay.dtb
-
-
-12.  Set up LEDscape.
-
-        cd devl
-        git clone git://github.com/Yona-Appletree/LEDscape
-        cd LEDscape
-
-sudo cp /boot/dtbs/$(uname -r)/am335x-bonegreen.dtb{,.original}
-
-cd /opt/source/dtb-4.4-ti/src/arm
-sudo debian
-cp am335x-bonegreen.dts am335x-bonegreen.dts.original
-Disable remoteproc and enable uio in am335x-bonegreen.dts:
-    Enable this line:  #include "am33xx-pruss-uio.dtsi"
-    Comment out this line:  /* #include "am33xx-pruss-rproc.dtsi" */
-Fix the name of the device tree compiler (dtc) in Makefile.
-    cp Makefile Makefile.original
-    Make this edit:
-        #DTC ?= /usr/bin/dtc-v4.1.x
-        DTC ?= /usr/bin/dtc
-make src/arm/am335x-bonegreen.dtb
-sudo cp src/arm/am335x-bonegreen.dtb /boot/dtbs/4.4.54-ti-r93/
-exit
-cd
-sudo cp /etc/modprobe.d/pruss-blacklist.conf pruss-blacklist.conf.original
-Replace this line in /etc/modprobe.d/pruss-blacklist.conf:
-    blacklist uio_pruss
-with these:
-    blacklist pruss
-    blacklist pruss_intc
-    blacklist pru-rproc
-
-Cross your fingers and reboot.
-
-Check:
-    lsmod | grep uio
-Output should be:
-uio_pruss       4928 0
-uio_pdrv_genirq 3539 0
-uio             8822 2 uio_pruss,uio_pdrv_genirq
-
-
-This is the wrong output:
-illumicone@ic-strdrv:~$ lsmod | grep uio
-uio_pdrv_genirq         3923  0 
-uio                    10524  1 uio_pdrv_genirq
-
-
-=-=-=-=-=-=-=-=
-Wheezy only?  Not necessary on Jessie?  Is Jessie even compatible with LEDscape?
-        sudo cp /boot/dtbs/$(uname -r)/am335x-bonegreen.dtb{,.originalBeforeLEDscape}
-
-cp am335x-boneblack.dtb /boot/dtbs/$(uname -r)/ 
-cp am335x-green.dtb /boot/dtbs/$(uname -r)/ 
-modprobe uio_pruss  
-vi /boot/uEnv.txt
-reboot
-
-- sudo cp am335x-boneblack.dtb /boot/dtbs/3.8.13-bone79/
-
-- sudo modprobe -v uio_pruss
-
-- sudo reboot
-
-=-=-=-=-=-=-=-=
-
-- make
-
-- sudo ./install-service.sh
-
-
-
-
-
-x.  Assign static IP address 192.168.69.100 for ic-strdrv on wired network.
+    TODO: how to modify /boot/uEnv.txt on the micro-SD card to disable the
+    eMMC flasher.
 
 
 ================================================================================

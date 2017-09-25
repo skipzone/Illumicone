@@ -38,6 +38,8 @@
 
     passwd
 
+    log in as illumicone
+
 
 5.  Set up ssh keys.
 
