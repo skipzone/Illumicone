@@ -177,12 +177,11 @@
     call (and after any mutex release but before any sleep) in render_thread:
         fflush(stdout);
 
-    sudo cp ~/devl/Illumicone/config/ledscape-config.json /etc/
-    cp ~/devl/Illumicone/config/rgb-123-v3-3to10.json pru/mappings/
-
-    If the third port of the RGB-123 board has been fixed, omit the above copy
-    of rgb-123-v3-3to10.json.  Also, modify and commit ledscape-config.json so
-    that it points to the original mapping.  Finally, update this document.
+    sudo cp ~/devl/Illumicone/config/ledscape-config-*.json /etc/
+    If configuring for Illumicone (the big cone):
+        sudo ln -s /etc/ledscape-config-illumicone.json /etc/ledscape-config.json
+    If configuring for Mini-Cone:
+        sudo ln -s /etc/ledscape-config-minicone.json /etc/ledscape-config.json
 
     make
 

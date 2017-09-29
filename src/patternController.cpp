@@ -181,7 +181,7 @@ void sendOpcMessage()
     // send to OPC server over network connection
     //logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
     send(opcServerSocketFd, opcBuffer, opcBufferSize, 0);
-    ////logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
+    //logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
 }
 
 
@@ -456,8 +456,8 @@ bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, s
             tmStartTimeToday.tm_isdst = tmEndTimeToday.tm_isdst = tmNowTime.tm_isdst;
             time_t startTimeToday = mktime(&tmStartTimeToday);
             time_t endTimeToday = mktime(&tmEndTimeToday);
-            logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
-                              + to_string(startTimeToday) + ", endTime=" + to_string(endTimeToday));
+            //logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
+            //                  + to_string(startTimeToday) + ", endTime=" + to_string(endTimeToday));
             // Periods that span midnight have an end time that is numerically less
             // than the start time (which actually occurs on the previous day).
             if (endTimeToday < startTimeToday) {
@@ -475,8 +475,8 @@ bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, s
         }
         else {
             // This is a one-time event.
-            logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
-                              + to_string(schedulePeriod.startTime) + ", endTime=" + to_string(schedulePeriod.endTime));
+            //logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
+            //                  + to_string(schedulePeriod.startTime) + ", endTime=" + to_string(schedulePeriod.endTime));
             if (now >= schedulePeriod.startTime && now <= schedulePeriod.endTime) {
                 periodDescription = schedulePeriod.description;
                 return true;
