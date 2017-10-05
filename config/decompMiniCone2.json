@@ -135,22 +135,23 @@
             "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
         {   "name" : "multicolorSparkle",
-            "enabled" : false,
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
             "inputs" : [
                 {   "inputName" : "density",
-                    "widgetName" : "fourPlay42",
-                    "channelNumber" : 3,
+                    "widgetName" : "spinnah",
+                    "channelNumber" : 0,
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,
-            "densityScaledownFactor" : 1200,
+            "activationThreshold" : 10,
+            "densityScaledownFactor" : 300,     // 1200 for FourPlay4x
             "useRandomColors" : true,
             "sparkleChangeIntervalMs" : 50
         },
+/*
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
             "priority" : 9,
@@ -171,6 +172,7 @@
             "fillStepSize" : 1,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalMs" : 20
         },
+*/
         {   "name" : "rain",
             "enabled" : true,
             "priority" : 2,
