@@ -19,6 +19,8 @@
 #include <climits>
 #include <iostream>
 
+#include <stdlib.h>
+
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
 #include "illumiconePixelUtility.h"
@@ -153,7 +155,7 @@ bool SparklePattern::update()
     if ((usePositionMeasurement && densityChannel->getHasNewPositionMeasurement())
         || (!usePositionMeasurement && densityChannel->getHasNewVelocityMeasurement()))
     {
-        int curMeasmt = usePositionMeasurement ? densityChannel->getPosition() : densityChannel->getVelocity();
+        int curMeasmt = usePositionMeasurement ? densityChannel->getPosition() : abs(densityChannel->getVelocity());
 
         // If the latest measurement is below the activation threshold, turn off this pattern.
         if (curMeasmt <= activationThreshold) {
