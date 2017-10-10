@@ -40,10 +40,10 @@
 
 using namespace std;
 
-
 static ConfigReader config;
 static string lockFilePath;
 static string patconIpAddress;
+static unsigned int radioPollingLoopSleepIntervalUs;
 static unsigned int widgetPortNumberBase;
 
 static struct sockaddr_in widgetSockAddr[16];
@@ -55,11 +55,20 @@ static int widgetSock[16];
  * Radio Configuration *
  ***********************/
 
+#define RF24_SPI_DEV
+
+#ifdef RF24_SPI_DEV
+// RF24 radio(<ce_pin>, <a>*10+<b>) for spi device at /dev/spidev<a>.<b>
+// See http://pi.gadgetoid.com/pinout
+RF24 radio(25, 0);
+#else
 // Radio CE Pin, CSN Pin, SPI Speed
 // See http://www.airspayce.com/mikem/bcm2835/group__constants.html#ga63c029bd6500167152db4e57736d0939
 // and the related enumerations for pin information.  (That's some pretty useful shit right there, Maynard.)
 // Raspberry Pi B+:  CE connected to GPIO25 on J8-22, CSN connected to CE0
+#error oh shit!
 RF24 radio(RPI_BPLUS_GPIO_J8_22, RPI_BPLUS_GPIO_J8_24, BCM2835_SPI_SPEED_8MHZ);
+#endif
 
 // We're using dynamic payload size, but we still need to know what the largest can be.
 constexpr uint8_t maxPayloadSize = 32;
@@ -349,6 +358,8 @@ bool readConfig(const string& configFileName)
         return false;
     }
 
+    radioPollingLoopSleepIntervalUs = config.getRadioPollingLoopSleepIntervalUs();
+
     widgetPortNumberBase = config.getWidgetPortNumberBase();
     if (widgetPortNumberBase == 0) {
         return false;
@@ -396,6 +407,7 @@ bool configureRadio()
         radio.openReadingPipe(i, readPipeAddresses[i]);
     }
 
+    logMsg(LOG_INFO, "Radio configuration details:");
     radio.printDetails();
 
     return true;
@@ -404,11 +416,18 @@ bool configureRadio()
 
 void runLoop()
 {
+    time_t lastDataReceivedTime;
+    time(&lastDataReceivedTime);
+    time_t noDataReceivedMessageIntervalS = 2;
+    time_t noDataReceivedMessageTime = 0;
 
     while (1) {
 
         uint8_t pipeNum;
         while(radio.available(&pipeNum)) {
+
+            time(&lastDataReceivedTime);
+            noDataReceivedMessageIntervalS = 2;
 
             unsigned int payloadSize = radio.getDynamicPayloadSize();
             if (payloadSize == 0) {
@@ -472,8 +491,25 @@ void runLoop()
             }
         }
 
-        // There are no payloads to process, so give other threads a chance to run.
-        this_thread::yield();
+        time_t now;
+        time(&now);
+        if (now != noDataReceivedMessageTime) {
+            time_t noDataReceivedIntervalS = now - lastDataReceivedTime;
+            if (noDataReceivedIntervalS >= noDataReceivedMessageIntervalS
+                && noDataReceivedIntervalS % noDataReceivedMessageIntervalS == 0)
+            {
+                logMsg(LOG_INFO, "No widget data received for " + to_string(noDataReceivedIntervalS) + " seconds.");
+                noDataReceivedMessageTime = now;
+                if (noDataReceivedMessageIntervalS <= 32) {
+                    noDataReceivedMessageIntervalS *= 2;
+                }
+            }
+        }
+
+        // There are no payloads to process, so give other threads a chance to
+        // run.  Also, don't hammmer on the SPI interface too hard (and drive
+        // up cpu usage) by polling for data too often.
+        usleep(radioPollingLoopSleepIntervalUs);
     }
 }
 
@@ -509,6 +545,7 @@ int main(int argc, char** argv)
     logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
     logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
     logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
+    logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = " + to_string(radioPollingLoopSleepIntervalUs));
     logMsg(LOG_INFO, "widgetPortNumberBase = " + to_string(widgetPortNumberBase));
 
     if (!openUdpPorts()) {
@@ -520,6 +557,7 @@ int main(int argc, char** argv)
     }
 
     radio.startListening();
+    logMsg(LOG_INFO, "Now listening for widget data.");
 
     runLoop();
     

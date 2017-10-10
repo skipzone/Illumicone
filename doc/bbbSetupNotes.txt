@@ -1,3 +1,260 @@
+9/24/2017 -- Set up ic-strdrv on a BeagleBone Green using Debian Jessie
+=======================================================================
+
+0.  Write the image to a micro-SD card.
+
+    Download and uncompress this image (newer ones don't support uio_pruss,
+    which is needed by LEDscape to talk to the PRUs):
+        https://debian.beagleboard.org/images/bone-debian-8.6-iot-armhf-2016-11-06-4gb.img.xz
+
+    diskutil list
+    diskutil unmountDisk /dev/diskN
+    sudo dd bs=1m if=bone-debian-8.6-iot-armhf-2016-11-06-4gb.img of=/dev/rdiskN
+    diskutil unmountDisk /dev/diskN
+
+
+1.  Update everything.
+
+    Boot from the micro-SD card, ssh to beaglebone.local, and log in as
+    debian/temppwd.
+
+    sudo apt-get update
+    sudo apt-get upgrade
+
+    Reboot.
+
+
+2.  Create user illumicone and add it to the sudo group.
+
+    sudo adduser illumicone
+    sudo adduser illumicone sudo
+
+
+3.  Change user debian's password to be the same as illumicone's.
+
+    passwd
+
+    Remove the "default username:password" line from /etc/issue and
+    /etc/issue.net.
+
+    log in as illumicone
+
+
+4.  Set up ssh keys.
+
+    on development system:  scp ~/.ssh/id_rsa.pub illumicone@beaglebone.local:myrsa.pub
+
+    mkdir .ssh
+    cd .ssh
+    ssh-keygen
+    mv ../myrsa.pub authorized_keys
+    chmod 600 authorized_keys
+
+
+5.  Set the host name to ic-strdrv.
+
+    Change all occurrences of "beaglebone" to "ic-strdrv" in /etc/hostname and
+    /etc/hosts.
+
+    Reboot.
+
+
+6.  Create .bash_aliases
+
+    on development system:  scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-strdrv.local:.bash_aliases
+
+
+7.  Set up time zone and NTP.
+
+    sudo apt-get install ntp
+
+    Add this above the existing server lines in /etc/ntp.conf:
+
+        # On Illumicone's LAN, ic-widcon has the RTC and is an NTP server.
+        server 192.168.69.102
+        server 192.168.69.103
+
+    sudo timedatectl set-timezone America/Boise
+
+
+8.  Install required and useful packages.
+
+    sudo apt-get install psmisc git-flow
+
+    (psmisc gives us the killall utility.)
+
+
+9.  Set up the Illumicone project.
+
+    cd
+    mkdir devl
+    cd devl
+    git clone https://github.com/skipzone/Illumicone.git
+    cd Illumicone
+    git flow init
+        Take all defaults.
+    cp ~/devl/Illumicone/config/vimrc ~/.vimrc
+    git config --global core.editor "vim"
+
+
+10.  Disable HDMI.
+
+    The BeagleBone Green does not have HDMI, so this step should not be
+    necessary (per Yona Appletree, https://devhub.io/repos/Yona-Appletree-LEDscape).
+    For the record and in case a BBB is used instead, enable this line in
+    /boot/uEnv.txt to disable HDMI:
+        ##BeagleBone Black: HDMI (Audio/Video) disabled:
+        dtb=am335x-boneblack-emmc-overlay.dtb
+    Note that the dts and dtb file names in the next step will need to be
+    am335x-boneblack-emmc-overlay instead of am335x-bonegreen.
+
+
+11.  Enable uio_pruss (interface to PRUs).
+
+    Back up existing compiled device tree file.
+        sudo cp /boot/dtbs/$(uname -r)/am335x-bonegreen.dtb{,.original}
+
+    Modify device tree to enable pruss.
+        cd /opt/source/dtb-4.4-ti/src/arm
+        su debian
+        cp am335x-bonegreen.dts am335x-bonegreen.dts.original
+        Disable remoteproc and enable uio in am335x-bonegreen.dts.
+            Enable this line:  #include "am33xx-pruss-uio.dtsi"
+            Comment out this line:  /* #include "am33xx-pruss-rproc.dtsi" */
+
+    Compile device tree and copy to boot directory.
+        cd /opt/source/dtb-4.4-ti
+        sudo ln -s /usr/bin/dtc /usr/bin/dtc-v4.1.x
+        make src/arm/am335x-bonegreen.dtb
+        sudo cp src/arm/am335x-bonegreen.dtb /boot/dtbs/4.4.30-ti-r64/
+        exit
+
+    Put remoteproc on module blacklist.
+        sudo cp /etc/modprobe.d/pruss-blacklist.conf pruss-blacklist.conf.original
+        Replace this line in /etc/modprobe.d/pruss-blacklist.conf:
+            blacklist uio_pruss
+        with these:
+            blacklist pruss
+            blacklist pruss_intc
+            blacklist pru-rproc
+        If the file doesn't exist, create it, and populate it with the three
+        lines above.
+
+    Reboot.
+
+    Check:
+        lsmod | grep uio
+    Output should be:
+        uio_pruss       4928 0
+        uio_pdrv_genirq 3539 0
+        uio             8822 2 uio_pruss,uio_pdrv_genirq
+    This is the wrong output:
+        illumicone@ic-strdrv:~$ lsmod | grep uio
+        uio_pdrv_genirq         3923  0 
+        uio                    10524  1 uio_pdrv_genirq
+
+
+12.  Set up LEDscape.
+
+    Get Yona Appletree's fork.
+        cd ~/devl
+        git clone git://github.com/Yona-Appletree/LEDscape
+        cd LEDscape
+
+    Fix a bug in join_multicast_group_on_all_ifaces in opc-server.c by changing
+    this:
+        while ( cursor != NULL ) {
+            if ( cursor->ifa_addr->sa_family == AF_INET
+                && !(cursor->ifa_flags & IFF_LOOPBACK)
+    to this:
+        while ( cursor != NULL ) {
+            if ( cursor->ifa_addr != NULL   // ifa_addr can be null for some interfaces
+                && cursor->ifa_addr->sa_family == AF_INET
+                && !(cursor->ifa_flags & IFF_LOOPBACK)
+
+    While you're at it, fix the problem of not seeing opc-server messages
+    promptly in the system log by adding this fflush call after each printf
+    call (and after any mutex release but before any sleep) in render_thread:
+        fflush(stdout);
+
+    sudo cp ~/devl/Illumicone/config/ledscape-config-*.json /etc/
+    If configuring for Illumicone (the big cone):
+        sudo ln -s /etc/ledscape-config-illumicone.json /etc/ledscape-config.json
+    If configuring for Mini-Cone:
+        sudo ln -s /etc/ledscape-config-minicone.json /etc/ledscape-config.json
+
+    make
+
+    Install the service.
+        sudo ./install-service.sh
+
+    Use these commands to stop and start the service:
+        sudo systemctl stop ledscape.service
+        sudo systemctl start ledscape.service
+
+    You can see if the service is running with this:
+        systemctl status ledscape.service
+
+    Output from the service (opc-server, actually) will appear in
+    /var/log/syslog and /var/log/daemon.log.  The messages will appear in
+    batches every 5-7 minutes if you didn't add the fflush calls as suggested
+    above.
+
+    Alternatively, you can use journalctl to view the output.
+        sudo adduser illumicone systemd-journal
+        Log out/in.
+        To see all entries (with less-style pagination), starting with oldest:
+            journalctl _SYSTEMD_UNIT=ledscape.service
+        To see current entries as they are written:
+            journalctl -f _SYSTEMD_UNIT=ledscape.service
+
+13.  Fix the bug in /etc/rsyslog.conf.
+
+    A bug in the rsyslog config causes /dev/xconsole buffer to fill up.  See
+    https://raspberrypi.stackexchange.com/questions/47781/what-is-action-17
+
+    Comment out these lines in /etc/rsyslog.conf:
+        #daemon.*;mail.*;\
+        #        news.err;\
+        #        *.=debug;*.=info;\
+        #        *.=notice;*.=warn       |/dev/xconsole
+
+    sudo systemctl restart rsyslog.service
+
+
+14.  Assign static IP address 192.168.69.100 for ic-strdrv on wired network.
+
+    sudo connmanctl services
+    Note which service is ethernet_hexshit_cable.
+    sudo connmanctl config ethernet_hexshit_cable --ipv4 manual 192.168.69.101 255.255.255.0 192.168.69.1 --nameservers 192.168.69.1 8.8.8.8
+  
+    Your ssh connection will go away because the address change will be
+    immediate.  So, it is best to do this step when ic-strdrv is on the
+    illumicone network because you won't be able to reconnect to it and
+    shut it down nicely otherwise.
+
+
+15.  Write the image to the on-board flash.
+
+    Enable the following line in /boot/uEnv.txt:
+        ##enable Generic eMMC Flasher:
+        ##make sure, these tools are installed: dosfstools rsync
+        cmdline=init=/opt/scripts/tools/eMMC/init-eMMC-flasher-v3.sh
+
+    Reboot from the on-board flash.  The 4 user LEDs will flash in succession
+    while the image is being written.  When complete, the LEDs will be off,
+    and the board will be powered down automatically.  This can take up to ten
+    minutes.
+
+    Removed the micro-SD card and reboot from the on-board flash.
+
+    TODO: how to modify /boot/uEnv.txt on the micro-SD card to disable the
+    eMMC flasher.
+
+
+================================================================================
+
+
 7/8/2017 - Set up ic-patcon with new jessie image
 =================================================
 
@@ -63,13 +320,13 @@
 
         # On Illumicone's LAN, ic-widcon has the RTC and is an NTP server.
         server 192.168.69.102
+        server 192.168.69.103
 
     sudo rm /etc/localtime; sudo ln -s /usr/share/zoneinfo/America/Boise /etc/localtime
 
         --> Check this.  After reboot, /etc/timezone still says "Etc/UTC".
         But, the output from timedatectl looks correct.  Try this command
         instead:  sudo timedatectl set-timezone America/Boise
-
 
 - Install psmisc to get the killall utility.
 
@@ -85,16 +342,12 @@
 
     git clone https://github.com/skipzone/Illumicone
 
-
-
-
 - If using an SD card larger than 4 GB, expand the partition then reboot
   immediately afterward.
 
     (May need to do "git pull" in /opt/scripts/tools.)
 
     /opt/scripts/tools/grow_partition.sh
-
 
 
 

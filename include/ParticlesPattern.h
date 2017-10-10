@@ -63,6 +63,7 @@ class ParticlesPattern : public Pattern {
         unsigned int nextMoveParticlesMs;
         unsigned int particleEmitIntervalMs;
         unsigned int nextEmitParticlesMs;
+        bool usePositionMeasurement;
 
         bool moveParticles();
 };

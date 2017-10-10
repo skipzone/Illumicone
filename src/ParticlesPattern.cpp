@@ -106,19 +106,27 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
     for (auto&& channelConfig : channelConfigs) {
 
         if (channelConfig.inputName == "emitRate") {
+            if (channelConfig.measurement == "velocity") {
+                usePositionMeasurement = false;
+            }
+            else if (channelConfig.measurement == "position") {
+                usePositionMeasurement = true;
+            }
+            else {
+                logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
+                return false;
+            }
             emitRateChannel = channelConfig.widgetChannel;
+            logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
+                             + (usePositionMeasurement ? " position measurement for " : " velocity measurement for ")
+                             + channelConfig.inputName);
         }
         else {
             logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
-        if (channelConfig.measurement != "position") {
-            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
-                + channelConfig.inputName + " doesn't specify position.");
-        }
     }
 
     return true;
@@ -185,10 +193,12 @@ bool ParticlesPattern::update()
     }
 
     // If there is a new measurement, update the emit rate.
-    if (emitRateChannel->getHasNewPositionMeasurement()) {
+    if ((usePositionMeasurement && emitRateChannel->getHasNewPositionMeasurement())
+        || (!usePositionMeasurement && emitRateChannel->getHasNewVelocityMeasurement()))
+    {
         //logMsg(LOG_DEBUG, "emitRateChannel has a new measurement");
 
-        int emitIntervalMeasmt = emitRateChannel->getPosition();
+        int emitIntervalMeasmt = usePositionMeasurement ? emitRateChannel->getPosition() : abs(emitRateChannel->getVelocity());
 
         // Don't emit anything if the measurement is below the lower limit.
         if (emitIntervalMeasmt < emitIntervalMeasmtLow) {

@@ -35,22 +35,23 @@ class WidgetChannel
         WidgetChannel& operator =(const WidgetChannel&) = delete;
 
         
-        unsigned int getChannelNumber();
-        std::string getName();
-        bool getIsActive();
-        bool getHasNewPositionMeasurement();
-        bool getHasNewVelocityMeasurement();
-        int getPosition();
-        int getVelocity();
-        int getPreviousPosition();
-        int getPreviousVelocity();
+        virtual unsigned int getChannelNumber();
+        virtual std::string getName();
 
-        void setIsActive(bool isNowActive);
-        void setPosition(int newPosition);
-        void setVelocity(int newVelocity);
-        void setPositionAndVelocity(int newPosition, int newVelocity);
+        virtual bool getIsActive();
+        virtual bool getHasNewPositionMeasurement();
+        virtual bool getHasNewVelocityMeasurement();
+        virtual int getPosition();
+        virtual int getVelocity();
+        virtual int getPreviousPosition();
+        virtual int getPreviousVelocity();
 
-    private:
+        virtual void setIsActive(bool isNowActive);
+        virtual void setPosition(int newPosition);
+        virtual void setVelocity(int newVelocity);
+        virtual void setPositionAndVelocity(int newPosition, int newVelocity);
+
+    protected:
 
         const int channelNumber;
         Widget* widget;             // TODO:  not sure if we really need this

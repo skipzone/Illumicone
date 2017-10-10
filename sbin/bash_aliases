@@ -1,0 +1,8 @@
+alias cp='cp -iv'
+alias h='history 50'
+alias hexd='od -t x1 -A x -v'
+alias la='ls -alGh'
+alias ll='ls -lGh'
+alias mv='mv -iv'
+alias rm='rm -i'
+alias src='cd ~/devl/Illumicone/src'

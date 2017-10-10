@@ -75,6 +75,7 @@ class ConfigReader
         std::string getPatconIpAddress();
         std::string getPatternBlendMethod();
         unsigned int getPatternRunLoopSleepIntervalUs();
+        unsigned int getRadioPollingLoopSleepIntervalUs();
         bool getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods);
         int getWidgetPortNumberBase();
 
