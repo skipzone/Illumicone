@@ -19,7 +19,7 @@ end
 theta = linspace(span(1), span(2), N);
 rho = ones(1, N) * radius;
 
-[x,y] = pol2cart(theta,rho);
+[x,y] = pol2cart(theta, rho);
 
 x = x + center(1);
 y = y + center(2);

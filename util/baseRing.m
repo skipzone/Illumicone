@@ -33,14 +33,14 @@ couplerLineWidth = 6;
 couplerColor = 'red';
 couplerN = 100;
 
-string36Radius = ringRadius - 3;    % plot the 36-string configuration tie-down points inside the ring
+string36Radius = ringRadius * 0.98;
 string36Symbol = 'bp';              % plot these tie-down points as blue stars
 
-string48Radius = ringRadius - 6;    % plot the 48-string configuration tie-down points inside the ring
+string48Radius = ringRadius * 0.94;
 string48Symbol = 'gp';              % plot these tie-down points as green stars
 
 
-%% Calculate the pipe segment lengths, coupler positions, and tie-down positions.
+%% Calculate the pipe segment lengths and coupler positions.
 
 ringCircumference = 2 * pi * ringRadius;
 
@@ -65,8 +65,7 @@ couplerSpanEndPositions = couplerCenterPositions + couplerLength / 2;
 couplerSpanStartPositions(1) = couplerSpanStartPositions(1) + ringCircumference;
 
 
-string36Offset = 0;
-string48Offset = 0;
+%% Calculate the tie-down positions, optimizing for the least overlaps with couplers.
 
 offsetStep = tiedownRadius;
 
@@ -97,7 +96,7 @@ display(sprintf('first best offset is %g inches, producing %d overlaps', ...
     string36Offset, numOverlaps(bestOffsetIdx)));
 string36TiedownPositions = [0:35] .* (ringCircumference / 36) + string36Offset;
 
-
+string48Offset = string36Offset;
 
 string48TiedownPositions = [0:48] .* (ringCircumference / 48) + string48Offset;
 
@@ -112,8 +111,12 @@ hold on;
 
 segmentStartAngle = 0;
 for i = 1:numRingSegments
-    segmentAngle = ringSegmentLengths(i) / ringCircumference * 2 * pi
-    [x, y] = pol2cart(segmentStartAngle + segmentAngle / 2, ringLabelRadius);
+    segmentAngle = ringSegmentLengths(i) / ringCircumference * 2 * pi;
+    labelAngle = segmentStartAngle + segmentAngle / 2;
+%    [x, y] = pol2cart(labelAngle, ringLabelRadius);
+    [x, y] = arc(center, ringLabelRadius, [labelAngle labelAngle], 1);
+    x = x + center(1);
+    y = y + center(2);
     if x >= 0
         halign = 'left';
     else
@@ -125,11 +128,10 @@ for i = 1:numRingSegments
         valign = 'top';
     end
     text(x, y, sprintf('%d:  %.4g"', i, ringSegmentLengths(i)), ...
-        'FontSize', 14, ...
-        'VerticalAlignment', valign, 'HorizontalAlignment', halign);
+        'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+        'FontSize', 14);
     segmentStartAngle = segmentStartAngle + segmentAngle;
 end
-
 
 
 %% Plot the couplers.
@@ -157,7 +159,9 @@ for i = 1:numRingSegments
     else
         valign = 'top';
     end
-    text(labelx, labely, cellstr(num2str(i)), 'VerticalAlignment', valign, 'HorizontalAlignment', halign, 'Color', 'red');
+    text(labelx, labely, cellstr(num2str(i)), ...
+        'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+        'Color', 'red');
 end
 
 
@@ -166,10 +170,21 @@ end
 string36TiedownAngles = ...
     string36TiedownPositions / ringCircumference * 2 * pi;
 for i = 1 : 36
-    [x, y] = pol2cart(string36TiedownAngles, string36Radius);
-    x = x + center(1);
-    y = y + center(2);
+    [x, y] = arc(center, string36Radius, [string36TiedownAngles(i) string36TiedownAngles(i)], 1);
     h = plot(x, y, string36Symbol);
+    if x >= 0
+        halign = 'right';
+    else
+        halign = 'left';
+    end
+    if y >= 0
+        valign = 'top';
+    else
+        valign = 'bottom';
+    end
+    text(x, y, cellstr(num2str(i)), ...
+        'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+        'Color', 'blue');
 end
 
 
@@ -178,9 +193,20 @@ end
 string48TiedownAngles = ...
     string48TiedownPositions / ringCircumference * 2 * pi;
 for i = 1 : 48
-    [x, y] = pol2cart(string48TiedownAngles, string48Radius);
-    x = x + center(1);
-    y = y + center(2);
+    [x, y] = arc(center, string48Radius, [string48TiedownAngles(i) string48TiedownAngles(i)], 1);
     h = plot(x, y, string48Symbol);
+    if x >= 0
+        halign = 'right';
+    else
+        halign = 'left';
+    end
+    if y >= 0
+        valign = 'top';
+    else
+        valign = 'bottom';
+    end
+    text(x, y, cellstr(num2str(i)), ...
+        'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+        'Color', 'green');
 end
 
