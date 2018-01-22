@@ -11,13 +11,34 @@ close all;
 
 ringRadius = 19 * 12 + 4;       % the actual size of the physical ring:  19'4"
 
-% We can't make the segments all of equal length because the usable portion
-% of each pipe is only 21' - 2' = 19' long, and 19' / 3 = 6' 4".
-%numRingSegments = 18;
-%segmentLength = 6 * 12 + 9;     % Make all the segments 6'9" long.
+ringCircumference = 2 * pi * ringRadius;
 
+% This is the best configuration, producing no tie-down/coupler overlaps.
+% Unfortunately, we can't make the segments all of equal length because the
+% usable portion of each pipe is only 21' - 2' = 19' long, and 19' / 3 = 6' 4".
+% numRingSegments = 18;
+% segmentLength = 6 * 12 + 9;     % Make all the segments 6'9" long.
+% ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
+
+% This appears to be the next-best configuration, producing only 2 overlaps
+% for 36 strings and none for 48 strings.  It also makes all segments
+% except for the last the same length.
 numRingSegments = 19;
 segmentLength = 6 * 12 + 4;     % Make all the segments except the last 6'4" long.
+ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
+
+% numRingSegments = 20;
+% segmentLength = 6 * 12;
+% ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
+
+% numRingSegments = 19;
+% s1 = 77;
+% s2 = 77;
+% ringSegmentLengths = [s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 0];
+
+% The last segment's length is whatever is needed to complete the circle.
+ringSegmentLengths(numRingSegments) = ...
+    ringCircumference - sum(ringSegmentLengths(1:numRingSegments - 1));
 
 couplerLength = 6;
 
@@ -47,15 +68,7 @@ string48Color = 'green';
 string48Marker = 'hexagram';
 
 
-%% Calculate the pipe segment lengths and coupler positions.
-
-ringCircumference = 2 * pi * ringRadius;
-
-% Set all segments to the specified length.
-ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
-% The last segment's length is whatever is needed to complete the circle.
-ringSegmentLengths(numRingSegments) = ...
-    ringCircumference - sum(ringSegmentLengths(1:numRingSegments - 1));
+%% Calculate the coupler positions.
 
 % Calculate the center positions of the couplers on the ring's
 % circumference.  The center position is where two segments come together.
@@ -96,8 +109,8 @@ display(sprintf( ...
 for j = 1 : overlapCount48
     display(sprintf( ...
         '    coupler %d at %.4g" from center', ...
-        overlappedCouplers(j, 1), ...
-        overlappedCouplers(j, 2)));
+        overlappedCouplers48(j, 1), ...
+        overlappedCouplers48(j, 2)));
 end
 
 % string48Offset = findBestOffset( ...
