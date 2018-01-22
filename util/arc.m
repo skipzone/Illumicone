@@ -1,5 +1,5 @@
 function [x, y] = arc(center, radius, span, N)
-% ARC
+% arc
 % Calculates N points of the arc that spans the angle range [span(1), span(2)]
 % on a circle with the specified center position and radius.
 % Example:

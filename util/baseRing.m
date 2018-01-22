@@ -73,27 +73,30 @@ offsets = ...
     couplerLength / 2 + tiedownRadius ...
     : offsetStep ...
     : ringCircumference / 36 - (couplerLength / 2 + tiedownRadius);
-numOverlaps = zeros(size(offsets));
+
+overlapCount = zeros(size(offsets));
+overlappedCouplers = zeros(size(offsets, 2), 36, 2);
+
 for offsetIdx = 1 : size(offsets, 2)
     display(sprintf('----- offset %d = %g inches -----', offsetIdx, offsets(offsetIdx)));
-    string36TiedownPositions = [0:35] .* (ringCircumference / 36) + offsets(offsetIdx);
-    for tdIdx = 1 : 36
-        % Find the closest coupler to this tiedown.
-        couplerDistances = abs(couplerCenterPositions - string36TiedownPositions(tdIdx));
-        closestCouplerIdx = find(couplerDistances == min(couplerDistances));
-%        display(sprintf('coupler %d is closest to tie-down %d', closestCouplerIdx, tdIdx));
-        tiedownDistanceFromCouplerCenter = couplerDistances(closestCouplerIdx);
-        if (tiedownDistanceFromCouplerCenter < couplerLength / 2 + tiedownRadius)
-            numOverlaps(offsetIdx) = numOverlaps(offsetIdx) + 1;
-            display(sprintf('tie-down %d is in coupler %d at %g inches from center', ...
-                tdIdx, closestCouplerIdx, tiedownDistanceFromCouplerCenter));
-        end
+    [overlapCount(offsetIdx) overlappedCouplers(offsetIdx, :, :)] = ...
+        findTiedownInCoupler(ringCircumference, couplerCenterPositions, couplerLength, 36, tiedownRadius, offsets(offsetIdx));
+end
+
+bestOffsetIdxs = find(overlapCount == min(overlapCount));
+for i = 1 : size(bestOffsetIdxs, 2)
+    display(sprintf( ...
+        'good offset %d is %g inches, producing %d overlaps:', ...
+        i, offsets(bestOffsetIdxs(i)), overlapCount(bestOffsetIdxs(i))));
+    for j = 1 : overlapCount(bestOffsetIdxs(i))
+        display(sprintf( ...
+            '    coupler %d at %.4g" from center', ...
+            overlappedCouplers(bestOffsetIdxs(i), j, 1), ...
+            overlappedCouplers(bestOffsetIdxs(i), j, 2)));
     end
 end
-bestOffsetIdx = find(numOverlaps == min(numOverlaps), 1, 'first');
-string36Offset = offsets(bestOffsetIdx);
-display(sprintf('first best offset is %g inches, producing %d overlaps', ...
-    string36Offset, numOverlaps(bestOffsetIdx)));
+
+string36Offset = offsets(bestOffsetIdxs(1));
 string36TiedownPositions = [0:35] .* (ringCircumference / 36) + string36Offset;
 
 string48Offset = string36Offset;
@@ -113,7 +116,6 @@ segmentStartAngle = 0;
 for i = 1:numRingSegments
     segmentAngle = ringSegmentLengths(i) / ringCircumference * 2 * pi;
     labelAngle = segmentStartAngle + segmentAngle / 2;
-%    [x, y] = pol2cart(labelAngle, ringLabelRadius);
     [x, y] = arc(center, ringLabelRadius, [labelAngle labelAngle], 1);
     x = x + center(1);
     y = y + center(2);
@@ -170,7 +172,11 @@ end
 string36TiedownAngles = ...
     string36TiedownPositions / ringCircumference * 2 * pi;
 for i = 1 : 36
-    [x, y] = arc(center, string36Radius, [string36TiedownAngles(i) string36TiedownAngles(i)], 1);
+    [x, y] = arc( ...
+        center, ...
+        string36Radius, ...
+        [string36TiedownAngles(i) string36TiedownAngles(i)], ...
+        1);
     h = plot(x, y, string36Symbol);
     if x >= 0
         halign = 'right';
@@ -193,7 +199,11 @@ end
 string48TiedownAngles = ...
     string48TiedownPositions / ringCircumference * 2 * pi;
 for i = 1 : 48
-    [x, y] = arc(center, string48Radius, [string48TiedownAngles(i) string48TiedownAngles(i)], 1);
+    [x, y] = arc( ...
+        center, ...
+        string48Radius, ...
+        [string48TiedownAngles(i) string48TiedownAngles(i)], ...
+        1);
     h = plot(x, y, string48Symbol);
     if x >= 0
         halign = 'right';
