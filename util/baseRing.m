@@ -26,6 +26,7 @@ center = [0 0];
 ringLineWidth = 1.25;
 ringColor = 'black';
 ringN = 2000;
+ringLabelRadius = ringRadius * 1.01;
 
 couplerRadius = ringRadius;     % plot couplers on top of the ring
 couplerLineWidth = 6;
@@ -109,16 +110,34 @@ axis([-1.25*ringRadius+center(1) 1.25*ringRadius+center(1) -1.25*ringRadius+cent
 axis equal;
 hold on;
 
+segmentStartAngle = 0;
+for i = 1:numRingSegments
+    segmentAngle = ringSegmentLengths(i) / ringCircumference * 2 * pi
+    [x, y] = pol2cart(segmentStartAngle + segmentAngle / 2, ringLabelRadius);
+    if x >= 0
+        halign = 'left';
+    else
+        halign = 'right';
+    end
+    if y >= 0
+        valign = 'bottom';
+    else
+        valign = 'top';
+    end
+    text(x, y, sprintf('%d:  %.4g"', i, ringSegmentLengths(i)), ...
+        'FontSize', 14, ...
+        'VerticalAlignment', valign, 'HorizontalAlignment', halign);
+    segmentStartAngle = segmentStartAngle + segmentAngle;
+end
+
+
 
 %% Plot the couplers.
 
-%couplerCenterPositionAngles = couplerCenterPositions / ringCircumference * 2 * pi;
-%couplerHalfLengthAngle = couplerLength / 2 / ringCircumference * 2 * pi;
-%couplerSpanStartAngles = couplerCenterPositionAngles - couplerHalfLengthAngle;
-%couplerSpanEndAngles = couplerCenterPositionAngles + couplerHalfLengthAngle;
 couplerSpanStartAngles = couplerSpanStartPositions / ringCircumference * 2 * pi;
 couplerSpanEndAngles = couplerSpanEndPositions / ringCircumference * 2 * pi;
-for i = 1 : numRingSegments
+
+for i = 1:numRingSegments
     [x, y] = arc( ...
         center, ...
         couplerRadius, ...
@@ -126,6 +145,19 @@ for i = 1 : numRingSegments
         couplerN);
     h = plot(x, y);
     set(h, 'Color', couplerColor, 'LineWidth', couplerLineWidth);
+    labelx = x(1);
+    labely = y(1);
+    if labelx >= 0
+        halign = 'left';
+    else
+        halign = 'right';
+    end
+    if labely >= 0
+        valign = 'bottom';
+    else
+        valign = 'top';
+    end
+    text(labelx, labely, cellstr(num2str(i)), 'VerticalAlignment', valign, 'HorizontalAlignment', halign, 'Color', 'red');
 end
 
 
