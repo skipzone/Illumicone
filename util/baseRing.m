@@ -1,3 +1,5 @@
+clear;
+
 %% Set the dimensions of the ring and its components.
 
 % All measurements and coordinates are in inches
@@ -14,6 +16,8 @@ segmentLength = 6 * 12 + 4;     % Make all the segments except the last 6'4" lon
 
 couplerLength = 6;
 
+tiedownRadius = 0.25;
+
 
 %% Set the appearances of the plots.
 
@@ -28,8 +32,14 @@ couplerLineWidth = 6;
 couplerColor = 'red';
 couplerN = 100;
 
+string36Radius = ringRadius - 3;    % plot the 36-string configuration tie-down points inside the ring
+string36Symbol = 'bp';              % plot these tie-down points as blue stars
 
-%% Calculate the pipe segment lengths and the coupler positions.
+string48Radius = ringRadius - 6;    % plot the 48-string configuration tie-down points inside the ring
+string48Symbol = 'gp';              % plot these tie-down points as green stars
+
+
+%% Calculate the pipe segment lengths, coupler positions, and tie-down positions.
 
 ringCircumference = 2 * pi * ringRadius;
 
@@ -47,6 +57,49 @@ for i = 2 : numRingSegments
         couplerCenterPositions(i - 1) + ringSegmentLengths(i - 1);
 end
 
+% Calculate the starting and ending span of each coupler.
+couplerSpanStartPositions = couplerCenterPositions - couplerLength / 2;
+couplerSpanEndPositions = couplerCenterPositions + couplerLength / 2;
+% Make the first coupler's starting position non-negative. 
+couplerSpanStartPositions(1) = couplerSpanStartPositions(1) + ringCircumference;
+
+
+string36Offset = 0;
+string48Offset = 0;
+
+offsetStep = tiedownRadius;
+
+offsets = ...
+    couplerLength / 2 + tiedownRadius ...
+    : offsetStep ...
+    : ringCircumference / 36 - (couplerLength / 2 + tiedownRadius);
+numOverlaps = zeros(size(offsets));
+for offsetIdx = 1 : size(offsets, 2)
+    display(sprintf('----- offset %d = %g inches -----', offsetIdx, offsets(offsetIdx)));
+    string36TiedownPositions = [0:35] .* (ringCircumference / 36) + offsets(offsetIdx);
+    for tdIdx = 1 : 36
+        % Find the closest coupler to this tiedown.
+        couplerDistances = abs(couplerCenterPositions - string36TiedownPositions(tdIdx));
+        closestCouplerIdx = find(couplerDistances == min(couplerDistances));
+%        display(sprintf('coupler %d is closest to tie-down %d', closestCouplerIdx, tdIdx));
+        tiedownDistanceFromCouplerCenter = couplerDistances(closestCouplerIdx);
+        if (tiedownDistanceFromCouplerCenter < couplerLength / 2 + tiedownRadius)
+            numOverlaps(offsetIdx) = numOverlaps(offsetIdx) + 1;
+            display(sprintf('tie-down %d is in coupler %d at %g inches from center', ...
+                tdIdx, closestCouplerIdx, tiedownDistanceFromCouplerCenter));
+        end
+    end
+end
+bestOffsetIdx = find(numOverlaps == min(numOverlaps), 1, 'first');
+string36Offset = offsets(bestOffsetIdx);
+display(sprintf('first best offset is %g inches, producing %d overlaps', ...
+    string36Offset, numOverlaps(bestOffsetIdx)));
+string36TiedownPositions = [0:35] .* (ringCircumference / 36) + string36Offset;
+
+
+
+string48TiedownPositions = [0:48] .* (ringCircumference / 48) + string48Offset;
+
 
 %% Plot the entire ring in black.
 [x, y] = arc(center, ringRadius, [0 2*pi], ringN);
@@ -59,10 +112,12 @@ hold on;
 
 %% Plot the couplers.
 
-couplerCenterPositionAngles = couplerCenterPositions / ringCircumference * 2 * pi;
-couplerHalfLengthAngle = couplerLength / 2 / ringCircumference * 2 * pi;
-couplerSpanStartAngles = couplerCenterPositionAngles - couplerHalfLengthAngle;
-couplerSpanEndAngles = couplerCenterPositionAngles + couplerHalfLengthAngle;
+%couplerCenterPositionAngles = couplerCenterPositions / ringCircumference * 2 * pi;
+%couplerHalfLengthAngle = couplerLength / 2 / ringCircumference * 2 * pi;
+%couplerSpanStartAngles = couplerCenterPositionAngles - couplerHalfLengthAngle;
+%couplerSpanEndAngles = couplerCenterPositionAngles + couplerHalfLengthAngle;
+couplerSpanStartAngles = couplerSpanStartPositions / ringCircumference * 2 * pi;
+couplerSpanEndAngles = couplerSpanEndPositions / ringCircumference * 2 * pi;
 for i = 1 : numRingSegments
     [x, y] = arc( ...
         center, ...
@@ -71,5 +126,29 @@ for i = 1 : numRingSegments
         couplerN);
     h = plot(x, y);
     set(h, 'Color', couplerColor, 'LineWidth', couplerLineWidth);
+end
+
+
+%% Plot the 36-string configuration tie-down points.
+
+string36TiedownAngles = ...
+    string36TiedownPositions / ringCircumference * 2 * pi;
+for i = 1 : 36
+    [x, y] = pol2cart(string36TiedownAngles, string36Radius);
+    x = x + center(1);
+    y = y + center(2);
+    h = plot(x, y, string36Symbol);
+end
+
+
+%% Plot the 48-string configuration tie-down points.
+
+string48TiedownAngles = ...
+    string48TiedownPositions / ringCircumference * 2 * pi;
+for i = 1 : 48
+    [x, y] = pol2cart(string48TiedownAngles, string48Radius);
+    x = x + center(1);
+    y = y + center(2);
+    h = plot(x, y, string48Symbol);
 end
 
