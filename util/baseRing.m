@@ -1,10 +1,15 @@
+% This MATLAB script calculates and plots the locations of the couplers and
+% tie-down points for the new Illumicone base.      Ross, 21 Jan. 2018
+
 clear;
+close all;
+
 
 %% Set the dimensions of the ring and its components.
 
 % All measurements and coordinates are in inches
 
-ringRadius = 19 * 12 + 4;       % the actual size of the physical ring
+ringRadius = 19 * 12 + 4;       % the actual size of the physical ring:  19'4"
 
 % We can't make the segments all of equal length because the usable portion
 % of each pipe is only 21' - 2' = 19' long, and 19' / 3 = 6' 4".
@@ -16,7 +21,7 @@ segmentLength = 6 * 12 + 4;     % Make all the segments except the last 6'4" lon
 
 couplerLength = 6;
 
-tiedownRadius = 0.25;
+tiedownRadius = 0.5;
 
 
 %% Set the appearances of the plots.
@@ -28,16 +33,18 @@ ringColor = 'black';
 ringN = 2000;
 ringLabelRadius = ringRadius * 1.01;
 
-couplerRadius = ringRadius;     % plot couplers on top of the ring
+couplerRadius = ringRadius;         % plot couplers on top of the ring
 couplerLineWidth = 6;
 couplerColor = 'red';
 couplerN = 100;
 
 string36Radius = ringRadius * 0.98;
-string36Symbol = 'bp';              % plot these tie-down points as blue stars
+string36Color = 'blue';
+string36Marker = 'hexagram';
 
 string48Radius = ringRadius * 0.94;
-string48Symbol = 'gp';              % plot these tie-down points as green stars
+string48Color = 'green';
+string48Marker = 'hexagram';
 
 
 %% Calculate the pipe segment lengths and coupler positions.
@@ -67,67 +74,44 @@ couplerSpanStartPositions(1) = couplerSpanStartPositions(1) + ringCircumference;
 
 %% Calculate the tie-down positions, optimizing for the least overlaps with couplers.
 
-offsetStep = tiedownRadius;
-
-numTiedowns = 36;
-
-offsets = ...
-    couplerLength / 2 + tiedownRadius ...
-    : offsetStep ...
-    : ringCircumference / numTiedowns - (couplerLength / 2 + tiedownRadius);
-
-overlapCount = zeros(size(offsets));
-overlappedCouplers = zeros(size(offsets, 2), numTiedowns, 2);
-
-for offsetIdx = 1 : size(offsets, 2)
-    display(sprintf('----- offset %d = %g inches -----', offsetIdx, offsets(offsetIdx)));
-    [overlapCount(offsetIdx) overlappedCouplers(offsetIdx, :, :)] = ...
-        findTiedownInCoupler( ...
-            ringCircumference, ...
-            couplerCenterPositions, ...
-            couplerLength, ...
-            numTiedowns, ...
-            tiedownRadius, ...
-            offsets(offsetIdx));
-end
-
-% Identify the offsets that produce the fewest tie-downs located in a
-% coupler.
-fewestConflictIdxs = find(overlapCount == min(overlapCount));
-
-% The best offset is the one that, overall, places the tie-downs farthest from
-% the centers of the couplers, thus required the smallest overall adjustment of
-% the tie-downs to move them out of the couplers.  We use the log of the
-% distance to favor offsets having tie-downs a moderate distance from
-% coupler centers over those having an offset very far from a coupler
-% center but another very near.
-weightedDistances = ...
-    sum(log(abs(overlappedCouplers(fewestConflictIdxs, :, 2)) + 1), 2);
-bestOffsetIdx = ...
-    fewestConflictIdxs( ...
-        find(weightedDistances == max(weightedDistances), 1));
-
-display(sprintf( ...
-    'best %d-string offset is %d, measuring %g inches and producing %d overlaps:', ...
-    numTiedowns, bestOffsetIdx, offsets(bestOffsetIdx), overlapCount(bestOffsetIdx)));
-for j = 1 : overlapCount(bestOffsetIdx)
-    display(sprintf( ...
-        '    coupler %d at %.4g" from center', ...
-        overlappedCouplers(bestOffsetIdx, j, 1), ...
-        overlappedCouplers(bestOffsetIdx, j, 2)));
-end
-
-string36Offset = offsets(bestOffsetIdx);
+string36Offset = findBestOffset( ...
+    ringCircumference, ...
+    couplerCenterPositions, ...
+    couplerLength, ...
+    36, ...
+    tiedownRadius);
 string36TiedownPositions = [0:35] .* (ringCircumference / 36) + string36Offset;
 
+[overlapCount48 overlappedCouplers48] = ...
+    findTiedownInCoupler( ...
+        ringCircumference, ...
+        couplerCenterPositions, ...
+        couplerLength, ...
+        48, ...
+        tiedownRadius, ...
+        string36Offset);
+display(sprintf( ...
+    'The best 36-string offset produces %d 48-string overlaps:', ...
+    overlapCount48));
+for j = 1 : overlapCount48
+    display(sprintf( ...
+        '    coupler %d at %.4g" from center', ...
+        overlappedCouplers(j, 1), ...
+        overlappedCouplers(j, 2)));
+end
 
-
+% string48Offset = findBestOffset( ...
+%     ringCircumference, ...
+%     couplerCenterPositions, ...
+%     couplerLength, ...
+%     48, ...
+%     tiedownRadius);
 string48Offset = string36Offset;
-
 string48TiedownPositions = [0:48] .* (ringCircumference / 48) + string48Offset;
 
 
-%% Plot the entire ring in black.
+%% Plot the entire ring.
+
 [x, y] = arc(center, ringRadius, [0 2*pi], ringN);
 h = plot(x, y);
 set(h, 'Color', ringColor, 'LineWidth', ringLineWidth);
@@ -154,7 +138,7 @@ for i = 1:numRingSegments
     end
     text(x, y, sprintf('%d:  %.4g"', i, ringSegmentLengths(i)), ...
         'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
-        'FontSize', 14);
+        'FontSize', 14, 'Color', ringColor);
     segmentStartAngle = segmentStartAngle + segmentAngle;
 end
 
@@ -200,7 +184,7 @@ for i = 1 : 36
         string36Radius, ...
         [string36TiedownAngles(i) string36TiedownAngles(i)], ...
         1);
-    h = plot(x, y, string36Symbol);
+    h = plot(x, y, 'Marker', string36Marker, 'Color', string36Color);
     if x >= 0
         halign = 'right';
     else
@@ -213,7 +197,7 @@ for i = 1 : 36
     end
     text(x, y, cellstr(num2str(i)), ...
         'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
-        'Color', 'blue');
+        'Color', string36Color);
 end
 
 
@@ -227,7 +211,7 @@ for i = 1 : 48
         string48Radius, ...
         [string48TiedownAngles(i) string48TiedownAngles(i)], ...
         1);
-    h = plot(x, y, string48Symbol);
+    h = plot(x, y, 'Marker', string48Marker, 'Color', string48Color);
     if x >= 0
         halign = 'right';
     else
@@ -240,6 +224,6 @@ for i = 1 : 48
     end
     text(x, y, cellstr(num2str(i)), ...
         'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
-        'Color', 'green');
+        'Color', string48Color);
 end
 
