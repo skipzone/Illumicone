@@ -4,6 +4,8 @@
 clear;
 close all;
 
+of = fopen('baseRing.txt','w');
+
 
 %% Set the dimensions of the ring and its components.
 
@@ -12,6 +14,9 @@ close all;
 ringRadius = 19 * 12 + 4;       % the actual size of the physical ring:  19'4"
 
 ringCircumference = 2 * pi * ringRadius;
+
+% Each 252" (21') pipe has 7"-10" of unusable, straight length at each end due
+% to the rolling process.  The net usable length of each pipe is 232".
 
 % This is the best configuration, producing no tie-down/coupler overlaps.
 % Unfortunately, we can't make the segments all of equal length because the
@@ -23,18 +28,24 @@ ringCircumference = 2 * pi * ringRadius;
 % This appears to be the next-best configuration, producing only 2 overlaps
 % for 36 strings and none for 48 strings.  It also makes all segments
 % except for the last the same length.
-numRingSegments = 19;
-segmentLength = 6 * 12 + 4;     % Make all the segments except the last 6'4" long.
-ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
+% numRingSegments = 19;
+% segmentLength = 6 * 12 + 4;     % Make all the segments except the last 6'4" long.
+% ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
 
 % numRingSegments = 20;
 % segmentLength = 6 * 12;
 % ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
 
-% numRingSegments = 19;
-% s1 = 77;
+%numRingSegments = 19;
+% s1 = 75;
 % s2 = 77;
-% ringSegmentLengths = [s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 0];
+%ringSegmentLengths = [s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 0];
+%ringSegmentLengths = [s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 0];
+
+% This is the huckleberry!
+numRingSegments = 19;
+%                      1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19
+ringSegmentLengths = [75 76 73 80 75 77 75 77 75 77 79 73 75 77 75 77 79 79 0];
 
 % The last segment's length is whatever is needed to complete the circle.
 ringSegmentLengths(numRingSegments) = ...
@@ -43,6 +54,16 @@ ringSegmentLengths(numRingSegments) = ...
 couplerLength = 6;
 
 tiedownRadius = 0.5;
+
+fprintf(of, 'All lengths and locations are in inches.\n\n');
+fprintf(of, 'ring radius:  %g\n', ringRadius);
+fprintf(of, 'ring circumference:  %g\n', ringCircumference);
+fprintf(of, 'number of segments:  %g\n', numRingSegments);
+fprintf(of, 'segment lengths:\n');
+fprintf(of, ' %4d', [1 : numRingSegments]);
+fprintf(of, '\n');
+fprintf(of, ' %4.1f', ringSegmentLengths);
+fprintf(of, '\ncoupler length:  %g\n', couplerLength);
 
 
 %% Set the appearances of the plots.
@@ -88,6 +109,7 @@ couplerSpanStartPositions(1) = couplerSpanStartPositions(1) + ringCircumference;
 %% Calculate the tie-down positions, optimizing for the least overlaps with couplers.
 
 string36Offset = findBestOffset( ...
+    of, ...
     ringCircumference, ...
     couplerCenterPositions, ...
     couplerLength, ...
@@ -103,14 +125,14 @@ string36TiedownPositions = [0:35] .* (ringCircumference / 36) + string36Offset;
         48, ...
         tiedownRadius, ...
         string36Offset);
-display(sprintf( ...
-    'The best 36-string offset produces %d 48-string overlaps:', ...
-    overlapCount48));
+fprintf(of, ...
+    'The best 36-string offset produces %d 48-string overlaps:\n', ...
+    overlapCount48);
 for j = 1 : overlapCount48
-    display(sprintf( ...
-        '    coupler %d at %.4g" from center', ...
+    fprintf(of, ...
+        '    coupler %d at %.4g" from center\n', ...
         overlappedCouplers48(j, 1), ...
-        overlappedCouplers48(j, 2)));
+        overlappedCouplers48(j, 2));
 end
 
 % string48Offset = findBestOffset( ...
@@ -119,8 +141,40 @@ end
 %     couplerLength, ...
 %     48, ...
 %     tiedownRadius);
+% We'll use the same offset for the 48-string configuration so that every
+% third of the 36 strings will be in the same place as every fourth of the
+% 48 strings.
 string48Offset = string36Offset;
 string48TiedownPositions = [0:48] .* (ringCircumference / 48) + string48Offset;
+
+
+%% Print the tie-down locations.
+
+fprintf(of, '\n36-String Tie-Down Locations\n');
+fprintf(of, '----------------------------\n');
+fprintf(of, 'No.  Segment  Distance\n');
+for tdIdx = 1 : 36    
+    % Find the closest coupler before this tiedown.
+    previousCouplerIdxs = find(couplerCenterPositions < string36TiedownPositions(tdIdx));
+    previousCouplerIdx = max(previousCouplerIdxs);
+
+    fprintf(of, '%2d   %2d       %4.1f\n', ...
+        tdIdx, previousCouplerIdx, ...
+        string36TiedownPositions(tdIdx) - couplerCenterPositions(previousCouplerIdx));
+end
+
+fprintf(of, '\n48-String Tie-Down Locations\n');
+fprintf(of, '----------------------------\n');
+fprintf(of, 'No.  Segment  Distance\n');
+for tdIdx = 1 : 48    
+    % Find the closest coupler before this tiedown.
+    previousCouplerIdxs = find(couplerCenterPositions < string48TiedownPositions(tdIdx));
+    previousCouplerIdx = max(previousCouplerIdxs);
+
+    fprintf(of, '%2d   %2d       %4.1f\n', ...
+        tdIdx, previousCouplerIdx, ...
+        string48TiedownPositions(tdIdx) - couplerCenterPositions(previousCouplerIdx));
+end
 
 
 %% Plot the entire ring.
@@ -240,3 +294,7 @@ for i = 1 : 48
         'Color', string48Color);
 end
 
+
+%% Done.
+
+fclose(of);
