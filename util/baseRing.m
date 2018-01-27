@@ -13,6 +13,8 @@ of = fopen('baseRing.txt','w');
 
 ringInsideRadius = 19 * 12 + 4;     % the actual size of the physical ring:  19'4"
 pipeOutsideDiameter = 2.375;        % for converting inside to outside measurements
+pipeWeightPerInch = 3.66 / 12;      % lbs per inch
+couplerWeightPerInch = 5.80 / 12;   % lbs per inch
 
 ringOutsideRadius = ringInsideRadius + pipeOutsideDiameter;
 ringInsideCircumference = 2 * pi * ringInsideRadius;
@@ -76,6 +78,9 @@ fprintf(of, ' %5d', [1 : numRingSegments]);
 fprintf(of, '\n');
 fprintf(of, ' %5.2f', ringSegmentInsideLengths * ringInsideToOutsideCircumferenceMultiplier);
 fprintf(of, '\ncoupler length:  %g\n', couplerLength);
+fprintf(of, 'total weight:  %g lbs\n', ...
+    (ringInsideCircumference + ringOutsideCircumference) / 2 * pipeWeightPerInch ...
+    + couplerLength * numRingSegments * couplerWeightPerInch);
 
 
 %% Set the appearances of the plots.
