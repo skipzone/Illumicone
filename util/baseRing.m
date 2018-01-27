@@ -9,11 +9,16 @@ of = fopen('baseRing.txt','w');
 
 %% Set the dimensions of the ring and its components.
 
-% All measurements and coordinates are in inches
+% All measurements and coordinates are in inches.
 
-ringRadius = 19 * 12 + 4;       % the actual size of the physical ring:  19'4"
+ringInsideRadius = 19 * 12 + 4;     % the actual size of the physical ring:  19'4"
+pipeOutsideDiameter = 2.375;        % for converting inside to outside measurements
 
-ringCircumference = 2 * pi * ringRadius;
+ringOutsideRadius = ringInsideRadius + pipeOutsideDiameter;
+ringInsideCircumference = 2 * pi * ringInsideRadius;
+ringOutsideCircumference = 2 * pi * ringOutsideRadius;
+ringInsideToOutsideCircumferenceMultiplier = ...
+    ringOutsideCircumference / ringInsideCircumference;
 
 % Each 252" (21') pipe has 7"-10" of unusable, straight length at each end due
 % to the rolling process.  The net usable length of each pipe is 232".
@@ -23,46 +28,53 @@ ringCircumference = 2 * pi * ringRadius;
 % usable portion of each pipe is only 21' - 2' = 19' long, and 19' / 3 = 6' 4".
 % numRingSegments = 18;
 % segmentLength = 6 * 12 + 9;     % Make all the segments 6'9" long.
-% ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
+% ringSegmentInsideLengths = ones(1, numRingSegments) * segmentLength;
 
 % This appears to be the next-best configuration, producing only 2 overlaps
 % for 36 strings and none for 48 strings.  It also makes all segments
 % except for the last the same length.
 % numRingSegments = 19;
 % segmentLength = 6 * 12 + 4;     % Make all the segments except the last 6'4" long.
-% ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
+% ringSegmentInsideLengths = ones(1, numRingSegments) * segmentLength;
 
 % numRingSegments = 20;
 % segmentLength = 6 * 12;
-% ringSegmentLengths = ones(1, numRingSegments) * segmentLength;
+% ringSegmentInsideLengths = ones(1, numRingSegments) * segmentLength;
 
 %numRingSegments = 19;
 % s1 = 75;
 % s2 = 77;
-%ringSegmentLengths = [s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 0];
-%ringSegmentLengths = [s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 0];
+%ringSegmentInsideLengths = [s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 s1 s1 s2 0];
+%ringSegmentInsideLengths = [s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 s1 s2 0];
 
 % This is the huckleberry!
 numRingSegments = 19;
-%                      1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19
-ringSegmentLengths = [75 76 73 80 75 77 75 77 75 77 79 73 75 77 75 77 79 79 0];
+%                            1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19
+ringSegmentInsideLengths = [75 76 73 80 75 77 75 77 75 77 79 73 75 77 75 77 79 79 0];
 
 % The last segment's length is whatever is needed to complete the circle.
-ringSegmentLengths(numRingSegments) = ...
-    ringCircumference - sum(ringSegmentLengths(1:numRingSegments - 1));
+ringSegmentInsideLengths(numRingSegments) = ...
+    ringInsideCircumference - sum(ringSegmentInsideLengths(1:numRingSegments - 1));
 
 couplerLength = 6;
 
 tiedownRadius = 0.5;
 
 fprintf(of, 'All lengths and locations are in inches.\n\n');
-fprintf(of, 'ring radius:  %g\n', ringRadius);
-fprintf(of, 'ring circumference:  %g\n', ringCircumference);
+fprintf(of, 'ring inside radius:  %g\n', ringInsideRadius);
+fprintf(of, 'pipe outside diameter:  %g\n', pipeOutsideDiameter);
+fprintf(of, 'ring inside circumference:  %g\n', ringInsideCircumference);
+fprintf(of, 'ring outside circumference:  %g\n', ringOutsideCircumference);
+fprintf(of, 'inside-to-outside multiplier:  %.7g\n', ringInsideToOutsideCircumferenceMultiplier);
 fprintf(of, 'number of segments:  %g\n', numRingSegments);
-fprintf(of, 'segment lengths:\n');
+fprintf(of, 'segment lengths (inside):\n');
 fprintf(of, ' %4d', [1 : numRingSegments]);
 fprintf(of, '\n');
-fprintf(of, ' %4.1f', ringSegmentLengths);
+fprintf(of, ' %4.1f', ringSegmentInsideLengths);
+fprintf(of, '\nsegment lengths (outside):\n');
+fprintf(of, ' %5d', [1 : numRingSegments]);
+fprintf(of, '\n');
+fprintf(of, ' %5.2f', ringSegmentInsideLengths * ringInsideToOutsideCircumferenceMultiplier);
 fprintf(of, '\ncoupler length:  %g\n', couplerLength);
 
 
@@ -73,18 +85,18 @@ center = [0 0];
 ringLineWidth = 1.25;
 ringColor = 'black';
 ringN = 2000;
-ringLabelRadius = ringRadius * 1.01;
+ringLabelRadius = ringInsideRadius * 1.01;
 
-couplerRadius = ringRadius;         % plot couplers on top of the ring
+couplerRadius = ringInsideRadius;         % plot couplers on top of the ring
 couplerLineWidth = 6;
 couplerColor = 'red';
 couplerN = 100;
 
-string36Radius = ringRadius * 0.98;
+string36Radius = ringInsideRadius * 0.98;
 string36Color = 'blue';
 string36Marker = 'hexagram';
 
-string48Radius = ringRadius * 0.94;
+string48Radius = ringInsideRadius * 0.94;
 string48Color = 'green';
 string48Marker = 'hexagram';
 
@@ -96,30 +108,30 @@ string48Marker = 'hexagram';
 couplerCenterPositions = zeros(1, numRingSegments);
 for i = 2 : numRingSegments
     couplerCenterPositions(i) = ...
-        couplerCenterPositions(i - 1) + ringSegmentLengths(i - 1);
+        couplerCenterPositions(i - 1) + ringSegmentInsideLengths(i - 1);
 end
 
 % Calculate the starting and ending span of each coupler.
 couplerSpanStartPositions = couplerCenterPositions - couplerLength / 2;
 couplerSpanEndPositions = couplerCenterPositions + couplerLength / 2;
 % Make the first coupler's starting position non-negative. 
-couplerSpanStartPositions(1) = couplerSpanStartPositions(1) + ringCircumference;
+couplerSpanStartPositions(1) = couplerSpanStartPositions(1) + ringInsideCircumference;
 
 
 %% Calculate the tie-down positions, optimizing for the least overlaps with couplers.
 
 string36Offset = findBestOffset( ...
     of, ...
-    ringCircumference, ...
+    ringInsideCircumference, ...
     couplerCenterPositions, ...
     couplerLength, ...
     36, ...
     tiedownRadius);
-string36TiedownPositions = [0:35] .* (ringCircumference / 36) + string36Offset;
+string36TiedownPositions = [0:35] .* (ringInsideCircumference / 36) + string36Offset;
 
 [overlapCount48 overlappedCouplers48] = ...
     findTiedownInCoupler( ...
-        ringCircumference, ...
+        ringInsideCircumference, ...
         couplerCenterPositions, ...
         couplerLength, ...
         48, ...
@@ -145,50 +157,60 @@ end
 % third of the 36 strings will be in the same place as every fourth of the
 % 48 strings.
 string48Offset = string36Offset;
-string48TiedownPositions = [0:48] .* (ringCircumference / 48) + string48Offset;
+string48TiedownPositions = [0:48] .* (ringInsideCircumference / 48) + string48Offset;
 
 
 %% Print the tie-down locations.
 
 fprintf(of, '\n36-String Tie-Down Locations\n');
-fprintf(of, '----------------------------\n');
-fprintf(of, 'No.  Segment  Distance\n');
+fprintf(of, '--------------------------------\n');
+fprintf(of, '              Inside    Outside\n');
+fprintf(of, 'No.  Segment  Distance  Distance\n');
 for tdIdx = 1 : 36    
     % Find the closest coupler before this tiedown.
     previousCouplerIdxs = find(couplerCenterPositions < string36TiedownPositions(tdIdx));
     previousCouplerIdx = max(previousCouplerIdxs);
 
-    fprintf(of, '%2d   %2d       %4.1f\n', ...
-        tdIdx, previousCouplerIdx, ...
-        string36TiedownPositions(tdIdx) - couplerCenterPositions(previousCouplerIdx));
+    tiedownInsidePosition = ...
+        string36TiedownPositions(tdIdx) - couplerCenterPositions(previousCouplerIdx);
+    tiedownOutsidePosition = ...
+        tiedownInsidePosition * ringInsideToOutsideCircumferenceMultiplier;
+    
+    fprintf(of, '%2d   %2d       %4.1f      %4.1f\n', ...
+        tdIdx, previousCouplerIdx, tiedownInsidePosition, tiedownOutsidePosition);
 end
 
 fprintf(of, '\n48-String Tie-Down Locations\n');
-fprintf(of, '----------------------------\n');
-fprintf(of, 'No.  Segment  Distance\n');
+fprintf(of, '--------------------------------\n');
+fprintf(of, '              Inside    Outside\n');
+fprintf(of, 'No.  Segment  Distance  Distance\n');
 for tdIdx = 1 : 48    
     % Find the closest coupler before this tiedown.
     previousCouplerIdxs = find(couplerCenterPositions < string48TiedownPositions(tdIdx));
     previousCouplerIdx = max(previousCouplerIdxs);
 
-    fprintf(of, '%2d   %2d       %4.1f\n', ...
-        tdIdx, previousCouplerIdx, ...
-        string48TiedownPositions(tdIdx) - couplerCenterPositions(previousCouplerIdx));
+    tiedownInsidePosition = ...
+        string48TiedownPositions(tdIdx) - couplerCenterPositions(previousCouplerIdx);
+    tiedownOutsidePosition = ...
+        tiedownInsidePosition * ringInsideToOutsideCircumferenceMultiplier;
+    
+    fprintf(of, '%2d   %2d       %4.1f      %4.1f\n', ...
+        tdIdx, previousCouplerIdx, tiedownInsidePosition, tiedownOutsidePosition);
 end
 
 
 %% Plot the entire ring.
 
-[x, y] = arc(center, ringRadius, [0 2*pi], ringN);
+[x, y] = arc(center, ringInsideRadius, [0 2*pi], ringN);
 h = plot(x, y);
 set(h, 'Color', ringColor, 'LineWidth', ringLineWidth);
-axis([-1.25*ringRadius+center(1) 1.25*ringRadius+center(1) -1.25*ringRadius+center(2) 1.25*ringRadius+center(2)]);
+axis([-1.25*ringInsideRadius+center(1) 1.25*ringInsideRadius+center(1) -1.25*ringInsideRadius+center(2) 1.25*ringInsideRadius+center(2)]);
 axis equal;
 hold on;
 
 segmentStartAngle = 0;
 for i = 1:numRingSegments
-    segmentAngle = ringSegmentLengths(i) / ringCircumference * 2 * pi;
+    segmentAngle = ringSegmentInsideLengths(i) / ringInsideCircumference * 2 * pi;
     labelAngle = segmentStartAngle + segmentAngle / 2;
     [x, y] = arc(center, ringLabelRadius, [labelAngle labelAngle], 1);
     x = x + center(1);
@@ -203,7 +225,8 @@ for i = 1:numRingSegments
     else
         valign = 'top';
     end
-    text(x, y, sprintf('%d:  %.4g"', i, ringSegmentLengths(i)), ...
+    text(x, y, sprintf('%d:  %.4g" / %.4g"', ...
+            i, ringSegmentInsideLengths(i), ringSegmentInsideLengths(i) * ringInsideToOutsideCircumferenceMultiplier), ...
         'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
         'FontSize', 14, 'Color', ringColor);
     segmentStartAngle = segmentStartAngle + segmentAngle;
@@ -212,8 +235,8 @@ end
 
 %% Plot the couplers.
 
-couplerSpanStartAngles = couplerSpanStartPositions / ringCircumference * 2 * pi;
-couplerSpanEndAngles = couplerSpanEndPositions / ringCircumference * 2 * pi;
+couplerSpanStartAngles = couplerSpanStartPositions / ringInsideCircumference * 2 * pi;
+couplerSpanEndAngles = couplerSpanEndPositions / ringInsideCircumference * 2 * pi;
 
 for i = 1:numRingSegments
     [x, y] = arc( ...
@@ -244,7 +267,7 @@ end
 %% Plot the 36-string configuration tie-down points.
 
 string36TiedownAngles = ...
-    string36TiedownPositions / ringCircumference * 2 * pi;
+    string36TiedownPositions / ringInsideCircumference * 2 * pi;
 for i = 1 : 36
     [x, y] = arc( ...
         center, ...
@@ -271,7 +294,7 @@ end
 %% Plot the 48-string configuration tie-down points.
 
 string48TiedownAngles = ...
-    string48TiedownPositions / ringCircumference * 2 * pi;
+    string48TiedownPositions / ringInsideCircumference * 2 * pi;
 for i = 1 : 48
     [x, y] = arc( ...
         center, ...
