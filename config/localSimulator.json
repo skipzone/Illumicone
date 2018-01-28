@@ -25,9 +25,7 @@
     "numberOfPixelsPerString" : 100,
 
     "patconIpAddress" : "127.0.0.1",
-    //"opcServerIpAddress": "127.0.0.1",
-    "opcServerIpAddress": "192.168.69.12",
-    //"opcServerIpAddress": "192.168.76.124",
+    "opcServerIpAddress": "127.0.0.1",
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
@@ -84,17 +82,12 @@
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
-        {   "name" : "buckNorris",
-            "enabled" : false,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         }
     ],
