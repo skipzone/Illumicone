@@ -2081,6 +2081,7 @@ static void event_handler(struct ns_connection *conn, enum ns_event ev, void *ev
 			// Fallback to handle misformed data. Clear the io buffer if we have more
 			// than 100k waiting.
 			if (io->len > 1e5) {
+                warn("[tcp] WARN: io->len = %d > 1e5.  Clearing the buffer.\n", io->len);
 				iobuf_remove(io, io->len);
 			}
 		} break;
