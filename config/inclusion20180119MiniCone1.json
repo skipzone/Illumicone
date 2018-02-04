@@ -1,0 +1,184 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "lockFilePaths" : {
+        "patternController" : "/tmp/patternController.lock",
+        "widgetRcvr" : "/tmp/widgetRcvr.lock"
+    },
+
+    "numberOfStrings" : 12,
+    "numberOfPixelsPerString" : 20,
+
+    "patconIpAddress" : "127.0.0.1",
+    "opcServerIpAddress": "192.168.69.100",
+    "widgetPortNumberBase" : 4200,
+
+    "shutoffPeriods" : [
+    ],
+
+    "quiescentPeriods" : [
+    ],
+
+    "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+    "patternRunLoopSleepIntervalUs" : 5000,
+
+    "radioPollingLoopSleepIntervalUs" : 1000,
+
+    "widgets" : [
+        {   "name" : "rainstick",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "fourPlay42",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "fourPlay43",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        }
+    ],
+
+    "patterns" : [
+        {   "name" : "verticalStripes",
+            "enabled" : true,
+            "priority" : 6,
+            "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "RgbVerticalPattern",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                }   //,
+                //{   "inputName" : "width",
+                //    "widgetName" : "fourPlay42",
+                //    "channelNumber" : 3,
+                //    "measurement" : "position"
+                //}
+            ],
+            "widthScaleFactor" : 6,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 4,             // the maximum width when cyclical values are used
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+        },
+        {   "name" : "horizontalRings",
+            "enabled" : true,
+            "priority" : 5,
+            "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "HorizontalStripePattern",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                }   //,
+                //{   "inputName" : "width",
+                //    "widgetName" : "fourPlay43",
+                //    "channelNumber" : 3,
+                //    "measurement" : "position"
+                //}
+            ],
+            "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 4,             // the maximum width when cyclical values are used
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+        },
+        {   "name" : "multicolorSparkle",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 3,
+                    "measurement" : "velocity"
+                }
+            ],
+            "activationThreshold" : 10,
+            "densityScaledownFactor" : 1200,     // 1200 for FourPlay4x, 300 for spinnah
+            "useRandomColors" : true,
+            "sparkleChangeIntervalMs" : 50
+        },
+        {   "name" : "rain",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 2,        // average sound amplitude
+                    "measurement" : "position"
+                }
+            ],
+            "emitColor" : "0,64,192",
+            "emitIntervalMeasmtLow" : 600,
+            "emitIntervalMeasmtHigh" : 1020,    // make about 1.5 times max from widget for smoother operation near max
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 50,
+            "emitBatchSize" : 5,
+            "emitDirectionIsUp" : false,
+            "particleMoveIntervalMs" : 50
+        },
+        {   "name" : "spray",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 3,
+                    "measurement" : "velocity"
+                }
+            ],
+            "emitColor" : "white",
+            "emitIntervalMeasmtLow" : 20,
+            "emitIntervalMeasmtHigh" : 400,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 50,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 40
+        }
+    ]
+
+}

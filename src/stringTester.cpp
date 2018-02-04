@@ -93,6 +93,6 @@ int main(int argc, char **argv)
     // Periodically send a message to the OPC server.
     while (1) {
         send(sock, opcBuffer, sizeof(opcBuffer), 0);
-        usleep(500000);
+        usleep(20000);
     }
 }
