@@ -71,7 +71,9 @@ class ConfigReader
         std::string getLockFilePath(const std::string& serviceName);
         int getNumberOfStrings();
         int getNumberOfPixelsPerString();
+        bool getUseTcpForOpcServer();
         std::string getOpcServerIpAddress();
+        unsigned int getOpcServerPortNumber();
         std::string getPatconIpAddress();
         std::string getPatternBlendMethod();
         unsigned int getPatternRunLoopSleepIntervalUs();

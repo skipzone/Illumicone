@@ -85,7 +85,6 @@ static PatternBlendMethod patternBlendMethod;
 static unsigned int patternRunLoopSleepIntervalUs;
 
 static bool useTcpForOpcServer;
-constexpr unsigned int opcServerPortNumber = 7890;  // TODO:  move to json config
 static struct sockaddr_in opcServerSockaddr;
 static int opcServerSocketFd;
 static uint8_t* opcBuffer;      // points to the buffer used for sending messages to the OPC server
@@ -611,14 +610,14 @@ bool doInitialization()
     }
 
     // Open communications with OPC server.
-    useTcpForOpcServer = false;  // TODO 2/3/2018 ross:  get from config
+    useTcpForOpcServer = config.getUseTcpForOpcServer();
     if (useTcpForOpcServer) {
-        if (!openOpcServerTcpConnection(config.getOpcServerIpAddress(), opcServerPortNumber)) {
+        if (!openOpcServerTcpConnection(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
             return false;
         }
     }
     else {
-        if (!openUdpPortForOpcServer(config.getOpcServerIpAddress(), opcServerPortNumber)) {
+        if (!openUdpPortForOpcServer(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
             return false;
         }
     }
