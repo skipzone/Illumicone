@@ -201,53 +201,64 @@ std::string ConfigReader::getLockFilePath(const string& serviceName)
 
 int ConfigReader::getNumberOfStrings()
 {
-    return configObj["numberOfStrings"].int_value();
+    int val;
+    return getIntValue(configObj, "numberOfStrings", val, ".", 1, 48) ? val : 0;
 }
 
 
 int ConfigReader::getNumberOfPixelsPerString()
 {
-    return configObj["numberOfPixelsPerString"].int_value();
+    int val;
+    return getIntValue(configObj, "numberOfPixelsPerString", val, ".", 1, 2048) ? val : 0;
+}
+
+
+bool ConfigReader::getUseTcpForOpcServer()
+{
+    bool val;
+    return getBoolValue(configObj, "useTcpForOpcServer", val, ".") ? val : false;
 }
 
 
 string ConfigReader::getOpcServerIpAddress()
 {
-    return configObj["opcServerIpAddress"].string_value();
+    string val;
+    return getStringValue(configObj, "opcServerIpAddress", val, ".") ? val : "";
+}
+
+
+unsigned int ConfigReader::getOpcServerPortNumber()
+{
+    unsigned int val;
+    return getUnsignedIntValue(configObj, "opcServerPortNumber", val, ".", 1024, 65535) ? val : 0;
 }
 
 
 string ConfigReader::getPatconIpAddress()
 {
-    if (!configObj["patconIpAddress"].is_string()) {
-        logMsg(LOG_ERR, "patconIpAddress missing from configuration.");
-        return "";
-    }
-    return configObj["patconIpAddress"].string_value();
+    string val;
+    return getStringValue(configObj, "patconIpAddress", val, ".") ? val : "";
 }
 
 
 string ConfigReader::getPatternBlendMethod()
 {
-    if (!configObj["patternBlendMethod"].is_string()) {
-        logMsg(LOG_ERR, "patternBlendMethod missing from configuration.");
-        return "";
-    }
-    return configObj["patternBlendMethod"].string_value();
+    string val;
+    return getStringValue(configObj, "patternBlendMethod", val, ".") ? val : "";
 }
 
 
 unsigned int ConfigReader::getPatternRunLoopSleepIntervalUs()
 {
     unsigned int val;
-    return  getUnsignedIntValue(configObj, "patternRunLoopSleepIntervalUs", val, ".", 1) ? val : 0;
+    return getUnsignedIntValue(configObj, "patternRunLoopSleepIntervalUs", val, ".", 1) ? val : 0;
 }
 
 
 unsigned int ConfigReader::getRadioPollingLoopSleepIntervalUs()
 {
     unsigned int val;
-    return  getUnsignedIntValue(configObj, "radioPollingLoopSleepIntervalUs", val, ".", 1) ? val : 0;
+    return getUnsignedIntValue(configObj, "radioPollingLoopSleepIntervalUs", val, ".", 1) ? val : 0;
 }
 
 
@@ -325,11 +336,8 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
 
 int ConfigReader::getWidgetPortNumberBase()
 {
-    if (!configObj["widgetPortNumberBase"].is_number()) {
-        logMsg(LOG_ERR, "widgetPortNumberBase missing from configuration.");
-        return 0;
-    }
-    return configObj["widgetPortNumberBase"].int_value();
+    unsigned int val;
+    return getUnsignedIntValue(configObj, "widgetPortNumberBase", val, ".", 1024, 65535) ? val : 0;
 }
 
 

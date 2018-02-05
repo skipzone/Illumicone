@@ -84,10 +84,11 @@ static string patternBlendMethodStr;
 static PatternBlendMethod patternBlendMethod;
 static unsigned int patternRunLoopSleepIntervalUs;
 
+static bool useTcpForOpcServer;
 static struct sockaddr_in opcServerSockaddr;
 static int opcServerSocketFd;
 static uint8_t* opcBuffer;      // points to the buffer used for sending messages to the OPC server
-static size_t opcBufferSize;
+static ssize_t opcBufferSize;
 static uint8_t* opcData;        // points to the data portion of opcBuffer
 
 static map<WidgetId, Widget*> widgets;
@@ -118,25 +119,32 @@ bool registerSignalHandlers()
 }
 
 
-bool openOpcServerConnection(const string& opcServerIpAddress)
+bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber)
 {
+    logMsg(LOG_INFO, "Connecting to OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
+
     opcServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (opcServerSocketFd == -1) {
+        logSysErr(LOG_ERR, "Failed to create socket for OPC server.", errno);
+        return false;
+    }
 
-    opcServerSockaddr.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
     opcServerSockaddr.sin_family = AF_INET;
-    opcServerSockaddr.sin_port = htons(7890);
+    opcServerSockaddr.sin_addr.s_addr = inet_addr(ipAddress.c_str());
+    opcServerSockaddr.sin_port = htons(portNumber);
 
-    logMsg(LOG_INFO, "Connecting to OPC server at " + opcServerIpAddress + "...");
-    if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) < 0) {
+    if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) == -1) {
         logSysErr(LOG_ERR, "Unable to connect to opc-server.", errno);
         return false;
     }
+
+    logMsg(LOG_INFO, "Connected.");
 
     return true;
 }
 
 
-bool closeOpcServerConnection()
+bool closeOpcServerTcpConnection()
 {
     logMsg(LOG_INFO, "Disconnecting from OPC server...");
     ///if (disconnectx(opcServerSocketFd, SAE_ASSOCID_ANY, SAE_CONNID_ANY) != 0) {
@@ -148,23 +156,74 @@ bool closeOpcServerConnection()
 }
 
 
-void dumpOpcBuffer()
+bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
 {
-    logMsg(LOG_DEBUG, "opcBuffer[0]: " + to_string(unsigned(opcBuffer[0])));
-    logMsg(LOG_DEBUG, "opcBuffer[1]: " + to_string(unsigned(opcBuffer[1])));
-    logMsg(LOG_DEBUG, "opcBuffer[2]: " + to_string(unsigned(opcBuffer[2])));
-    logMsg(LOG_DEBUG, "opcBuffer[3]: " + to_string(unsigned(opcBuffer[3])));
+    logMsg(LOG_INFO, "Creating and binding socket for OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
 
-    // Print just data for the first two strings.
-    for (size_t i = 0; i < 2 * numberOfPixelsPerString * 3; i++) {
-        logMsg(LOG_DEBUG, to_string(unsigned(opcData[i]))
-                + " " + to_string(unsigned(opcData[i+1]))
-                + " " + to_string(unsigned(opcData[i+2])));
+    memset(&opcServerSockaddr, 0, sizeof(struct sockaddr_in));
+
+    opcServerSockaddr.sin_family = AF_INET;
+    opcServerSockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    opcServerSockaddr.sin_port = htons(0);
+
+    if ((opcServerSocketFd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+        logSysErr(LOG_ERR, "Failed to create socket for OPC server.", errno);
+        return false;
+    }
+
+    if (::bind(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(struct sockaddr_in)) == -1) {
+        logSysErr(LOG_ERR, "bind failed for OPC server.", errno);
+        return false;
+    }
+
+    logMsg(LOG_INFO, "Setting address to " + ipAddress + ":" + to_string(portNumber) + ".");
+
+    inet_pton(AF_INET, ipAddress.c_str(), &opcServerSockaddr.sin_addr.s_addr);
+    opcServerSockaddr.sin_port = htons(portNumber);
+
+    return true;
+}
+
+
+bool closeUdpPortForOpcServer()
+{
+    // TODO 2/3/2018 ross:  make sure this implementation is correct
+    logMsg(LOG_INFO, "Closing UDP port for OPC server...");
+    if (close(opcServerSocketFd) != 0) {
+        logSysErr(LOG_ERR, "Unable to close UDP port for opc-server.", errno);
+        return false;
+    }
+    return true;
+}
+
+
+void dumpOpcBuffer(size_t numStringsToPrint)
+{
+    logMsg(LOG_DEBUG,
+        "opcBuffer header:  "
+        + to_string((int) opcBuffer[0]) + " "
+        + to_string((int) opcBuffer[1]) + " "
+        + to_string((int) opcBuffer[2]) + " "
+        + to_string((int) opcBuffer[3]));
+
+    if (numStringsToPrint > 0) {
+        for (size_t iPixel = 0; iPixel < numberOfPixelsPerString; ++iPixel) {
+            stringstream sstr;
+            sstr << setfill(' ') << setw(3) << iPixel << ":";
+            for (size_t iString = 0; iString < numStringsToPrint; ++iString) {
+                size_t pixelOffset = iString * numberOfPixelsPerString * 3 + iPixel * 3;
+                sstr << "  "
+                    << setfill(' ') << setw(3) << (int) opcData[pixelOffset] << ","
+                    << setfill(' ') << setw(3) << (int) opcData[pixelOffset + 1] << ","
+                    << setfill(' ') << setw(3) << (int) opcData[pixelOffset + 2];
+            }
+            logMsg(LOG_DEBUG, sstr.str());
+        }
     }
 }
 
 
-void sendOpcMessage()
+bool sendOpcMessage()
 {
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         unsigned int colOffset = col * numberOfPixelsPerString * 3;
@@ -176,12 +235,39 @@ void sendOpcMessage()
         }
     }
 
-    //dumpOpcBuffer(opcBuffer);
+    //dumpOpcBuffer(2);
 
-    // send to OPC server over network connection
-    //logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
-    send(opcServerSocketFd, opcBuffer, opcBufferSize, 0);
-    //logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
+    if (useTcpForOpcServer) {
+        //logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
+        if (send(opcServerSocketFd, opcBuffer, opcBufferSize, 0) == -1) {
+            logSysErr(LOG_ERR, "Failed to send message to OPC server via TCP.", errno);
+            return false;
+        }
+        //logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
+    }
+    else {
+        //logMsg(LOG_DEBUG, "sending message to OPC server via UDP...");
+        // TODO 2/3/2018 ross:  modify to not block if no message space is available to hold the message
+        ssize_t bytesSentCount = sendto(opcServerSocketFd,
+                                        opcBuffer,
+                                        opcBufferSize,
+                                        0,
+                                        (struct sockaddr *) &opcServerSockaddr,
+                                        sizeof(struct sockaddr_in));
+        if (bytesSentCount == -1) {
+            logSysErr(LOG_ERR, "Failed to send message to OPC server via UDP.", errno);
+            return false;
+        }
+        if (bytesSentCount != opcBufferSize) {
+            logMsg(LOG_ERR,
+                   "UPD payload size is " + to_string(opcBufferSize)
+                   + ", but " + to_string(bytesSentCount) + " bytes were sent to OPC server.");
+            return false;
+        }
+        //logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
+    }
+
+    return true;
 }
 
 
@@ -523,9 +609,17 @@ bool doInitialization()
         return false;
     }
 
-    // open socket, connect with opc-server
-    if (!openOpcServerConnection(config.getOpcServerIpAddress())) {
-        return false;
+    // Open communications with OPC server.
+    useTcpForOpcServer = config.getUseTcpForOpcServer();
+    if (useTcpForOpcServer) {
+        if (!openOpcServerTcpConnection(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
+            return false;
+        }
+    }
+    else {
+        if (!openUdpPortForOpcServer(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
+            return false;
+        }
     }
 
     initWidgets();
@@ -544,8 +638,15 @@ bool doTeardown()
     tearDownPatterns();
     tearDownWidgets();
 
-    if (!closeOpcServerConnection()) {
-        return false;
+    if (useTcpForOpcServer) {
+        if (!closeOpcServerTcpConnection()) {
+            return false;
+        }
+    }
+    else {
+        if (!closeUdpPortForOpcServer()) {
+            return false;
+        }
     }
 
     freeOpcBuffer();
