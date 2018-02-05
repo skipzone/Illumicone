@@ -97,24 +97,57 @@ static vector<PatternState*> patternStates;
 static HsvConeStrings hsvFinalFrame;
 static RgbConeStrings rgbFinalFrame;
 
-static bool gotReinitSignal;
+static volatile bool gotExitSignal;
+static volatile bool gotReinitSignal;
+static volatile bool gotToggleTestPatternSignal;
 
 
-void signalHandler(int signum)
+
+void handleReinitSignal(int signum)
 {
-    logMsg(LOG_INFO, "Received signal " + to_string(signum));
-    if (signum == SIGUSR1) {
-        gotReinitSignal = true;
-    }
+    gotReinitSignal = true;
+}
+
+
+void handleTestPatternSignal(int signum)
+{
+    gotToggleTestPatternSignal = true;
+}
+
+
+void handleExitSignal(int signum)
+{
+    gotExitSignal = true;
 }
 
 
 bool registerSignalHandlers()
 {
-    if (signal(SIGUSR1, signalHandler) == SIG_ERR) {
-        logMsg(LOG_ERR, "Unable to register handler for SIGUSR1.");
-        return false;
-    }
+	struct sigaction act;
+	memset(&act, 0, sizeof(act));
+
+	act.sa_handler = &handleReinitSignal;
+	if (sigaction(SIGUSR1, &act, NULL) < 0) {
+        logSysErr(LOG_ERR, "Unable to register re-init signal handler.", errno);
+		return false;
+	}
+
+	act.sa_handler = &handleTestPatternSignal;
+	if (sigaction(SIGUSR2, &act, NULL) < 0) {
+        logSysErr(LOG_ERR, "Unable to register test pattern signal handler.", errno);
+		return false;
+	}
+
+	act.sa_handler = &handleExitSignal;
+	if (   sigaction(SIGHUP, &act, NULL) < 0
+        || sigaction(SIGINT, &act, NULL) < 0
+        || sigaction(SIGPIPE, &act, NULL) < 0
+        || sigaction(SIGTERM, &act, NULL) < 0)
+    {
+        logSysErr(LOG_ERR, "Unable to register exit signal handler.", errno);
+		return false;
+	}
+
     return true;
 }
 
@@ -225,6 +258,8 @@ void dumpOpcBuffer(size_t numStringsToPrint)
 
 bool sendOpcMessage()
 {
+    // TODO 2/5/2018 ross:  Need to throttle the messaging so that things like turnOnSafetlyLights don't hammer opc-server.
+
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         unsigned int colOffset = col * numberOfPixelsPerString * 3;
         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
@@ -292,6 +327,55 @@ void turnOnSafetyLights()
 void setAllPixelsToQuiescentColor()
 {
     fillSolid(rgbFinalFrame, RgbPixel::Navy);
+    sendOpcMessage();
+}
+
+
+void displayTestPattern()
+{
+    // TODO 2/5/2018 ross:  get the colors from config
+    string areaIlluminationColorStr = "127,127,127";        // half-intensity white
+    string stringPosition1IndicatorColorStr = "0,255,0";    // full-intensity green
+    string stringPosition5IndicatorColorStr = "0,255,255";  // full-intensity cyan
+    string stringPosition10IndicatorColorStr = "255,0,255"; // full-intensity magenta
+    CRGB areaIlluminationColor;
+    CRGB stringPosition1IndicatorColor;
+    CRGB stringPosition5IndicatorColor;
+    CRGB stringPosition10IndicatorColor;
+    stringToRgbPixel(areaIlluminationColorStr, areaIlluminationColor);
+    stringToRgbPixel(stringPosition1IndicatorColorStr, stringPosition1IndicatorColor);
+    stringToRgbPixel(stringPosition5IndicatorColorStr, stringPosition5IndicatorColor);
+    stringToRgbPixel(stringPosition10IndicatorColorStr, stringPosition10IndicatorColor);
+
+    fillSolid(rgbFinalFrame, RgbPixel::Black);
+
+    // On each string and from the bottom up, turn on the quantity of pixels
+    // that corresponds to the string's position.  Also, turn on the top part of
+    // the cone for area illumination.
+    for (size_t iString = 0; iString < numberOfStrings; ++iString) {
+
+        // It is possible to have more strings than pixels per string (like,
+        // if we expand Mini-Cone from 12 to 24 strings).  So, we'll make the
+        // number of illuminated string position pixels wrap around to 1.
+        int numStringPositionPixels = iString % numberOfPixelsPerString + 1;
+
+        // The string position pixels are illuminated from the bottom up.
+        int iPixel = numberOfPixelsPerString - 1;
+        for (int i = 0; i < numStringPositionPixels; ++i) {
+            rgbFinalFrame[iString][iPixel]
+                = (i + 1) % 10 == 0 ? stringPosition10IndicatorColor
+                : (i + 1) % 5 == 0 ? stringPosition5IndicatorColor
+                : stringPosition1IndicatorColor;
+            --iPixel;
+        }
+
+        // Use the part of the cone above the string
+        // position indicators for area illumination.
+        for (iPixel = numberOfPixelsPerString - numberOfStrings - 1; iPixel >= 0; --iPixel) {
+            rgbFinalFrame[iString][iPixel] = areaIlluminationColor;
+        }
+    }
+
     sendOpcMessage();
 }
 
@@ -856,6 +940,7 @@ int main(int argc, char **argv)
     if (!doInitialization()) {
         return(EXIT_FAILURE);
     }
+    bool displayingTestPattern = false;
     time_t lastPeriodCheckTime = 0;
     bool inPeriod = false;
     string lastPeriodDesc = "";
@@ -875,9 +960,12 @@ int main(int argc, char **argv)
 */
 
     // ----- run loop -----
-    while (true) {
+    while (!gotExitSignal) {
+
+        usleep(patternRunLoopSleepIntervalUs);
 
         if (gotReinitSignal) {
+            gotReinitSignal = false;
             logMsg(LOG_INFO, "---------- Reinitializing... ----------");
             turnOnSafetyLights();
             if (!doTeardown()) {
@@ -890,16 +978,27 @@ int main(int argc, char **argv)
             if (!readConfig() || !doInitialization()) {
                 return(EXIT_FAILURE);
             }
+            displayingTestPattern = false;
             lastPeriodCheckTime = 0;
             inPeriod = false;
             lastPeriodDesc = "";
-            gotReinitSignal = false;
+        }
+
+        if (gotToggleTestPatternSignal) {
+            gotToggleTestPatternSignal = false;
+            displayingTestPattern = !displayingTestPattern;
+            logMsg(LOG_INFO, string("Turning test pattern ") + (displayingTestPattern ? "on." : "off."));
         }
 
         // Give the widgets a chance to update their simulated measurements.
         //logMsg(LOG_DEBUG, "Updating simulated measurements.");
         for (auto&& widget : widgets) {
             widget.second->updateSimulatedMeasurements();
+        }
+
+        if (displayingTestPattern) {
+            displayTestPattern();
+            continue;
         }
 
         // Once per second, check if we're in a schedule period.
@@ -935,11 +1034,13 @@ int main(int argc, char **argv)
         if (!inPeriod) {
             doPatterns();
         }
-
-        usleep(patternRunLoopSleepIntervalUs);
     }
 
-    // We should never get here, but if we do, something went wrong.
-    return EXIT_FAILURE;
+    logMsg(LOG_INFO, "---------- Exiting... ----------");
+    turnOnSafetyLights();
+    if (!doTeardown()) {
+        return(EXIT_FAILURE);
+    }
+    return EXIT_SUCCESS;
 }
 
