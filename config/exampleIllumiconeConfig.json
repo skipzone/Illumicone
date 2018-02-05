@@ -29,6 +29,8 @@
     //"opcServerIpAddress": "192.168.69.11",
     "patconIpAddress" : "192.168.69.103",
     "opcServerIpAddress": "192.168.69.100",
+    "opcServerPortNumber" : 7890,
+    "useTcpForOpcServer" : false,
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
