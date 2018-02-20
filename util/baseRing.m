@@ -4,6 +4,8 @@
 clear;
 close all;
 
+colors;     % import colors defined in colors.m
+
 of = fopen('baseRing.txt','w');
 
 
@@ -60,7 +62,7 @@ ringSegmentInsideLengths(numRingSegments) = ...
 
 couplerLength = 6;
 
-tiedownRadius = 0.5;
+tiedownWidth = 0.5;
 
 fprintf(of, 'All lengths and locations are in inches.\n\n');
 fprintf(of, 'ring inside radius:  %g\n', ringInsideRadius);
@@ -85,6 +87,12 @@ fprintf(of, 'total weight:  %g lbs\n', ...
 
 %% Set the appearances of the plots.
 
+showSegmentLengths = false;
+showCouplerNumbers = false;
+show36Strings = true;
+show48Strings = false;
+showCenteringCables = true;
+
 center = [0 0];
 
 ringLineWidth = 1.25;
@@ -94,16 +102,23 @@ ringLabelRadius = ringInsideRadius * 1.01;
 
 couplerRadius = ringInsideRadius;         % plot couplers on top of the ring
 couplerLineWidth = 6;
-couplerColor = 'red';
+couplerColor = rgbBlueViolet;
 couplerN = 100;
 
 string36Radius = ringInsideRadius * 0.98;
-string36Color = 'blue';
+string36Color = rgbDarkGreen;
 string36Marker = 'hexagram';
+string36LabelFontSize = 14;
 
 string48Radius = ringInsideRadius * 0.94;
-string48Color = 'green';
+string48Color = rgbDarkBlue;
 string48Marker = 'hexagram';
+string48LabelFontSize = 14;
+
+centeringCableRadius = ringInsideRadius * 1.1;
+centeringCableColor = rgbCornflowerBlue;
+centeringCableLineWidth = 2;
+centeringCableLabelFontSize = 16;
 
 
 %% Calculate the coupler positions.
@@ -131,7 +146,7 @@ string36Offset = findBestOffset( ...
     couplerCenterPositions, ...
     couplerLength, ...
     36, ...
-    tiedownRadius);
+    tiedownWidth);
 string36TiedownPositions = [0:35] .* (ringInsideCircumference / 36) + string36Offset;
 
 [overlapCount48 overlappedCouplers48] = ...
@@ -140,7 +155,7 @@ string36TiedownPositions = [0:35] .* (ringInsideCircumference / 36) + string36Of
         couplerCenterPositions, ...
         couplerLength, ...
         48, ...
-        tiedownRadius, ...
+        tiedownWidth, ...
         string36Offset);
 fprintf(of, ...
     'The best 36-string offset produces %d 48-string overlaps:\n', ...
@@ -163,6 +178,15 @@ end
 % 48 strings.
 string48Offset = string36Offset;
 string48TiedownPositions = [0:48] .* (ringInsideCircumference / 48) + string48Offset;
+
+centeringCableOffset = findBestOffset( ...
+    of, ...
+    ringInsideCircumference, ...
+    couplerCenterPositions, ...
+    couplerLength, ...
+    4, ...
+    tiedownWidth);
+centeringCableTiedownPositions = [0:3] .* (ringInsideCircumference / 4) + centeringCableOffset;
 
 
 %% Print the tie-down locations.
@@ -230,10 +254,18 @@ for i = 1:numRingSegments
     else
         valign = 'top';
     end
-    text(x, y, sprintf('%d:  %.4g" / %.4g"', ...
-            i, ringSegmentInsideLengths(i), ringSegmentInsideLengths(i) * ringInsideToOutsideCircumferenceMultiplier), ...
-        'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
-        'FontSize', 14, 'Color', ringColor);
+    if showSegmentLengths
+        text(x, y, ...
+            sprintf('%d:  %.4g" / %.4g"', ...
+                i, ringSegmentInsideLengths(i), ringSegmentInsideLengths(i) * ringInsideToOutsideCircumferenceMultiplier), ...
+            'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+            'FontSize', 14, 'Color', ringColor);
+    else
+        text(x, y, ...
+            sprintf('%d', i), ...
+            'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+            'FontSize', 14, 'Color', ringColor);
+    end
     segmentStartAngle = segmentStartAngle + segmentAngle;
 end
 
@@ -263,63 +295,112 @@ for i = 1:numRingSegments
     else
         valign = 'top';
     end
-    text(labelx, labely, cellstr(num2str(i)), ...
-        'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
-        'Color', 'red');
+    if showCouplerNumbers
+        text(labelx, labely, cellstr(num2str(i)), ...
+            'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+            'Color', couplerColor);
+    end
 end
 
 
 %% Plot the 36-string configuration tie-down points.
 
-string36TiedownAngles = ...
-    string36TiedownPositions / ringInsideCircumference * 2 * pi;
-for i = 1 : 36
-    [x, y] = arc( ...
-        center, ...
-        string36Radius, ...
-        [string36TiedownAngles(i) string36TiedownAngles(i)], ...
-        1);
-    h = plot(x, y, 'Marker', string36Marker, 'Color', string36Color);
-    if x >= 0
-        halign = 'right';
-    else
-        halign = 'left';
+if show36Strings
+
+    string36TiedownAngles = ...
+        string36TiedownPositions / ringInsideCircumference * 2 * pi;
+    for i = 1 : 36
+        [x, y] = arc( ...
+            center, ...
+            string36Radius, ...
+            [string36TiedownAngles(i) string36TiedownAngles(i)], ...
+            1);
+        h = plot(x, y, 'Marker', string36Marker, 'Color', string36Color);
+        if x >= 0
+            halign = 'right';
+        else
+            halign = 'left';
+        end
+        if y >= 0
+            valign = 'top';
+        else
+            valign = 'bottom';
+        end
+        text(x, y, cellstr(num2str(i)), ...
+            'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+            'FontSize', string36LabelFontSize, 'Color', string36Color);
     end
-    if y >= 0
-        valign = 'top';
-    else
-        valign = 'bottom';
-    end
-    text(x, y, cellstr(num2str(i)), ...
-        'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
-        'Color', string36Color);
+
 end
 
 
 %% Plot the 48-string configuration tie-down points.
 
-string48TiedownAngles = ...
-    string48TiedownPositions / ringInsideCircumference * 2 * pi;
-for i = 1 : 48
-    [x, y] = arc( ...
-        center, ...
-        string48Radius, ...
-        [string48TiedownAngles(i) string48TiedownAngles(i)], ...
-        1);
-    h = plot(x, y, 'Marker', string48Marker, 'Color', string48Color);
-    if x >= 0
-        halign = 'right';
-    else
-        halign = 'left';
+if show48Strings
+
+    string48TiedownAngles = ...
+        string48TiedownPositions / ringInsideCircumference * 2 * pi;
+    for i = 1 : 48
+        [x, y] = arc( ...
+            center, ...
+            string48Radius, ...
+            [string48TiedownAngles(i) string48TiedownAngles(i)], ...
+            1);
+        h = plot(x, y, 'Marker', string48Marker, 'Color', string48Color);
+        if x >= 0
+            halign = 'right';
+        else
+            halign = 'left';
+        end
+        if y >= 0
+            valign = 'top';
+        else
+            valign = 'bottom';
+        end
+        text(x, y, cellstr(num2str(i)), ...
+            'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+            'FontSize', string48LabelFontSize, 'Color', string48Color);
     end
-    if y >= 0
-        valign = 'top';
-    else
-        valign = 'bottom';
+
+end
+
+
+%% Plot the centering cables.
+
+if showCenteringCables
+
+    centeringCableTiedownAngles = ...
+        centeringCableTiedownPositions / ringInsideCircumference * 2 * pi;
+    for i = 1 : 4
+        x(1) = center(1);
+        y(1) = center(2);
+        [x(2), y(2)] = pol2cart(centeringCableTiedownAngles(i), ringInsideRadius);
+        h = line(x, y, 'Color', centeringCableColor, 'LineWidth', centeringCableLineWidth);
+        if x >= 0
+            halign = 'left';
+        else
+            halign = 'right';
+        end
+        if y >= 0
+            valign = 'bottom';
+        else
+            valign = 'top';
+        end
+
+        % Find the closest coupler before this tiedown and use its position to
+        % calculate this tiedown's position relative to the start of the pipe
+        % segment to which it is attached.
+        previousCouplerIdxs = find(couplerCenterPositions < centeringCableTiedownPositions(i));
+        previousCouplerIdx = max(previousCouplerIdxs);
+        tiedownInsidePosition = ...
+            centeringCableTiedownPositions(i) - couplerCenterPositions(previousCouplerIdx);
+        
+        text(x(2), y(2), ...
+            sprintf('%d:  %4.1f"', i, tiedownInsidePosition), ...
+            'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
+            'FontSize', centeringCableLabelFontSize, 'Color', centeringCableColor);
     end
-    text(x, y, cellstr(num2str(i)), ...
-        'VerticalAlignment', valign, 'HorizontalAlignment', halign, ...
-        'Color', string48Color);
+
 end
 
 
