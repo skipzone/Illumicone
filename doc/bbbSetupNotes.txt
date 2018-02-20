@@ -136,9 +136,6 @@
         ##BeagleBone Black: HDMI (Audio/Video) disabled:
         dtb=am335x-boneblack-emmc-overlay.dtb
 
-    Note that the dts and dtb file names in the next step will need to be
-    am335x-boneblack-emmc-overlay instead of am335x-bonegreen.
-
 
 11.  Set up LEDscape.
 

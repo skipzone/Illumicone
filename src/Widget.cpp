@@ -125,17 +125,21 @@ void Widget::startUdpRxThread()
 
     unsigned int widgetPortNumber = widgetPortNumberBase + widgetIdToInt(id);
 
-    // TODO 7/10/2016 ross:  determine if we really need to do this
-    //pthread_t thisThread = pthread_self();
-    //pthread_setschedprio(thisThread, SCHED_FIFO);
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == -1) {
+        logSysErr(LOG_ERR, "Failed to create socket in Widget::startUdpRxThread for " + widgetIdToString(id), errno);
+        return;
+    }
 
-    // udp initialization
-    sockfd=socket(AF_INET,SOCK_DGRAM,0);
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons(widgetPortNumber);
-    bind(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+
+    if (::bind(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) == -1) {
+        logSysErr(LOG_ERR, "Failed to bind socket in Widget::startUdpRxThread for " + widgetIdToString(id), errno);
+        return;
+    }
 
     if (pthread_create(&udpRxThread, NULL, udpRxThreadEntry, this)) {
         logMsg(LOG_ERR, "pthread_create failed in Widget::startUdpRxThread for " + widgetIdToString(id));
