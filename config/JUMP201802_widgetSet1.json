@@ -26,7 +26,7 @@
 
     // ----- installation configuration -----
     "patconIpAddress" : "127.0.0.1",
-    "opcServerIpAddress": "127.0.0.1",
+    "opcServerIpAddress": "192.168.69.100",
     "useTcpForOpcServer" : false,
     // ----- remote widget receiver configuration -----
     //"patconIpAddress" : "192.168.69.103",
