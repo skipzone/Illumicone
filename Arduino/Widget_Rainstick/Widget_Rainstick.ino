@@ -545,6 +545,7 @@ void loop() {
 #endif
 
   if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
+    lastSoundSampleMs = now;
     unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
     if (soundSample < minSoundSample) {
       minSoundSample = soundSample;
@@ -556,8 +557,8 @@ void loop() {
   }
 
   if (now - lastTxMs >= (isActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
-    sendMeasurements();
     lastTxMs = now;
+    sendMeasurements();
   }
 
 }
