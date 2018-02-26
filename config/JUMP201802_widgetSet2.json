@@ -51,7 +51,7 @@
     ],
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
-    "patternRunLoopSleepIntervalUs" : 5000,
+    "patternRunLoopSleepIntervalUs" : 4000,
 
     "widgets" : [
         {   "name" : "bells",
@@ -220,7 +220,7 @@
         },
         */
 
-        // ---------- colored sprays and sparkles on Bells (multiple) ----------
+        // ---------- colored sprays on Bells (multiple) ----------
         {   "name" : "sprayWhite",
             "enabled" : true,
             "priority" : 2,
@@ -261,24 +261,28 @@
             "emitIntervalHighMs" : 10,
             "emitBatchSize" : 15,
             "emitDirectionIsUp" : true,
-            "particleMoveIntervalMs" : 8
+            "particleMoveIntervalMs" : 4
         },
-        {   "name" : "multicolorSparkle",
+        {   "name" : "sprayGreen",
             "enabled" : true,
-            "priority" : 7,
-            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-            "patternClassName" : "SparklePattern",
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
             "inputs" : [
-                {   "inputName" : "density",
+                {   "inputName" : "emitRate",
                     "widgetName" : "bells",
                     "channelNumber" : 2,
                     "measurement" : "position"
                 }
             ],
-            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
-            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
-            "useRandomColors" : true,
-            "sparkleChangeIntervalMs" : 50
+            "emitColor" : "green",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 12
         },
 
         // ---------- sparkles on TriObelisk ----------
