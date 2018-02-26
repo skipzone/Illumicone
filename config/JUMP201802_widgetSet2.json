@@ -53,6 +53,8 @@
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
     "patternRunLoopSleepIntervalUs" : 4000,
 
+    "radioPollingLoopSleepIntervalUs" : 1000,
+
     "widgets" : [
         {   "name" : "bells",
             "enabled" : true,
