@@ -41,81 +41,13 @@
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
-        /*
         {   "description" : "JUMP daytime shutoff",
-            "startDateTime" : "07:30:00",
-            "endDateTime" : "17:00:00"
+            "startDateTime" : "22:00:00",
+            "endDateTime" : "18:00:00"
         }
-        */
     ],
 
     "quiescentPeriods" : [
-        /*
-        {   "description" : "JUMP late night glow - Friday 2/23",
-            "startDateTime" : "2018-02-23 23:00:00",
-            "endDateTime" : "2018-02-24 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Saturday 2/24",
-            "startDateTime" : "2018-02-24 23:00:00",
-            "endDateTime" : "2018-02-25 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Sunday 2/25",
-            "startDateTime" : "2018-02-25 23:00:00",
-            "endDateTime" : "2018-02-26 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Monday 2/26",
-            "startDateTime" : "2018-02-26 23:00:00",
-            "endDateTime" : "2018-02-27 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Tuesday 2/27",
-            "startDateTime" : "2018-02-27 23:00:00",
-            "endDateTime" : "2018-02-28 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Wednesday 2/28",
-            "startDateTime" : "2018-02-28 23:00:00",
-            "endDateTime" : "2018-03-01 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Thursday 3/01",
-            "startDateTime" : "2018-03-01 23:00:00",
-            "endDateTime" : "2018-03-02 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Friday 3/02",
-            "startDateTime" : "2018-03-02 23:00:00",
-            "endDateTime" : "2018-03-03 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Saturday 3/03",
-            "startDateTime" : "2018-03-03 23:00:00",
-            "endDateTime" : "2018-03-04 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Sunday 3/04",
-            "startDateTime" : "2018-03-04 23:00:00",
-            "endDateTime" : "2018-03-05 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Monday 3/05",
-            "startDateTime" : "2018-03-05 23:00:00",
-            "endDateTime" : "2018-03-06 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Tuesday 3/06",
-            "startDateTime" : "2018-03-06 23:00:00",
-            "endDateTime" : "2018-03-07 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Wednesday 3/07",
-            "startDateTime" : "2018-03-07 23:00:00",
-            "endDateTime" : "2018-03-08 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Thursday 3/08",
-            "startDateTime" : "2018-03-08 23:00:00",
-            "endDateTime" : "2018-03-09 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Friday 3/09",
-            "startDateTime" : "2018-03-09 23:00:00",
-            "endDateTime" : "2018-03-10 07:30:00"
-        },
-        {   "description" : "JUMP late night glow - Saturday 3/10",
-            "startDateTime" : "2018-03-10 23:00:00",
-            "endDateTime" : "2018-03-11 07:30:00"
-        },
-        */
     ],
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
