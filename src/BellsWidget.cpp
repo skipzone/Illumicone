@@ -29,7 +29,7 @@ using namespace std;
 
 
 BellsWidget::BellsWidget()
-    : Widget(WidgetId::bells, 1)
+    : Widget(WidgetId::bells, 3)
     , simStep(INT_MIN + stepSize)
 {
     simulationUpdateIntervalMs[0] = 10;
