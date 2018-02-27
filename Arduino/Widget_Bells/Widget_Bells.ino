@@ -45,7 +45,7 @@ constexpr uint32_t soundSampleIntervalMs = 10;
 
 constexpr uint8_t numAudioInputPins = 3;
 constexpr uint8_t audioInputPins[numAudioInputPins] = {A1, A2, A3};
-constexpr uint16_t bellActiveThreshold[numAudioInputPins] = {100, 100, 100};
+constexpr uint16_t bellActiveThreshold[numAudioInputPins] = {100, 200, 200};
 
 
 /***************************************
