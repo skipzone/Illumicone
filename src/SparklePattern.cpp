@@ -86,15 +86,14 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 
     if (!useRandomColors) {
         string rgbStr;
-        if (!ConfigReader::getStringValue(patternConfig, "sparkleColor", rgbStr, errMsgSuffix)) {
+        if (!ConfigReader::getRgbPixelValue(patternConfig, "forwardSparkleColor", rgbStr, forwardSparkleColor, errMsgSuffix)) {
             return false;
         }
-        if (!stringToRgbPixel(rgbStr, sparkleColor)) {
-            logMsg(LOG_ERR, "sparkleColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
+        logMsg(LOG_INFO, name + " forwardSparkleColor=" + rgbStr);
+        if (!ConfigReader::getRgbPixelValue(patternConfig, "reverseSparkleColor", rgbStr, reverseSparkleColor, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " sparkleColor=" + rgbStr);
-
+        logMsg(LOG_INFO, name + " reverseSparkleColor=" + rgbStr);
     }
 
 
@@ -155,7 +154,9 @@ bool SparklePattern::update()
     if ((usePositionMeasurement && densityChannel->getHasNewPositionMeasurement())
         || (!usePositionMeasurement && densityChannel->getHasNewVelocityMeasurement()))
     {
-        int curMeasmt = usePositionMeasurement ? densityChannel->getPosition() : abs(densityChannel->getVelocity());
+        int curMeasmt = usePositionMeasurement ? densityChannel->getPosition() : densityChannel->getVelocity();
+        bool curMeasmtIsNegative = curMeasmt < 0;
+        curMeasmt = abs(curMeasmt);
 
         // If the latest measurement is below the activation threshold, turn off this pattern.
         if (curMeasmt <= activationThreshold) {
@@ -184,7 +185,7 @@ bool SparklePattern::update()
             return false;
         }
         // It wouldn't overflow for, like, fucking forever, but we'll prevent
-        // that from happening because defensive programming 'n shit.
+        // that from happening because defensive programming n' shit.
         goodMeasurementCount = numGoodMeasurementsForReactivation;
 
         if (!isActive) {
@@ -194,10 +195,12 @@ bool SparklePattern::update()
 
         float sparkePercentage = min((float) curMeasmt / (float) densityScaledownFactor, (float) 1);
         numPixelsPerStringToSparkle = sparkePercentage * (float) pixelsPerString;
+        motionIsReverse = curMeasmtIsNegative;
 
         //logMsg(LOG_DEBUG, "curMeasmt=" + to_string(curMeasmt)
         //                  + ", sparkePercentage=" + to_string(sparkePercentage)
-        //                  + ", numPixelsPerStringToSparkle=" + to_string(numPixelsPerStringToSparkle));
+        //                  + ", numPixelsPerStringToSparkle=" + to_string(numPixelsPerStringToSparkle)
+        //                  + ", motionIsReverse=" + to_string(motionIsReverse));
     }
 
     if (isActive && (int) (nowMs - nextSparkleChangeMs) >= 0) {
@@ -215,7 +218,7 @@ bool SparklePattern::update()
                     pixelString[randPos].b = random8();
                 }
                 else {
-                    pixelString[randPos] = sparkleColor;
+                    pixelString[randPos] = motionIsReverse ? reverseSparkleColor : forwardSparkleColor;
                 }
             }
         }

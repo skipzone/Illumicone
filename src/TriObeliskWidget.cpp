@@ -21,6 +21,7 @@
 #include "illumiconeUtility.h"
 #include "illumiconeWidgetTypes.h"
 #include "log.h"
+#include "math.h"
 #include "WidgetId.h"
 
 using namespace std;
@@ -71,7 +72,7 @@ void TriObeliskWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
             newPosition = minPosition[chIdx];
         }
         //logMsg(LOG_DEBUG, "chIdx=" + to_string(chIdx) + ", newPosition=" + to_string(newPosition));
-        int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
+        int newVelocity = copysign(newPosition % 51 * 10, newPosition);    // limit to +/-500 rpm
         channels[chIdx]->setPositionAndVelocity(newPosition, newVelocity);
         channels[chIdx]->setIsActive(true);
     }
