@@ -22,7 +22,7 @@
 #include <sstream>
 
 #include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconePixelUtility.h"
 #include "log.h"
 
 using namespace std;
@@ -111,6 +111,41 @@ bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
         if (!errorMessageSuffix.empty()) {
             logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
+                                    const std::string& name,
+                                    std::string& rgbStr,
+                                    RgbPixel& value,
+                                    const std::string& errorMessageSuffix,
+                                    bool allowEmptyString,
+                                    const RgbPixel& defaultValue)
+{
+    if (!jsonObj[name].is_string()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+        }
+        return false;
+    }
+    rgbStr = jsonObj[name].string_value();
+    if (rgbStr.empty()) {
+        if (!allowEmptyString) {
+            if (!errorMessageSuffix.empty()) {
+                logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+            }
+            return false;
+        }
+        value = defaultValue;
+        return true;
+    }
+    if (!stringToRgbPixel(rgbStr, value)) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not a valid RGB color" + errorMessageSuffix);
         }
         return false;
     }

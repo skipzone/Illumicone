@@ -21,8 +21,10 @@
 #include <string>
 #include <vector>
 
+#include "illumiconePixelTypes.h"
 #include "illumiconeTypes.h"
 #include "json11.hpp"
+#include "pixeltypes.h"
 #include "WidgetId.h"
 
 
@@ -54,6 +56,14 @@ class ConfigReader
                                         const std::string& errorMessageSuffix = "",
                                         unsigned int minValue = 0,
                                         unsigned int maxValue = UINT_MAX);
+
+        static bool getRgbPixelValue(const json11::Json& jsonObj,
+                                     const std::string& name,
+                                     std::string& rgbStr,
+                                     RgbPixel& value,
+                                     const std::string& errorMessageSuffix = "",
+                                     bool allowEmptyString = false,
+                                     const RgbPixel& defaultValue = CRGB::Black);
 
         ConfigReader();
         virtual ~ConfigReader();
