@@ -1,10 +1,10 @@
 /*****************************************************************
  *                                                               *
- * FourPlay Widget                                               *
+ * FourPlay, Spinnah, and TriObelisk Widgets                     *
  *                                                               *
  * Platform:  Arduino Uno, Pro, Pro Mini                         *
  *                                                               *
- * by Ross Butler, August 2016                               )'( *
+ * by Ross Butler, August 2016, February 2018                )'( *
  *                                                               *
  *****************************************************************/
 
@@ -41,7 +41,8 @@
 //#define SPINNAH
 //#define FOURPLAY
 //#define FOURPLAY_4_2
-#define FOURPLAY_4_3
+//#define FOURPLAY_4_3
+#define TRIOBELISK
 
 #if defined(SPINNAH)
   #define WIDGET_ID 2
@@ -51,15 +52,28 @@
   #define WIDGET_ID 10
 #elif defined(FOURPLAY_4_3)
   #define WIDGET_ID 11
+#elif defined(TRIOBELISK)
+  #define WIDGET_ID 6
 #endif
 
-#ifdef SPINNAH
+#if defined(SPINNAH)
   #define NUM_ENCODERS 1
   #define ACTIVE_TX_INTERVAL_MS 100L
   #define INACTIVE_TX_INTERVAL_MS 1000L
   //#define TX_FAILURE_LED_PIN 2
   #define ENCODER_0_A_PIN 2
   #define ENCODER_0_B_PIN 3
+#elif defined(TRIOBELISK)
+  #define NUM_ENCODERS 3
+  #define ACTIVE_TX_INTERVAL_MS 10L
+  #define INACTIVE_TX_INTERVAL_MS 1000L
+  //#define TX_FAILURE_LED_PIN 2
+  #define ENCODER_0_A_PIN 2
+  #define ENCODER_0_B_PIN 3
+  #define ENCODER_1_A_PIN 4
+  #define ENCODER_1_B_PIN 5
+  #define ENCODER_2_A_PIN 6
+  #define ENCODER_2_B_PIN 7
 #else
   #define NUM_ENCODERS 4
   #define ACTIVE_TX_INTERVAL_MS 10L
@@ -88,6 +102,8 @@
 #elif defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
   // them cool little spoked wheels that someone left out back
   #define NUM_STEPS_PER_REV 20
+#elif defined(TRIOBELISK)
+  #define NUM_STEPS_PER_REV 24
 #endif
 
 
@@ -111,6 +127,8 @@
 #define TX_RETRY_DELAY_MULTIPLIER 3
 #elif defined(FOURPLAY_4_3)
 #define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(TRIOBELISK)
+#define TX_RETRY_DELAY_MULTIPLIER 2
 #endif
 
 // Max. retries can be 0 to 15.
