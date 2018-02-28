@@ -25,8 +25,13 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#define ENABLE_DEBUG_PRINT
+
 #include "illumiconeWidget.h"
+
+#ifdef ENABLE_DEBUG_PRINT
 #include "printf.h"
+#endif
 
 
 /************************
@@ -75,10 +80,10 @@ StressTestPayload payload;
 
 void setup()
 {
-  delay(5000);
-  
+#ifdef ENABLE_DEBUG_PRINT
   Serial.begin(57600);
   printf_begin();
+#endif
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
   
@@ -95,7 +100,9 @@ void loop() {
   static int32_t lastStatsPrintPayloadNum;
 
   uint32_t now = millis();
+
   if (now - lastTxMs >= TX_INTERVAL_MS) {
+    lastTxMs = now;
 
     ++payload.payloadNum;
     ++payload.widgetHeader.channel;
@@ -119,11 +126,9 @@ void loop() {
       digitalWrite(LED_PIN, LOW);
 #endif
     }
-    
-    lastTxMs = now;
   }
 
-  now = millis();
+#ifdef ENABLE_DEBUG_PRINT
   uint32_t statsIntervalMs = now - lastStatsPrintMs;
   if (statsIntervalMs >= STATS_PRINT_INTERVAL_MS) {
     uint32_t sendRate = (payload.payloadNum - lastStatsPrintPayloadNum) * 1000L / statsIntervalMs;
@@ -142,6 +147,7 @@ void loop() {
     lastStatsPrintMs = now;
     lastStatsPrintPayloadNum = payload.payloadNum;
   }
+#endif
 
 }
 
