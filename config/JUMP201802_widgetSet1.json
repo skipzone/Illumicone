@@ -41,8 +41,12 @@
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
-        {   "description" : "JUMP daytime shutoff",
+        {   "description" : "JUMP late night shutoff",
             "startDateTime" : "22:00:00",
+            "endDateTime" : "06:00:00"
+        },
+        {   "description" : "JUMP daytime shutoff",
+            "startDateTime" : "07:30:00",
             "endDateTime" : "18:00:00"
         }
     ],
@@ -193,7 +197,8 @@
             "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "white"
+            "forwardSparkleColor" : "white",
+            "reverseSparkleColor" : "white"
         },
         */
 
@@ -221,7 +226,7 @@
         },
 
         // ---------- sparkles on TriObelisk ----------
-        {   "name" : "redSparkle",
+        {   "name" : "magentaGreenSparkle",
             "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
@@ -233,15 +238,16 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,                 // 20 is what we used with Shirley's Web in 2016
+            "activationThreshold" : 10,
             "deactivationThreshold" : 300,
             "numGoodMeasurementsForReactivation" : 10,
             "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "magenta"
+            "forwardSparkleColor" : "magenta",
+            "reverseSparkleColor" : "green"
         },
-        {   "name" : "greenSparkle",
+        {   "name" : "aquaRedSparkle",
             "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
@@ -253,15 +259,16 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,                 // 20 is what we used with Shirley's Web in 2016
+            "activationThreshold" : 10,
             "deactivationThreshold" : 300,
             "numGoodMeasurementsForReactivation" : 10,
             "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "aqua"
+            "forwardSparkleColor" : "aqua",
+            "reverseSparkleColor" : "red"
         },
-        {   "name" : "blueSparkle",
+        {   "name" : "yellowBlueSparkle",
             "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
@@ -273,13 +280,14 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,                 // 20 is what we used with Shirley's Web in 2016
+            "activationThreshold" : 10,
             "deactivationThreshold" : 300,
             "numGoodMeasurementsForReactivation" : 10,
             "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "yellow"
+            "forwardSparkleColor" : "yellow",
+            "reverseSparkleColor" : "blue"
         },
 
         // ---------- fill and burst on Pump ----------
