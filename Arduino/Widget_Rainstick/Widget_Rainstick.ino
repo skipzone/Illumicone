@@ -25,8 +25,8 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#define ENABLE_MOTION_DETECTION
-//#define ENABLE_DEBUG_PRINT
+#define ENABLE_MOTION_DETECTION
+#define ENABLE_DEBUG_PRINT
 
 
 #ifdef ENABLE_MOTION_DETECTION
@@ -51,91 +51,29 @@
 #endif
 
 
-#ifdef ENABLE_MOTION_DETECTION
-
-// class default I2C address is 0x68
-// specific I2C addresses may be passed as a parameter here
-// AD0 low = 0x68 (default for SparkFun breakout and InvenSense evaluation board)
-// AD0 high = 0x69
-MPU6050 mpu;
-//MPU6050 mpu(0x69); // <-- use for AD0 high
-
-// uncomment "OUTPUT_READABLE_QUATERNION" if you want to see the actual
-// quaternion components in a [w, x, y, z] format (not best for parsing
-// on a remote host such as Processing or something though)
-//#define OUTPUT_READABLE_QUATERNION
-
-// uncomment "OUTPUT_READABLE_EULER" if you want to see Euler angles
-// (in degrees) calculated from the quaternions coming from the FIFO.
-// Note that Euler angles suffer from gimbal lock (for more info, see
-// http://en.wikipedia.org/wiki/Gimbal_lock)
-//#define OUTPUT_READABLE_EULER
-
-// uncomment "OUTPUT_READABLE_YAWPITCHROLL" if you want to see the yaw/
-// pitch/roll angles (in degrees) calculated from the quaternions coming
-// from the FIFO. Note this also requires gravity vector calculations.
-// Also note that yaw/pitch/roll angles suffer from gimbal lock (for
-// more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
-#define OUTPUT_READABLE_YAWPITCHROLL
-
-// uncomment "OUTPUT_READABLE_REALACCEL" if you want to see acceleration
-// components with gravity removed. This acceleration reference frame is
-// not compensated for orientation, so +X is always +X according to the
-// sensor, just without the effects of gravity. If you want acceleration
-// compensated for orientation, us OUTPUT_READABLE_WORLDACCEL instead.
-//#define OUTPUT_READABLE_REALACCEL
-
-// uncomment "OUTPUT_READABLE_WORLDACCEL" if you want to see acceleration
-// components with gravity removed and adjusted for the world frame of
-// reference (yaw is relative to initial orientation, since no magnetometer
-// is present in this case). Could be quite handy in some cases.
-//#define OUTPUT_READABLE_WORLDACCEL
-
-// uncomment "OUTPUT_TEAPOT" if you want output that matches the
-// format used for the InvenSense teapot demo
-//#define OUTPUT_TEAPOT
-
-
-// MPU control/status vars
-bool dmpReady = false;  // set true if DMP init was successful
-uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
-uint8_t devStatus;      // return status after each device operation (0 = success, !0 = error)
-uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
-uint16_t fifoCount;     // count of all bytes currently in FIFO
-uint8_t fifoBuffer[64]; // FIFO storage buffer
-
-// orientation/motion vars
-Quaternion quat;           // [w, x, y, z]         quaternion container
-VectorInt16 aa;         // [x, y, z]            accel sensor measurements
-VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
-VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
-VectorFloat gravity;    // [x, y, z]            gravity vector
-float euler[3];         // [psi, theta, phi]    Euler angle container
-float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-
-// packet structure for InvenSense teapot demo
-uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
-
-#endif
-
-
 /************************
  * Widget Configuration *
  ************************/
 
 #define WIDGET_ID 4
 #define SOUND_SAMPLE_INTERVAL_MS 10L
-#define ACTIVE_TX_INTERVAL_MS 500L
-#define INACTIVE_TX_INTERVAL_MS 2000L
+#define ACTIVE_TX_INTERVAL_MS 200L
+#define INACTIVE_TX_INTERVAL_MS 2000L   // should be a multiple of ACTIVE_TX_INTERVAL_MS
 //#define TX_FAILURE_LED_PIN 2
-#define MIC_SIGNAL_PIN A0
-#define MIC_POWER_PIN 8
+// --- the real Rainstick ---
+//#define MIC_SIGNAL_PIN A0
+//#define MIC_POWER_PIN 8
+// --- development breadboard ---
+#define MIC_SIGNAL_PIN A3
+#define MIC_POWER_PIN 3
 
 #define NUM_SOUND_VALUES_TO_SEND 3
-#define NUM_MPU_VALUES_TO_SEND 4
+#define NUM_MPU_VALUES_TO_SEND 6
 
 #define MA_LENGTH 3
 #define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
+
+constexpr uint16_t activeSoundThreshold = 100;
 
 
 /***************************************
@@ -165,16 +103,43 @@ RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 1
 
 MeasurementVectorPayload payload;
 
-int16_t mpuMeasurementValues[NUM_MPU_VALUES_TO_SEND];
 bool isActive;
+bool wasActive;
 
 static uint16_t minSoundSample = UINT16_MAX;
 static uint16_t maxSoundSample;
+
+static int16_t avgMinSoundSample;
+static int16_t avgMaxSoundSample;
+static int16_t ppSoundSample;
 
 static float maValues[NUM_MA_SETS][MA_LENGTH];
 static float maSums[NUM_MA_SETS];
 static uint8_t nextSlotIdx[NUM_MA_SETS];
 static bool maSetFull[NUM_MA_SETS];
+
+#ifdef ENABLE_MOTION_DETECTION
+
+// Default I2C address is 0x68.  Specific I2C address may be passed as a parameter.
+MPU6050 mpu;
+
+// MPU control/status vars
+bool dmpReady = false;  // set true if DMP init was successful
+uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
+uint8_t devStatus;      // return status after each device operation (0 = success, !0 = error)
+uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
+uint16_t fifoCount;     // count of all bytes currently in FIFO
+uint8_t fifoBuffer[64]; // FIFO storage buffer
+
+// orientation/motion vars
+Quaternion quat;        // [w, x, y, z]         quaternion container
+VectorFloat gravity;    // [x, y, z]            gravity vector
+float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+int16_t gyro[3];
+
+volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
+
+#endif
 
 
 /******************
@@ -183,7 +148,6 @@ static bool maSetFull[NUM_MA_SETS];
 
 #ifdef ENABLE_MOTION_DETECTION
 
-volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 void dmpDataReady() {
     mpuInterrupt = true;
 }
@@ -225,6 +189,10 @@ void initMpu()
     Serial.println(F("Initializing DMP..."));
 #endif
     devStatus = mpu.dmpInitialize();
+
+//    mpu.setRate(9);                       // 1 kHz / (1 + 9) = 100 Hz
+    mpu.setRate(49);                       // 1 kHz / (1 + 49) = 20 Hz
+    mpu.setDLPFMode(MPU6050_DLPF_BW_5);   // 5, 10, 20, 42, 98, 188, 256
 
     // supply your own gyro offsets here, scaled for min sensitivity
     mpu.setXGyroOffset(220);
@@ -275,7 +243,7 @@ void initMpu()
 void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.begin(115200);
+  Serial.begin(57600);
 #endif
 
   pinMode(MIC_POWER_PIN, OUTPUT);
@@ -327,70 +295,59 @@ float getMovingAverage(uint8_t setIdx)
 }
 
 
-void gatherMeasurements()
+void gatherMotionMeasurements()
 {
-  unsigned long now = millis();
-
 #ifdef ENABLE_MOTION_DETECTION
-    // reset interrupt flag and get INT_STATUS byte
-    mpuInterrupt = false;
-    mpuIntStatus = mpu.getIntStatus();
 
-    // get current FIFO count
-    fifoCount = mpu.getFIFOCount();
+//#ifdef ENABLE_DEBUG_PRINT
+//    Serial.println(F("gather motion"));
+//#endif
 
-    // check for overflow (this should never happen unless our code is too inefficient)
-    if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
-        // reset so we can continue cleanly
-        mpu.resetFIFO();
+  // reset interrupt flag and get INT_STATUS byte
+  mpuInterrupt = false;
+  mpuIntStatus = mpu.getIntStatus();
+
+  // get current FIFO count
+  fifoCount = mpu.getFIFOCount();
+
+  // check for overflow (this should never happen unless our code is too inefficient)
+  if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
+    uint16_t fifoCountBeforeReset = fifoCount;
+    // reset so we can continue cleanly
+    mpu.resetFIFO();
 #ifdef ENABLE_DEBUG_PRINT
-        Serial.println(F("FIFO overflow!"));
+    Serial.print(F("FIFO overflow!  fifoCount was "));
+    Serial.println(fifoCountBeforeReset);
 #endif
+    return;
+  }
+  // otherwise, check for DMP data ready interrupt (this should happen frequently)
+  else if (mpuIntStatus & 0x02) {
 
-    // otherwise, check for DMP data ready interrupt (this should happen frequently)
+    // wait for correct available data length, should be a VERY short wait
+    if (fifoCount < packetSize) {
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Wait for fifo."));
+#endif
+      while (fifoCount < packetSize) {
+        fifoCount = mpu.getFIFOCount();
+      }
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Done wait."));
+#endif
     }
-    else if (mpuIntStatus & 0x02) {
-        // wait for correct available data length, should be a VERY short wait
-        while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
 
-        // read a packet from FIFO
-        mpu.getFIFOBytes(fifoBuffer, packetSize);
+    // read a packet from FIFO
+    mpu.getFIFOBytes(fifoBuffer, packetSize);
+//#ifdef ENABLE_DEBUG_PRINT
+//  Serial.println(F("Got fifo."));
+//#endif
         
-        // track FIFO count here in case there is > 1 packet available
-        // (this lets us immediately read more without waiting for an interrupt)
-        fifoCount -= packetSize;
+    // track FIFO count here in case there is > 1 packet available
+    // (this lets us immediately read more without waiting for an interrupt)
+    fifoCount -= packetSize;
 
-        #ifdef OUTPUT_READABLE_QUATERNION
-            // display quaternion values in easy matrix form: w x y z
-            mpu.dmpGetQuaternion(&quat, fifoBuffer);
-#ifdef ENABLE_DEBUG_PRINT
-            Serial.print("quat\t");
-            Serial.print(quat.w);
-            Serial.print("\t");
-            Serial.print(quat.x);
-            Serial.print("\t");
-            Serial.print(quat.y);
-            Serial.print("\t");
-            Serial.println(quat.z);
-#endif
-        #endif
-
-        #ifdef OUTPUT_READABLE_EULER
-            // display Euler angles in degrees
-            mpu.dmpGetQuaternion(&quat, fifoBuffer);
-            mpu.dmpGetEuler(euler, &quat);
-#ifdef ENABLE_DEBUG_PRINT
-            Serial.print("euler\t");
-            Serial.print(euler[0] * 180/M_PI);
-            Serial.print("\t");
-            Serial.print(euler[1] * 180/M_PI);
-            Serial.print("\t");
-            Serial.println(euler[2] * 180/M_PI);
-#endif
-        #endif
-
-#ifdef OUTPUT_READABLE_YAWPITCHROLL
-    // display Euler angles in degrees
+    mpu.dmpGetGyro(gyro, fifoBuffer);
     mpu.dmpGetQuaternion(&quat, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &quat);
     mpu.dmpGetYawPitchRoll(ypr, &quat, &gravity);
@@ -398,110 +355,87 @@ void gatherMeasurements()
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND, ypr[0] * 180/M_PI);
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 1, ypr[1] * 180/M_PI);
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 2, ypr[2] * 180/M_PI);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 3, 0);
 
-//#ifdef ENABLE_DEBUG_PRINT
-//    Serial.print("ypr\t");
-//    Serial.print(mpuMeasurementValues[0]);
-//    Serial.print("\t");
-//    Serial.print(mpuMeasurementValues[1]);
-//    Serial.print("\t");
-//    Serial.println(mpuMeasurementValues[2]);
-//#endif
-#endif
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 3, gyro[0]);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 4, gyro[1]);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 5, gyro[2]);
 
-        #ifdef OUTPUT_READABLE_REALACCEL
-            // display real acceleration, adjusted to remove gravity
-            mpu.dmpGetQuaternion(&quat, fifoBuffer);
-            mpu.dmpGetAccel(&aa, fifoBuffer);
-            mpu.dmpGetGravity(&gravity, &quat);
-            mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
 #ifdef ENABLE_DEBUG_PRINT
-            Serial.print("areal\t");
-            Serial.print(aaReal.x);
-            Serial.print("\t");
-            Serial.print(aaReal.y);
-            Serial.print("\t");
-            Serial.println(aaReal.z);
+    Serial.print("ypr:  ");
+    Serial.print(ypr[0]);
+    Serial.print(", ");
+    Serial.print(ypr[1]);
+    Serial.print(", ");
+    Serial.print(ypr[2]);
+    Serial.print("    gyro:  ");
+    Serial.print(gyro[0]);
+    Serial.print(", ");
+    Serial.print(gyro[1]);
+    Serial.print(", ");
+    Serial.println(gyro[2]);
 #endif
-        #endif
-
-        #ifdef OUTPUT_READABLE_WORLDACCEL
-            // display initial world-frame acceleration, adjusted to remove gravity
-            // and rotated based on known orientation from quaternion
-            mpu.dmpGetQuaternion(&quat, fifoBuffer);
-            mpu.dmpGetAccel(&aa, fifoBuffer);
-            mpu.dmpGetGravity(&gravity, &quat);
-            mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-            mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &quat);
-#ifdef ENABLE_DEBUG_PRINT
-            Serial.print("aworld\t");
-            Serial.print(aaWorld.x);
-            Serial.print("\t");
-            Serial.print(aaWorld.y);
-            Serial.print("\t");
-            Serial.println(aaWorld.z);
-#endif
-        #endif
-    
-        #ifdef OUTPUT_TEAPOT
-            // display quaternion values in InvenSense Teapot demo format:
-            teapotPacket[2] = fifoBuffer[0];
-            teapotPacket[3] = fifoBuffer[1];
-            teapotPacket[4] = fifoBuffer[4];
-            teapotPacket[5] = fifoBuffer[5];
-            teapotPacket[6] = fifoBuffer[8];
-            teapotPacket[7] = fifoBuffer[9];
-            teapotPacket[8] = fifoBuffer[12];
-            teapotPacket[9] = fifoBuffer[13];
-#ifdef ENABLE_DEBUG_PRINT
-            Serial.write(teapotPacket, 14);
-#endif
-            teapotPacket[11]++; // packetCount, loops at 0xFF on purpose
-        #endif
-    }
-
-  isActive = true;
-
-#else   // #ifdef ENABLE_MOTION_DETECTION
-
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND, 0);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 1, 0);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 2, 0);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 3, 0);
+  }
 
 #endif  // #ifdef ENABLE_MOTION_DETECTION
+}
 
+
+void gatherSoundMeasurement()
+{
 //#ifdef ENABLE_DEBUG_PRINT
-//  for (int i = 0; i < NUM_MPU_VALUES_TO_SEND; ++i) {
-//    Serial.print(i);
-//    Serial.print(",");
-//    Serial.println(mpuMeasurementValues[i]);
-//  }
+//    Serial.println(F("gather sound"));
 //#endif
-    
+  unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
+  if (soundSample < minSoundSample) {
+    minSoundSample = soundSample;
+  }
+  if (soundSample > maxSoundSample) {
+    maxSoundSample = soundSample;
+  }
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("soundSample="));
+    Serial.print(soundSample);
+    Serial.print(F(" minSoundSample="));
+    Serial.print(minSoundSample);
+    Serial.print(F(" maxSoundSample="));
+    Serial.println(maxSoundSample);
+#endif
+}
+
+
+void calculateSoundMeasurements()
+{
+  updateMovingAverage(0, minSoundSample);
+  updateMovingAverage(1, maxSoundSample);
+
+  minSoundSample = UINT16_MAX;
+  maxSoundSample = 0;
+
+  avgMinSoundSample = getMovingAverage(0);
+  avgMaxSoundSample = getMovingAverage(1);
+  ppSoundSample = avgMaxSoundSample - avgMinSoundSample;
+
+  isActive = ppSoundSample > activeSoundThreshold;
 }
 
 
 void sendMeasurements()
 {
-  updateMovingAverage(0, minSoundSample);
-  updateMovingAverage(1, maxSoundSample);
-  minSoundSample = UINT16_MAX;
-  maxSoundSample = 0;
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("send"));
+#endif
 
-  payload.measurements[0] = getMovingAverage(0);
-  payload.measurements[1] = getMovingAverage(1);
-  payload.measurements[2] = getMovingAverage(1) - getMovingAverage(0);
-  
-//  updateMovingAverage(2, getMovingAverage(1) - getMovingAverage(0));
+  payload.measurements[0] = avgMinSoundSample;
+  payload.measurements[1] = avgMaxSoundSample;
+  payload.measurements[2] = ppSoundSample;
 
+  // Place the MPU average values after the sound values.
   for (int i = 0, j = NUM_SOUND_VALUES_TO_SEND; i < NUM_MPU_VALUES_TO_SEND; ++i, ++j) {
       payload.measurements[j] = getMovingAverage(j);
   }
 
-//  payload.widgetHeader.isActive = isActive;
-  payload.widgetHeader.isActive = true;
+
+  payload.widgetHeader.isActive = isActive;
 
 #ifdef ENABLE_DEBUG_PRINT
   for (int i = 0; i < NUM_MPU_VALUES_TO_SEND + NUM_SOUND_VALUES_TO_SEND; ++i) {
@@ -540,26 +474,22 @@ void loop() {
 
 #ifdef ENABLE_MOTION_DETECTION
   if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
-    gatherMeasurements();
+    gatherMotionMeasurements();
   }
 #endif
 
   if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
     lastSoundSampleMs = now;
-    unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
-    if (soundSample < minSoundSample) {
-      minSoundSample = soundSample;
-    }
-    if (soundSample > maxSoundSample) {
-      maxSoundSample = soundSample;
-    }
-    isActive = true;
+    gatherSoundMeasurement();
   }
 
-  if (now - lastTxMs >= (isActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
-    lastTxMs = now;
-    sendMeasurements();
+  if (now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {
+    calculateSoundMeasurements();
+    if (isActive || wasActive || now - lastTxMs >= INACTIVE_TX_INTERVAL_MS) {
+      lastTxMs = now;
+      sendMeasurements();
+      wasActive = isActive;
+    }
   }
-
 }
 

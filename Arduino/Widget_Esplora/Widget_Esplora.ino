@@ -27,6 +27,8 @@
 
 //#define ENABLE_DEBUG_PRINT
 
+#include <Esplora.h>
+
 #include "illumiconeWidget.h"
 
 #ifdef ENABLE_DEBUG_PRINT
