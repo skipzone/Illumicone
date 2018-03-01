@@ -56,7 +56,8 @@
  ************************/
 
 #define WIDGET_ID 4
-#define SOUND_SAMPLE_INTERVAL_MS 10L
+#define SOUND_SAMPLE_INTERVAL_MS 20L
+#define SOUND_SAMPLE_SAVE_INTERVAL_MS 200L
 #define ACTIVE_TX_INTERVAL_MS 200L
 #define INACTIVE_TX_INTERVAL_MS 2000L   // should be a multiple of ACTIVE_TX_INTERVAL_MS
 //#define TX_FAILURE_LED_PIN 2
@@ -65,7 +66,8 @@
 //#define MIC_POWER_PIN 8
 // --- development breadboard ---
 #define MIC_SIGNAL_PIN A3
-#define MIC_POWER_PIN 3
+#define MIC_POWER_PIN 4
+#define IMU_INTERRUPT_PIN 2
 
 #define NUM_SOUND_VALUES_TO_SEND 3
 #define NUM_MPU_VALUES_TO_SEND 6
@@ -99,12 +101,12 @@ constexpr uint16_t activeSoundThreshold = 100;
  * Globals *
  ***********/
 
-RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
+static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
-MeasurementVectorPayload payload;
+static MeasurementVectorPayload payload;
 
-bool isActive;
-bool wasActive;
+static bool isActive;
+static bool wasActive;
 
 static uint16_t minSoundSample = UINT16_MAX;
 static uint16_t maxSoundSample;
@@ -113,31 +115,30 @@ static int16_t avgMinSoundSample;
 static int16_t avgMaxSoundSample;
 static int16_t ppSoundSample;
 
-static float maValues[NUM_MA_SETS][MA_LENGTH];
-static float maSums[NUM_MA_SETS];
+static int16_t maValues[NUM_MA_SETS][MA_LENGTH];
+static int32_t maSums[NUM_MA_SETS];
 static uint8_t nextSlotIdx[NUM_MA_SETS];
 static bool maSetFull[NUM_MA_SETS];
 
 #ifdef ENABLE_MOTION_DETECTION
 
-// Default I2C address is 0x68.  Specific I2C address may be passed as a parameter.
-MPU6050 mpu;
+static MPU6050 mpu;            // using default I2C address 0x68
 
 // MPU control/status vars
-bool dmpReady = false;  // set true if DMP init was successful
-uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
-uint8_t devStatus;      // return status after each device operation (0 = success, !0 = error)
-uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
-uint16_t fifoCount;     // count of all bytes currently in FIFO
-uint8_t fifoBuffer[64]; // FIFO storage buffer
+static bool dmpReady = false;  // set true if DMP init was successful
+static uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
+static uint8_t devStatus;      // return status after each device operation (0 = success, !0 = error)
+static uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
+static uint16_t fifoCount;     // count of all bytes currently in FIFO
+static uint8_t fifoBuffer[64]; // FIFO storage buffer
 
 // orientation/motion vars
-Quaternion quat;        // [w, x, y, z]         quaternion container
-VectorFloat gravity;    // [x, y, z]            gravity vector
-float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-int16_t gyro[3];
+static Quaternion quat;        // [w, x, y, z]         quaternion container
+static VectorFloat gravity;    // [x, y, z]            gravity vector
+static float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+static int16_t gyro[3];
 
-volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
+static volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 
 #endif
 
@@ -190,9 +191,9 @@ void initMpu()
 #endif
     devStatus = mpu.dmpInitialize();
 
-//    mpu.setRate(9);                       // 1 kHz / (1 + 9) = 100 Hz
-    mpu.setRate(49);                       // 1 kHz / (1 + 49) = 20 Hz
-    mpu.setDLPFMode(MPU6050_DLPF_BW_5);   // 5, 10, 20, 42, 98, 188, 256
+    mpu.setRate(9);                       // 1 kHz / (1 + 9) = 100 Hz
+//    mpu.setRate(49);                       // 1 kHz / (1 + 49) = 20 Hz
+//    mpu.setDLPFMode(MPU6050_DLPF_BW_5);   // 5, 10, 20, 42, 98, 188, 256
 
     // supply your own gyro offsets here, scaled for min sensitivity
     mpu.setXGyroOffset(220);
@@ -212,8 +213,8 @@ void initMpu()
 #ifdef ENABLE_DEBUG_PRINT
         Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
 #endif
-        attachInterrupt(0, dmpDataReady, RISING);
-        mpuIntStatus = mpu.getIntStatus();
+        attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), dmpDataReady, RISING);
+///        mpuIntStatus = mpu.getIntStatus();
 
         // set our DMP Ready flag so the main loop() function knows it's okay to use it
 #ifdef ENABLE_DEBUG_PRINT
@@ -246,9 +247,6 @@ void setup()
   Serial.begin(57600);
 #endif
 
-  pinMode(MIC_POWER_PIN, OUTPUT);
-  digitalWrite(MIC_POWER_PIN, HIGH);
-
 // For some unkown reason, shit don't work without printf.
 //#ifdef ENABLE_DEBUG_PRINT
   printf_begin();
@@ -260,14 +258,17 @@ void setup()
 #endif
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
-  
+
+  pinMode(MIC_POWER_PIN, OUTPUT);
+  digitalWrite(MIC_POWER_PIN, HIGH);
+
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
 }
 
 
-void updateMovingAverage(uint8_t setIdx, float newValue)
+void updateMovingAverage(uint8_t setIdx, int16_t newValue)
 {
   maSums[setIdx] -= maValues[setIdx][nextSlotIdx[setIdx]];
   maSums[setIdx] += newValue;
@@ -281,15 +282,30 @@ void updateMovingAverage(uint8_t setIdx, float newValue)
 }
 
 
-float getMovingAverage(uint8_t setIdx)
+int16_t getMovingAverage(uint8_t setIdx)
 {
-  uint16_t avg;
+  int32_t avg;
   if (maSetFull[setIdx]) {
-    avg = maSums[setIdx] / MA_LENGTH;
+    avg = maSums[setIdx] / (int32_t) MA_LENGTH;
   }
   else {
-    avg = nextSlotIdx[setIdx] > 0 ? maSums[setIdx] / nextSlotIdx[setIdx] : 0;
+    avg = nextSlotIdx[setIdx] > 0 ? (int32_t) maSums[setIdx] / (int32_t) nextSlotIdx[setIdx] : 0;
   }
+
+//#ifdef ENABLE_DEBUG_PRINT
+//  Serial.print("getMovingAverage(");
+//  Serial.print(setIdx);
+//  Serial.print("):  ");
+//  for (uint8_t i = 0; i < (maSetFull[setIdx] ? MA_LENGTH : nextSlotIdx[setIdx]); ++i) {
+//    Serial.print(i);
+//    Serial.print(":");
+//    Serial.print(maValues[setIdx][i]);
+//    Serial.print("  ");
+//  }
+//  Serial.print(maSums[setIdx]);
+//  Serial.print("  ");
+//  Serial.println(avg);
+//#endif
 
   return avg;
 }
@@ -352,59 +368,66 @@ void gatherMotionMeasurements()
     mpu.dmpGetGravity(&gravity, &quat);
     mpu.dmpGetYawPitchRoll(ypr, &quat, &gravity);
 
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND, ypr[0] * 180/M_PI);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 1, ypr[1] * 180/M_PI);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 2, ypr[2] * 180/M_PI);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND    , ypr[0] * (float) 1800 / M_PI);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 1, ypr[1] * (float) 1800 / M_PI);
+    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 2, ypr[2] * (float) 1800 / M_PI);
 
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 3, gyro[0]);
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 4, gyro[1]);
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 5, gyro[2]);
 
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print("ypr:  ");
-    Serial.print(ypr[0]);
-    Serial.print(", ");
-    Serial.print(ypr[1]);
-    Serial.print(", ");
-    Serial.print(ypr[2]);
-    Serial.print("    gyro:  ");
-    Serial.print(gyro[0]);
-    Serial.print(", ");
-    Serial.print(gyro[1]);
-    Serial.print(", ");
-    Serial.println(gyro[2]);
-#endif
+//#ifdef ENABLE_DEBUG_PRINT
+//    Serial.print("ypr:  ");
+//    Serial.print(ypr[0]);
+//    Serial.print(", ");
+//    Serial.print(ypr[1]);
+//    Serial.print(", ");
+//    Serial.print(ypr[2]);
+//    Serial.print("    gyro:  ");
+//    Serial.print(gyro[0]);
+//    Serial.print(", ");
+//    Serial.print(gyro[1]);
+//    Serial.print(", ");
+//    Serial.println(gyro[2]);
+//#endif
   }
 
 #endif  // #ifdef ENABLE_MOTION_DETECTION
 }
 
 
-void gatherSoundMeasurement()
+void sampleSound()
 {
 //#ifdef ENABLE_DEBUG_PRINT
-//    Serial.println(F("gather sound"));
+//    Serial.println(F("sampleSound"));
 //#endif
-  unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
+  uint16_t soundSample = analogRead(MIC_SIGNAL_PIN);
   if (soundSample < minSoundSample) {
     minSoundSample = soundSample;
   }
   if (soundSample > maxSoundSample) {
     maxSoundSample = soundSample;
   }
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("soundSample="));
-    Serial.print(soundSample);
-    Serial.print(F(" minSoundSample="));
-    Serial.print(minSoundSample);
-    Serial.print(F(" maxSoundSample="));
-    Serial.println(maxSoundSample);
-#endif
+//#ifdef ENABLE_DEBUG_PRINT
+//    Serial.print(F("soundSample="));
+//    Serial.print(soundSample);
+//    Serial.print(F(" minSoundSample="));
+//    Serial.print(minSoundSample);
+//    Serial.print(F(" maxSoundSample="));
+//    Serial.println(maxSoundSample);
+//#endif
 }
 
 
-void calculateSoundMeasurements()
+void saveSoundSample()
 {
+//#ifdef ENABLE_DEBUG_PRINT
+//    Serial.print(F("saveSoundSample:  minSoundSample="));
+//    Serial.print(minSoundSample);
+//    Serial.print(F(" maxSoundSample="));
+//    Serial.println(maxSoundSample);
+//#endif
+
   updateMovingAverage(0, minSoundSample);
   updateMovingAverage(1, maxSoundSample);
 
@@ -416,6 +439,15 @@ void calculateSoundMeasurements()
   ppSoundSample = avgMaxSoundSample - avgMinSoundSample;
 
   isActive = ppSoundSample > activeSoundThreshold;
+
+//#ifdef ENABLE_DEBUG_PRINT
+//    Serial.print(F("avgMinSoundSample="));
+//    Serial.print(avgMinSoundSample);
+//    Serial.print(F(" avgMaxSoundSample="));
+//    Serial.print(avgMaxSoundSample);
+//    Serial.print(F(" isActive="));
+//    Serial.println(isActive);
+//#endif
 }
 
 
@@ -434,7 +466,6 @@ void sendMeasurements()
       payload.measurements[j] = getMovingAverage(j);
   }
 
-
   payload.widgetHeader.isActive = isActive;
 
 #ifdef ENABLE_DEBUG_PRINT
@@ -446,16 +477,16 @@ void sendMeasurements()
 #endif
 
   if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * (NUM_MPU_VALUES_TO_SEND + NUM_SOUND_VALUES_TO_SEND))) {
-#ifdef LED_PIN      
-    digitalWrite(LED_PIN, HIGH);
+#ifdef TX_FAILURE_LED_PIN      
+    digitalWrite(TX_FAILURE_LED_PIN, HIGH);
 #endif
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write failed."));
 #endif
   }
   else {
-#ifdef LED_PIN      
-    digitalWrite(LED_PIN, LOW);
+#ifdef TX_FAILURE_LED_PIN      
+    digitalWrite(TX_FAILURE_LED_PIN, LOW);
 #endif
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write succeeded."));
@@ -469,6 +500,7 @@ void loop() {
 
   static int32_t lastTxMs;
   static int32_t lastSoundSampleMs;
+  static int32_t lastSoundSampleSaveMs;
 
   uint32_t now = millis();
 
@@ -480,16 +512,39 @@ void loop() {
 
   if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
     lastSoundSampleMs = now;
-    gatherSoundMeasurement();
+    sampleSound();
   }
 
+#ifdef ENABLE_MOTION_DETECTION
+  if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
+    gatherMotionMeasurements();
+  }
+#endif
+
+  if (now - lastSoundSampleSaveMs >= SOUND_SAMPLE_SAVE_INTERVAL_MS) {
+    lastSoundSampleSaveMs = now;
+    saveSoundSample();
+  }
+
+#ifdef ENABLE_MOTION_DETECTION
+  if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
+    gatherMotionMeasurements();
+  }
+#endif
+
   if (now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {
-    calculateSoundMeasurements();
     if (isActive || wasActive || now - lastTxMs >= INACTIVE_TX_INTERVAL_MS) {
       lastTxMs = now;
       sendMeasurements();
       wasActive = isActive;
     }
   }
+
+#ifdef ENABLE_MOTION_DETECTION
+  if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
+    gatherMotionMeasurements();
+  }
+#endif
+
 }
 
