@@ -26,8 +26,10 @@
 */
 
 #define ENABLE_MOTION_DETECTION
-//#define ENABLE_DEBUG_PRINT
+#define ENABLE_DEBUG_PRINT
 
+
+#include <avr/wdt.h>
 
 #ifdef ENABLE_MOTION_DETECTION
 #include "I2Cdev.h"
@@ -78,6 +80,11 @@
 #define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
 
 constexpr uint16_t activeSoundThreshold = 8;  // 100;
+
+// When we haven't retrieved packets from the MPU6050's DMP's FIFO fast enough,
+// data corruption becomes likely even before the FIFO overflows.  We'll clear
+// the FIFO when more than maxPacketsInFifoBeforeReset packets are in it.
+constexpr uint8_t maxPacketsInFifoBeforeReset = 2;
 
 
 /***************************************
@@ -247,7 +254,8 @@ void setup()
   Serial.begin(57600);
 #endif
 
-// For some unkown reason, shit don't work without printf.
+// For some unkown reason, shit don't work without printf.  (One of the
+// libraries is probably calling printf unconditionally.  What an asshole.)
 //#ifdef ENABLE_DEBUG_PRINT
   printf_begin();
 //#endif
@@ -265,6 +273,11 @@ void setup()
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
+
+  // Communication with the MPU6050 has proven to be problematic.
+  // If we don't hear from the unit periodically, or if we don't
+  // get good data for a while, we need the watchdog to reset us.
+  wdt_enable(WDTO_1S);     // enable the watchdog
 }
 
 
@@ -311,6 +324,28 @@ int16_t getMovingAverage(uint8_t setIdx)
 }
 
 
+void resetDmpFifo()
+{
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("Resetting DMP FIFO..."));
+#endif
+    mpu.resetFIFO();
+    while (true) {
+      if (mpuInterrupt) {
+        mpuInterrupt = false;
+        uint8_t mpuIntStatus = mpu.getIntStatus();
+        if (mpuIntStatus & 0x01) {
+          mpu.resetFIFO();
+          break;
+        }
+      }
+    }
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("Cleared FIFO and re-sync'd."));
+#endif
+}
+
+
 void gatherMotionMeasurements()
 {
 #ifdef ENABLE_MOTION_DETECTION
@@ -325,30 +360,22 @@ void gatherMotionMeasurements()
 
   // Check if FIFO overflowed.  If it did, clear it, then wait for another
   // data-ready interrupt and clear the FIFO again so that we are back in
-  // sync (i.e., any partial packets have been cleared out).
+  // sync (i.e., any partial packets have been cleared out).  Based on some
+  // brief testing, it appears that bits 0 and 1 always appear set together.
   if (mpuIntStatus & 0x10) {
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("FIFO overflow!  fifoCount is "));
+    Serial.print(F("*** FIFO overflow!  fifoCount is "));
     Serial.println(fifoCount);
 #endif
-    mpu.resetFIFO();
-    while (true) {
-      if (mpuInterrupt) {
-        mpuInterrupt = false;
-        mpuIntStatus = mpu.getIntStatus();
-        if (mpuIntStatus & 0x01) {
-          mpu.resetFIFO();
-          break;
-        }
-      }
-    }
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Cleared FIFO and re-sync'd."));
-#endif
+    resetDmpFifo();
     return;
   }
 
-  if (!(mpuIntStatus & 0x01)) {
+  // The MPU6050 register map document says that bit 0 indicates data ready and bit 1
+  // is reserved.  However, the I2C data analyzer dump from Jeff Rowberg found at
+  // https://www.i2cdevlib.com/tools/analyzer/1 shows that bit 0 indicates raw data
+  // ready and bit 1 indicates DMP data ready.
+  if (!(mpuIntStatus & 0x02)) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.print(F("Got interrupt but not for data ready.  mpuIntStatus="));
     Serial.print((int) mpuIntStatus);
@@ -358,14 +385,38 @@ void gatherMotionMeasurements()
     return;
   }
 
+  // If we've missed retrieving more than a few packets in time, the FIFO has
+  // probably already overflowed (even though we haven't gotten that interrupt)
+  // or otherwise become corrupted.  We need to reset it to avoid getting bad data.
+  if (fifoCount > packetSize * maxPacketsInFifoBeforeReset) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("*** Missed too many packets.  fifoCount="));
+    Serial.println(fifoCount);
+#endif
+    resetDmpFifo();
+    return;
+  }
+
+  // If the FIFO length is not a multiple of the packet size, there is a partial
+  // packet in the FIFO, either due to the FIFO being filled right now or due to
+  // some sort of FIFO corruption.  We need to reset it to avoid getting bad data.
+  if (fifoCount % packetSize != 0) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("////////// *** Partial packet in FIFO.  fifoCount="));
+    Serial.println(fifoCount);
+#endif
+    resetDmpFifo();
+    return;
+  }
+
   while (fifoCount >= packetSize) {
     fifoCount -= packetSize;
     mpu.getFIFOBytes(packetBuffer, packetSize);
-//#ifdef ENABLE_DEBUG_PRINT
-//    // Careful:  We might not be able to keep up if this debug print is enabled.
-//    Serial.print(F("Got packet from fifo.  fifoCount now "));
-//    Serial.println(fifoCount);
-//#endif
+#ifdef ENABLE_DEBUG_PRINT
+    // Careful:  We might not be able to keep up if this debug print is enabled.
+    Serial.print(F("Got packet from fifo.  fifoCount now "));
+    Serial.println(fifoCount);
+#endif
 
     mpu.dmpGetGyro(gyro, packetBuffer);
     mpu.dmpGetQuaternion(&quat, packetBuffer);
@@ -380,21 +431,34 @@ void gatherMotionMeasurements()
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 4, gyro[1]);
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 5, gyro[2]);
 
-//#ifdef ENABLE_DEBUG_PRINT
-//      // Careful:  We might not be able to keep up if this debug print is enabled.
-//    Serial.print("ypr:  ");
-//    Serial.print(ypr[0]);
-//    Serial.print(", ");
-//    Serial.print(ypr[1]);
-//    Serial.print(", ");
-//    Serial.print(ypr[2]);
-//    Serial.print("    gyro:  ");
-//    Serial.print(gyro[0]);
-//    Serial.print(", ");
-//    Serial.print(gyro[1]);
-//    Serial.print(", ");
-//    Serial.println(gyro[2]);
-//#endif
+    // If we're here and we got non-zero data, communication
+    // with the MPU6050 is probably working, so kick the dog.
+    bool gotNonzeroData = false;
+    for (uint8_t i = 0; i < 3; ++i) {
+      if (ypr[i] > 0.001 || gyro != 0) {
+        gotNonzeroData = true;
+        break;
+      }
+    }
+    if (gotNonzeroData) {
+      wdt_reset();
+    }
+
+#ifdef ENABLE_DEBUG_PRINT
+      // Careful:  We might not be able to keep up if this debug print is enabled.
+    Serial.print("ypr:  ");
+    Serial.print(ypr[0]);
+    Serial.print(", ");
+    Serial.print(ypr[1]);
+    Serial.print(", ");
+    Serial.print(ypr[2]);
+    Serial.print("    gyro:  ");
+    Serial.print(gyro[0]);
+    Serial.print(", ");
+    Serial.print(gyro[1]);
+    Serial.print(", ");
+    Serial.println(gyro[2]);
+#endif
   }
 
 #endif  // #ifdef ENABLE_MOTION_DETECTION
@@ -513,6 +577,10 @@ void loop() {
   if (dmpReady && mpuInterrupt) {
     gatherMotionMeasurements();
   }
+#else
+  // Normally, we kick the dog after getting good data from the MPU6050.
+  // If we're not using the unit, we need to reset the watchdog.
+  wdt_reset();
 #endif
 
   if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
