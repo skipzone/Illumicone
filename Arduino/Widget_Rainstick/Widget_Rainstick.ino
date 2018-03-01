@@ -26,7 +26,7 @@
 */
 
 #define ENABLE_MOTION_DETECTION
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 
 #ifdef ENABLE_MOTION_DETECTION
@@ -77,7 +77,7 @@
 #define MA_LENGTH 8
 #define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
 
-constexpr uint16_t activeSoundThreshold = 100;
+constexpr uint16_t activeSoundThreshold = 8;  // 100;
 
 
 /***************************************
@@ -124,20 +124,18 @@ static bool maSetFull[NUM_MA_SETS];
 
 #ifdef ENABLE_MOTION_DETECTION
 
-static MPU6050 mpu;            // using default I2C address 0x68
+static MPU6050 mpu;               // using default I2C address 0x68
 
 // MPU control/status vars
-static bool dmpReady = false;  // set true if DMP init was successful
-static uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
-static uint8_t devStatus;      // return status after each device operation (0 = success, !0 = error)
-static uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
-static uint16_t fifoCount;     // count of all bytes currently in FIFO
-static uint8_t fifoBuffer[64]; // FIFO storage buffer
+static bool dmpReady = false;     // set true if DMP init was successful
+static uint8_t devStatus;         // return status after each device operation (0 = success, !0 = error)
+static uint16_t packetSize;       // expected DMP packet size (default is 42 bytes)
+static uint8_t packetBuffer[42];  // must be at least as large as packet size returned by dmpGetFIFOPacketSize
 
 // orientation/motion vars
-static Quaternion quat;        // [w, x, y, z]         quaternion container
-static VectorFloat gravity;    // [x, y, z]            gravity vector
-static float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+static Quaternion quat;           // [w, x, y, z] quaternion container
+static VectorFloat gravity;       // [x, y, z] gravity vector
+static float ypr[3];              // [yaw, pitch, roll] yaw/pitch/roll container
 static int16_t gyro[3];
 
 static volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
@@ -182,48 +180,60 @@ void initMpu()
 
 #ifdef ENABLE_DEBUG_PRINT
   Serial.println(F("Testing MPU6050 connection..."));
-  Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 #endif
+  if (mpu.testConnection()) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("MPU6050 connection successful.  Initializing DMP..."));
+#endif
+    devStatus = mpu.dmpInitialize();
+    if (devStatus == 0) {
+  
+      // supply your own gyro offsets here, scaled for min sensitivity
+      // TODO 2/28/2018 ross:  What do we do about this?  Every widget could be different.
+      mpu.setXGyroOffset(220);
+      mpu.setYGyroOffset(76);
+      mpu.setZGyroOffset(-85);
+      mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
+  
+      // turn on the DMP, now that it's ready
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Enabling DMP..."));
+#endif
+      mpu.setDMPEnabled(true);
 
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("Initializing DMP..."));
+      Serial.println(F("Enabling interrupt..."));
 #endif
-  devStatus = mpu.dmpInitialize();
-  if (devStatus == 0) {
+      attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), dmpDataReady, RISING);
 
-    // supply your own gyro offsets here, scaled for min sensitivity
-    // TODO 2/28/2018 ross:  What do we do about this?  Every widget could be different.
-    mpu.setXGyroOffset(220);
-    mpu.setYGyroOffset(76);
-    mpu.setZGyroOffset(-85);
-    mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
-
-    // turn on the DMP, now that it's ready
+      // Get expected DMP packet size, and make sure packetBuffer is large enough.
+      packetSize = mpu.dmpGetFIFOPacketSize();
+      if (sizeof(packetBuffer) >= packetSize) {
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Enabling DMP..."));
+        Serial.println(F("DMP ready."));
 #endif
-    mpu.setDMPEnabled(true);
-
+        dmpReady = true;
+      }
+      else {
+        Serial.print(F("*** FIFO packet size "));
+        Serial.print(packetSize);
+        Serial.print(F(" is larger than packetBuffer size "));
+        Serial.println(sizeof(packetBuffer));
+      }
+    }
+    else {
+      // Well, shit.
+      // 1 = initial memory load failed (most likely)
+      // 2 = DMP configuration updates failed
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Enabling interrupt..."));
+      Serial.print(F("*** DMP Initialization failed.  devStatus="));
+      Serial.println(devStatus);
 #endif
-    attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), dmpDataReady, RISING);
-
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("DMP ready."));
-#endif
-    dmpReady = true;
-
-    // Get expected DMP packet size for later use when pulling packets out of FIFO.
-    packetSize = mpu.dmpGetFIFOPacketSize();
+    }
   }
   else {
-    // Well, shit.
-    // 1 = initial memory load failed (most likely)
-    // 2 = DMP configuration updates failed
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("DMP Initialization failed.  devStatus="));
-    Serial.println(devStatus);
+  Serial.println(F("MPU6050 connection failed."));
 #endif
   }
 }
@@ -310,38 +320,8 @@ void gatherMotionMeasurements()
 //#endif
 
   mpuInterrupt = false;
-  mpuIntStatus = mpu.getIntStatus();
-  fifoCount = mpu.getFIFOCount();
-
-/*
-  // check for overflow (this should never happen unless our code is too inefficient)
-  if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
-    // reset so we can continue cleanly
-    mpu.resetFIFO();
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("FIFO overflow!  fifoCount was "));
-    Serial.println(fifoCount);
-#endif
-    fifoCount = 0;
-    return;
-  }
-
-  // otherwise, check for DMP data ready interrupt (this should happen frequently)
-  else if (mpuIntStatus & 0x02) {   // TODO 2/28/2018:  This doesn't seem right.  Register Map and Descriptions rev. 4.2 says bits 2 and 1 are reserved.
-
-    // wait for correct available data length, should be a VERY short wait
-    if (fifoCount < packetSize) {
-#ifdef ENABLE_DEBUG_PRINT
-      Serial.println(F("Wait for fifo."));
-#endif
-      while (fifoCount < packetSize) {
-        fifoCount = mpu.getFIFOCount();
-      }
-#ifdef ENABLE_DEBUG_PRINT
-      Serial.println(F("Done wait."));
-#endif
-    }
-*/
+  uint8_t mpuIntStatus = mpu.getIntStatus();
+  uint16_t fifoCount = mpu.getFIFOCount();
 
   // Check if FIFO overflowed.  If it did, clear it, then wait for another
   // data-ready interrupt and clear the FIFO again so that we are back in
@@ -380,14 +360,15 @@ void gatherMotionMeasurements()
 
   while (fifoCount >= packetSize) {
     fifoCount -= packetSize;
-    mpu.getFIFOBytes(fifoBuffer, packetSize);
+    mpu.getFIFOBytes(packetBuffer, packetSize);
 //#ifdef ENABLE_DEBUG_PRINT
+//    // Careful:  We might not be able to keep up if this debug print is enabled.
 //    Serial.print(F("Got packet from fifo.  fifoCount now "));
 //    Serial.println(fifoCount);
 //#endif
 
-    mpu.dmpGetGyro(gyro, fifoBuffer);
-    mpu.dmpGetQuaternion(&quat, fifoBuffer);
+    mpu.dmpGetGyro(gyro, packetBuffer);
+    mpu.dmpGetQuaternion(&quat, packetBuffer);
     mpu.dmpGetGravity(&gravity, &quat);
     mpu.dmpGetYawPitchRoll(ypr, &quat, &gravity);
 
@@ -529,7 +510,7 @@ void loop() {
   uint32_t now = millis();
 
 #ifdef ENABLE_MOTION_DETECTION
-  if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
+  if (dmpReady && mpuInterrupt) {
     gatherMotionMeasurements();
   }
 #endif
