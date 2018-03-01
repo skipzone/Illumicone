@@ -56,23 +56,25 @@
  ************************/
 
 #define WIDGET_ID 4
-#define SOUND_SAMPLE_INTERVAL_MS 20L
-#define SOUND_SAMPLE_SAVE_INTERVAL_MS 200L
+
+#define SOUND_SAMPLE_INTERVAL_MS 10L
+#define SOUND_SAMPLE_SAVE_INTERVAL_MS 50L   // same as 200 Hz IMU sample frequency so MA length works for both
 #define ACTIVE_TX_INTERVAL_MS 200L
-#define INACTIVE_TX_INTERVAL_MS 2000L   // should be a multiple of ACTIVE_TX_INTERVAL_MS
+#define INACTIVE_TX_INTERVAL_MS 2000L       // should be a multiple of ACTIVE_TX_INTERVAL_MS
+
 //#define TX_FAILURE_LED_PIN 2
+#define IMU_INTERRUPT_PIN 2
 // --- the real Rainstick ---
 //#define MIC_SIGNAL_PIN A0
 //#define MIC_POWER_PIN 8
 // --- development breadboard ---
 #define MIC_SIGNAL_PIN A3
 #define MIC_POWER_PIN 4
-#define IMU_INTERRUPT_PIN 2
 
 #define NUM_SOUND_VALUES_TO_SEND 3
 #define NUM_MPU_VALUES_TO_SEND 6
 
-#define MA_LENGTH 3
+#define MA_LENGTH 8
 #define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
 
 constexpr uint16_t activeSoundThreshold = 100;
@@ -173,69 +175,57 @@ void initI2c()
 
 void initMpu()
 {
-    // initialize device
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Initializing I2C devices..."));
+  Serial.println(F("Initializing MPU6050..."));
 #endif
-    mpu.initialize();
+  mpu.initialize();
 
-    // verify connection
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Testing device connections..."));
-    Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
+  Serial.println(F("Testing MPU6050 connection..."));
+  Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 #endif
 
-    // load and configure the DMP
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Initializing DMP..."));
+  Serial.println(F("Initializing DMP..."));
 #endif
-    devStatus = mpu.dmpInitialize();
-
-    mpu.setRate(9);                       // 1 kHz / (1 + 9) = 100 Hz
-//    mpu.setRate(49);                       // 1 kHz / (1 + 49) = 20 Hz
-//    mpu.setDLPFMode(MPU6050_DLPF_BW_5);   // 5, 10, 20, 42, 98, 188, 256
+  devStatus = mpu.dmpInitialize();
+  if (devStatus == 0) {
 
     // supply your own gyro offsets here, scaled for min sensitivity
+    // TODO 2/28/2018 ross:  What do we do about this?  Every widget could be different.
     mpu.setXGyroOffset(220);
     mpu.setYGyroOffset(76);
     mpu.setZGyroOffset(-85);
     mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
 
-    // make sure it worked (returns 0 if so)
-    if (devStatus == 0) {
-        // turn on the DMP, now that it's ready
+    // turn on the DMP, now that it's ready
 #ifdef ENABLE_DEBUG_PRINT
-        Serial.println(F("Enabling DMP..."));
+    Serial.println(F("Enabling DMP..."));
 #endif
-        mpu.setDMPEnabled(true);
+    mpu.setDMPEnabled(true);
 
-        // enable Arduino interrupt detection
 #ifdef ENABLE_DEBUG_PRINT
-        Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
+    Serial.println(F("Enabling interrupt..."));
 #endif
-        attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), dmpDataReady, RISING);
-///        mpuIntStatus = mpu.getIntStatus();
+    attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), dmpDataReady, RISING);
 
-        // set our DMP Ready flag so the main loop() function knows it's okay to use it
 #ifdef ENABLE_DEBUG_PRINT
-        Serial.println(F("DMP ready! Waiting for first interrupt..."));
+    Serial.println(F("DMP ready."));
 #endif
-        dmpReady = true;
+    dmpReady = true;
 
-        // get expected DMP packet size for later comparison
-        packetSize = mpu.dmpGetFIFOPacketSize();
-    }
-    else {
-        // ERROR!
-        // 1 = initial memory load failed
-        // 2 = DMP configuration updates failed
-        // (if it's going to break, usually the code will be 1)
+    // Get expected DMP packet size for later use when pulling packets out of FIFO.
+    packetSize = mpu.dmpGetFIFOPacketSize();
+  }
+  else {
+    // Well, shit.
+    // 1 = initial memory load failed (most likely)
+    // 2 = DMP configuration updates failed
 #ifdef ENABLE_DEBUG_PRINT
-        Serial.print(F("DMP Initialization failed (code "));
-        Serial.print(devStatus);
-        Serial.println(F(")"));
+    Serial.print(F("DMP Initialization failed.  devStatus="));
+    Serial.println(devStatus);
 #endif
-    }
+  }
 }
 
 #endif
@@ -319,26 +309,25 @@ void gatherMotionMeasurements()
 //    Serial.println(F("gather motion"));
 //#endif
 
-  // reset interrupt flag and get INT_STATUS byte
   mpuInterrupt = false;
   mpuIntStatus = mpu.getIntStatus();
-
-  // get current FIFO count
   fifoCount = mpu.getFIFOCount();
 
+/*
   // check for overflow (this should never happen unless our code is too inefficient)
   if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
-    uint16_t fifoCountBeforeReset = fifoCount;
     // reset so we can continue cleanly
     mpu.resetFIFO();
 #ifdef ENABLE_DEBUG_PRINT
     Serial.print(F("FIFO overflow!  fifoCount was "));
-    Serial.println(fifoCountBeforeReset);
+    Serial.println(fifoCount);
 #endif
+    fifoCount = 0;
     return;
   }
+
   // otherwise, check for DMP data ready interrupt (this should happen frequently)
-  else if (mpuIntStatus & 0x02) {
+  else if (mpuIntStatus & 0x02) {   // TODO 2/28/2018:  This doesn't seem right.  Register Map and Descriptions rev. 4.2 says bits 2 and 1 are reserved.
 
     // wait for correct available data length, should be a VERY short wait
     if (fifoCount < packetSize) {
@@ -352,16 +341,50 @@ void gatherMotionMeasurements()
       Serial.println(F("Done wait."));
 #endif
     }
+*/
 
-    // read a packet from FIFO
+  // Check if FIFO overflowed.  If it did, clear it, then wait for another
+  // data-ready interrupt and clear the FIFO again so that we are back in
+  // sync (i.e., any partial packets have been cleared out).
+  if (mpuIntStatus & 0x10) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("FIFO overflow!  fifoCount is "));
+    Serial.println(fifoCount);
+#endif
+    mpu.resetFIFO();
+    while (true) {
+      if (mpuInterrupt) {
+        mpuInterrupt = false;
+        mpuIntStatus = mpu.getIntStatus();
+        if (mpuIntStatus & 0x01) {
+          mpu.resetFIFO();
+          break;
+        }
+      }
+    }
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("Cleared FIFO and re-sync'd."));
+#endif
+    return;
+  }
+
+  if (!(mpuIntStatus & 0x01)) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("Got interrupt but not for data ready.  mpuIntStatus="));
+    Serial.print((int) mpuIntStatus);
+    Serial.print(F(", fifoCount="));
+    Serial.println(fifoCount);
+#endif
+    return;
+  }
+
+  while (fifoCount >= packetSize) {
+    fifoCount -= packetSize;
     mpu.getFIFOBytes(fifoBuffer, packetSize);
 //#ifdef ENABLE_DEBUG_PRINT
-//  Serial.println(F("Got fifo."));
+//    Serial.print(F("Got packet from fifo.  fifoCount now "));
+//    Serial.println(fifoCount);
 //#endif
-        
-    // track FIFO count here in case there is > 1 packet available
-    // (this lets us immediately read more without waiting for an interrupt)
-    fifoCount -= packetSize;
 
     mpu.dmpGetGyro(gyro, fifoBuffer);
     mpu.dmpGetQuaternion(&quat, fifoBuffer);
@@ -377,6 +400,7 @@ void gatherMotionMeasurements()
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 5, gyro[2]);
 
 //#ifdef ENABLE_DEBUG_PRINT
+//      // Careful:  We might not be able to keep up if this debug print is enabled.
 //    Serial.print("ypr:  ");
 //    Serial.print(ypr[0]);
 //    Serial.print(", ");
@@ -515,22 +539,10 @@ void loop() {
     sampleSound();
   }
 
-#ifdef ENABLE_MOTION_DETECTION
-  if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
-    gatherMotionMeasurements();
-  }
-#endif
-
   if (now - lastSoundSampleSaveMs >= SOUND_SAMPLE_SAVE_INTERVAL_MS) {
     lastSoundSampleSaveMs = now;
     saveSoundSample();
   }
-
-#ifdef ENABLE_MOTION_DETECTION
-  if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
-    gatherMotionMeasurements();
-  }
-#endif
 
   if (now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {
     if (isActive || wasActive || now - lastTxMs >= INACTIVE_TX_INTERVAL_MS) {
@@ -539,12 +551,6 @@ void loop() {
       wasActive = isActive;
     }
   }
-
-#ifdef ENABLE_MOTION_DETECTION
-  if (dmpReady && (mpuInterrupt || fifoCount >= packetSize)) {
-    gatherMotionMeasurements();
-  }
-#endif
 
 }
 
