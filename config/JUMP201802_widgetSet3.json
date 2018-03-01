@@ -393,18 +393,18 @@
                 },
                 {   "inputName" : "emitColor",
                     "widgetName" : "rainstick",
-                    "channelNumber" : 7,                // average gyro y-axis (corresponds to pitch and rolling the rainstick)
+                    "channelNumber" : 4,                // average gyro y-axis (corresponds to pitch and rolling the rainstick)
                     "measurement" : "position"
                 }
             ],
             // TODO 3/1/2018 ross:  Add this as a defined color:  "0,64,192"
             "emitColorDefault" : "blue",
-            "emitColorMeasmtLow" : -180,
-            "emitColorMeasmtHigh" : 180,
-            "emitColorLow" : "red",
+            "emitColorMeasmtLow" : -90,
+            "emitColorMeasmtHigh" : 90,
+            "emitColorLow" : "red",                     // same color for low and high means use the entire color wheel
             "emitColorHigh" : "red",
             "emitColorMeasmtMultiplier" : 0.1,          // Rainstick reports position in tenths of a degree
-            "emitColorIntegrateMeasmt" : true,
+            "emitColorIntegrateMeasmt" : false,
             "emitIntervalMeasmtLow" : 600,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,

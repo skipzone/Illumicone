@@ -59,18 +59,20 @@ class ParticlesPattern : public Pattern {
         double emitColorMeasmtHigh;
         double emitColorMeasmtLow;
         double emitColorMeasmtMultiplier;
+        bool emitColorUsePositionMeasmt;
         bool emitDirectionIsUp;
         int emitIntervalMeasmtHigh;
         int emitIntervalMeasmtLow;
         int emitIntervalHighMs;
         int emitIntervalLowMs;
+        bool emitRateUsePositionMeasmt;
         unsigned int particleMoveIntervalMs;
 
-        int numRotationsNeededToClearParticles;
-        unsigned int nextMoveParticlesMs;
-        unsigned int particleEmitIntervalMs;
         unsigned int nextEmitParticlesMs;
-        bool usePositionMeasurement;
+        unsigned int nextMoveParticlesMs;
+        int numRotationsNeededToClearParticles;
+        unsigned int particleEmitIntervalMs;
+        CRGB rgbEmitColor;
 
         bool moveParticles();
 };

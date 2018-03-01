@@ -38,11 +38,6 @@ ParticlesPattern::ParticlesPattern(const std::string& name)
 
 bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numRotationsNeededToClearParticles = 0;
-    nextMoveParticlesMs = 0;
-    nextEmitParticlesMs = 0;
-
-
     // ----- get input channels -----
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
@@ -55,30 +50,42 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
 
         if (channelConfig.inputName == "emitRate") {
             emitRateChannel = channelConfig.widgetChannel;
+            if (channelConfig.measurement == "velocity") {
+                emitRateUsePositionMeasmt = false;
+            }
+            else if (channelConfig.measurement == "position") {
+                emitRateUsePositionMeasmt = true;
+            }
+            else {
+                logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
+                return false;
+            }
+            logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
+                             + (emitRateUsePositionMeasmt ? " position measurement for " : " velocity measurement for ")
+                             + channelConfig.inputName);
         }
         else if (channelConfig.inputName == "emitColor") {
             emitColorChannel = channelConfig.widgetChannel;
+            if (channelConfig.measurement == "velocity") {
+                emitColorUsePositionMeasmt = false;
+            }
+            else if (channelConfig.measurement == "position") {
+                emitColorUsePositionMeasmt = true;
+            }
+            else {
+                logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
+                return false;
+            }
+            logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
+                             + (emitColorUsePositionMeasmt ? " position measurement for " : " velocity measurement for ")
+                             + channelConfig.inputName);
         }
         else {
             logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
-                + "' in input configuration for " + name + " is not recognized.");
+                                + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
 
-        if (channelConfig.measurement == "velocity") {
-            usePositionMeasurement = false;
-        }
-        else if (channelConfig.measurement == "position") {
-            usePositionMeasurement = true;
-        }
-        else {
-            logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
-            return false;
-        }
-
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
-                         + (usePositionMeasurement ? " position measurement for " : " velocity measurement for ")
-                         + channelConfig.inputName);
     }
 
     // ----- get pattern configuration -----
@@ -132,8 +139,6 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
     logMsg(LOG_INFO, name + " emitColorDefault=" + hsvStr);
 
     if (emitColorChannel != nullptr) {
-/*
-*/
 
         if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtLow", emitColorMeasmtLow, errMsgSuffix)) {
             return false;
@@ -156,6 +161,13 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
         }
         logMsg(LOG_INFO, name + " emitColorHigh=" + hsvStr);
 
+        if (emitColorHigh == emitColorLow) {
+            emitColorLow.h = 0;
+            emitColorHigh.h = 255;
+        }
+        logMsg(LOG_INFO, name + " emitColorLow.h=" + to_string(emitColorLow.h));
+        logMsg(LOG_INFO, name + " emitColorHigh.h=" + to_string(emitColorHigh.h));
+
         if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtMultiplier", emitColorMeasmtMultiplier, errMsgSuffix)) {
             return false;
         }
@@ -165,7 +177,18 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
             return false;
         }
         logMsg(LOG_INFO, name + " emitColorIntegrateMeasmt=" + to_string(emitColorIntegrateMeasmt));
+        if (emitColorIntegrateMeasmt) {
+            logMsg(LOG_ERR, "Integration of emit color measurments it not yet supported for " + name + ".");
+            return false;
+        }
     }
+
+    // ----- initialize object data -----
+
+    numRotationsNeededToClearParticles = 0;
+    nextMoveParticlesMs = 0;
+    nextEmitParticlesMs = 0;
+    hsv2rgb(emitColorDefault, rgbEmitColor);
 
     return true;
 }
@@ -197,7 +220,7 @@ bool ParticlesPattern::moveParticles()
 
 bool ParticlesPattern::update()
 {
-    // Don't do anything if no input channel was assigned.
+    // Don't do anything if no emit rate input channel was assigned.
     if (emitRateChannel == nullptr) {
         return false;
     }
@@ -223,6 +246,31 @@ bool ParticlesPattern::update()
         }
     }
 
+    // Update the emit color if we're directly using a scaled measurement
+    // (i.e., not integrating the rate of change of something).
+    if (!emitColorIntegrateMeasmt && emitColorChannel != nullptr && emitColorChannel->getIsActive()
+        && ((emitColorUsePositionMeasmt && emitRateChannel->getHasNewPositionMeasurement())
+            || (!emitColorUsePositionMeasmt && emitRateChannel->getHasNewVelocityMeasurement())))
+    {
+        //logMsg(LOG_DEBUG, "emitColorChannel has a new measurement");
+        double emitColorMeasmt = emitColorUsePositionMeasmt ? emitColorChannel->getPosition() : emitColorChannel->getVelocity();
+        emitColorMeasmt *= emitColorMeasmtMultiplier;
+        emitColorMeasmt = std::min(emitColorMeasmt, emitColorMeasmtHigh);
+        emitColorMeasmt = std::max(emitColorMeasmt, emitColorMeasmtLow);
+
+        double emitColorMeasmtRange = emitColorMeasmtHigh - emitColorMeasmtLow;
+        double emitColorRange = emitColorHigh.h - emitColorLow.h;
+        double emitColorHue =
+            emitColorRange * (emitColorMeasmt - emitColorMeasmtLow) / emitColorMeasmtRange + emitColorLow.h;
+        logMsg(LOG_DEBUG,
+            "emitColorLow.h=" + to_string(emitColorLow.h)
+            + ", emitColorHigh.h=" + to_string(emitColorHigh.h)
+            + ", emitColorMeasmt=" + to_string(emitColorMeasmt)
+            + ", emitColorHue=" + to_string(emitColorHue));
+        CHSV hsvEmitColor((uint8_t) emitColorHue, 255, 255);
+        hsv2rgb(hsvEmitColor, rgbEmitColor);
+    }
+
     // Don't emit any particles if the widget has gone inactive.
     if (!emitRateChannel->getIsActive()) {
         //logMsg(LOG_DEBUG, "emitRateChannel is inactive");
@@ -231,12 +279,12 @@ bool ParticlesPattern::update()
     }
 
     // If there is a new measurement, update the emit rate.
-    if ((usePositionMeasurement && emitRateChannel->getHasNewPositionMeasurement())
-        || (!usePositionMeasurement && emitRateChannel->getHasNewVelocityMeasurement()))
+    if ((emitRateUsePositionMeasmt && emitRateChannel->getHasNewPositionMeasurement())
+        || (!emitRateUsePositionMeasmt && emitRateChannel->getHasNewVelocityMeasurement()))
     {
         //logMsg(LOG_DEBUG, "emitRateChannel has a new measurement");
 
-        int emitIntervalMeasmt = usePositionMeasurement ? emitRateChannel->getPosition() : abs(emitRateChannel->getVelocity());
+        int emitIntervalMeasmt = emitRateUsePositionMeasmt ? emitRateChannel->getPosition() : abs(emitRateChannel->getVelocity());
 
         // Don't emit anything if the measurement is below the lower limit.
         if (emitIntervalMeasmt < emitIntervalMeasmtLow) {
@@ -275,11 +323,9 @@ bool ParticlesPattern::update()
         //logMsg(LOG_DEBUG, "time to emit particles");
 
         // Emit particles.
-        CRGB rgbEmitColorDefault;
-        hsv2rgb(emitColorDefault, rgbEmitColorDefault);
         for (int i = 0; i < emitBatchSize; ++i) {
             int randStringNum = random16(numStrings);
-            pixelArray[randStringNum][emitDirectionIsUp ? pixelsPerString - 1 : 0] = rgbEmitColorDefault;
+            pixelArray[randStringNum][emitDirectionIsUp ? pixelsPerString - 1 : 0] = rgbEmitColor;
         }
 
         // Make sure the new particles eventually get moved out of the frame.
