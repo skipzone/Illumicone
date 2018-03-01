@@ -48,15 +48,22 @@ class ParticlesPattern : public Pattern {
     private:
 
         std::shared_ptr<WidgetChannel> emitRateChannel;
+        std::shared_ptr<WidgetChannel> emitColorChannel;
 
         // pattern configuration
-        CRGB emitColor;
-        int emitIntervalMeasmtLow;
-        int emitIntervalMeasmtHigh;
-        int emitIntervalLowMs;
-        int emitIntervalHighMs;
         int emitBatchSize;
+        CHSV emitColorDefault;
+        CHSV emitColorHigh;
+        bool emitColorIntegrateMeasmt;
+        CHSV emitColorLow;
+        double emitColorMeasmtHigh;
+        double emitColorMeasmtLow;
+        double emitColorMeasmtMultiplier;
         bool emitDirectionIsUp;
+        int emitIntervalMeasmtHigh;
+        int emitIntervalMeasmtLow;
+        int emitIntervalHighMs;
+        int emitIntervalLowMs;
         unsigned int particleMoveIntervalMs;
 
         int numRotationsNeededToClearParticles;

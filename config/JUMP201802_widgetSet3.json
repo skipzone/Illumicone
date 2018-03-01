@@ -1,0 +1,986 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "lockFilePaths" : {
+        "patternController" : "/tmp/patternController.lock",
+        "widgetRcvr" : "/tmp/widgetRcvr.lock"
+    },
+
+    "numberOfStrings" : 36,
+    "numberOfPixelsPerString" : 100,
+
+    // ----- installation configuration -----
+    "patconIpAddress" : "127.0.0.1",
+    "opcServerIpAddress": "192.168.69.100",
+    "useTcpForOpcServer" : false,
+    // ----- remote widget receiver configuration -----
+    //"patconIpAddress" : "192.168.69.103",
+    //"opcServerIpAddress": "192.168.69.103",
+    //"useTcpForOpcServer" : false,
+    // ----- Xu shop computer simulator configuration -----
+    //"patconIpAddress" : "192.168.69.11",
+    //"opcServerIpAddress": "192.168.69.11",
+    //"useTcpForOpcServer" : true,
+
+    "opcServerPortNumber" : 7890,
+    "widgetPortNumberBase" : 4200,
+
+    "shutoffPeriods" : [
+        {   "description" : "JUMP late night shutoff",
+            "startDateTime" : "22:00:00",
+            "endDateTime" : "06:00:00"
+        },
+        {   "description" : "JUMP daytime shutoff",
+            "startDateTime" : "07:30:00",
+            "endDateTime" : "18:00:00"
+        }
+    ],
+
+    "quiescentPeriods" : [
+    ],
+
+    "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+    "patternRunLoopSleepIntervalUs" : 4000,
+
+    "radioPollingLoopSleepIntervalUs" : 1000,
+
+    "widgets" : [
+        {   "name" : "bells",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "rainstick",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "schroedersPlaything",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 8000
+        },
+        {   "name" : "triObelisk",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "pump",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "fourPlay42",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "fourPlay43",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        }
+    ],
+
+    "patterns" : [
+        // ---------- stripes and rings on FourPlay-4-x ----------
+        {   "name" : "verticalStripes",
+            "enabled" : true,
+            "priority" : 6,
+            "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "RgbVerticalPattern",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "width",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 3,
+                    "measurement" : "position"
+                }
+            ],
+            "widthScaleFactor" : 6,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 12,
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+        },
+        {   "name" : "horizontalRings",
+            "enabled" : true,
+            "priority" : 5,
+            "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "HorizontalStripePattern",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "width",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 3,
+                    "measurement" : "position"
+                }
+            ],
+            "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 20,            // the maximum width when cyclical values are used
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+        },
+
+        // ---------- sparkes on Bells (single) ----------
+        /*
+        {   "name" : "multicolorSparkle",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "useRandomColors" : true,
+            "sparkleChangeIntervalMs" : 50
+        },
+        {   "name" : "whiteSparkle",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "white",
+            "reverseSparkleColor" : "white"
+        },
+        */
+
+        // ---------- spray on Bells (single) ----------
+        /*
+        {   "name" : "spray",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorDefault" : "white",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 8
+        },
+        */
+
+        // ---------- colored sprays on Bells (multiple) ----------
+        {   "name" : "sprayWhite",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorDefault" : "white",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 8
+        },
+        {   "name" : "sprayPink",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "bells",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorDefault" : "pink",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 4
+        },
+        {   "name" : "sprayGreen",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "bells",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorDefault" : "green",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 12
+        },
+
+        // ---------- sparkles on TriObelisk ----------
+        {   "name" : "magentaGreenSparkle",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "triObelisk",
+                    "channelNumber" : 0,
+                    "measurement" : "velocity"
+                }
+            ],
+            "activationThreshold" : 10,
+            "deactivationThreshold" : 300,
+            "numGoodMeasurementsForReactivation" : 10,
+            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "magenta",
+            "reverseSparkleColor" : "green"
+        },
+        {   "name" : "aquaRedSparkle",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "triObelisk",
+                    "channelNumber" : 1,
+                    "measurement" : "velocity"
+                }
+            ],
+            "activationThreshold" : 10,
+            "deactivationThreshold" : 300,
+            "numGoodMeasurementsForReactivation" : 10,
+            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "aqua",
+            "reverseSparkleColor" : "red"
+        },
+        {   "name" : "yellowBlueSparkle",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "triObelisk",
+                    "channelNumber" : 2,
+                    "measurement" : "velocity"
+                }
+            ],
+            "activationThreshold" : 10,
+            "deactivationThreshold" : 300,
+            "numGoodMeasurementsForReactivation" : 10,
+            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "yellow",
+            "reverseSparkleColor" : "blue"
+        },
+
+        // ---------- fill and burst on Pump ----------
+        {   "name" : "pumpFillAndBurst",
+            "enabled" : true,
+            "priority" : 9,
+            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "burstingPriority" : 1,
+            "patternClassName" : "FillAndBurstPattern",
+            "inputs" : [
+                {   "inputName" : "pressure",
+                    "widgetName" : "pump",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "lowPressureCutoff" : 150,
+            "burstThreshold" : 400,
+            "pressurizationColor" : "96,0,0",
+            "depressurizationColor" : "32,64,0",
+            "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
+            "fillStepIntervalMs" : 20
+        },
+
+        // ---------- rain on Rainstick ----------
+        {   "name" : "rain",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 2,                // average sound amplitude
+                    "measurement" : "position"
+                },
+                {   "inputName" : "emitColor",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 7,                // average gyro y-axis (corresponds to pitch and rolling the rainstick)
+                    "measurement" : "position"
+                }
+            ],
+            // TODO 3/1/2018 ross:  Add this as a defined color:  "0,64,192"
+            "emitColorDefault" : "blue",
+            "emitColorMeasmtLow" : -180,
+            "emitColorMeasmtHigh" : 180,
+            "emitColorLow" : "red",
+            "emitColorHigh" : "red",
+            "emitColorMeasmtMultiplier" : 0.1,          // Rainstick reports position in tenths of a degree
+            "emitColorIntegrateMeasmt" : true,
+            "emitIntervalMeasmtLow" : 600,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 5,
+            "emitDirectionIsUp" : false,
+            "particleMoveIntervalMs" : 10
+        },
+
+        // ---------- 60-key keyboard for 100x36 cone on Schroeder's Plaything ----------
+        {   "name" : "schroedersPlaything",
+            "enabled" : true,
+            "priority" : 3,
+            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "MidiActivatedRegionsPattern",
+            "inputs" : [
+                {   "inputName" : "midiInput",
+                    "widgetName" : "schroedersPlaything",
+                    "channelNumber" : 0
+                }
+            ],
+            "selectedBlockAnimationIntervalMs" : 3000,
+            "indicatorClassName" : "SimpleBlockIndicator",
+            "numberOfIndicators" : 61,
+            "indicators" : [
+                // --- C1 ---
+                {   "index" : 0,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C#1 ---
+                {   "index" : 1,
+                    "upperLeftStringIdx" : 3,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D1 ---
+                {   "index" : 2,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D#1 ---
+                {   "index" : 3,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- E1 ---
+                {   "index" : 4,
+                    "upperLeftStringIdx" : 12,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F1 ---
+                {   "index" : 5,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F#1 ---
+                {   "index" : 6,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G1 ---
+                {   "index" : 7,
+                    "upperLeftStringIdx" : 21,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G#1 ---
+                {   "index" : 8,
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A1 ---
+                {   "index" : 9,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A#1 ---
+                {   "index" : 10,
+                    "upperLeftStringIdx" : 30,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- B1 ---
+                {   "index" : 11,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 80,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "purple",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C2 ---
+                {   "index" : 12,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C#2 ---
+                {   "index" : 13,
+                    "upperLeftStringIdx" : 3,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D2 ---
+                {   "index" : 14,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D#2 ---
+                {   "index" : 15,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- E2 ---
+                {   "index" : 16,
+                    "upperLeftStringIdx" : 12,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F2 ---
+                {   "index" : 17,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F#2 ---
+                {   "index" : 18,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G2 ---
+                {   "index" : 19,
+                    "upperLeftStringIdx" : 21,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G#2 ---
+                {   "index" : 20,
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A2 ---
+                {   "index" : 21,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A#2 ---
+                {   "index" : 22,
+                    "upperLeftStringIdx" : 30,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- B2 ---
+                {   "index" : 23,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 60,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "purple",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C3 ---
+                {   "index" : 24,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C#3 ---
+                {   "index" : 25,
+                    "upperLeftStringIdx" : 3,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D3 ---
+                {   "index" : 26,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D#3 ---
+                {   "index" : 27,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- E3 ---
+                {   "index" : 28,
+                    "upperLeftStringIdx" : 12,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F3 ---
+                {   "index" : 29,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F#3 ---
+                {   "index" : 30,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G3 ---
+                {   "index" : 31,
+                    "upperLeftStringIdx" : 21,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G#3 ---
+                {   "index" : 32,
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A3 ---
+                {   "index" : 33,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A#3 ---
+                {   "index" : 34,
+                    "upperLeftStringIdx" : 30,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- B3 ---
+                {   "index" : 35,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 40,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "purple",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C4 ---
+                {   "index" : 36,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C#4 ---
+                {   "index" : 37,
+                    "upperLeftStringIdx" : 3,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D4 ---
+                {   "index" : 38,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D#4 ---
+                {   "index" : 39,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- E4 ---
+                {   "index" : 40,
+                    "upperLeftStringIdx" : 12,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F4 ---
+                {   "index" : 41,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F#4 ---
+                {   "index" : 42,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G4 ---
+                {   "index" : 43,
+                    "upperLeftStringIdx" : 21,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G#4 ---
+                {   "index" : 44,
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A4 ---
+                {   "index" : 45,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A#4 ---
+                {   "index" : 46,
+                    "upperLeftStringIdx" : 30,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- B4 ---
+                {   "index" : 47,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 20,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "purple",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C5 ---
+                {   "index" : 48,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C#5 ---
+                {   "index" : 49,
+                    "upperLeftStringIdx" : 3,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D5 ---
+                {   "index" : 50,
+                    "upperLeftStringIdx" : 6,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- D#5 ---
+                {   "index" : 51,
+                    "upperLeftStringIdx" : 9,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "orange",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- E5 ---
+                {   "index" : 52,
+                    "upperLeftStringIdx" : 12,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "yellow",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F5 ---
+                {   "index" : 53,
+                    "upperLeftStringIdx" : 15,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- F#5 ---
+                {   "index" : 54,
+                    "upperLeftStringIdx" : 18,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "green",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G5 ---
+                {   "index" : 55,
+                    "upperLeftStringIdx" : 21,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- G#5 ---
+                {   "index" : 56,
+                    "upperLeftStringIdx" : 24,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "aqua",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A5 ---
+                {   "index" : 57,
+                    "upperLeftStringIdx" : 27,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- A#5 ---
+                {   "index" : 58,
+                    "upperLeftStringIdx" : 30,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "blue",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- B5 ---
+                {   "index" : 59,
+                    "upperLeftStringIdx" : 33,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 3,
+                    "heightInPixels" : 20,
+                    "foregroundHsv" : "purple",
+                    "fadeIntervalMs" : 7000
+                },
+                // --- C6 ---
+                {   "index" : 60,
+                    "upperLeftStringIdx" : 0,
+                    "upperLeftPixelIdx" : 0,
+                    "widthInStrings" : 36,
+                    "heightInPixels" : 8,
+                    "foregroundHsv" : "red",
+                    "fadeIntervalMs" : 7000
+                }
+            ]
+        }
+    ]
+
+}

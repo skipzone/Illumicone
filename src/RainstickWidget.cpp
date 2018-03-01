@@ -27,7 +27,7 @@ using namespace std;
 
 
 RainstickWidget::RainstickWidget()
-    : Widget(WidgetId::rainstick, 7)
+    : Widget(WidgetId::rainstick, 9)
 {
     simulationUpdateIntervalMs[2] = 10;
 }

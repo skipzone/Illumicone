@@ -26,7 +26,7 @@
 */
 
 #define ENABLE_MOTION_DETECTION
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 
 #include <avr/wdt.h>
@@ -79,7 +79,7 @@
 #define MA_LENGTH 8
 #define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
 
-constexpr uint16_t activeSoundThreshold = 8;  // 100;
+constexpr uint16_t activeSoundThreshold = 12;  // 100;
 
 // When we haven't retrieved packets from the MPU6050's DMP's FIFO fast enough,
 // data corruption becomes likely even before the FIFO overflows.  We'll clear

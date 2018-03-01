@@ -43,21 +43,49 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
     nextEmitParticlesMs = 0;
 
 
+    // ----- get input channels -----
+
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    if (channelConfigs.empty()) {
+        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+        return false;
+    }
+
+    for (auto&& channelConfig : channelConfigs) {
+
+        if (channelConfig.inputName == "emitRate") {
+            emitRateChannel = channelConfig.widgetChannel;
+        }
+        else if (channelConfig.inputName == "emitColor") {
+            emitColorChannel = channelConfig.widgetChannel;
+        }
+        else {
+            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+                + "' in input configuration for " + name + " is not recognized.");
+            continue;
+        }
+
+        if (channelConfig.measurement == "velocity") {
+            usePositionMeasurement = false;
+        }
+        else if (channelConfig.measurement == "position") {
+            usePositionMeasurement = true;
+        }
+        else {
+            logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
+            return false;
+        }
+
+        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
+                         + (usePositionMeasurement ? " position measurement for " : " velocity measurement for ")
+                         + channelConfig.inputName);
+    }
+
     // ----- get pattern configuration -----
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    string rgbStr;
-    if (!ConfigReader::getStringValue(patternConfig, "emitColor", rgbStr, errMsgSuffix)) {
-        return false;
-    }
-    if (!stringToRgbPixel(rgbStr, emitColor)) {
-        logMsg(LOG_ERR, "emitColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
-        return false;
-    }
-    logMsg(LOG_INFO, name + " emitColor=" + rgbStr);
 
     if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtLow", emitIntervalMeasmtLow, errMsgSuffix)) {
         return false;
@@ -94,39 +122,49 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
     }
     logMsg(LOG_INFO, name + " particleMoveIntervalMs=" + to_string(particleMoveIntervalMs));
 
+    // --- emit color stuff ---
 
-    // ----- get input channels -----
+    string hsvStr;
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
-    if (channelConfigs.empty()) {
-        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+    if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorDefault", hsvStr, emitColorDefault, errMsgSuffix)) {
         return false;
     }
+    logMsg(LOG_INFO, name + " emitColorDefault=" + hsvStr);
 
-    for (auto&& channelConfig : channelConfigs) {
+    if (emitColorChannel != nullptr) {
+/*
+*/
 
-        if (channelConfig.inputName == "emitRate") {
-            if (channelConfig.measurement == "velocity") {
-                usePositionMeasurement = false;
-            }
-            else if (channelConfig.measurement == "position") {
-                usePositionMeasurement = true;
-            }
-            else {
-                logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
-                return false;
-            }
-            emitRateChannel = channelConfig.widgetChannel;
-            logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
-                             + (usePositionMeasurement ? " position measurement for " : " velocity measurement for ")
-                             + channelConfig.inputName);
+        if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtLow", emitColorMeasmtLow, errMsgSuffix)) {
+            return false;
         }
-        else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
-                + "' in input configuration for " + name + " is not recognized.");
-            continue;
-        }
+        logMsg(LOG_INFO, name + " emitColorMeasmtLow=" + to_string(emitColorMeasmtLow));
 
+        if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtHigh", emitColorMeasmtHigh, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " emitColorMeasmtHigh=" + to_string(emitColorMeasmtHigh));
+
+        if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorLow", hsvStr, emitColorLow, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " emitColorLow=" + hsvStr);
+
+        string hsvStr;
+        if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorHigh", hsvStr, emitColorHigh, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " emitColorHigh=" + hsvStr);
+
+        if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtMultiplier", emitColorMeasmtMultiplier, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " emitColorMeasmtMultiplier=" + to_string(emitColorMeasmtMultiplier));
+
+        if (!ConfigReader::getBoolValue(patternConfig, "emitColorIntegrateMeasmt", emitColorIntegrateMeasmt, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " emitColorIntegrateMeasmt=" + to_string(emitColorIntegrateMeasmt));
     }
 
     return true;
@@ -237,9 +275,11 @@ bool ParticlesPattern::update()
         //logMsg(LOG_DEBUG, "time to emit particles");
 
         // Emit particles.
+        CRGB rgbEmitColorDefault;
+        hsv2rgb(emitColorDefault, rgbEmitColorDefault);
         for (int i = 0; i < emitBatchSize; ++i) {
             int randStringNum = random16(numStrings);
-            pixelArray[randStringNum][emitDirectionIsUp ? pixelsPerString - 1 : 0] = emitColor;
+            pixelArray[randStringNum][emitDirectionIsUp ? pixelsPerString - 1 : 0] = rgbEmitColorDefault;
         }
 
         // Make sure the new particles eventually get moved out of the frame.
