@@ -67,11 +67,11 @@
 //#define TX_FAILURE_LED_PIN 2
 #define IMU_INTERRUPT_PIN 2
 // --- the real Rainstick ---
-//#define MIC_SIGNAL_PIN A0
-//#define MIC_POWER_PIN 8
+#define MIC_SIGNAL_PIN A0
+#define MIC_POWER_PIN 8
 // --- development breadboard ---
-#define MIC_SIGNAL_PIN A3
-#define MIC_POWER_PIN 4
+//#define MIC_SIGNAL_PIN A3
+//#define MIC_POWER_PIN 4
 
 #define NUM_SOUND_VALUES_TO_SEND 3
 #define NUM_MPU_VALUES_TO_SEND 6
@@ -79,7 +79,7 @@
 #define MA_LENGTH 8
 #define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
 
-constexpr uint16_t activeSoundThreshold = 12;  // 100;
+constexpr uint16_t activeSoundThreshold = 100;
 
 // When we haven't retrieved packets from the MPU6050's DMP's FIFO fast enough,
 // data corruption becomes likely even before the FIFO overflows.  We'll clear
