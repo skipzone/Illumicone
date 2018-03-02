@@ -59,6 +59,8 @@ class ParticlesPattern : public Pattern {
         double emitColorMeasmtHigh;
         double emitColorMeasmtLow;
         double emitColorMeasmtMultiplier;
+        double emitColorMeasmtRange;
+        double emitColorHueRange;
         bool emitColorUsePositionMeasmt;
         bool emitDirectionIsUp;
         int emitIntervalMeasmtHigh;
