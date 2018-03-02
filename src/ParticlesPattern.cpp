@@ -150,6 +150,8 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
         }
         logMsg(LOG_INFO, name + " emitColorMeasmtHigh=" + to_string(emitColorMeasmtHigh));
 
+        emitColorMeasmtRange = emitColorMeasmtHigh - emitColorMeasmtLow;
+
         if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorLow", hsvStr, emitColorLow, errMsgSuffix)) {
             return false;
         }
@@ -161,12 +163,16 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
         }
         logMsg(LOG_INFO, name + " emitColorHigh=" + hsvStr);
 
+        // Setting the high and low colors to the same value
+        // means that we should use the entire color wheel.
         if (emitColorHigh == emitColorLow) {
             emitColorLow.h = 0;
             emitColorHigh.h = 255;
         }
         logMsg(LOG_INFO, name + " emitColorLow.h=" + to_string(emitColorLow.h));
         logMsg(LOG_INFO, name + " emitColorHigh.h=" + to_string(emitColorHigh.h));
+
+        emitColorHueRange = emitColorHigh.h - emitColorLow.h;
 
         if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtMultiplier", emitColorMeasmtMultiplier, errMsgSuffix)) {
             return false;
@@ -258,17 +264,20 @@ bool ParticlesPattern::update()
         emitColorMeasmt = std::min(emitColorMeasmt, emitColorMeasmtHigh);
         emitColorMeasmt = std::max(emitColorMeasmt, emitColorMeasmtLow);
 
-        double emitColorMeasmtRange = emitColorMeasmtHigh - emitColorMeasmtLow;
-        double emitColorRange = emitColorHigh.h - emitColorLow.h;
-        double emitColorHue =
-            emitColorRange * (emitColorMeasmt - emitColorMeasmtLow) / emitColorMeasmtRange + emitColorLow.h;
-        logMsg(LOG_DEBUG,
-            "emitColorLow.h=" + to_string(emitColorLow.h)
-            + ", emitColorHigh.h=" + to_string(emitColorHigh.h)
-            + ", emitColorMeasmt=" + to_string(emitColorMeasmt)
-            + ", emitColorHue=" + to_string(emitColorHue));
+        double emitColorHue = emitColorHueRange * (emitColorMeasmt - emitColorMeasmtLow) / emitColorMeasmtRange + emitColorLow.h;
+        //logMsg(LOG_DEBUG,
+        //    "emitColorLow.h=" + to_string(emitColorLow.h)
+        //    + ", emitColorHigh.h=" + to_string(emitColorHigh.h)
+        //    + ", emitColorMeasmt=" + to_string(emitColorMeasmt)
+        //    + ", emitColorHue=" + to_string(emitColorHue));
+
         CHSV hsvEmitColor((uint8_t) emitColorHue, 255, 255);
         hsv2rgb(hsvEmitColor, rgbEmitColor);
+        //string hsvEmitColorStr;
+        //hsvPixelToString(hsvEmitColor, hsvEmitColorStr);
+        //string rgbEmitColorStr;
+        //rgbPixelToString(rgbEmitColor, rgbEmitColorStr);
+        //logMsg(LOG_DEBUG, "hsvEmitColor=" + hsvEmitColorStr + "  rgbEmitColor=" + rgbEmitColorStr);
     }
 
     // Don't emit any particles if the widget has gone inactive.
