@@ -405,8 +405,8 @@
             "emitColorHigh" : "red",
             "emitColorMeasmtMultiplier" : 0.1,          // Rainstick reports position in tenths of a degree
             "emitColorIntegrateMeasmt" : false,
-            "emitIntervalMeasmtLow" : 600,
-            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalMeasmtLow" : 30,
+            "emitIntervalMeasmtHigh" : 780,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,
             "emitBatchSize" : 5,
