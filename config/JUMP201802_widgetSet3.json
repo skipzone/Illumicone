@@ -41,25 +41,21 @@
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
-        //{   "description" : "JUMP late night shutoff",
-        //    "startDateTime" : "22:00:00",
-        //    "endDateTime" : "06:00:00"
-        //},
-        //{   "description" : "JUMP daytime shutoff",
-        //    "startDateTime" : "07:30:00",
-        //    "endDateTime" : "18:00:00"
-        //},
-        {   "description" : "iLLUMIBRATE late night and daytime shutoff",
-            "startDateTime" : "23:00:00",
-            "endDateTime" : "17:30:00"
+        {   "description" : "JUMP late night shutoff",
+            "startDateTime" : "22:00:00",
+            "endDateTime" : "06:00:00"
+        },
+        {   "description" : "JUMP daytime shutoff",
+            "startDateTime" : "07:30:00",
+            "endDateTime" : "18:00:00"
         }
+        //{   "description" : "iLLUMIBRATE late night and daytime shutoff",
+        //    "startDateTime" : "23:00:00",
+        //    "endDateTime" : "17:30:00"
+        //}
     ],
 
     "quiescentPeriods" : [
-        {   "description" : "iLLUMIBRATE after-hours glow",
-            "startDateTime" : "2018-03-02 22:05:00",
-            "endDateTime" : "2018-03-03 07:30:00"
-        }
     ],
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
