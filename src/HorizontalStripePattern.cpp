@@ -165,7 +165,7 @@ bool HorizontalStripePattern::update()
         int lowerExtraWidth = 0;
         if (widthPos >= 2) {
             upperExtraWidth = widthPos / 2;
-            lowerExtraWidth = widthPos - upperExtraWidth;
+            lowerExtraWidth = widthPos - 1 - upperExtraWidth;
         }
         //logMsg(LOG_DEBUG, "upperExtraWidth=" + to_string(upperExtraWidth));
         //logMsg(LOG_DEBUG, "lowerExtraWidth=" + to_string(lowerExtraWidth));
