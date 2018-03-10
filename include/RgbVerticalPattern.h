@@ -56,8 +56,12 @@ class RgbVerticalPattern : public Pattern {
         std::shared_ptr<WidgetChannel> bluePositionChannel;
         std::shared_ptr<WidgetChannel> widthChannel;
 
-        int widthPos;
         int rPos;
         int gPos;
         int bPos;
+
+        unsigned int nextResetWidthMs;
+        bool resetWidth;
+        int widthPos;
+        int widthPosOffset;
 };
