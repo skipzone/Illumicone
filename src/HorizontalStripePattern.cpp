@@ -18,6 +18,7 @@
 #include "ConfigReader.h"
 #include "HorizontalStripePattern.h"
 #include "illumiconePixelUtility.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "Pattern.h"
 #include "Widget.h"
@@ -35,11 +36,6 @@ HorizontalStripePattern::HorizontalStripePattern(const std::string& name)
 
 bool HorizontalStripePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    widthPos = 1;
-    rPos = 0;
-    gPos = 0;
-    bPos = 0;
-
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["widthScaleFactor"].is_number()) {
@@ -96,6 +92,15 @@ bool HorizontalStripePattern::initPattern(ConfigReader& config, std::map<WidgetI
         }
     }
 
+    // ----- initialize object data -----
+
+    rPos = 0;
+    gPos = 0;
+    bPos = 0;
+    nextResetWidthMs = 0;
+    resetWidth = true;
+    widthPos = 1;
+
     return true;
 }
 
@@ -103,8 +108,8 @@ bool HorizontalStripePattern::initPattern(ConfigReader& config, std::map<WidgetI
 bool HorizontalStripePattern::update()
 {
     isActive = false;
-
     bool gotPositionOrWidthUpdate = false;
+    unsigned int nowMs = getNowMs();
 
     // Get any updated positions of the stripes.
     if (redPositionChannel != nullptr) {
@@ -136,23 +141,46 @@ bool HorizontalStripePattern::update()
     }
 
     // Get an updated stripe width, if available.
-    // TODO 6/25/2017 ross:  set width back to 1 when width channel has been inactive for widthResetTimeoutSeconds 
     if (widthChannel != nullptr) {
         if (widthChannel->getIsActive()) {
             isActive = true;
             if (widthChannel->getHasNewPositionMeasurement()) {
                 gotPositionOrWidthUpdate = true;
-                widthPos = widthChannel->getPosition() / widthScaleFactor;
+                int rawWidthPos = widthChannel->getPosition();
+                if (resetWidth) {
+                    resetWidth = false;
+                    widthPosOffset = rawWidthPos;
+                }
+                widthPos = (rawWidthPos - widthPosOffset) / widthScaleFactor;
                 if (maxCyclicalWidth != 0) {
                     // This is a triangle wave function where the period is
                     // (maxCyclicalWidth - 1) * 2 and the range is 1 to maxCyclicalWidth.
-                    widthPos = abs(abs(widthPos) % ((maxCyclicalWidth - 1) * 2) - (maxCyclicalWidth - 1)) + 1;
+                    // We left-shift the wave so that the width starts out at 1.
+                    widthPos = abs(abs(widthPos + (maxCyclicalWidth - 1)) % ((maxCyclicalWidth - 1) * 2) - (maxCyclicalWidth - 1)) + 1;
                 }
                 if (widthPos < 1) {
                     widthPos = 1;
                 }
-                //logMsg(LOG_DEBUG, "widthPos=" + to_string(widthPos));
+                //logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
+                //                  + ", widthPosOffset=" + to_string(widthPosOffset)
+                //                  + ", widthPos=" + to_string(widthPos));
             }
+        }
+    }
+
+    // Set flag to force width back to 1 when width channel
+    // has been inactive for widthResetTimeoutSeconds.
+    if (isActive) {
+        nextResetWidthMs = 0;
+    }
+    else {
+        if (nextResetWidthMs == 0) {
+            nextResetWidthMs = nowMs + widthResetTimeoutSeconds * 1000;
+        }
+        else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
+            //logMsg(LOG_DEBUG, name + ":  Resetting width.");
+            resetWidth = true;
+            widthPos = 1;
         }
     }
 

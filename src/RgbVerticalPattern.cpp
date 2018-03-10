@@ -164,9 +164,9 @@ bool RgbVerticalPattern::update()
                 if (widthPos < 1) {
                     widthPos = 1;
                 }
-                logMsg(LOG_DEBUG, "rawWidthPos=" + to_string(rawWidthPos)
-                                  + ", widthPosOffset=" + to_string(widthPosOffset)
-                                  + ", widthPos=" + to_string(widthPos));
+                //logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
+                //                  + ", widthPosOffset=" + to_string(widthPosOffset)
+                //                  + ", widthPos=" + to_string(widthPos));
             }
         }
     }
