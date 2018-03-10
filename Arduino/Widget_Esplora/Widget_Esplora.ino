@@ -41,7 +41,8 @@
  ************************/
 
 //#define WIDGET_RADIO_TESTER
-#define FOURPLAY_4_2
+//#define FOURPLAY_4_2
+#define FOURPLAY_4_3
 
 #if defined(WIDGET_RADIO_TESTER)
   #define WIDGET_ID 11  // FourPlay-4-3
@@ -55,7 +56,8 @@
 #elif defined(FOURPLAY_4_2)
   #define WIDGET_ID 10
   #define NUM_ENCODERS 4
-  #define VELOCITY_DIVISOR 2
+  #define VELOCITY_DIVISOR 1
+  #define ACTIVITY_THRESHOLD 2
   #define SAMPLE_INTERVAL_MS 5
   #define ACTIVE_TX_INTERVAL_MS 10L
   #define INACTIVE_TX_INTERVAL_MS 1000L
@@ -63,7 +65,19 @@
   #define SPIN_INACTIVITY_TIMEOUT_MS 500
   #define NUM_STEPS_PER_REV 20
   #define TX_PIPE_ADDRESS "1wdgt"
-  #define TX_RETRY_DELAY_MULTIPLIER 3
+  #define PAYLOAD_TYPE PositionVelocityPayload
+#elif defined(FOURPLAY_4_3)
+  #define WIDGET_ID 11
+  #define NUM_ENCODERS 4
+  #define VELOCITY_DIVISOR 1
+  #define ACTIVITY_THRESHOLD 2
+  #define SAMPLE_INTERVAL_MS 5
+  #define ACTIVE_TX_INTERVAL_MS 10L
+  #define INACTIVE_TX_INTERVAL_MS 1000L
+  #define SPIN_ACTIVITY_DETECT_MS 50
+  #define SPIN_INACTIVITY_TIMEOUT_MS 500
+  #define NUM_STEPS_PER_REV 20
+  #define TX_PIPE_ADDRESS "1wdgt"
   #define PAYLOAD_TYPE PositionVelocityPayload
 #else
   #error Unspecified or unrecognized widget simulation.
@@ -80,7 +94,7 @@
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
-// defined in widget configuration
+#define TX_RETRY_DELAY_MULTIPLIER 2
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
@@ -185,7 +199,7 @@ void doWidgetTester(uint32_t now)
 #endif
 
 
-#if defined(FOURPLAY_4_2)
+#if defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
 void doFourPlay4x(uint32_t now)
 {
 //  static int32_t lastEncoderValues[NUM_ENCODERS];
@@ -217,6 +231,9 @@ void doFourPlay4x(uint32_t now)
         case 3:
           rawVelocity = buttonPressed ? Esplora.readJoystickY() - centerJoystickY : 0;
           break;
+      }
+      if (abs(rawVelocity) <= ACTIVITY_THRESHOLD) {
+        rawVelocity = 0;
       }
       rawVelocitySum[wheelIdx] += rawVelocity;
 //#ifdef ENABLE_DEBUG_PRINT
@@ -303,7 +320,7 @@ void loop()
 
 #if defined(WIDGET_RADIO_TESTER)
   doWidgetTester(now);
-#elif defined(FOURPLAY_4_2)
+#elif defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
   doFourPlay4x(now);
 #endif
 }
