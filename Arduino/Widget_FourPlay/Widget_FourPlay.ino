@@ -117,8 +117,6 @@
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11, 13) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 5
-
 #if defined(SPINNAH)
 #define TX_RETRY_DELAY_MULTIPLIER 11
 #elif defined(FOURPLAY)
