@@ -178,10 +178,12 @@ bool RgbVerticalPattern::update()
     }
     else {
         if (nextResetWidthMs == 0) {
-            nextResetWidthMs = nowMs + widthResetTimeoutSeconds;
+            nextResetWidthMs = nowMs + widthResetTimeoutSeconds * 1000;
         }
-        else if ((int) (nowMs - nextResetWidthMs) >= 0) {
+        else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
+            logMsg(LOG_DEBUG, name + ":  Resetting width.");
             resetWidth = true;
+            widthPos = 1;
         }
     }
 
