@@ -42,7 +42,8 @@
 
 //#define WIDGET_RADIO_TESTER
 //#define FOURPLAY_4_2
-#define FOURPLAY_4_3
+//#define FOURPLAY_4_3
+#define PUMP
 
 #if defined(WIDGET_RADIO_TESTER)
   #define WIDGET_ID 11  // FourPlay-4-3
@@ -77,6 +78,11 @@
   #define SPIN_ACTIVITY_DETECT_MS 50
   #define SPIN_INACTIVITY_TIMEOUT_MS 500
   #define NUM_STEPS_PER_REV 20
+  #define TX_PIPE_ADDRESS "1wdgt"
+  #define PAYLOAD_TYPE PositionVelocityPayload
+#elif defined(PUMP)
+  #define WIDGET_ID 8
+  #define TX_INTERVAL_MS 250L
   #define TX_PIPE_ADDRESS "1wdgt"
   #define PAYLOAD_TYPE PositionVelocityPayload
 #else
@@ -314,6 +320,34 @@ void doFourPlay4x(uint32_t now)
 #endif
 
 
+#if defined(PUMP)
+void doPump(uint32_t now)
+{
+  static int32_t lastTxMs;
+
+  if (now - lastTxMs >= TX_INTERVAL_MS) {
+    lastTxMs = now;
+
+    payload.widgetHeader.channel = 0;
+    payload.widgetHeader.isActive = true;
+    payload.position = 1023 - Esplora.readSlider();   // seems that the API author holds the board upside down
+    payload.velocity = 1;
+    
+    if (!radio.write(&payload, sizeof(payload))) {
+#ifdef TX_FAILURE_LED_PIN      
+      digitalWrite(TX_FAILURE_LED_PIN, HIGH);
+#endif
+    }
+    else {
+#ifdef TX_FAILURE_LED_PIN
+      digitalWrite(TX_FAILURE_LED_PIN, LOW);
+#endif
+    }
+  }
+}
+#endif
+
+
 void loop()
 {
   uint32_t now = millis();
@@ -322,6 +356,8 @@ void loop()
   doWidgetTester(now);
 #elif defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
   doFourPlay4x(now);
+#elif defined(PUMP)
+  doPump(now);
 #endif
 }
 
