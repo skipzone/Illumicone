@@ -95,20 +95,25 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
     }
     logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
 
-    if (!ConfigReader::getIntValue(patternConfig, "fillStepIntervalLowMs", fillStepIntervalLowMs, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " fillStepIntervalLowMs=" + to_string(fillStepIntervalLowMs));
-
     if (!ConfigReader::getIntValue(patternConfig, "fillStepIntervalHighMs", fillStepIntervalHighMs, errMsgSuffix)) {
         return false;
     }
     logMsg(LOG_INFO, name + " fillStepIntervalHighMs=" + to_string(fillStepIntervalHighMs));
 
+    if (!ConfigReader::getIntValue(patternConfig, "fillStepIntervalLowMs", fillStepIntervalLowMs, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " fillStepIntervalLowMs=" + to_string(fillStepIntervalLowMs));
+
     if (!ConfigReader::getIntValue(patternConfig, "flashIntervalMs", flashIntervalMs, errMsgSuffix)) {
         return false;
     }
     logMsg(LOG_INFO, name + " flashIntervalMs=" + to_string(flashIntervalMs));
+
+    if (!ConfigReader::getIntValue(patternConfig, "burstDurationMs", burstDurationMs, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " burstDurationMs=" + to_string(burstDurationMs));
 
     if (!ConfigReader::getIntValue(patternConfig, "flashDurationMs", flashDurationMs, errMsgSuffix)) {
         return false;
@@ -193,16 +198,20 @@ bool FillAndBurstPattern::update()
             if (curMeasmt > flashThreshold) {
                 state = PatternState::startFlashing;
             }
-            else if (curMeasmt <= burstThreshold) {
+/*
+            else if (curMeasmt <= burstThreshold || (int) (nowMs - endBurstingMs) >= 0) {
                 priority = fillingPriority;
                 clearAllPixels();
                 state = PatternState::depressurizing;
             }
+*/
             else {
                 // Map the pressure measurement into the fill step interval millisecond range.
                 fillStepIntervalMs =
-                    fillStepIntervalRange * (curMeasmt - burstThreshold) / fillStepIntervalMeasmtRange
-                    + fillStepIntervalLowMs;
+                    fillStepIntervalHighMs
+                     - (fillStepIntervalRange * (curMeasmt - burstThreshold) / fillStepIntervalMeasmtRange);
+                fillStepIntervalMs = std::min(fillStepIntervalMs, fillStepIntervalHighMs);
+                fillStepIntervalMs = std::max(fillStepIntervalMs, fillStepIntervalLowMs);
             }
         }
         // If it isn't time to do the next step, just return that we're active.
@@ -230,9 +239,10 @@ bool FillAndBurstPattern::update()
 
             // Start bursting if we're past the maximum pressure.
             if (curMeasmt > burstThreshold) {
+                endBurstingMs = nowMs + burstDurationMs;
                 fillPosition = pixelsPerString;
+                fillStepIntervalMs = fillStepIntervalHighMs;
                 nextStepMs = nowMs;         // immediately
-                fillStepIntervalMs = fillStepIntervalLowMs;
                 state = PatternState::fillRed;
             }
             else {
@@ -341,7 +351,14 @@ bool FillAndBurstPattern::update()
             }
             nextStepMs = nowMs + fillStepIntervalMs;
             if (fillPosition <= 0) {
-                state = PatternState::fillRed;
+                if (curMeasmt <= burstThreshold || (int) (nowMs - endBurstingMs) >= 0) {
+                    priority = fillingPriority;
+                    clearAllPixels();
+                    state = PatternState::depressurizing;
+                }
+                else {
+                    state = PatternState::fillRed;
+                }
             }
             break;
 

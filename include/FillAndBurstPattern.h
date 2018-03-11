@@ -76,6 +76,7 @@ class FillAndBurstPattern : public Pattern
         int fillStepIntervalLowMs;
         int fillStepIntervalHighMs;
         int flashIntervalMs;
+        int burstDurationMs;
         int flashDurationMs;
 
         PatternState state;
@@ -84,6 +85,7 @@ class FillAndBurstPattern : public Pattern
         int fillStepIntervalMs;
         int fillStepIntervalMeasmtRange;
         int fillStepIntervalRange;
+        int endBurstingMs;
         int endFlashingMs;
 
         void clearAllPixels();
