@@ -55,7 +55,9 @@ class FillAndBurstPattern : public Pattern
             fillBlue,
             fillIndigo,
             fillViolet,
-            endBursting,
+            startFlashing,
+            flashOn,
+            flashOff,
             depressurizing
         };
 
@@ -68,13 +70,21 @@ class FillAndBurstPattern : public Pattern
         int burstingPriority;
         int lowPressureCutoff;
         int burstThreshold;
+        int flashThreshold;
         CRGB pressurizationColor;
         int fillStepSize;
-        unsigned int fillStepIntervalMs;
+        int fillStepIntervalLowMs;
+        int fillStepIntervalHighMs;
+        int flashIntervalMs;
+        int flashDurationMs;
 
         PatternState state;
         int fillPosition;
         unsigned int nextStepMs;
+        int fillStepIntervalMs;
+        int fillStepIntervalMeasmtRange;
+        int fillStepIntervalRange;
+        int endFlashingMs;
 
         void clearAllPixels();
 };
