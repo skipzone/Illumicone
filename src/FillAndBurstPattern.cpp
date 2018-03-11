@@ -96,14 +96,18 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
     }
     logMsg(LOG_INFO, name + " pressurizationColor=" + rgbStr);
 
-    if (!ConfigReader::getStringValue(patternConfig, "depressurizationColor", rgbStr, errMsgSuffix)) {
-        return false;
+    if (ConfigReader::getStringValue(patternConfig, "depressurizationColor", rgbStr)) {
+        if (!stringToRgbPixel(rgbStr, depressurizationColor)) {
+            logMsg(LOG_ERR, "depressurizationColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
+            return false;
+        }
+        displayDepressurization = true;
+        logMsg(LOG_INFO, name + " depressurizationColor=" + rgbStr);
     }
-    if (!stringToRgbPixel(rgbStr, depressurizationColor)) {
-        logMsg(LOG_ERR, "depressurizationColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
-        return false;
+    else {
+        displayDepressurization = false;
+        logMsg(LOG_INFO, name + " depressurization will not be displayed.");
     }
-    logMsg(LOG_INFO, name + " depressurizationColor=" + rgbStr);
 
     if (!patternConfig["fillStepSize"].is_number()) {
         logMsg(LOG_ERR, "fillStepSize not specified" + errMsgSuffix);
@@ -332,15 +336,20 @@ bool FillAndBurstPattern::update()
                         state = PatternState::pressurizing;
                     }
                     else {
-                        // Fill the cone from the bottom up to represent the current pressure.
-                        clearAllPixels();
-                        int fillLevel = curMeasmt >= burstThreshold
-                                      ? pixelsPerString
-                                      : pixelsPerString * (curMeasmt - lowPressureCutoff) / (burstThreshold - lowPressureCutoff);
-                        for (auto&& pixels:pixelArray) {
-                            for (unsigned int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
-                                pixels[i] = depressurizationColor;
+                        if (displayDepressurization) {
+                            // Fill the cone from the bottom up to represent the current pressure.
+                            clearAllPixels();
+                            int fillLevel = curMeasmt >= burstThreshold
+                                          ? pixelsPerString
+                                          : pixelsPerString * (curMeasmt - lowPressureCutoff) / (burstThreshold - lowPressureCutoff);
+                            for (auto&& pixels:pixelArray) {
+                                for (unsigned int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
+                                    pixels[i] = depressurizationColor;
+                                }
                             }
+                        }
+                        else {
+                            isActive = false;
                         }
                     }
                 }

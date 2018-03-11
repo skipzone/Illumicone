@@ -62,12 +62,13 @@ class FillAndBurstPattern : public Pattern
         std::shared_ptr<WidgetChannel> pressureChannel;
 
         // pattern configuration
+        CRGB depressurizationColor;
+        bool displayDepressurization;
         int fillingPriority;
         int burstingPriority;
         int lowPressureCutoff;
         int burstThreshold;
         CRGB pressurizationColor;
-        CRGB depressurizationColor;
         int fillStepSize;
         unsigned int fillStepIntervalMs;
 
