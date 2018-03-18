@@ -18,6 +18,8 @@
 #include <iostream>
 
 #include "ConfigReader.h"
+#include "illumiconePixelUtility.h"
+#include "illumiconeUtility.h"
 #include "log.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
@@ -36,10 +38,6 @@ RgbVerticalPattern::RgbVerticalPattern(const std::string& name)
 
 bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    rPos = 0;
-    gPos = 0;
-    bPos = 0;
-
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["widthScaleFactor"].is_number()) {
@@ -96,6 +94,15 @@ bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Wi
         }
     }
 
+    // ----- initialize object data -----
+
+    rPos = 0;
+    gPos = 0;
+    bPos = 0;
+    nextResetWidthMs = 0;
+    resetWidth = true;
+    widthPos = 1;
+
     return true;
 }
 
@@ -103,91 +110,135 @@ bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Wi
 bool RgbVerticalPattern::update()
 {
     isActive = false;
+    bool gotPositionOrWidthUpdate = false;
+    unsigned int nowMs = getNowMs();
 
-    // clear pixel data
-    for (auto&& pixels:pixelArray) {
-        for (auto&& pixel:pixels) {
-            pixel = CRGB::Black;
+    if (redPositionChannel != nullptr) {
+        if (redPositionChannel->getIsActive()) {
+            isActive = true;
+            if (redPositionChannel->getHasNewPositionMeasurement()) {
+                gotPositionOrWidthUpdate = true;
+                rPos = ((unsigned int) redPositionChannel->getPosition()) % numStrings;
+            }
         }
     }
 
-    // TODO 7/24/2017 ross:  We need to figure out the width first, then set the pixels.
-    //                       That will allow us to do blending more easily.
-
-    // TODO 6/13/2017 ross:  If we kept the previous position and didn't clear it above, maybe we would have to do
-    //                       this only if redPositionChannel->getHasNewPositionMeasurement() && redPositionChannel->getIsActive().
-    //                       We'd have to remember to clear the previous position if the channel went inactive, though.
-    //                       Same for green and blue.
-    if (redPositionChannel != nullptr && redPositionChannel->getIsActive()) {
-        isActive = true;
-        rPos = ((unsigned int) redPositionChannel->getPosition()) % numStrings;
-        for (auto&& pixel:pixelArray[rPos]) {
-            pixel.r = 255;
+    if (greenPositionChannel != nullptr) {
+        if (greenPositionChannel->getIsActive()) {
+            isActive = true;
+            if (greenPositionChannel->getHasNewPositionMeasurement()) {
+                gotPositionOrWidthUpdate = true;
+                gPos = ((unsigned int) greenPositionChannel->getPosition()) % numStrings;
+            }
         }
     }
 
-    if (greenPositionChannel != nullptr && greenPositionChannel->getIsActive()) {
-        isActive = true;
-        gPos = ((unsigned int) greenPositionChannel->getPosition()) % numStrings;
-        for (auto&& pixel:pixelArray[gPos]) {
-            pixel.g = 255;
+    if (bluePositionChannel != nullptr) {
+        if (bluePositionChannel->getIsActive()) {
+            isActive = true;
+            if (bluePositionChannel->getHasNewPositionMeasurement()) {
+                gotPositionOrWidthUpdate = true;
+                bPos = ((unsigned int) bluePositionChannel->getPosition()) % numStrings;
+            }
         }
     }
 
-    if (bluePositionChannel != nullptr && bluePositionChannel->getIsActive()) {
-        isActive = true;
-        bPos = ((unsigned int) bluePositionChannel->getPosition()) % numStrings;
-        for (auto&& pixel:pixelArray[bPos]) {
-            pixel.b = 255;
+    // Get an updated stripe width, if available.
+    if (widthChannel != nullptr) {
+        if (widthChannel->getIsActive()) {
+            isActive = true;
+            if (widthChannel->getHasNewPositionMeasurement()) {
+                gotPositionOrWidthUpdate = true;
+                int rawWidthPos = widthChannel->getPosition();
+                if (resetWidth) {
+                    resetWidth = false;
+                    widthPosOffset = rawWidthPos;
+                }
+                widthPos = (rawWidthPos - widthPosOffset) / widthScaleFactor;
+                if (maxCyclicalWidth != 0) {
+                    // This is a triangle wave function where the period is
+                    // (maxCyclicalWidth - 1) * 2 and the range is 1 to maxCyclicalWidth.
+                    // We left-shift the wave so that the width starts out at 1.
+                    widthPos = abs(abs(widthPos + (maxCyclicalWidth - 1)) % ((maxCyclicalWidth - 1) * 2) - (maxCyclicalWidth - 1)) + 1;
+                }
+                if (widthPos < 1) {
+                    widthPos = 1;
+                }
+                //logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
+                //                  + ", widthPosOffset=" + to_string(widthPosOffset)
+                //                  + ", widthPos=" + to_string(widthPos));
+            }
         }
     }
 
-    // TODO 6/25/2017 ross:  set width back to 1 when width channel has been inactive for widthResetTimeoutSeconds 
-
-    if (widthChannel != nullptr && widthChannel->getIsActive()) {
-
-        isActive = true;
-
-        int widthPos = widthChannel->getPosition() / widthScaleFactor;
-
-        if (maxCyclicalWidth != 0) {
-            // This is a triangle wave function where the period is (maxCyclicalWidth - 1) * 2 and the range is 1 to maxCyclicalWidth.
-            widthPos = abs(abs(widthPos) % ((maxCyclicalWidth - 1) * 2) - (maxCyclicalWidth - 1)) + 1;
+    // Set flag to force width back to 1 when width channel
+    // has been inactive for widthResetTimeoutSeconds.
+    if (isActive) {
+        nextResetWidthMs = 0;
+    }
+    else {
+        if (nextResetWidthMs == 0) {
+            nextResetWidthMs = nowMs + widthResetTimeoutSeconds * 1000;
         }
+        else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
+            logMsg(LOG_DEBUG, name + ":  Resetting width.");
+            resetWidth = true;
+            widthPos = 1;
+        }
+    }
 
+    // Draw the stripes.
+    if (gotPositionOrWidthUpdate) {
+
+        clearAllPixels(pixelArray);
+
+        int leftExtraWidth = 0;
+        int rightExtraWidth = 0;
         if (widthPos >= 2) {
+            leftExtraWidth = widthPos / 2;
+            rightExtraWidth = widthPos - 1 - leftExtraWidth;
+        }
 
-            int leftExtraWidth = widthPos / 2;
-            int rightExtraWidth = widthPos - leftExtraWidth;
+        int rWidthLowIndex = rPos - leftExtraWidth;
+        int rWidthHighIndex = rPos + rightExtraWidth;
 
-            int rWidthLowIndex = rPos - leftExtraWidth;
-            int rWidthHighIndex = rPos + rightExtraWidth;
+        int gWidthLowIndex = gPos - leftExtraWidth;
+        int gWidthHighIndex = gPos + rightExtraWidth;
 
-            int gWidthLowIndex = gPos - leftExtraWidth;
-            int gWidthHighIndex = gPos + rightExtraWidth;
+        int bWidthLowIndex = bPos - leftExtraWidth;
+        int bWidthHighIndex = bPos + rightExtraWidth;
 
-            int bWidthLowIndex = bPos - leftExtraWidth;
-            int bWidthHighIndex = bPos + rightExtraWidth;
+        //logMsg(LOG_DEBUG, name
+        //    + ":  leftExtraWidth=" + to_string(leftExtraWidth)
+        //    + ", rightExtraWidth=" + to_string(rightExtraWidth)
+        //    + ", rPos=" + to_string(rPos)
+        //    + ", rWidthLowIndex=" + to_string(rWidthLowIndex)
+        //    + ", rWidthHighIndex=" + to_string(rWidthHighIndex)
+        //    + ", gPos=" + to_string(gPos)
+        //    + ", gWidthLowIndex=" + to_string(gWidthLowIndex)
+        //    + ", gWidthHighIndex=" + to_string(gWidthHighIndex)
+        //    + ", bPos=" + to_string(bPos)
+        //    + ", bWidthLowIndex=" + to_string(bWidthLowIndex)
+        //    + ", bWidthHighIndex=" + to_string(bWidthHighIndex));
 
-            for (int i = rWidthLowIndex; i < rWidthHighIndex; ++i) {
-                int stringIndex = (i % numStrings + numStrings) % numStrings;
-                for (auto&& pixels:pixelArray[stringIndex]) {
-                    pixels.r = 255;
-                }
+        for (int i = rWidthLowIndex; i <= rWidthHighIndex; ++i) {
+            int stringIndex = (i % numStrings + numStrings) % numStrings;
+            for (auto&& pixels:pixelArray[stringIndex]) {
+                pixels.r = 255;
             }
+        }
 
-            for (int i = gWidthLowIndex; i < gWidthHighIndex; ++i) {
-                int stringIndex = (i % numStrings + numStrings) % numStrings;
-                for (auto&& pixels:pixelArray[stringIndex]) {
-                    pixels.g = 255;
-                }
+        for (int i = gWidthLowIndex; i <= gWidthHighIndex; ++i) {
+            int stringIndex = (i % numStrings + numStrings) % numStrings;
+            for (auto&& pixels:pixelArray[stringIndex]) {
+                pixels.g = 255;
             }
+        }
 
-            for (int i = bWidthLowIndex; i < bWidthHighIndex; ++i) {
-                int stringIndex = (i % numStrings + numStrings) % numStrings;
-                for (auto&& pixels:pixelArray[stringIndex]) {
-                    pixels.b = 255;
-                }
+        for (int i = bWidthLowIndex; i <= bWidthHighIndex; ++i) {
+            int stringIndex = (i % numStrings + numStrings) % numStrings;
+            for (auto&& pixels:pixelArray[stringIndex]) {
+                pixels.b = 255;
             }
         }
     }

@@ -18,11 +18,14 @@
 #pragma once
 
 #include <climits>
+#include <limits>
 #include <string>
 #include <vector>
 
+#include "illumiconePixelTypes.h"
 #include "illumiconeTypes.h"
 #include "json11.hpp"
+#include "pixeltypes.h"
 #include "WidgetId.h"
 
 
@@ -35,12 +38,35 @@ class ConfigReader
                                  bool& value,
                                  const std::string& errorMessageSuffix = "");
 
+        static bool getDoubleValue(const json11::Json& jsonObj,
+                                  const std::string& name,
+                                  double& value,
+                                  const std::string& errorMessageSuffix = "",
+                                  double minValue = std::numeric_limits<double>::lowest(),
+                                  double maxValue = std::numeric_limits<double>::max());
+
+        static bool getHsvPixelValue(const json11::Json& jsonObj,
+                                     const std::string& name,
+                                     std::string& rgbStr,
+                                     HsvPixel& value,
+                                     const std::string& errorMessageSuffix = "",
+                                     bool allowEmptyString = false,
+                                     const HsvPixel& defaultValue = HsvPixel(0, 0, 0));
+
         static bool getIntValue(const json11::Json& jsonObj,
                                 const std::string& name,
                                 int& value,
                                 const std::string& errorMessageSuffix = "",
                                 int minValue = INT_MIN,
                                 int maxValue = INT_MAX);
+
+        static bool getRgbPixelValue(const json11::Json& jsonObj,
+                                     const std::string& name,
+                                     std::string& rgbStr,
+                                     RgbPixel& value,
+                                     const std::string& errorMessageSuffix = "",
+                                     bool allowEmptyString = false,
+                                     const RgbPixel& defaultValue = CRGB::Black);
 
         static bool getStringValue(const json11::Json& jsonObj,
                                    const std::string& name,
@@ -71,7 +97,9 @@ class ConfigReader
         std::string getLockFilePath(const std::string& serviceName);
         int getNumberOfStrings();
         int getNumberOfPixelsPerString();
+        bool getUseTcpForOpcServer();
         std::string getOpcServerIpAddress();
+        unsigned int getOpcServerPortNumber();
         std::string getPatconIpAddress();
         std::string getPatternBlendMethod();
         unsigned int getPatternRunLoopSleepIntervalUs();

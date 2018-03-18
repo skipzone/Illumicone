@@ -27,54 +27,20 @@
     //"patconIpAddress" : "127.0.0.1",
     //"opcServerIpAddress": "127.0.0.1",
     //"opcServerIpAddress": "192.168.69.11",
-    "patconIpAddress" : "192.168.69.103",
+    "patconIpAddress" : "192.168.69.101",
     "opcServerIpAddress": "192.168.69.100",
     "opcServerPortNumber" : 7890,
     "useTcpForOpcServer" : false,
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
-/*
-        {   "description" : "test shutoff",
-            "startDateTime" : "2017-07-06 21:27:50",
-            "endDateTime" : "2017-07-06 21:27:59"
-        },
-        {   "description" : "test shutoff spanning midnight",
-            "startDateTime" : "2017-07-11 23:59:00",
-            "endDateTime" : "2017-07-12 00:01:00"
-        },
-        {   "description" : "daytime shutoff",
-            "startDateTime" : "06:00:00",
-            "endDateTime" : "21:15:00"
+        {   "description" : "Burning Man daytime shutoff",
+            "startDateTime" : "07:00:00",   // 06:00 PDT
+            "endDateTime" : "20:05:00"      // 19:05 PDT
         }
-*/
     ],
 
     "quiescentPeriods" : [
-/*
-        {   "description" : "test quiescent period",
-            "startDateTime" : "2017-07-06 21:40:40",
-            "endDateTime" : "2017-07-06 21:40:50"
-        },
-        {   "description" : "test daily quiescent period",
-            "startDateTime" : "21:40:00",
-            "endDateTime" : "21:40:10"
-        },
-        {   "description" : "test daily quiescent period spanning midnight",
-            "startDateTime" : "23:58:30",
-            "endDateTime" : "00:01:30"
-        },
-        {   "description" : "Element 11 Temple burn",
-            "startDateTime" : "2017-07-15 22:00:00",
-            "endDateTime" : "2017-07-15 23:00:00",
-            "idlePatternName" : "fire"
-        },
-        {   "description" : "Burning Man Temple burn",
-            "startDateTime" : "2017-09-03 20:00:00",
-            "endDateTime" : "2017-09-03 21:00:00",
-            "idlePatternName" : "fire"
-        }
-*/
     ],
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend

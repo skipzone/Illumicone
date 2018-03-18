@@ -26,37 +26,25 @@
 
     "patconIpAddress" : "127.0.0.1",
     "opcServerIpAddress": "192.168.69.100",
+    "opcServerPortNumber" : 7890,
+    "useTcpForOpcServer" : false,
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
-        {   "description" : "Idaho Decompression daytime shutoff",
-            "startDateTime" : "08:00:00",
-            "endDateTime" : "19:00:00"
-        }
     ],
 
     "quiescentPeriods" : [
     ],
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
-    "patternRunLoopSleepIntervalUs" : 5000,
+    "patternRunLoopSleepIntervalUs" : 2000,
 
     "radioPollingLoopSleepIntervalUs" : 1000,
 
     "widgets" : [
-        {   "name" : "spinnah",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
         {   "name" : "rainstick",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
-        {   "name" : "pump",
-            "enabled" : false,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay42",
@@ -92,7 +80,7 @@
                     "widgetName" : "fourPlay42",
                     "channelNumber" : 2,
                     "measurement" : "position"
-                }   //,
+                }//,
                 //{   "inputName" : "width",
                 //    "widgetName" : "fourPlay42",
                 //    "channelNumber" : 3,
@@ -123,7 +111,7 @@
                     "widgetName" : "fourPlay43",
                     "channelNumber" : 2,
                     "measurement" : "position"
-                }   //,
+                }//,
                 //{   "inputName" : "width",
                 //    "widgetName" : "fourPlay43",
                 //    "channelNumber" : 3,
@@ -131,7 +119,7 @@
                 //}
             ],
             "widthScaleFactor" : 3,             // effectively gear down a rotating widget
-            "maxCyclicalWidth" : 4,             // the maximum width when cyclical values are used
+            "maxCyclicalWidth" : 1,             // the maximum width when cyclical values are used
             "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
         {   "name" : "multicolorSparkle",
@@ -146,30 +134,10 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,
-            "densityScaledownFactor" : 1200,
+            "activationThreshold" : 10,
+            "densityScaledownFactor" : 1200,     // 1200 for FourPlay4x, 300 for spinnah
             "useRandomColors" : true,
             "sparkleChangeIntervalMs" : 50
-        },
-        {   "name" : "pumpFillAndBurst",
-            "enabled" : true,
-            "priority" : 9,
-            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-            "burstingPriority" : 1,
-            "patternClassName" : "FillAndBurstPattern",
-            "inputs" : [
-                {   "inputName" : "pressure",
-                    "widgetName" : "spinnah",
-                    "channelNumber" : 0,
-                    "measurement" : "velocity"
-                }
-            ],
-            "lowPressureCutoff" : 20,
-            "burstThreshold" : 400,
-            "pressurizationColor" : "96,0,0",
-            "depressurizationColor" : "32,64,0",
-            "fillStepSize" : 1,                 // the number of pixels (depth from bottom) to turn on with each fill step
-            "fillStepIntervalMs" : 20
         },
         {   "name" : "rain",
             "enabled" : true,
@@ -185,7 +153,7 @@
             ],
             "emitColor" : "0,64,192",
             "emitIntervalMeasmtLow" : 600,
-            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalMeasmtHigh" : 1020,    // make about 1.5 times max from widget for smoother operation near max
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 50,
             "emitBatchSize" : 5,
@@ -193,13 +161,13 @@
             "particleMoveIntervalMs" : 50
         },
         {   "name" : "spray",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 2,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
-                    "widgetName" : "fourPlay42",
+                    "widgetName" : "fourPlay43",
                     "channelNumber" : 3,
                     "measurement" : "velocity"
                 }

@@ -53,6 +53,7 @@ extern template void fillSolid(RgbConeStrings&, unsigned int, const RgbPixel&);
 void clearAllPixels(HsvConeStrings& coneStrings);
 void clearAllPixels(RgbConeStrings& coneStrings);
 
+void hsv2rgb(const HsvPixel& hsv, RgbPixel& rgb);
 //void hsv2rgb(const HsvConeStrings& coneStrings, std::vector<std::vector<CRGB>>& pixelArray);
 void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeStrings);
 

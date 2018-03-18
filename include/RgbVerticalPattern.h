@@ -59,4 +59,9 @@ class RgbVerticalPattern : public Pattern {
         int rPos;
         int gPos;
         int bPos;
+
+        unsigned int nextResetWidthMs;
+        bool resetWidth;
+        int widthPos;
+        int widthPosOffset;
 };

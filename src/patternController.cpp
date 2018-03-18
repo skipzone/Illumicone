@@ -84,10 +84,11 @@ static string patternBlendMethodStr;
 static PatternBlendMethod patternBlendMethod;
 static unsigned int patternRunLoopSleepIntervalUs;
 
+static bool useTcpForOpcServer;
 static struct sockaddr_in opcServerSockaddr;
 static int opcServerSocketFd;
 static uint8_t* opcBuffer;      // points to the buffer used for sending messages to the OPC server
-static size_t opcBufferSize;
+static ssize_t opcBufferSize;
 static uint8_t* opcData;        // points to the data portion of opcBuffer
 
 static map<WidgetId, Widget*> widgets;
@@ -96,47 +97,87 @@ static vector<PatternState*> patternStates;
 static HsvConeStrings hsvFinalFrame;
 static RgbConeStrings rgbFinalFrame;
 
-static bool gotReinitSignal;
+static volatile bool gotExitSignal;
+static volatile bool gotReinitSignal;
+static volatile bool gotToggleTestPatternSignal;
 
 
-void signalHandler(int signum)
+
+void handleReinitSignal(int signum)
 {
-    logMsg(LOG_INFO, "Received signal " + to_string(signum));
-    if (signum == SIGUSR1) {
-        gotReinitSignal = true;
-    }
+    gotReinitSignal = true;
+}
+
+
+void handleTestPatternSignal(int signum)
+{
+    gotToggleTestPatternSignal = true;
+}
+
+
+void handleExitSignal(int signum)
+{
+    gotExitSignal = true;
 }
 
 
 bool registerSignalHandlers()
 {
-    if (signal(SIGUSR1, signalHandler) == SIG_ERR) {
-        logMsg(LOG_ERR, "Unable to register handler for SIGUSR1.");
-        return false;
-    }
+	struct sigaction act;
+	memset(&act, 0, sizeof(act));
+
+	act.sa_handler = &handleReinitSignal;
+	if (sigaction(SIGUSR1, &act, NULL) < 0) {
+        logSysErr(LOG_ERR, "Unable to register re-init signal handler.", errno);
+		return false;
+	}
+
+	act.sa_handler = &handleTestPatternSignal;
+	if (sigaction(SIGUSR2, &act, NULL) < 0) {
+        logSysErr(LOG_ERR, "Unable to register test pattern signal handler.", errno);
+		return false;
+	}
+
+	act.sa_handler = &handleExitSignal;
+	if (   sigaction(SIGHUP, &act, NULL) < 0
+        || sigaction(SIGINT, &act, NULL) < 0
+        || sigaction(SIGPIPE, &act, NULL) < 0
+        || sigaction(SIGTERM, &act, NULL) < 0)
+    {
+        logSysErr(LOG_ERR, "Unable to register exit signal handler.", errno);
+		return false;
+	}
+
     return true;
 }
 
 
-bool openOpcServerConnection(const string& opcServerIpAddress)
+bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber)
 {
+    logMsg(LOG_INFO, "Connecting to OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
+
     opcServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (opcServerSocketFd == -1) {
+        logSysErr(LOG_ERR, "Failed to create socket for OPC server.", errno);
+        return false;
+    }
 
-    opcServerSockaddr.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
     opcServerSockaddr.sin_family = AF_INET;
-    opcServerSockaddr.sin_port = htons(7890);
+    opcServerSockaddr.sin_addr.s_addr = inet_addr(ipAddress.c_str());
+    opcServerSockaddr.sin_port = htons(portNumber);
 
-    logMsg(LOG_INFO, "Connecting to OPC server at " + opcServerIpAddress + "...");
-    if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) < 0) {
+    if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) == -1) {
         logSysErr(LOG_ERR, "Unable to connect to opc-server.", errno);
         return false;
     }
 
+    logMsg(LOG_INFO, "Connected.");
+
     return true;
 }
 
 
-bool closeOpcServerConnection()
+bool closeOpcServerTcpConnection()
 {
     logMsg(LOG_INFO, "Disconnecting from OPC server...");
     ///if (disconnectx(opcServerSocketFd, SAE_ASSOCID_ANY, SAE_CONNID_ANY) != 0) {
@@ -148,24 +189,77 @@ bool closeOpcServerConnection()
 }
 
 
-void dumpOpcBuffer()
+bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
 {
-    logMsg(LOG_DEBUG, "opcBuffer[0]: " + to_string(unsigned(opcBuffer[0])));
-    logMsg(LOG_DEBUG, "opcBuffer[1]: " + to_string(unsigned(opcBuffer[1])));
-    logMsg(LOG_DEBUG, "opcBuffer[2]: " + to_string(unsigned(opcBuffer[2])));
-    logMsg(LOG_DEBUG, "opcBuffer[3]: " + to_string(unsigned(opcBuffer[3])));
+    logMsg(LOG_INFO, "Creating and binding socket for OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
 
-    // Print just data for the first two strings.
-    for (size_t i = 0; i < 2 * numberOfPixelsPerString * 3; i++) {
-        logMsg(LOG_DEBUG, to_string(unsigned(opcData[i]))
-                + " " + to_string(unsigned(opcData[i+1]))
-                + " " + to_string(unsigned(opcData[i+2])));
+    memset(&opcServerSockaddr, 0, sizeof(struct sockaddr_in));
+
+    opcServerSockaddr.sin_family = AF_INET;
+    opcServerSockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    opcServerSockaddr.sin_port = htons(0);
+
+    if ((opcServerSocketFd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+        logSysErr(LOG_ERR, "Failed to create socket for OPC server.", errno);
+        return false;
+    }
+
+    if (::bind(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(struct sockaddr_in)) == -1) {
+        logSysErr(LOG_ERR, "bind failed for OPC server.", errno);
+        return false;
+    }
+
+    logMsg(LOG_INFO, "Setting address to " + ipAddress + ":" + to_string(portNumber) + ".");
+
+    inet_pton(AF_INET, ipAddress.c_str(), &opcServerSockaddr.sin_addr.s_addr);
+    opcServerSockaddr.sin_port = htons(portNumber);
+
+    return true;
+}
+
+
+bool closeUdpPortForOpcServer()
+{
+    // TODO 2/3/2018 ross:  make sure this implementation is correct
+    logMsg(LOG_INFO, "Closing UDP port for OPC server...");
+    if (close(opcServerSocketFd) != 0) {
+        logSysErr(LOG_ERR, "Unable to close UDP port for opc-server.", errno);
+        return false;
+    }
+    return true;
+}
+
+
+void dumpOpcBuffer(size_t numStringsToPrint)
+{
+    logMsg(LOG_DEBUG,
+        "opcBuffer header:  "
+        + to_string((int) opcBuffer[0]) + " "
+        + to_string((int) opcBuffer[1]) + " "
+        + to_string((int) opcBuffer[2]) + " "
+        + to_string((int) opcBuffer[3]));
+
+    if (numStringsToPrint > 0) {
+        for (size_t iPixel = 0; iPixel < numberOfPixelsPerString; ++iPixel) {
+            stringstream sstr;
+            sstr << setfill(' ') << setw(3) << iPixel << ":";
+            for (size_t iString = 0; iString < numStringsToPrint; ++iString) {
+                size_t pixelOffset = iString * numberOfPixelsPerString * 3 + iPixel * 3;
+                sstr << "  "
+                    << setfill(' ') << setw(3) << (int) opcData[pixelOffset] << ","
+                    << setfill(' ') << setw(3) << (int) opcData[pixelOffset + 1] << ","
+                    << setfill(' ') << setw(3) << (int) opcData[pixelOffset + 2];
+            }
+            logMsg(LOG_DEBUG, sstr.str());
+        }
     }
 }
 
 
-void sendOpcMessage()
+bool sendOpcMessage()
 {
+    // TODO 2/5/2018 ross:  Need to throttle the messaging so that things like turnOnSafetlyLights don't hammer opc-server.
+
     for (unsigned int col = 0; col < numberOfStrings; col++) {
         unsigned int colOffset = col * numberOfPixelsPerString * 3;
         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
@@ -176,12 +270,39 @@ void sendOpcMessage()
         }
     }
 
-    //dumpOpcBuffer(opcBuffer);
+    //dumpOpcBuffer(2);
 
-    // send to OPC server over network connection
-    //logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
-    send(opcServerSocketFd, opcBuffer, opcBufferSize, 0);
-    //logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
+    if (useTcpForOpcServer) {
+        //logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
+        if (send(opcServerSocketFd, opcBuffer, opcBufferSize, 0) == -1) {
+            logSysErr(LOG_ERR, "Failed to send message to OPC server via TCP.", errno);
+            return false;
+        }
+        //logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
+    }
+    else {
+        //logMsg(LOG_DEBUG, "sending message to OPC server via UDP...");
+        // TODO 2/3/2018 ross:  modify to not block if no message space is available to hold the message
+        ssize_t bytesSentCount = sendto(opcServerSocketFd,
+                                        opcBuffer,
+                                        opcBufferSize,
+                                        0,
+                                        (struct sockaddr *) &opcServerSockaddr,
+                                        sizeof(struct sockaddr_in));
+        if (bytesSentCount == -1) {
+            logSysErr(LOG_ERR, "Failed to send message to OPC server via UDP.", errno);
+            return false;
+        }
+        if (bytesSentCount != opcBufferSize) {
+            logMsg(LOG_ERR,
+                   "UPD payload size is " + to_string(opcBufferSize)
+                   + ", but " + to_string(bytesSentCount) + " bytes were sent to OPC server.");
+            return false;
+        }
+        //logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
+    }
+
+    return true;
 }
 
 
@@ -206,6 +327,55 @@ void turnOnSafetyLights()
 void setAllPixelsToQuiescentColor()
 {
     fillSolid(rgbFinalFrame, RgbPixel::Navy);
+    sendOpcMessage();
+}
+
+
+void displayTestPattern()
+{
+    // TODO 2/5/2018 ross:  get the colors from config
+    string areaIlluminationColorStr = "127,127,127";        // half-intensity white
+    string stringPosition1IndicatorColorStr = "0,255,0";    // full-intensity green
+    string stringPosition5IndicatorColorStr = "0,255,255";  // full-intensity cyan
+    string stringPosition10IndicatorColorStr = "255,0,255"; // full-intensity magenta
+    CRGB areaIlluminationColor;
+    CRGB stringPosition1IndicatorColor;
+    CRGB stringPosition5IndicatorColor;
+    CRGB stringPosition10IndicatorColor;
+    stringToRgbPixel(areaIlluminationColorStr, areaIlluminationColor);
+    stringToRgbPixel(stringPosition1IndicatorColorStr, stringPosition1IndicatorColor);
+    stringToRgbPixel(stringPosition5IndicatorColorStr, stringPosition5IndicatorColor);
+    stringToRgbPixel(stringPosition10IndicatorColorStr, stringPosition10IndicatorColor);
+
+    fillSolid(rgbFinalFrame, RgbPixel::Black);
+
+    // On each string and from the bottom up, turn on the quantity of pixels
+    // that corresponds to the string's position.  Also, turn on the top part of
+    // the cone for area illumination.
+    for (size_t iString = 0; iString < numberOfStrings; ++iString) {
+
+        // It is possible to have more strings than pixels per string (like,
+        // if we expand Mini-Cone from 12 to 24 strings).  So, we'll make the
+        // number of illuminated string position pixels wrap around to 1.
+        int numStringPositionPixels = iString % numberOfPixelsPerString + 1;
+
+        // The string position pixels are illuminated from the bottom up.
+        int iPixel = numberOfPixelsPerString - 1;
+        for (int i = 0; i < numStringPositionPixels; ++i) {
+            rgbFinalFrame[iString][iPixel]
+                = (i + 1) % 10 == 0 ? stringPosition10IndicatorColor
+                : (i + 1) % 5 == 0 ? stringPosition5IndicatorColor
+                : stringPosition1IndicatorColor;
+            --iPixel;
+        }
+
+        // Use the part of the cone above the string
+        // position indicators for area illumination.
+        for (iPixel = numberOfPixelsPerString - numberOfStrings - 1; iPixel >= 0; --iPixel) {
+            rgbFinalFrame[iString][iPixel] = areaIlluminationColor;
+        }
+    }
+
     sendOpcMessage();
 }
 
@@ -523,9 +693,17 @@ bool doInitialization()
         return false;
     }
 
-    // open socket, connect with opc-server
-    if (!openOpcServerConnection(config.getOpcServerIpAddress())) {
-        return false;
+    // Open communications with OPC server.
+    useTcpForOpcServer = config.getUseTcpForOpcServer();
+    if (useTcpForOpcServer) {
+        if (!openOpcServerTcpConnection(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
+            return false;
+        }
+    }
+    else {
+        if (!openUdpPortForOpcServer(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
+            return false;
+        }
     }
 
     initWidgets();
@@ -544,8 +722,15 @@ bool doTeardown()
     tearDownPatterns();
     tearDownWidgets();
 
-    if (!closeOpcServerConnection()) {
-        return false;
+    if (useTcpForOpcServer) {
+        if (!closeOpcServerTcpConnection()) {
+            return false;
+        }
+    }
+    else {
+        if (!closeUdpPortForOpcServer()) {
+            return false;
+        }
     }
 
     freeOpcBuffer();
@@ -576,6 +761,9 @@ void doPatterns()
         anyPatternIsActive |= patternState->wantsDisplay;
         minPriority = min(patternState->priority, minPriority);
         maxPriority = max(patternState->priority, maxPriority);
+        //logMsg(LOG_DEBUG, patternState->pattern->getName() + ":  priority=" + to_string(patternState->priority)
+        //                  + ", opacity=" + to_string(patternState->pattern->opacity)
+        //                  + ", amountOfOverlay=" + to_string(patternState->amountOfOverlay));
     }
 
     clearAllPixels(rgbFinalFrame);
@@ -755,6 +943,7 @@ int main(int argc, char **argv)
     if (!doInitialization()) {
         return(EXIT_FAILURE);
     }
+    bool displayingTestPattern = false;
     time_t lastPeriodCheckTime = 0;
     bool inPeriod = false;
     string lastPeriodDesc = "";
@@ -774,9 +963,12 @@ int main(int argc, char **argv)
 */
 
     // ----- run loop -----
-    while (true) {
+    while (!gotExitSignal) {
+
+        usleep(patternRunLoopSleepIntervalUs);
 
         if (gotReinitSignal) {
+            gotReinitSignal = false;
             logMsg(LOG_INFO, "---------- Reinitializing... ----------");
             turnOnSafetyLights();
             if (!doTeardown()) {
@@ -789,16 +981,27 @@ int main(int argc, char **argv)
             if (!readConfig() || !doInitialization()) {
                 return(EXIT_FAILURE);
             }
+            displayingTestPattern = false;
             lastPeriodCheckTime = 0;
             inPeriod = false;
             lastPeriodDesc = "";
-            gotReinitSignal = false;
+        }
+
+        if (gotToggleTestPatternSignal) {
+            gotToggleTestPatternSignal = false;
+            displayingTestPattern = !displayingTestPattern;
+            logMsg(LOG_INFO, string("Turning test pattern ") + (displayingTestPattern ? "on." : "off."));
         }
 
         // Give the widgets a chance to update their simulated measurements.
         //logMsg(LOG_DEBUG, "Updating simulated measurements.");
         for (auto&& widget : widgets) {
             widget.second->updateSimulatedMeasurements();
+        }
+
+        if (displayingTestPattern) {
+            displayTestPattern();
+            continue;
         }
 
         // Once per second, check if we're in a schedule period.
@@ -834,11 +1037,13 @@ int main(int argc, char **argv)
         if (!inPeriod) {
             doPatterns();
         }
-
-        usleep(patternRunLoopSleepIntervalUs);
     }
 
-    // We should never get here, but if we do, something went wrong.
-    return EXIT_FAILURE;
+    logMsg(LOG_INFO, "---------- Exiting... ----------");
+    turnOnSafetyLights();
+    if (!doTeardown()) {
+        return(EXIT_FAILURE);
+    }
+    return EXIT_SUCCESS;
 }
 

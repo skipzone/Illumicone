@@ -22,7 +22,7 @@
 #include <sstream>
 
 #include "ConfigReader.h"
-#include "illumiconeTypes.h"
+#include "illumiconePixelUtility.h"
 #include "log.h"
 
 using namespace std;
@@ -45,6 +45,66 @@ bool ConfigReader::getBoolValue(const json11::Json& jsonObj,
 }
 
 
+bool ConfigReader::getDoubleValue(const json11::Json& jsonObj,
+                                  const std::string& name,
+                                  double& value,
+                                  const std::string& errorMessageSuffix,
+                                  double minValue,
+                                  double maxValue)
+{
+    if (!jsonObj[name].is_number()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].number_value();
+    if (value < minValue || value > maxValue) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
+                                    const std::string& name,
+                                    std::string& rgbStr,
+                                    HsvPixel& value,
+                                    const std::string& errorMessageSuffix,
+                                    bool allowEmptyString,
+                                    const HsvPixel& defaultValue)
+{
+    if (!jsonObj[name].is_string()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+        }
+        return false;
+    }
+    rgbStr = jsonObj[name].string_value();
+    if (rgbStr.empty()) {
+        if (!allowEmptyString) {
+            if (!errorMessageSuffix.empty()) {
+                logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+            }
+            return false;
+        }
+        value = defaultValue;
+        return true;
+    }
+    if (!stringToHsvPixel(rgbStr, value)) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not a valid HSV color" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
 bool ConfigReader::getIntValue(const json11::Json& jsonObj,
                                const std::string& name,
                                int& value,
@@ -54,7 +114,7 @@ bool ConfigReader::getIntValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
@@ -63,6 +123,41 @@ bool ConfigReader::getIntValue(const json11::Json& jsonObj,
         if (!errorMessageSuffix.empty()) {
             logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
+                                    const std::string& name,
+                                    std::string& rgbStr,
+                                    RgbPixel& value,
+                                    const std::string& errorMessageSuffix,
+                                    bool allowEmptyString,
+                                    const RgbPixel& defaultValue)
+{
+    if (!jsonObj[name].is_string()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+        }
+        return false;
+    }
+    rgbStr = jsonObj[name].string_value();
+    if (rgbStr.empty()) {
+        if (!allowEmptyString) {
+            if (!errorMessageSuffix.empty()) {
+                logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+            }
+            return false;
+        }
+        value = defaultValue;
+        return true;
+    }
+    if (!stringToRgbPixel(rgbStr, value)) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not a valid RGB color" + errorMessageSuffix);
         }
         return false;
     }
@@ -102,7 +197,7 @@ bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not an integer" + errorMessageSuffix);
+            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
@@ -201,53 +296,64 @@ std::string ConfigReader::getLockFilePath(const string& serviceName)
 
 int ConfigReader::getNumberOfStrings()
 {
-    return configObj["numberOfStrings"].int_value();
+    int val;
+    return getIntValue(configObj, "numberOfStrings", val, ".", 1, 48) ? val : 0;
 }
 
 
 int ConfigReader::getNumberOfPixelsPerString()
 {
-    return configObj["numberOfPixelsPerString"].int_value();
+    int val;
+    return getIntValue(configObj, "numberOfPixelsPerString", val, ".", 1, 2048) ? val : 0;
+}
+
+
+bool ConfigReader::getUseTcpForOpcServer()
+{
+    bool val;
+    return getBoolValue(configObj, "useTcpForOpcServer", val, ".") ? val : false;
 }
 
 
 string ConfigReader::getOpcServerIpAddress()
 {
-    return configObj["opcServerIpAddress"].string_value();
+    string val;
+    return getStringValue(configObj, "opcServerIpAddress", val, ".") ? val : "";
+}
+
+
+unsigned int ConfigReader::getOpcServerPortNumber()
+{
+    unsigned int val;
+    return getUnsignedIntValue(configObj, "opcServerPortNumber", val, ".", 1024, 65535) ? val : 0;
 }
 
 
 string ConfigReader::getPatconIpAddress()
 {
-    if (!configObj["patconIpAddress"].is_string()) {
-        logMsg(LOG_ERR, "patconIpAddress missing from configuration.");
-        return "";
-    }
-    return configObj["patconIpAddress"].string_value();
+    string val;
+    return getStringValue(configObj, "patconIpAddress", val, ".") ? val : "";
 }
 
 
 string ConfigReader::getPatternBlendMethod()
 {
-    if (!configObj["patternBlendMethod"].is_string()) {
-        logMsg(LOG_ERR, "patternBlendMethod missing from configuration.");
-        return "";
-    }
-    return configObj["patternBlendMethod"].string_value();
+    string val;
+    return getStringValue(configObj, "patternBlendMethod", val, ".") ? val : "";
 }
 
 
 unsigned int ConfigReader::getPatternRunLoopSleepIntervalUs()
 {
     unsigned int val;
-    return  getUnsignedIntValue(configObj, "patternRunLoopSleepIntervalUs", val, ".", 1) ? val : 0;
+    return getUnsignedIntValue(configObj, "patternRunLoopSleepIntervalUs", val, ".", 1) ? val : 0;
 }
 
 
 unsigned int ConfigReader::getRadioPollingLoopSleepIntervalUs()
 {
     unsigned int val;
-    return  getUnsignedIntValue(configObj, "radioPollingLoopSleepIntervalUs", val, ".", 1) ? val : 0;
+    return getUnsignedIntValue(configObj, "radioPollingLoopSleepIntervalUs", val, ".", 1) ? val : 0;
 }
 
 
@@ -325,11 +431,8 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
 
 int ConfigReader::getWidgetPortNumberBase()
 {
-    if (!configObj["widgetPortNumberBase"].is_number()) {
-        logMsg(LOG_ERR, "widgetPortNumberBase missing from configuration.");
-        return 0;
-    }
-    return configObj["widgetPortNumberBase"].int_value();
+    unsigned int val;
+    return getUnsignedIntValue(configObj, "widgetPortNumberBase", val, ".", 1024, 65535) ? val : 0;
 }
 
 

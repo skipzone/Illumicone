@@ -47,6 +47,10 @@ void clearAllPixels(RgbConeStrings& coneStrings)
     fillSolid(coneStrings, transparent);
 }
 
+void hsv2rgb(const HsvPixel& hsv, RgbPixel& rgb)
+{
+    hsv2rgb_rainbow(hsv, rgb);
+}
 
 void hsv2rgb(const HsvConeStrings& hsvConeStrings, RgbConeStrings& rgbConeStrings)
 {

@@ -12,8 +12,8 @@
 	"enableLookupTable": true,
 	"lumCurvePower": 2.0000,
 	"whitePoint": {
-		"red": 1.0000,
+		"red": 0.7500,
 		"green": 1.0000,
-		"blue": 1.0000
+		"blue": 0.7500
 	}
 }

@@ -1,5 +1,305 @@
+2/3/2018 -- Set up ic-strdrv on a BeagleBone Green using Debian Wheezy
+======================================================================
+
+0.  Write the image to a 4 GB micro-SD card.
+
+    Download and uncompress this image (newer ones don't support uio_pruss,
+    which is needed by LEDscape to talk to the PRUs):
+
+        https://debian.beagleboard.org/images/bone-debian-7.11-lxde-4gb-armhf-2016-06-15-4gb.img.xz
+
+    If you are using macOS:
+
+        Insert the SD card (in an adapter) into the SD slot of your computer
+        or a USB SD adapter.
+
+        diskutil list
+
+        Look for what is the SD card.  Note the N in /dev/diskN.
+
+        diskutil unmountDisk /dev/diskN
+
+        Assuming the Wheezy image file is in the current working directory...
+
+        sudo dd bs=1m if=bone-debian-7.11-lxde-4gb-armhf-2016-06-15-4gb.img of=/dev/rdiskN
+
+        (The r in rdiskN is not a typo.  rdiskN is the raw device with which IO
+        is much, much faster.)
+        
+        If you're impatient and/or worried that nothing is happening, type
+        ctrl-T to get an update of how much dd has transferred.
+
+        diskutil unmountDisk /dev/diskN
+
+    If you are using Linux, you'll figure out the SD card device.  Then, use
+    dd as shown above.  If you're using Windows, well, you poor bastard.  Go
+    google how to write a disk image to an SD card.  Or, make your life easier:
+    Go get a MacBook Pro, preferrably an older one with an SD slot.  Or, at
+    least get a cheap laptop and put Linux on it.  You'll thank yourself later
+    when you don't have to deal with the hassle of trying to work in a POSIX
+    world using a massively non-standard system.
+
+
+1.  Update everything.
+
+    Boot from the micro-SD card, ssh to beaglebone.local, and log in as
+    debian/temppwd.
+
+    ssh debian@beaglebone.local
+    sudo apt-get update
+    sudo apt-get upgrade
+
+    Reboot.
+
+
+2.  Create user illumicone and add it to the sudo group.
+
+    sudo adduser illumicone
+    sudo adduser illumicone sudo
+
+
+3.  Change user debian's password to be the same as illumicone's.
+
+    passwd
+
+    Remove the "default username:password" line from /etc/issue and
+    /etc/issue.net.
+
+    log in as illumicone
+
+
+4.  Set up ssh keys.
+
+    on development system:  scp ~/.ssh/id_rsa.pub illumicone@beaglebone.local:myrsa.pub
+
+    mkdir .ssh
+    cd .ssh
+    ssh-keygen
+    mv ../myrsa.pub authorized_keys
+    chmod 600 authorized_keys
+
+
+5.  Set the host name to ic-strdrv.
+
+    Change all occurrences of "beaglebone" to "ic-strdrv" in /etc/hostname and
+    /etc/hosts.
+
+    Reboot.
+
+
+6.  Create .bash_aliases
+
+    on development system:  scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-strdrv.local:.bash_aliases
+
+
+7.  Set up time zone and NTP.
+
+    sudo apt-get install ntp
+
+    Add this above the existing server lines in /etc/ntp.conf:
+
+        # On Illumicone's LAN, ic-widpatcon has the RTC and is an NTP server.
+        server 192.168.69.103
+
+    sudo dpkg-reconfigure tzdata
+        America
+        Boise
+
+
+8.  Install required and useful packages.
+
+    sudo apt-get install psmisc git-flow
+
+    (psmisc gives us the killall utility.)
+
+
+9.  Set up the Illumicone project.
+
+    cd
+    mkdir devl
+    cd devl
+    git clone https://github.com/skipzone/Illumicone.git
+    cd Illumicone
+    git flow init
+        Take all defaults.
+    cp ~/devl/Illumicone/config/vimrc ~/.vimrc
+    git config --global core.editor "vim"
+
+
+10.  Disable HDMI.
+
+    The BeagleBone Green does not have HDMI, so this step should not be
+    necessary (per Yona Appletree, https://devhub.io/repos/Yona-Appletree-LEDscape).
+    For the record and in case a BBB is used instead, enable this line in
+    /boot/uEnv.txt to disable HDMI:
+
+        ##BeagleBone Black: HDMI (Audio/Video) disabled:
+        dtb=am335x-boneblack-emmc-overlay.dtb
+
+
+11.  Set up LEDscape.
+
+    Get Yona Appletree's fork.
+
+        cd ~/devl
+        git clone git://github.com/Yona-Appletree/LEDscape
+        cd LEDscape
+
+    The modifications to opc-server.c described below have already been done
+    to Illumicone/src/opc-server.c.  You can simply copy that file to
+    LEDscape.  The changes are described below for reference.  (Yeah, yeah, I
+    know.  Fork, fix, and pull request would be the right thing to do.)
+
+    Fix a bug in join_multicast_group_on_all_ifaces in opc-server.c by changing
+    this (starting on line 1781):
+
+        while ( cursor != NULL ) {
+            if ( cursor->ifa_addr->sa_family == AF_INET
+                && !(cursor->ifa_flags & IFF_LOOPBACK)
+
+    to this:
+
+        while ( cursor != NULL ) {
+            if ( cursor->ifa_addr != NULL   // ifa_addr can be null for some interfaces
+                && cursor->ifa_addr->sa_family == AF_INET
+                && !(cursor->ifa_flags & IFF_LOOPBACK)
+
+    While you're at it, fix the problem of not seeing opc-server messages
+    promptly in the system log by adding this fflush call after each printf
+    call (and after any mutex release but before any sleep) in render_thread:
+
+        fflush(stdout);
+
+    In Makefile, change line 33 from this:
+
+        -D_DEFAULT_SOURCE \
+
+    to this:
+
+        -D_BSD_SOURCE \
+
+    Why?  The bone-debian-7.11-lxde-4gb-armhf-2016-06-15-4gb image has an older
+    glibc.  Thanks to Ashoat for this solution.  See his/her comment here:
+    https://www.bountysource.com/issues/44236677-compilation-failure
+
+    sudo cp ~/devl/Illumicone/config/ledscape-config-*.json /etc/
+
+    If configuring for Illumicone (the big cone):
+
+        sudo ln -s /etc/ledscape-config-illumicone.json /etc/ledscape-config.json
+
+    If configuring for Mini-Cone:
+
+        sudo ln -s /etc/ledscape-config-minicone.json /etc/ledscape-config.json
+
+    make
+
+    sudo cp /boot/dtbs/$(uname -r)/am335x-boneblack.dtb{,.preledscape_bk}
+    sudo cp /boot/dtbs/$(uname -r)/am335x-bonegreen.dtb{,.preledscape_bk}
+    sudo cp devicetree/am335x-boneblack.dtb /boot/dtbs/$(uname -r)/
+    sudo cp devicetree/am335x-bonegreen.dtb /boot/dtbs/$(uname -r)/
+
+    sudo modprobe -v uio_pruss
+
+    reboot
+
+    Check:
+
+        lsmod | grep uio
+
+    Output should be:
+
+        uio_pruss               4066  0
+
+    Install the service.
+
+        sudo ./install-service.sh
+
+    Use these commands to stop and start the service:
+
+        sudo systemctl stop ledscape.service
+        sudo systemctl start ledscape.service
+
+    You can see if the service is running with this:
+
+        systemctl status ledscape.service
+
+    Output from the service (opc-server, actually) will appear in
+    /var/log/syslog and /var/log/daemon.log.  The messages will appear in
+    batches every 5-7 minutes if you didn't add the fflush calls as suggested
+    above.
+
+
+12.  Assign static IP address 192.168.69.100 for ic-strdrv on wired network.
+
+    Modify the eth0 section of /etc/network/interfaces as follows:
+
+        auto eth0
+        iface eth0 inet static
+            address 192.168.69.100
+            netmask 255.255.255.0
+            network 192.168.69.0   <-- not sure if this is needed
+            gateway 192.168.69.1
+
+    reboot
+
+
+13.  After you have determined that everything is working correctly, write the
+     image to the on-board flash.
+
+    Enable the following line in /boot/uEnv.txt:
+
+        ##enable Generic eMMC Flasher:
+        ##make sure, these tools are installed: dosfstools rsync
+        cmdline=init=/opt/scripts/tools/eMMC/init-eMMC-flasher-v3.sh
+
+    reboot
+
+    The 4 user LEDs will flash in succession while the image is being written.
+    When complete, the LEDs will be off, and the board will be powered down
+    automatically.  This can take up to ten minutes.
+
+    Removed the micro-SD card and reboot from the on-board flash.
+
+
+14.  Disable writing to the on-board flash.
+
+    THIS STEP IS IMPORTANT!  If you leave the SD card configured for writing
+    to the on-board flash, forget that you did, then attempt to boot from it
+    later, you will wipe out any work you have done to the system in the
+    on-board flash.  It sucks when that happens.
+
+    Boot the BeagleBone from the on-board flash (i.e., without the SD card
+    inserted).
+
+    Insert the SD card while the system is running.
+
+    sudo mkdir /media/card
+
+    sudo mount -v /dev/mmcblk1p1 /media/card
+
+    Comment out this line in /media/card/boot/uEnv.txt:
+
+        #cmdline=init=/opt/scripts/tools/eMMC/init-eMMC-flasher-v3.sh
+
+    sudo umount /media/card
+
+    Remove the SD card.
+
+
+================================================================================
+================================================================================
+
+
 9/24/2017 -- Set up ic-strdrv on a BeagleBone Green using Debian Jessie
 =======================================================================
+
+2/3/2018  This seemed like a good idea at the time, and it was a good exercise
+in learning how to enable uio_pruss.  Although Jessie can be made to work with
+LEDscape, there is a problem of certain pixels on all strings flickering.  The
+problem is most noticeable (and irritating) when all pixels are set to black.
+Finding and fixing the problem would be fun and instructive, but the easier
+path is to use Wheezy instead.
 
 0.  Write the image to a micro-SD card.
 
@@ -226,7 +526,7 @@
 
     sudo connmanctl services
     Note which service is ethernet_hexshit_cable.
-    sudo connmanctl config ethernet_hexshit_cable --ipv4 manual 192.168.69.101 255.255.255.0 192.168.69.1 --nameservers 192.168.69.1 8.8.8.8
+    sudo connmanctl config ethernet_hexshit_cable --ipv4 manual 192.168.69.100 255.255.255.0 192.168.69.1 --nameservers 192.168.69.1 8.8.8.8
   
     Your ssh connection will go away because the address change will be
     immediate.  So, it is best to do this step when ic-strdrv is on the
@@ -253,10 +553,15 @@
 
 
 ================================================================================
+================================================================================
 
 
 7/8/2017 - Set up ic-patcon with new jessie image
 =================================================
+
+2/3/2018  ic-patcon is no longer used.  It and ic-widcon have been replaced
+with ic-widpatcon on a Raspberry Pi 3.  The RPi3 has sufficient processing
+power to run both widgetRcvr and patternController.
 
 - Log in as user debian, password temppwd.
 
@@ -350,11 +655,18 @@
     /opt/scripts/tools/grow_partition.sh
 
 
+================================================================================
+================================================================================
+
+
+2/3/2018  The following procedure is obsolete.  It remains here for
+reference, especially for setting up WiFi on a BeagleBone.
 
 1/17/2016 (updated 6/21/2016)
 =========
 
-On a new BeagleBone Black that came with the 2015-03-01 image (Debian 4.6.3-14, 3.8.13-bone70) (using sudo for most things):
+On a new BeagleBone Black that came with the 2015-03-01 image (Debian 4.6.3-14,
+3.8.13-bone70) (using sudo for most things):
 
 - apt-get update
 
@@ -449,4 +761,8 @@ LEDscape Setup
 The osresearch branch specifies this command, which seems to be unnecessary
 for the Yona-Appletree branch:
 echo 'options uio_pruss extram_pool_sz=0x800000' | sudo tee -a /etc/modprobe.d/ledscape.conf
+
+
+================================================================================
+================================================================================
 

@@ -4,7 +4,7 @@
  *                                                               *
  * Platform:  Arduino Uno, Pro, Pro Mini                         *
  *                                                               *
- * by Ross Butler, August 2016                               )'( *
+ * by Ross Butler, August 2016, February 2018                )'( *
  *                                                               *
  *****************************************************************/
 
@@ -25,6 +25,8 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#define ENABLE_DEBUG_PRINT
+
 #include "illumiconeWidget.h"
 #include "printf.h"
 
@@ -33,12 +35,17 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 3
-#define NUM_CHANNELS 1
-#define TX_INTERVAL_MS 200L
-#define MIC_SIGNAL_PIN A3
 //#define TX_FAILURE_LED_PIN 8
-//#define ENABLE_DEBUG_PRINT
+
+constexpr uint8_t widgetId = 3;
+
+constexpr uint32_t activeTxIntervalMs = 200L;
+constexpr uint32_t inactiveTxIntervalMs = 2000L;  // should be a multiple of activeTxIntervalMs
+constexpr uint32_t soundSampleIntervalMs = 10;
+
+constexpr uint8_t numAudioInputPins = 3;
+constexpr uint8_t audioInputPins[numAudioInputPins] = {A1, A2, A3};
+constexpr uint16_t bellActiveThreshold[numAudioInputPins] = {100, 200, 200};
 
 
 /***************************************
@@ -66,7 +73,13 @@
 
 RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
-PositionVelocityPayload payload;
+static PositionVelocityPayload payload;
+
+static uint16_t minSoundSample[numAudioInputPins];
+static uint16_t maxSoundSample[numAudioInputPins];
+static uint16_t ppSoundSample[numAudioInputPins];
+static bool bellIsActive[numAudioInputPins];
+static bool bellWasActive[numAudioInputPins];
 
 
 /******************
@@ -81,52 +94,117 @@ void setup()
 #endif
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
-  
-  payload.widgetHeader.id = WIDGET_ID;
-  payload.widgetHeader.isActive = true;
-  payload.widgetHeader.channel = 0;
+
+  payload.widgetHeader.id = widgetId;
+
+  for (uint8_t i = 0; i < numAudioInputPins; ++i) {
+    minSoundSample[i] = UINT16_MAX;
+    maxSoundSample[i] = 0;
+  }
 }
 
 
-void loop() {
+void gatherSoundMeasurements()
+{
+  for (uint8_t inputIdx = 0; inputIdx < numAudioInputPins; ++inputIdx) {
+    uint16_t soundSample = analogRead(audioInputPins[inputIdx]);
+    if (soundSample < minSoundSample[inputIdx]) {
+      minSoundSample[inputIdx] = soundSample;
+    }
+    if (soundSample > maxSoundSample[inputIdx]) {
+      maxSoundSample[inputIdx] = soundSample;
+    }
+  }
+}
 
-  static uint16_t minSoundSample = UINT16_MAX;
-  static uint16_t maxSoundSample;
-//  static uint16_t numSamples;
-  static int32_t lastTxMs;
 
-  uint32_t now = millis();
-  if (now - lastTxMs >= TX_INTERVAL_MS) {
+uint8_t calculatePpSoundSamples()
+{
+  // Returns true if any bell's p-p value exceeds its active threshold.
 
-    uint16_t pp = maxSoundSample - minSoundSample;
+  bool anyBellIsActive = false;
 
-    payload.position = pp;
-    payload.velocity = 0;
+  for (uint8_t inputIdx = 0; inputIdx < numAudioInputPins; ++inputIdx) {
 
-    if (!radio.write(&payload, sizeof(payload))) {
-#ifdef TX_FAILURE_LED_PIN
-      digitalWrite(TX_FAILURE_LED_PIN, HIGH);
-#endif
+    ppSoundSample[inputIdx] = maxSoundSample[inputIdx] - minSoundSample[inputIdx];
+    minSoundSample[inputIdx] = UINT16_MAX;
+    maxSoundSample[inputIdx] = 0;
+
+    if (ppSoundSample[inputIdx] >= bellActiveThreshold[inputIdx]) {
+      bellIsActive[inputIdx] = true;
+      anyBellIsActive = true;
     }
     else {
-#ifdef TX_FAILURE_LED_PIN
-      digitalWrite(TX_FAILURE_LED_PIN, LOW);
-#endif
+      bellIsActive[inputIdx] = false;
     }
-    
-    minSoundSample = UINT16_MAX;
-    maxSoundSample = 0;
-//    numSamples = 0;
-    lastTxMs = now;
+
   }
 
-//  ++numSamples;
-  unsigned int soundSample = analogRead(MIC_SIGNAL_PIN);
-  if (soundSample < minSoundSample) {
-    minSoundSample = soundSample;
+  return anyBellIsActive;
+}
+
+
+void sendMeasurements(bool sendForActiveBells)
+{
+  for (uint8_t inputIdx = 0; inputIdx < numAudioInputPins; ++inputIdx) {
+    if (bellIsActive[inputIdx] == sendForActiveBells || bellWasActive[inputIdx]) {
+
+      // Remember if the bell is active so that we can send the first inactive
+      // message as soon as possible (i.e., not wait for the next inactive
+      // bell transmission).
+      bellWasActive[inputIdx] = bellIsActive[inputIdx];
+
+      payload.widgetHeader.channel = inputIdx;
+      payload.widgetHeader.isActive = bellIsActive[inputIdx];
+      payload.position = ppSoundSample[inputIdx];
+      payload.velocity = 0;
+
+      if (!radio.write(&payload, sizeof(payload))) {
+#ifdef TX_FAILURE_LED_PIN
+        digitalWrite(TX_FAILURE_LED_PIN, HIGH);
+#endif
+      }
+      else {
+#ifdef TX_FAILURE_LED_PIN
+        digitalWrite(TX_FAILURE_LED_PIN, LOW);
+#endif
+      }
+    }
   }
-  if (soundSample > maxSoundSample) {
-    maxSoundSample = soundSample;
+}
+
+
+void loop()
+{
+  static int32_t lastActiveTxMs;
+  static int32_t lastInactiveTxMs;
+  static int32_t lastSoundSampleMs;
+
+  uint32_t now = millis();
+
+  if (now - lastSoundSampleMs >= soundSampleIntervalMs) {
+    lastSoundSampleMs = now;
+    gatherSoundMeasurements();
+  }
+
+  if (now - lastActiveTxMs >= activeTxIntervalMs) {
+    lastActiveTxMs = now;
+
+    bool anyBellIsActive = calculatePpSoundSamples();
+
+    // When it is time to send messages for inactive bells, we send the messages
+    // for them before the active bells so that we don't double-send for a bell
+    // that has just gone inactive.
+    if (now - lastInactiveTxMs >= inactiveTxIntervalMs) {
+      lastInactiveTxMs = now;
+      if (!anyBellIsActive) {
+        sendMeasurements(false);
+      }
+    }
+
+    if (anyBellIsActive) {
+      sendMeasurements(true);
+    }
   }
 
 }
