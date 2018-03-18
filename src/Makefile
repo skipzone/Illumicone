@@ -40,13 +40,13 @@ $(PROGS): $(OBJS)
 # can use something like this if the implicit linking rule is not sufficient.
 #	$(CXX) $(LDFLAGS) $(LIBS) -o $@ $< $(LDLIBS)
 
-widgetRcvr: widgetRcvr.cpp ConfigReader.o illumiconeUtility.o json11.o log.o WidgetId.o
+widgetRcvr: widgetRcvr.cpp ConfigReader.o hsv2rgb.o illumiconeUtility.o illumiconePixelUtility.o json11.o log.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
 
-stringTester: stringTester.cpp json11.o log.o illumiconeUtility.o ConfigReader.o
+stringTester: stringTester.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
-jsonTester: jsonTester.cpp json11.o log.o illumiconeUtility.o ConfigReader.o WidgetId.o
+jsonTester: jsonTester.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 clean:

@@ -761,6 +761,9 @@ void doPatterns()
         anyPatternIsActive |= patternState->wantsDisplay;
         minPriority = min(patternState->priority, minPriority);
         maxPriority = max(patternState->priority, maxPriority);
+        //logMsg(LOG_DEBUG, patternState->pattern->getName() + ":  priority=" + to_string(patternState->priority)
+        //                  + ", opacity=" + to_string(patternState->pattern->opacity)
+        //                  + ", amountOfOverlay=" + to_string(patternState->amountOfOverlay));
     }
 
     clearAllPixels(rgbFinalFrame);

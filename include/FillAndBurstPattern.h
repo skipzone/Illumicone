@@ -55,25 +55,38 @@ class FillAndBurstPattern : public Pattern
             fillBlue,
             fillIndigo,
             fillViolet,
-            endBursting,
+            startFlashing,
+            flashOn,
+            flashOff,
             depressurizing
         };
 
         std::shared_ptr<WidgetChannel> pressureChannel;
 
         // pattern configuration
+        CRGB depressurizationColor;
+        bool displayDepressurization;
         int fillingPriority;
         int burstingPriority;
         int lowPressureCutoff;
         int burstThreshold;
+        int flashThreshold;
         CRGB pressurizationColor;
-        CRGB depressurizationColor;
         int fillStepSize;
-        unsigned int fillStepIntervalMs;
+        int fillStepIntervalLowMs;
+        int fillStepIntervalHighMs;
+        int flashIntervalMs;
+        int burstDurationMs;
+        int flashDurationMs;
 
         PatternState state;
         int fillPosition;
         unsigned int nextStepMs;
+        int fillStepIntervalMs;
+        int fillStepIntervalMeasmtRange;
+        int fillStepIntervalRange;
+        int endBurstingMs;
+        int endFlashingMs;
 
         void clearAllPixels();
 };
