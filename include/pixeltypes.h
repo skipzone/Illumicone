@@ -650,6 +650,7 @@ struct CRGB {
         Blue=0x0000FF,
         BlueViolet=0x8A2BE2,
         Brown=0xA52A2A,
+        BsuOrange=0xFF6500,
         BurlyWood=0xDEB887,
         CadetBlue=0x5F9EA0,
         Chartreuse=0x7FFF00,
