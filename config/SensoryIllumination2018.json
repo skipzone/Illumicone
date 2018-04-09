@@ -43,7 +43,7 @@
     "shutoffPeriods" : [
         {   "description" : "Sensory Sat. afternoon & Sun. morning shutoff",
             "startDateTime" : "02:30:00",
-            "endDateTime" : "20:25:00"
+            "endDateTime" : "14:37:00"
         }
     ],
 
