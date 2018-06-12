@@ -39,11 +39,18 @@ class ConfigReader
                                  const std::string& errorMessageSuffix = "");
 
         static bool getDoubleValue(const json11::Json& jsonObj,
+                                   const std::string& name,
+                                   double& value,
+                                   const std::string& errorMessageSuffix = "",
+                                   double minValue = std::numeric_limits<double>::lowest(),
+                                   double maxValue = std::numeric_limits<double>::max());
+
+        static bool getFloatValue(const json11::Json& jsonObj,
                                   const std::string& name,
-                                  double& value,
+                                  float& value,
                                   const std::string& errorMessageSuffix = "",
-                                  double minValue = std::numeric_limits<double>::lowest(),
-                                  double maxValue = std::numeric_limits<double>::max());
+                                  float minValue = std::numeric_limits<float>::lowest(),
+                                  float maxValue = std::numeric_limits<float>::max());
 
         static bool getHsvPixelValue(const json11::Json& jsonObj,
                                      const std::string& name,
