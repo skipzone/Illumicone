@@ -1,0 +1,81 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "lockFilePaths" : {
+        "patternController" : "/tmp/patternController.lock",
+        "widgetRcvr" : "/tmp/widgetRcvr.lock"
+    },
+
+    "numberOfStrings" : 48,
+    "numberOfPixelsPerString" : 100,
+
+    "patconIpAddress" : "127.0.0.1",
+    "opcServerIpAddress": "127.0.0.1",
+    "opcServerPortNumber" : 7890,
+    "useTcpForOpcServer" : true,
+    "widgetPortNumberBase" : 4200,
+
+    "shutoffPeriods" : [
+    ],
+
+    "quiescentPeriods" : [
+    ],
+
+    "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+    "patternRunLoopSleepIntervalUs" : 500,
+
+    "radioPollingLoopSleepIntervalUs" : 1000,
+
+    "widgets" : [
+        {   "name" : "fourPlay42",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : true,
+            "autoInactiveMs" : 5000
+        }
+    ],
+
+    "patterns" : [
+        {   "name" : "spring",
+            "enabled" : true,
+            "priority" : 5,
+            "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SpiralPattern",
+            "inputs" : [
+                {   "inputName" : "rotation",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "width",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "flipSpring" : false,                                   // flip upside down; meaningful for a progressive spring
+            "spiralTightnessFactor" : 6.0,                          // the number of turns around the cone
+            "progressiveSpringFactor" : 3,                          // 1 for non-progressive, >= 3 kinda looks like a bedspring
+            "progressiveSpringCompressionResponseFactor" : -0.5,    // multiplied by comp fac and added to progressiveSpringFactor
+            "widthScaleFactor" : 1,                                 // effectively gear down a rotating widget
+            "minCyclicalWidth" : 10,                                // the minimum width when cyclical values are used
+            "maxCyclicalWidth" : 40,                                // the maximum width when cyclical values are used
+            "widthResetTimeoutSeconds" : 3                          // reset to min after period of width ch inactivity
+        }
+    ]
+
+}

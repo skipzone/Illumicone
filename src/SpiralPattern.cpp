@@ -74,6 +74,26 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
+    if (!ConfigReader::getBoolValue(patternConfig, "flipSpring", flipSpring, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " flipSpring=" + to_string(flipSpring));
+
+    if (!ConfigReader::getFloatValue(patternConfig, "spiralTightnessFactor", spiralTightnessFactor, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " spiralTightnessFactor=" + to_string(spiralTightnessFactor));
+
+    if (!ConfigReader::getFloatValue(patternConfig, "progressiveSpringFactor", progressiveSpringFactor, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " progressiveSpringFactor=" + to_string(progressiveSpringFactor));
+
+    if (!ConfigReader::getFloatValue(patternConfig, "progressiveSpringCompressionResponseFactor", progressiveSpringCompressionResponseFactor, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " progressiveSpringCompressionResponseFactor=" + to_string(progressiveSpringCompressionResponseFactor));
+
     if (!ConfigReader::getIntValue(patternConfig, "widthScaleFactor", widthScaleFactor, errMsgSuffix)) {
         return false;
     }
@@ -93,6 +113,9 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
         return false;
     }
     logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
+
+    widthTriangleAmplitude = maxCyclicalWidth - minCyclicalWidth;
+    widthTrianglePeriod = widthTriangleAmplitude * 2;
 
 
     // ----- initialize object data -----
@@ -135,17 +158,25 @@ bool SpiralPattern::update()
                 }
                 widthPos = (rawWidthPos - widthPosOffset) / widthScaleFactor;
                 if (maxCyclicalWidth != 0) {
-                    // This is a triangle wave function where the period is
-                    // (maxCyclicalWidth - 1) * 2 and the range is 1 to maxCyclicalWidth.
-                    // We left-shift the wave so that the width starts out at 1.
-                    widthPos = abs(abs(widthPos + (maxCyclicalWidth - 1)) % ((maxCyclicalWidth - 1) * 2) - (maxCyclicalWidth - 1)) + 1;
+                    // This is a triangle wave function where the height of the
+                    // triangle (peak-to-peak amplitude of the waveform) is
+                    // maxCyclicalWidth - minCyclicalWidth, and the width of the
+                    // base (waveform period) is twice the height.  The waveform
+                    // is offset from zero (DC offset) by minCyclicalWidth.
+                    // We left-shift the wave so that widthPos starts out at
+                    // minCyclicalWidth.
+                    int singleCycleX = abs(widthPos + widthTriangleAmplitude) % widthTrianglePeriod;
+                    logMsg(LOG_DEBUG, name + ":  widthTriangleAmplitude=" + to_string(widthTriangleAmplitude)
+                                      + ", widthTrianglePeriod=" + to_string(widthTrianglePeriod)
+                                      + ", singleCycleX=" + to_string(singleCycleX));
+                    widthPos = abs(singleCycleX - widthTriangleAmplitude) + minCyclicalWidth;
                 }
                 if (widthPos < 1) {
                     widthPos = 1;
                 }
-                //logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
-                //                  + ", widthPosOffset=" + to_string(widthPosOffset)
-                //                  + ", widthPos=" + to_string(widthPos));
+                logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
+                                  + ", widthPosOffset=" + to_string(widthPosOffset)
+                                  + ", widthPos=" + to_string(widthPos));
             }
         }
     }
@@ -173,18 +204,24 @@ bool SpiralPattern::update()
 
         clearAllPixels(pixelArray);
 
+        float compressionFactor = (float) widthPos / 10.0;      // 1 = full height, 2 = half height, 3 = 1/3 height, etc.
+        unsigned int heightInPixels = (1.0 / compressionFactor) * (float) pixelsPerString;
+        unsigned int startingPixelOffset = pixelsPerString - heightInPixels;
+
         // Range of y is [0..1].
         float xStep = 1.0 / numStrings;
         float x = 0;
-        for (;;) {
+        for (unsigned int i = 0; i < numStrings * heightInPixels; ++i) {
 
-            float y = std::powf(x / 4, 1.5);
+            float y = std::powf(x / spiralTightnessFactor,
+                                progressiveSpringFactor + progressiveSpringCompressionResponseFactor * compressionFactor);
             if (y > 1.0) {
                 break;
             }
 
             unsigned int stringIdx = (unsigned int) (x / xStep) % numStrings;
-            unsigned int pixelIdx = y * pixelsPerString;
+            unsigned int pixelIdx = (flipSpring ? (1.0 - y) : y) * heightInPixels + startingPixelOffset;
+            // TODO:  set the color
             //logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx));
             pixelArray[stringIdx][pixelIdx].r = 255;
 

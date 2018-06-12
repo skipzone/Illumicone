@@ -47,10 +47,17 @@ class SpiralPattern : public Pattern
 
     private:
 
+        bool flipSpring;
+        float spiralTightnessFactor;
+        float progressiveSpringFactor;
+        float progressiveSpringCompressionResponseFactor;
+
         int widthScaleFactor;
         int maxCyclicalWidth;
         int minCyclicalWidth;
         int widthResetTimeoutSeconds;
+        int widthTriangleAmplitude;
+        int widthTrianglePeriod;
 
         std::shared_ptr<WidgetChannel> rotationChannel;
         std::shared_ptr<WidgetChannel> widthChannel;
@@ -60,3 +67,4 @@ class SpiralPattern : public Pattern
         int widthPos;
         int widthPosOffset;
 };
+
