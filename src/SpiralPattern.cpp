@@ -48,7 +48,10 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     for (auto&& channelConfig : channelConfigs) {
 
-        if (channelConfig.inputName == "rotation") {
+        if (channelConfig.inputName == "compression") {
+            compressionChannel = channelConfig.widgetChannel;
+        }
+        else if (channelConfig.inputName == "rotation") {
             rotationChannel = channelConfig.widgetChannel;
         }
         else if (channelConfig.inputName == "width") {
@@ -74,6 +77,8 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
+    // -- spiral --
+
     if (!ConfigReader::getBoolValue(patternConfig, "flipSpring", flipSpring, errMsgSuffix)) {
         return false;
     }
@@ -93,6 +98,38 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
         return false;
     }
     logMsg(LOG_INFO, name + " progressiveSpringCompressionResponseFactor=" + to_string(progressiveSpringCompressionResponseFactor));
+
+    // -- compression --
+
+    if (!ConfigReader::getIntValue(patternConfig, "compressionScaleFactor", compressionScaleFactor, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " compressionScaleFactor=" + to_string(compressionScaleFactor));
+
+    if (!ConfigReader::getFloatValue(patternConfig, "compressionDivisor", compressionDivisor, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " compressionDivisor=" + to_string(compressionDivisor));
+
+    if (!ConfigReader::getIntValue(patternConfig, "minCyclicalCompression", minCyclicalCompression, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " minCyclicalCompression=" + to_string(minCyclicalCompression));
+
+    if (!ConfigReader::getIntValue(patternConfig, "maxCyclicalCompression", maxCyclicalCompression, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " maxCyclicalCompression=" + to_string(maxCyclicalCompression));
+
+    if (!ConfigReader::getIntValue(patternConfig, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " compressionResetTimeoutSeconds=" + to_string(compressionResetTimeoutSeconds));
+
+    compressionTriangleAmplitude = maxCyclicalCompression - minCyclicalCompression;
+    compressionTrianglePeriod = compressionTriangleAmplitude * 2;
+
+    // -- width --
 
     if (!ConfigReader::getIntValue(patternConfig, "widthScaleFactor", widthScaleFactor, errMsgSuffix)) {
         return false;
@@ -120,6 +157,9 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     // ----- initialize object data -----
 
+    nextResetCompressionMs = 0;
+    resetCompression = true;
+    compressionPos = 1;
     nextResetWidthMs = 0;
     resetWidth = true;
     widthPos = 1;
@@ -131,7 +171,7 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 bool SpiralPattern::update()
 {
     isActive = true;    //false;
-    bool gotPositionOrWidthUpdate = true;   //false;
+    bool gotUpdateFromWidget = true;   //false;
     unsigned int nowMs = getNowMs();
 
 //    // Get any updated rotation.
@@ -139,18 +179,55 @@ bool SpiralPattern::update()
 //        if (rotationChannel->getIsActive()) {
 //            isActive = true;
 //            if (rotationChannel->getHasNewPositionMeasurement()) {
-//                gotPositionOrWidthUpdate = true;
+//                gotUpdateFromWidget = true;
 //                rPos = ((unsigned int) rotationChannel->getPosition()) % pixelsPerString;
 //            }
 //        }
 //    }
+
+    // TODO:  The next two blocks do the same thing but with different data.
+    //        Implement in one function.
+
+    // Get an updated compression, if available.
+    if (compressionChannel != nullptr) {
+        if (compressionChannel->getIsActive()) {
+            isActive = true;
+            if (compressionChannel->getHasNewPositionMeasurement()) {
+                gotUpdateFromWidget = true;
+                int rawCompressionPos = compressionChannel->getPosition();
+                if (resetCompression) {
+                    resetCompression = false;
+                    compressionPosOffset = rawCompressionPos;
+                }
+                compressionPos = (rawCompressionPos - compressionPosOffset) / compressionScaleFactor;
+                if (maxCyclicalCompression != 0) {
+                    // This is a triangle wave function where the height of the triangle (peak-to-peak
+                    // amplitude of the waveform) is maxCyclicalCompression - minCyclicalCompression,
+                    // and the width of the base (waveform period) is twice the height.   The waveform
+                    // is offset from zero (DC offset) by minCyclicalCompression.  We left-shift the
+                    // wave so that compressionPos starts out at minCyclicalCompression.
+                    int singleCycleX = abs(compressionPos + compressionTriangleAmplitude) % compressionTrianglePeriod;
+                    //logMsg(LOG_DEBUG, name + ":  compressionTriangleAmplitude=" + to_string(compressionTriangleAmplitude)
+                    //                  + ", compressionTrianglePeriod=" + to_string(compressionTrianglePeriod)
+                    //                  + ", singleCycleX=" + to_string(singleCycleX));
+                    compressionPos = abs(singleCycleX - compressionTriangleAmplitude) + minCyclicalCompression;
+                }
+                if (compressionPos < 1) {
+                    compressionPos = 1;
+                }
+                //logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
+                //                  + ", compressionPosOffset=" + to_string(compressionPosOffset)
+                //                  + ", compressionPos=" + to_string(compressionPos));
+            }
+        }
+    }
 
     // Get an updated stripe width, if available.
     if (widthChannel != nullptr) {
         if (widthChannel->getIsActive()) {
             isActive = true;
             if (widthChannel->getHasNewPositionMeasurement()) {
-                gotPositionOrWidthUpdate = true;
+                gotUpdateFromWidget = true;
                 int rawWidthPos = widthChannel->getPosition();
                 if (resetWidth) {
                     resetWidth = false;
@@ -158,26 +235,43 @@ bool SpiralPattern::update()
                 }
                 widthPos = (rawWidthPos - widthPosOffset) / widthScaleFactor;
                 if (maxCyclicalWidth != 0) {
-                    // This is a triangle wave function where the height of the
-                    // triangle (peak-to-peak amplitude of the waveform) is
-                    // maxCyclicalWidth - minCyclicalWidth, and the width of the
-                    // base (waveform period) is twice the height.  The waveform
-                    // is offset from zero (DC offset) by minCyclicalWidth.
-                    // We left-shift the wave so that widthPos starts out at
-                    // minCyclicalWidth.
+                    // This is a triangle wave function where the height of the triangle (peak-to-peak
+                    // amplitude of the waveform) is maxCyclicalWidth - minCyclicalWidth, and the
+                    // width of the base (waveform period) is twice the height.  The waveform is
+                    // offset from zero (DC offset) by minCyclicalWidth.  We left-shift the wave so
+                    // that widthPos starts out at minCyclicalWidth.
                     int singleCycleX = abs(widthPos + widthTriangleAmplitude) % widthTrianglePeriod;
-                    logMsg(LOG_DEBUG, name + ":  widthTriangleAmplitude=" + to_string(widthTriangleAmplitude)
-                                      + ", widthTrianglePeriod=" + to_string(widthTrianglePeriod)
-                                      + ", singleCycleX=" + to_string(singleCycleX));
+                    //logMsg(LOG_DEBUG, name + ":  widthTriangleAmplitude=" + to_string(widthTriangleAmplitude)
+                    //                  + ", widthTrianglePeriod=" + to_string(widthTrianglePeriod)
+                    //                  + ", singleCycleX=" + to_string(singleCycleX));
                     widthPos = abs(singleCycleX - widthTriangleAmplitude) + minCyclicalWidth;
                 }
                 if (widthPos < 1) {
                     widthPos = 1;
                 }
-                logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
-                                  + ", widthPosOffset=" + to_string(widthPosOffset)
-                                  + ", widthPos=" + to_string(widthPos));
+                //logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
+                //                  + ", widthPosOffset=" + to_string(widthPosOffset)
+                //                  + ", widthPos=" + to_string(widthPos));
             }
+        }
+    }
+
+    // TODO:  The next two blocks do the same thing but with different data.
+    //        Implement in one function.
+
+    // Set flag to force compression back to 1 when compression channel
+    // has been inactive for compressionResetTimeoutSeconds.
+    if (isActive) {
+        nextResetCompressionMs = 0;
+    }
+    else {
+        if (nextResetCompressionMs == 0) {
+            nextResetCompressionMs = nowMs + compressionResetTimeoutSeconds * 1000;
+        }
+        else if (!resetCompression && (int) (nowMs - nextResetCompressionMs) >= 0) {
+            //logMsg(LOG_DEBUG, name + ":  Resetting compression.");
+            resetCompression = true;
+            compressionPos = 1;
         }
     }
 
@@ -200,11 +294,11 @@ bool SpiralPattern::update()
 
     // Draw.
 
-    if (gotPositionOrWidthUpdate) {
+    if (gotUpdateFromWidget) {
 
         clearAllPixels(pixelArray);
 
-        float compressionFactor = (float) widthPos / 10.0;      // 1 = full height, 2 = half height, 3 = 1/3 height, etc.
+        float compressionFactor = (float) compressionPos / compressionDivisor;      // 1 = full height, 2 = half height, etc.
         unsigned int heightInPixels = (1.0 / compressionFactor) * (float) pixelsPerString;
         unsigned int startingPixelOffset = pixelsPerString - heightInPixels;
 

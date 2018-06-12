@@ -52,6 +52,14 @@ class SpiralPattern : public Pattern
         float progressiveSpringFactor;
         float progressiveSpringCompressionResponseFactor;
 
+        int compressionScaleFactor;
+        float compressionDivisor;
+        int maxCyclicalCompression;
+        int minCyclicalCompression;
+        int compressionResetTimeoutSeconds;
+        int compressionTriangleAmplitude;
+        int compressionTrianglePeriod;
+
         int widthScaleFactor;
         int maxCyclicalWidth;
         int minCyclicalWidth;
@@ -60,7 +68,13 @@ class SpiralPattern : public Pattern
         int widthTrianglePeriod;
 
         std::shared_ptr<WidgetChannel> rotationChannel;
+        std::shared_ptr<WidgetChannel> compressionChannel;
         std::shared_ptr<WidgetChannel> widthChannel;
+
+        unsigned int nextResetCompressionMs;
+        bool resetCompression;
+        int compressionPos;
+        int compressionPosOffset;
 
         unsigned int nextResetWidthMs;
         bool resetWidth;
