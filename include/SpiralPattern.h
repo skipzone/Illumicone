@@ -56,6 +56,7 @@ class SpiralPattern : public Pattern
         float compressionDivisor;
         int maxCyclicalCompression;
         int minCyclicalCompression;
+        float compressionFactorOffset;
         int compressionResetTimeoutSeconds;
         int compressionTriangleAmplitude;
         int compressionTrianglePeriod;

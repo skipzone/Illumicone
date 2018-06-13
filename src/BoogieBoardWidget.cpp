@@ -29,7 +29,7 @@ using namespace std;
 BoogieBoardWidget::BoogieBoardWidget()
     : Widget(WidgetId::boogieBoard, 6)
 {
-    simulationUpdateIntervalMs[2] = 10;
+    //simulationUpdateIntervalMs[2] = 10;
 }
 
 

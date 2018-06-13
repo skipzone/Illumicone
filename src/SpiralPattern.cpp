@@ -121,6 +121,12 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
     }
     logMsg(LOG_INFO, name + " maxCyclicalCompression=" + to_string(maxCyclicalCompression));
 
+    if (!ConfigReader::getFloatValue(patternConfig, "compressionFactorOffset", compressionFactorOffset, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " compressionFactorOffset=" + to_string(compressionFactorOffset));
+
+
     if (!ConfigReader::getIntValue(patternConfig, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
         return false;
     }
@@ -159,7 +165,7 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     nextResetCompressionMs = 0;
     resetCompression = true;
-    compressionPos = 1;
+    compressionPos = compressionDivisor;
     nextResetWidthMs = 0;
     resetWidth = true;
     widthPos = 1;
@@ -170,8 +176,8 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
 bool SpiralPattern::update()
 {
-    isActive = true;    //false;
-    bool gotUpdateFromWidget = true;   //false;
+    isActive = false;
+    bool gotUpdateFromWidget = false;
     unsigned int nowMs = getNowMs();
 
 //    // Get any updated rotation.
@@ -212,12 +218,13 @@ bool SpiralPattern::update()
                     //                  + ", singleCycleX=" + to_string(singleCycleX));
                     compressionPos = abs(singleCycleX - compressionTriangleAmplitude) + minCyclicalCompression;
                 }
-                if (compressionPos < 1) {
-                    compressionPos = 1;
-                }
-                //logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
-                //                  + ", compressionPosOffset=" + to_string(compressionPosOffset)
-                //                  + ", compressionPos=" + to_string(compressionPos));
+// TODO:  make sure that the cyclical stuff isn't dependent on this check
+//                if (compressionPos < 1) {
+//                    compressionPos = 1;
+//                }
+                logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
+                                  + ", compressionPosOffset=" + to_string(compressionPosOffset)
+                                  + ", compressionPos=" + to_string(compressionPos));
             }
         }
     }
@@ -298,7 +305,7 @@ bool SpiralPattern::update()
 
         clearAllPixels(pixelArray);
 
-        float compressionFactor = (float) compressionPos / compressionDivisor;      // 1 = full height, 2 = half height, etc.
+        float compressionFactor = (float) compressionPos / compressionDivisor + compressionFactorOffset;
         unsigned int heightInPixels = (1.0 / compressionFactor) * (float) pixelsPerString;
         unsigned int startingPixelOffset = pixelsPerString - heightInPixels;
 
@@ -315,9 +322,13 @@ bool SpiralPattern::update()
 
             unsigned int stringIdx = (unsigned int) (x / xStep) % numStrings;
             unsigned int pixelIdx = (flipSpring ? (1.0 - y) : y) * heightInPixels + startingPixelOffset;
-            // TODO:  set the color
             //logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx));
-            pixelArray[stringIdx][pixelIdx].r = 255;
+            // When the spiral is stretched, make sure we're
+            // setting a pixel within the physical bounds.
+            if (pixelIdx < pixelsPerString) {
+                // TODO:  set the color
+                pixelArray[stringIdx][pixelIdx].r = 255;
+            }
 
             x += xStep;
         }

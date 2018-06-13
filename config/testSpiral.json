@@ -42,8 +42,13 @@
     "radioPollingLoopSleepIntervalUs" : 1000,
 
     "widgets" : [
-        {   "name" : "fourPlay42",
+        {   "name" : "boogieBoard",
             "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 10000
+        },
+        {   "name" : "fourPlay42",
+            "enabled" : false,
             "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         }
@@ -56,9 +61,14 @@
             "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SpiralPattern",
             "inputs" : [
+                //{   "inputName" : "compression",
+                //    "widgetName" : "fourPlay42",
+                //    "channelNumber" : 0,
+                //    "measurement" : "position"
+                //},
                 {   "inputName" : "compression",
-                    "widgetName" : "fourPlay42",
-                    "channelNumber" : 0,
+                    "widgetName" : "boogieBoard",
+                    "channelNumber" : 1,                            // pitch, degrees * 100, (-9000, 9000)
                     "measurement" : "position"
                 },
                 {   "inputName" : "rotation",
@@ -76,11 +86,21 @@
             "spiralTightnessFactor" : 6.0,                          // the number of turns around the cone
             "progressiveSpringFactor" : 3,                          // 1 for non-progressive, >= 3 kinda looks like a bedspring
             "progressiveSpringCompressionResponseFactor" : -0.5,    // multiplied by comp fac and added to progressiveSpringFactor
-            "compressionScaleFactor" : 1,                           // effectively gear down a rotating widget
-            "compressionDivisor" : 10.0,                            // so we can get fractional compression from int measurments
-            "minCyclicalCompression" : 10,                          // the minimum compression measmt when cyclical values are used
-            "maxCyclicalCompression" : 40,                          // the maximum compression measmt when cyclical values are used
+            // -- compression, fourPlay42 ch. 0 sim --
+            //"compressionScaleFactor" : 1,                           // effectively gear down a rotating widget
+            //"compressionDivisor" : 10.0,                            // so we can get fractional compression from int measurments
+            //"minCyclicalCompression" : 10,                          // the minimum compression measmt when cyclical values are used
+            //"maxCyclicalCompression" : 40,                          // the maximum compression measmt when cyclical values are used
+            //"compressionFactorOffset" : 0,                          // no measurement offset needed because of min cyclical val
+            //"compressionResetTimeoutSeconds" : 3,                   // reset to min after period of compression ch inactivity
+            // -- compression, boogieBoard ch. 1 (pitch) --
+            "compressionScaleFactor" : 1,                           // no scaledown needed
+            "compressionDivisor" : 3000.0,                          // full 90 degrees is compression factor 3 + 1 = 4
+            "minCyclicalCompression" : 0,                           // cyclical not used
+            "maxCyclicalCompression" : 0,                           // cyclical not used
+            "compressionFactorOffset" : 1,                          // a zero measurement means no compression
             "compressionResetTimeoutSeconds" : 3,                   // reset to min after period of compression ch inactivity
+            // -- width, fourPlay42 ch. 2 --
             "widthScaleFactor" : 1,                                 // effectively gear down a rotating widget
             "minCyclicalWidth" : 10,                                // the minimum width when cyclical values are used
             "maxCyclicalWidth" : 40,                                // the maximum width when cyclical values are used
