@@ -17,7 +17,8 @@
 
 
 #include "BellsWidget.h"
-//#include "BuckNorrisWidget.h"
+#include "BoogieBoardWidget.h"
+#include "ContortOMaticWidget.h"
 #include "EyeWidget.h"
 #include "FourPlay42Widget.h"
 #include "FourPlay43Widget.h"
@@ -27,7 +28,6 @@
 #include "SchroedersPlaythingWidget.h"
 #include "SpinnahWidget.h"
 #include "TriObeliskWidget.h"
-#include "ContortOMaticWidget.h"
 #include "widgetFactory.h"
 
 
@@ -45,6 +45,8 @@ Widget* widgetFactory(WidgetId id) {
             return new SchroedersPlaythingWidget;
         case WidgetId::triObelisk:
             return new TriObeliskWidget;
+        case WidgetId::boogieBoard:
+            return new BoogieBoardWidget;
         case WidgetId::pump:
             return new PumpWidget;
         case WidgetId::contortOMatic:
@@ -53,8 +55,6 @@ Widget* widgetFactory(WidgetId id) {
             return new FourPlay42Widget;
         case WidgetId::fourPlay43:
             return new FourPlay43Widget;
-//        case WidgetId::buckNorris:
-//            return new BuckNorrisWidget;
         default:
             logMsg(LOG_ERR, "Unsupported id passed to widgetFactory.");
             return nullptr;

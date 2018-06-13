@@ -35,6 +35,8 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
             return WidgetId::schroedersPlaything;
         case 6:
             return WidgetId::triObelisk;
+        case 7:
+            return WidgetId::boogieBoard;
         case 8:
             return WidgetId::pump;
         case 9:
@@ -43,8 +45,6 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
             return WidgetId::fourPlay42;
         case 11:
             return WidgetId::fourPlay43;
-        case 12:
-            return WidgetId::buckNorris;
         default:
             return WidgetId::invalid;
     }
@@ -69,6 +69,8 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 5;
         case WidgetId::triObelisk:
             return 6;
+        case WidgetId::boogieBoard:
+            return 7;
         case WidgetId::pump:
             return 8;
         case WidgetId::contortOMatic:
@@ -77,9 +79,6 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 10;
         case WidgetId::fourPlay43:
             return 11;
-        case WidgetId::buckNorris:
-            return 12;
-        case WidgetId::unassigned_7:
         case WidgetId::invalid:
             return 255;
     }
@@ -104,6 +103,8 @@ std::string widgetIdToString(WidgetId widgetId)
             return "schroedersPlaything";
         case WidgetId::triObelisk:
             return "triObelisk";
+        case WidgetId::boogieBoard:
+            return "boogieBoard";
         case WidgetId::pump:
             return "pump";
         case WidgetId::contortOMatic:
@@ -112,9 +113,6 @@ std::string widgetIdToString(WidgetId widgetId)
             return "fourPlay42";
         case WidgetId::fourPlay43:
             return "fourPlay43";
-        case WidgetId::buckNorris:
-            return "buckNorris";
-        case WidgetId::unassigned_7:
         case WidgetId::invalid:
             return "invalid";
     }
