@@ -95,7 +95,7 @@ constexpr uint8_t maxPacketsInFifoBeforeReset = 2;
 #define TX_PIPE_ADDRESS "2wdgt"
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
-// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
+// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11, 13) or 15 (the max).
 #define TX_RETRY_DELAY_MULTIPLIER 5
 
 // Max. retries can be 0 to 15.

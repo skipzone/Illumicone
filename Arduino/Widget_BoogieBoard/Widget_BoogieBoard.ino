@@ -49,7 +49,7 @@
 
 #define WIDGET_ID 7
 
-#define ACTIVE_TX_INTERVAL_MS 200L
+#define ACTIVE_TX_INTERVAL_MS 50L
 #define INACTIVE_TX_INTERVAL_MS 2000L       // should be a multiple of ACTIVE_TX_INTERVAL_MS
 
 //#define TX_FAILURE_LED_PIN 2
@@ -66,7 +66,8 @@
 #define MA_LENGTH 8
 #define NUM_MA_SETS (NUM_MPU_VALUES_TO_SEND)
 
-///constexpr uint16_t activeSoundThreshold = 100;
+constexpr uint16_t activeAccelerationThreshold = 10;
+constexpr uint32_t activityTimeoutMs = 5000L;
 
 // When we haven't retrieved packets from the MPU6050's DMP's FIFO fast enough,
 // data corruption becomes likely even before the FIFO overflows.  We'll clear
@@ -318,8 +319,10 @@ void resetDmpFifo()
 }
 
 
-void gatherMotionMeasurements()
+void gatherMotionMeasurements(uint32_t now)
 {
+  static uint32_t inactiveStartMs;
+
 //#ifdef ENABLE_DEBUG_PRINT
 //    Serial.println(F("gather motion"));
 //#endif
@@ -393,9 +396,9 @@ void gatherMotionMeasurements()
     mpu.dmpGetGravity(&gravity, &quat);
     mpu.dmpGetYawPitchRoll(ypr, &quat, &gravity);
 
-    updateMovingAverage(0, ypr[0] * (float) 1800 / M_PI);
-    updateMovingAverage(1, ypr[1] * (float) 1800 / M_PI);
-    updateMovingAverage(2, ypr[2] * (float) 1800 / M_PI);
+    updateMovingAverage(0, ypr[0] * (float) 18000 / M_PI);
+    updateMovingAverage(1, ypr[1] * (float) 18000 / M_PI);
+    updateMovingAverage(2, ypr[2] * (float) 18000 / M_PI);
     updateMovingAverage(3, gyro[0]);
     updateMovingAverage(4, gyro[1]);
     updateMovingAverage(5, gyro[2]);
@@ -413,8 +416,18 @@ void gatherMotionMeasurements()
       wdt_reset();
     }
 
-  // TODO:  figure out how to set isActive
-  //isActive = ppSoundSample > activeSoundThreshold;
+  if (abs(gyro[0]) > activeAccelerationThreshold) {
+    isActive = true;
+    inactiveStartMs = 0;
+  }
+  else {
+    if (inactiveStartMs == 0) {
+      inactiveStartMs = now;
+    }
+    else if (now - inactiveStartMs >= activityTimeoutMs) {
+      isActive = false;
+    }
+  }
 
 #ifdef ENABLE_DEBUG_PRINT
       // Careful:  We might not be able to keep up if this debug print is enabled.
@@ -479,13 +492,11 @@ void sendMeasurements()
 void loop() {
 
   static int32_t lastTxMs;
-  static int32_t lastSoundSampleMs;
-  static int32_t lastSoundSampleSaveMs;
 
   uint32_t now = millis();
 
   if (dmpReady && mpuInterrupt) {
-    gatherMotionMeasurements();
+    gatherMotionMeasurements(now);
   }
 
   if (now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {

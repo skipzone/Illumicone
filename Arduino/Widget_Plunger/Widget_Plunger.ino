@@ -54,7 +54,7 @@
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 7
+#define TX_RETRY_DELAY_MULTIPLIER 13
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
