@@ -41,10 +41,9 @@
 #include "MPU6050_6Axis_MotionApps20.h"
 #endif
 
-//#ifdef ENABLE_DEBUG_PRINT
-// For some unkown reason, shit don't work without printf.
+#ifdef ENABLE_DEBUG_PRINT
 #include "printf.h"
-//#endif
+#endif
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h
@@ -252,13 +251,8 @@ void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
   Serial.begin(57600);
-#endif
-
-// For some unkown reason, shit don't work without printf.  (One of the
-// libraries is probably calling printf unconditionally.  What an asshole.)
-//#ifdef ENABLE_DEBUG_PRINT
   printf_begin();
-//#endif
+#endif
 
 #ifdef ENABLE_MOTION_DETECTION
   initI2c();
