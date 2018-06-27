@@ -54,12 +54,6 @@
 
 //#define TX_FAILURE_LED_PIN 2
 #define IMU_INTERRUPT_PIN 2
-// --- the real Boogie Board ---
-//#define MIC_SIGNAL_PIN A0
-//#define MIC_POWER_PIN 8
-// --- development breadboard ---
-#define MIC_SIGNAL_PIN A3
-#define MIC_POWER_PIN 4
 
 #define NUM_MPU_VALUES_TO_SEND 6
 
@@ -239,9 +233,6 @@ void setup()
   initMpu();
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
-
-  pinMode(MIC_POWER_PIN, OUTPUT);
-  digitalWrite(MIC_POWER_PIN, HIGH);
 
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
