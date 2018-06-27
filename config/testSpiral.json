@@ -95,7 +95,8 @@
             //"compressionResetTimeoutSeconds" : 3,                   // reset to min after period of compression ch inactivity
             // -- compression, boogieBoard ch. 1 (pitch) --
             "compressionScaleFactor" : 1,                           // no scaledown needed
-            "compressionDivisor" : 1000.0,                          // full 90 degrees is compression factor 3 + 1 = 4
+            //"compressionDivisor" : 3000.0,                          // full 90 degrees is compression factor 3 + 1 = 4
+            "compressionDivisor" : 1000.0,                          // full tilt is ~3000.0 -> ~30 degrees, compr. factor 3 + 1 = 4
             "minCyclicalCompression" : 0,                           // cyclical not used
             "maxCyclicalCompression" : 0,                           // cyclical not used
             "compressionFactorOffset" : 1.2,                          // a zero measurement means no compression
