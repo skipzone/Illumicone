@@ -20,6 +20,7 @@
 #include <map>
 #include <memory>
 
+#include "MeasurementMapper.h"
 #include "Pattern.h"
 #include "WidgetId.h"
 
@@ -81,5 +82,7 @@ class SpiralPattern : public Pattern
         bool resetWidth;
         int widthPos;
         int widthPosOffset;
+
+        MeasurementMapper<int, float> compressionMeasmtMapper;
 };
 

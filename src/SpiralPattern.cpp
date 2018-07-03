@@ -101,6 +101,11 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     // -- compression --
 
+    compressionMeasmtMapper.addRange(-9001, -3000, 0.1, 0.1);
+    compressionMeasmtMapper.addRange(-3000, 0, 0.1, 1.0);
+    compressionMeasmtMapper.addRange(0, 3000, 1.0, 4.0);
+    compressionMeasmtMapper.addRange(3000, 9001, 4.0, 4.0);
+
     if (!ConfigReader::getIntValue(patternConfig, "compressionScaleFactor", compressionScaleFactor, errMsgSuffix)) {
         return false;
     }
