@@ -49,6 +49,9 @@ stringTester: stringTester.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illu
 jsonTester: jsonTester.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
+unitTests: unitTests.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
+	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
+
 clean:
 	rm -f $(OBJS) $(PROGS)
 
@@ -60,4 +63,7 @@ clean-stringTester:
 
 clean-jsonTester:
 	rm -f jsonTester json11.o log.o illumiconeUtility.o ConfigReader.o WidgetId.o
+
+clean-unitTests:
+	rm -f unitTests json11.o log.o illumiconeUtility.o ConfigReader.o
 
