@@ -36,6 +36,10 @@
     //"patconIpAddress" : "192.168.69.11",
     //"opcServerIpAddress": "192.168.69.11",
     //"useTcpForOpcServer" : true,
+    // ----- perry/floyd simulator configuration -----
+    //"patconIpAddress" : "192.168.76.121",
+    //"opcServerIpAddress": "192.168.76.121",
+    //"useTcpForOpcServer" : true,
     // ----- local simulator -----
     "patconIpAddress" : "127.0.0.1",
     "opcServerIpAddress": "127.0.0.1",
@@ -65,25 +69,10 @@
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
-        {   "name" : "rainstick",
+        {   "name" : "boogieBoard",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
-        {   "name" : "schroedersPlaything",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 8000
-        },
-        {   "name" : "triObelisk",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
-        {   "name" : "pump",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
+            "autoInactiveMs" : 10000
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
@@ -94,10 +83,73 @@
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
+        },
+        {   "name" : "pump",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "rainstick",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "schroedersPlaything",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : true,
+            "autoInactiveMs" : 8000
+        },
+        {   "name" : "spinnah",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         }
     ],
 
     "patterns" : [
+
+        // ---------- spring on Boogie Board ----------
+        {   "name" : "spring",
+            "enabled" : true,
+            "priority" : 5,
+            "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SpiralPattern",
+            "inputs" : [
+                {   "inputName" : "compression",
+                    "widgetName" : "boogieBoard",
+                    "channelNumber" : 1,                            // pitch, degrees * 100, (-9000, 9000)
+                    "measurement" : "position"
+                },
+                {   "inputName" : "rotation",
+                    "widgetName" : "boogieBoard",
+                    "channelNumber" : 2,                            // roll, degrees * 100, (-9000, 9000)
+                    "measurement" : "position"
+                },
+                // TODO:  make this color
+                {   "inputName" : "width",
+                    "widgetName" : "boogieBoard",
+                    "channelNumber" : 5,                            // yaw accel., approx. [-40, 40] with lardass doing the twist
+                    "measurement" : "position"
+                }
+            ],
+            "flipSpring" : false,                                   // flip upside down; meaningful for a progressive spring
+            "spiralTightnessFactor" : 6.0,                          // the number of turns around the cone
+            "progressiveSpringFactor" : 3,                          // 1 for non-progressive, >= 3 kinda looks like a bedspring
+            "progressiveSpringCompressionResponseFactor" : -0.5,    // multiplied by comp fac and added to progressiveSpringFactor
+            // -- compression, boogieBoard ch. 1 (pitch) --
+            "compressionScaleFactor" : 1,                           // no scaledown needed
+            //"compressionDivisor" : 3000.0,                          // full 90 degrees is compression factor 3 + 1 = 4
+            "compressionDivisor" : 1000.0,                          // full tilt is ~3000.0 -> ~30 degrees, compr. factor 3 + 1 = 4
+            "minCyclicalCompression" : 0,                           // cyclical not used
+            "maxCyclicalCompression" : 0,                           // cyclical not used
+            "compressionFactorOffset" : 1.2,                        // a zero measurement means no compression
+            "compressionResetTimeoutSeconds" : 3,                   // reset to min after period of compression ch inactivity
+            // -- width, boogieBoard ch. 5 (yaw acceleration) --
+            "widthScaleFactor" : 1,                                 // effectively gear down a rotating widget
+            "minCyclicalWidth" : 10,                                // the minimum width when cyclical values are used
+            "maxCyclicalWidth" : 40,                                // the maximum width when cyclical values are used
+            "widthResetTimeoutSeconds" : 3                          // reset to min after period of width ch inactivity
+        },
 
         // ---------- colored sprays on Bells (multiple) ----------
         {   "name" : "sprayWhite",
@@ -251,7 +303,7 @@
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalHighMs" : 50,
             "fillStepIntervalLowMs" : 5,
-            "flashDurationMs" : 2000,
+            "flashDurationMs" : 4000,
             "flashIntervalMs" : 20
         },
 
@@ -288,6 +340,29 @@
             "emitBatchSize" : 10,
             "emitDirectionIsUp" : false,
             "particleMoveIntervalMs" : 10
+        },
+
+        // ---------- multi-colored sparkle on Spinnah ----------
+        {   "name" : "multicolorSparkle",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "spinnah",
+                    "channelNumber" : 0,
+                    "measurement" : "velocity"
+                }
+            ],
+            "activationThreshold" : 20,
+            "deactivationThreshold" : 500,
+            "numGoodMeasurementsForReactivation" : 10,
+            "densityScaledownFactor" : 1800,
+            "useRandomColors" : true,
+            "sparkleChangeIntervalMs" : 50
+            //"forwardSparkleColor" : "magenta",
+            //"reverseSparkleColor" : "green"
         },
 
         // ---------- 60-key keyboard for 100x36 cone on Schroeder's Plaything ----------
