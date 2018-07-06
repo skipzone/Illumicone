@@ -96,7 +96,7 @@
         },
         {   "name" : "schroedersPlaything",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 8000
         },
         {   "name" : "spinnah",
@@ -171,7 +171,7 @@
             "emitIntervalHighMs" : 10,
             "emitBatchSize" : 15,
             "emitDirectionIsUp" : true,
-            "particleMoveIntervalMs" : 8
+            "particleMoveIntervalMs" : 6
         },
         {   "name" : "sprayPink",
             "enabled" : true,
@@ -185,14 +185,14 @@
                     "measurement" : "position"
                 }
             ],
-            "emitColorDefault" : "pink",
+            "emitColorDefault" : "purple",
             "emitIntervalMeasmtLow" : 100,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,
             "emitBatchSize" : 15,
             "emitDirectionIsUp" : true,
-            "particleMoveIntervalMs" : 4
+            "particleMoveIntervalMs" : 18
         },
         {   "name" : "sprayGreen",
             "enabled" : true,
@@ -206,7 +206,7 @@
                     "measurement" : "position"
                 }
             ],
-            "emitColorDefault" : "green",
+            "emitColorDefault" : "aqua",
             "emitIntervalMeasmtLow" : 100,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
