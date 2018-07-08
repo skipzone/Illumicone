@@ -1,5 +1,5 @@
-2/3/2018 -- Set up ic-strdrv on a BeagleBone Green using Debian Wheezy
-======================================================================
+7/7/2018 -- Set up ic-strdrv on a BeagleBone Black or Green using Debian Wheezy
+===============================================================================
 
 0.  Write the image to a 4 GB micro-SD card.
 
@@ -128,13 +128,12 @@
 
 10.  Disable HDMI.
 
-    The BeagleBone Green does not have HDMI, so this step should not be
-    necessary (per Yona Appletree, https://devhub.io/repos/Yona-Appletree-LEDscape).
-    For the record and in case a BBB is used instead, enable this line in
-    /boot/uEnv.txt to disable HDMI:
+    On a BeagleBone Green, this step is not necessary because the Green does not
+    have HDMI.  On the BeagleBone Black, enable the following cape_disable line
+    in /boot/uEnv.txt:
 
-        ##BeagleBone Black: HDMI (Audio/Video) disabled:
-        dtb=am335x-boneblack-emmc-overlay.dtb
+        ##Disable HDMI (v3.8.x)
+        cape_disable=capemgr.disable_partno=BB-BONELT-HDMI,BB-BONELT-HDMIN
 
 
 11.  Set up LEDscape.
@@ -186,7 +185,7 @@
 
     If configuring for Illumicone (the big cone):
 
-        sudo ln -s /etc/ledscape-config-illumicone.json /etc/ledscape-config.json
+        sudo ln -s /etc/ledscape-config-illumicone48.json /etc/ledscape-config.json
 
     If configuring for Mini-Cone:
 
