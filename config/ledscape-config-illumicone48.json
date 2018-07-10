@@ -1,0 +1,19 @@
+{
+	"outputMode": "ws281x",
+	"outputMapping": "rgb-123-v3",
+	"demoMode": "fade",
+	"ledsPerStrip": 100,
+	"usedStripCount": 48,
+	"colorChannelOrder": "BGR",
+	"opcTcpPort": 7890,
+	"opcUdpPort": 7890,
+	"enableInterpolation": false,
+	"enableDithering": true,
+	"enableLookupTable": true,
+	"lumCurvePower": 2.0000,
+	"whitePoint": {
+		"red": 0.7500,
+		"green": 1.0000,
+		"blue": 0.7500
+	}
+}

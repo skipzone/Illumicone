@@ -1,5 +1,24 @@
-2/3/2018 -- Set up ic-strdrv on a BeagleBone Green using Debian Wheezy
-======================================================================
+7/7/2018 -- Set up ic-strdrv on a BeagleBone Black or Green using Debian Wheezy
+===============================================================================
+
+-1.  /// WARNING ///  At the cost of 2 BeagleBone Blacks and 1 BeagleBone Green,
+     we have discovered that, just before or after the second boot, GPIO_48,
+     which is the output for string 45 (zero-based), gets destroyed.  The likely
+     cause is something setting GPIO1_16 (GPIO_48) and GPIO2_0 (not exposed) to
+     outputs.  The two GPIOs are connected together through zero-ohm R160 and
+     R161 for reasons that are not apparent.  If/when they are both configured
+     as outputs but not in the same high/low state, excessive current will  flow
+     betweenn them, damaging one or both.  The symptom is that string 45 works
+     fine after the first boot but ceases to work after a subsequent boot.
+     GPIO_48 appears to work if toggled manually and observed with a voltmeter,
+     but the WS281x data signal viewed on an oscilloscope is very far from
+     alright.
+     
+     To prevent GPIO_48 from being treated like Zed treated Marsellus Wallace,
+     be sure to remove R161 before starting this procedure.  (On a BBB, R161 is
+     located near P8 (yes, P8) pin 15.)  That will disconnect GPIO2_0, which
+     you can't use anyway.  (Who is Zed?  Zed's dead, baby.  Zed's dead.)
+
 
 0.  Write the image to a 4 GB micro-SD card.
 
@@ -128,13 +147,12 @@
 
 10.  Disable HDMI.
 
-    The BeagleBone Green does not have HDMI, so this step should not be
-    necessary (per Yona Appletree, https://devhub.io/repos/Yona-Appletree-LEDscape).
-    For the record and in case a BBB is used instead, enable this line in
-    /boot/uEnv.txt to disable HDMI:
+    On a BeagleBone Green, this step is not necessary because the Green does not
+    have HDMI.  On the BeagleBone Black, enable the following cape_disable line
+    in /boot/uEnv.txt:
 
-        ##BeagleBone Black: HDMI (Audio/Video) disabled:
-        dtb=am335x-boneblack-emmc-overlay.dtb
+        ##Disable HDMI (v3.8.x)
+        cape_disable=capemgr.disable_partno=BB-BONELT-HDMI,BB-BONELT-HDMIN
 
 
 11.  Set up LEDscape.
@@ -186,7 +204,7 @@
 
     If configuring for Illumicone (the big cone):
 
-        sudo ln -s /etc/ledscape-config-illumicone.json /etc/ledscape-config.json
+        sudo ln -s /etc/ledscape-config-illumicone48.json /etc/ledscape-config.json
 
     If configuring for Mini-Cone:
 

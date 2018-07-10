@@ -1,7 +1,8 @@
+jsonTester
 patternController
 stringTester
+unitTests
 widgetRcvr
-jsonTester
 *.dSYM
 *.o
 .*.swp

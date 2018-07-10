@@ -46,8 +46,10 @@ void configureRadio(
   radio.setCRCLength(CRC_LENGTH);
 
   radio.openWritingPipe((const uint8_t*) writePipeAddress);
-  
+
+#ifdef ENABLE_DEBUG_PRINT 
   radio.printDetails();
+#endif
   
   // Widgets only transmit data.
   radio.stopListening();

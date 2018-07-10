@@ -1,10 +1,10 @@
 /*****************************************************************
  *                                                               *
- * Rainstick Widget                                              *
+ * Boogie Board Widget                                           *
  *                                                               *
  * Platform:  Arduino Uno, Pro, Pro Mini                         *
  *                                                               *
- * by Ross Butler, February 2017                             )'( *
+ * by Ross Butler, June 2018                                 )'( *
  *                                                               *
  *****************************************************************/
 
@@ -25,21 +25,12 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define ENABLE_MOTION_DETECTION
 //#define ENABLE_DEBUG_PRINT
 
-
 #include <avr/wdt.h>
-
-#ifdef ENABLE_MOTION_DETECTION
 #include "I2Cdev.h"
-#endif
-
 #include "illumiconeWidget.h"
-
-#ifdef ENABLE_MOTION_DETECTION
 #include "MPU6050_6Axis_MotionApps20.h"
-#endif
 
 #ifdef ENABLE_DEBUG_PRINT
 #include "printf.h"
@@ -56,29 +47,21 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 4
+#define WIDGET_ID 7
 
-#define SOUND_SAMPLE_INTERVAL_MS 10L
-#define SOUND_SAMPLE_SAVE_INTERVAL_MS 50L   // same as 200 Hz IMU sample frequency so MA length works for both
-#define ACTIVE_TX_INTERVAL_MS 200L
+#define ACTIVE_TX_INTERVAL_MS 50L
 #define INACTIVE_TX_INTERVAL_MS 2000L       // should be a multiple of ACTIVE_TX_INTERVAL_MS
 
 //#define TX_FAILURE_LED_PIN 2
 #define IMU_INTERRUPT_PIN 2
-// --- the real Rainstick ---
-#define MIC_SIGNAL_PIN A0
-#define MIC_POWER_PIN 8
-// --- development breadboard ---
-//#define MIC_SIGNAL_PIN A3
-//#define MIC_POWER_PIN 4
 
-#define NUM_SOUND_VALUES_TO_SEND 3
 #define NUM_MPU_VALUES_TO_SEND 6
 
 #define MA_LENGTH 8
-#define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
+#define NUM_MA_SETS (NUM_MPU_VALUES_TO_SEND)
 
-constexpr uint16_t activeSoundThreshold = 100;
+constexpr uint16_t activeAccelerationThreshold = 10;
+constexpr uint32_t activityTimeoutMs = 5000L;
 
 // When we haven't retrieved packets from the MPU6050's DMP's FIFO fast enough,
 // data corruption becomes likely even before the FIFO overflows.  We'll clear
@@ -96,7 +79,7 @@ constexpr uint8_t maxPacketsInFifoBeforeReset = 2;
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11, 13) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 5
+#define TX_RETRY_DELAY_MULTIPLIER 3
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
@@ -128,8 +111,6 @@ static int32_t maSums[NUM_MA_SETS];
 static uint8_t nextSlotIdx[NUM_MA_SETS];
 static bool maSetFull[NUM_MA_SETS];
 
-#ifdef ENABLE_MOTION_DETECTION
-
 static MPU6050 mpu;               // using default I2C address 0x68
 
 // MPU control/status vars
@@ -146,14 +127,10 @@ static int16_t gyro[3];
 
 static volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 
-#endif
-
 
 /******************
  * Implementation *
  ******************/
-
-#ifdef ENABLE_MOTION_DETECTION
 
 void dmpDataReady() {
     mpuInterrupt = true;
@@ -244,8 +221,6 @@ void initMpu()
   }
 }
 
-#endif
-
 
 void setup()
 {
@@ -254,15 +229,10 @@ void setup()
   printf_begin();
 #endif
 
-#ifdef ENABLE_MOTION_DETECTION
   initI2c();
   initMpu();
-#endif
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
-
-  pinMode(MIC_POWER_PIN, OUTPUT);
-  digitalWrite(MIC_POWER_PIN, HIGH);
 
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
@@ -340,9 +310,9 @@ void resetDmpFifo()
 }
 
 
-void gatherMotionMeasurements()
+void gatherMotionMeasurements(uint32_t now)
 {
-#ifdef ENABLE_MOTION_DETECTION
+  static uint32_t inactiveStartMs;
 
 //#ifdef ENABLE_DEBUG_PRINT
 //    Serial.println(F("gather motion"));
@@ -417,13 +387,12 @@ void gatherMotionMeasurements()
     mpu.dmpGetGravity(&gravity, &quat);
     mpu.dmpGetYawPitchRoll(ypr, &quat, &gravity);
 
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND    , ypr[0] * (float) 1800 / M_PI);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 1, ypr[1] * (float) 1800 / M_PI);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 2, ypr[2] * (float) 1800 / M_PI);
-
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 3, gyro[0]);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 4, gyro[1]);
-    updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 5, gyro[2]);
+    updateMovingAverage(0, ypr[0] * (float) 18000 / M_PI);
+    updateMovingAverage(1, ypr[1] * (float) 18000 / M_PI);
+    updateMovingAverage(2, ypr[2] * (float) 18000 / M_PI);
+    updateMovingAverage(3, gyro[0]);
+    updateMovingAverage(4, gyro[1]);
+    updateMovingAverage(5, gyro[2]);
 
     // If we're here and we got non-zero data, communication
     // with the MPU6050 is probably working, so kick the dog.
@@ -437,6 +406,19 @@ void gatherMotionMeasurements()
     if (gotNonzeroData) {
       wdt_reset();
     }
+
+  if (abs(gyro[0]) > activeAccelerationThreshold) {
+    isActive = true;
+    inactiveStartMs = 0;
+  }
+  else {
+    if (inactiveStartMs == 0) {
+      inactiveStartMs = now;
+    }
+    else if (now - inactiveStartMs >= activityTimeoutMs) {
+      isActive = false;
+    }
+  }
 
 #ifdef ENABLE_DEBUG_PRINT
       // Careful:  We might not be able to keep up if this debug print is enabled.
@@ -455,62 +437,6 @@ void gatherMotionMeasurements()
 #endif
   }
 
-#endif  // #ifdef ENABLE_MOTION_DETECTION
-}
-
-
-void sampleSound()
-{
-//#ifdef ENABLE_DEBUG_PRINT
-//    Serial.println(F("sampleSound"));
-//#endif
-  uint16_t soundSample = analogRead(MIC_SIGNAL_PIN);
-  if (soundSample < minSoundSample) {
-    minSoundSample = soundSample;
-  }
-  if (soundSample > maxSoundSample) {
-    maxSoundSample = soundSample;
-  }
-//#ifdef ENABLE_DEBUG_PRINT
-//    Serial.print(F("soundSample="));
-//    Serial.print(soundSample);
-//    Serial.print(F(" minSoundSample="));
-//    Serial.print(minSoundSample);
-//    Serial.print(F(" maxSoundSample="));
-//    Serial.println(maxSoundSample);
-//#endif
-}
-
-
-void saveSoundSample()
-{
-//#ifdef ENABLE_DEBUG_PRINT
-//    Serial.print(F("saveSoundSample:  minSoundSample="));
-//    Serial.print(minSoundSample);
-//    Serial.print(F(" maxSoundSample="));
-//    Serial.println(maxSoundSample);
-//#endif
-
-  updateMovingAverage(0, minSoundSample);
-  updateMovingAverage(1, maxSoundSample);
-
-  minSoundSample = UINT16_MAX;
-  maxSoundSample = 0;
-
-  avgMinSoundSample = getMovingAverage(0);
-  avgMaxSoundSample = getMovingAverage(1);
-  ppSoundSample = avgMaxSoundSample - avgMinSoundSample;
-
-  isActive = ppSoundSample > activeSoundThreshold;
-
-//#ifdef ENABLE_DEBUG_PRINT
-//    Serial.print(F("avgMinSoundSample="));
-//    Serial.print(avgMinSoundSample);
-//    Serial.print(F(" avgMaxSoundSample="));
-//    Serial.print(avgMaxSoundSample);
-//    Serial.print(F(" isActive="));
-//    Serial.println(isActive);
-//#endif
 }
 
 
@@ -520,26 +446,21 @@ void sendMeasurements()
     Serial.println(F("send"));
 #endif
 
-  payload.measurements[0] = avgMinSoundSample;
-  payload.measurements[1] = avgMaxSoundSample;
-  payload.measurements[2] = ppSoundSample;
-
-  // Place the MPU average values after the sound values.
-  for (int i = 0, j = NUM_SOUND_VALUES_TO_SEND; i < NUM_MPU_VALUES_TO_SEND; ++i, ++j) {
-      payload.measurements[j] = getMovingAverage(j);
+  for (int i = 0; i < NUM_MPU_VALUES_TO_SEND; ++i) {
+      payload.measurements[i] = getMovingAverage(i);
   }
 
   payload.widgetHeader.isActive = isActive;
 
 #ifdef ENABLE_DEBUG_PRINT
-  for (int i = 0; i < NUM_MPU_VALUES_TO_SEND + NUM_SOUND_VALUES_TO_SEND; ++i) {
+  for (int i = 0; i < NUM_MPU_VALUES_TO_SEND; ++i) {
     Serial.print(i);
     Serial.print(":  ");
     Serial.println(payload.measurements[i]);
   }
 #endif
 
-  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * (NUM_MPU_VALUES_TO_SEND + NUM_SOUND_VALUES_TO_SEND))) {
+  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * NUM_MPU_VALUES_TO_SEND)) {
 #ifdef TX_FAILURE_LED_PIN      
     digitalWrite(TX_FAILURE_LED_PIN, HIGH);
 #endif
@@ -562,29 +483,11 @@ void sendMeasurements()
 void loop() {
 
   static int32_t lastTxMs;
-  static int32_t lastSoundSampleMs;
-  static int32_t lastSoundSampleSaveMs;
 
   uint32_t now = millis();
 
-#ifdef ENABLE_MOTION_DETECTION
   if (dmpReady && mpuInterrupt) {
-    gatherMotionMeasurements();
-  }
-#else
-  // Normally, we kick the dog after getting good data from the MPU6050.
-  // If we're not using the unit, we need to reset the watchdog.
-  wdt_reset();
-#endif
-
-  if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
-    lastSoundSampleMs = now;
-    sampleSound();
-  }
-
-  if (now - lastSoundSampleSaveMs >= SOUND_SAMPLE_SAVE_INTERVAL_MS) {
-    lastSoundSampleSaveMs = now;
-    saveSoundSample();
+    gatherMotionMeasurements(now);
   }
 
   if (now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {

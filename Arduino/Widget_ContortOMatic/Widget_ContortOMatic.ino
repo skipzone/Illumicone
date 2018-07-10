@@ -65,8 +65,8 @@ constexpr int capSenseThresholds[numCapSensePins] = { 20,  20,  20,  20,
 #define TX_PIPE_ADDRESS "5wdgt"
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
-// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 5
+// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11, 13) or 15 (the max).
+#define TX_RETRY_DELAY_MULTIPLIER 15
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
