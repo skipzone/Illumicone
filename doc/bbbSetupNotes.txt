@@ -14,8 +14,8 @@
      but the WS281x data signal viewed on an oscilloscope is very far from
      alright.
      
-     To prevent GPIO_48 from being treated Zed treated Marsellus Wallace, be
-     sure to remove R161 before starting this procedure.  (On a Black, R161 is
+     To prevent GPIO_48 from being treated like Zed treated Marsellus Wallace,
+     be sure to remove R161 before starting this procedure.  (On a BBB, R161 is
      located near P8 (yes, P8) pin 15.)  That will disconnect GPIO2_0, which
      you can't use anyway.  (Who is Zed?  Zed's dead, baby.  Zed's dead.)
 
