@@ -2,19 +2,19 @@
 ===============================================================================
 
 -1.  /// WARNING ///  At the cost of 2 BeagleBone Blacks and 1 BeagleBone Green,
-     I have discovered that, just before or after the second boot, GPIO_48,
+     we have discovered that, just before or after the second boot, GPIO_48,
      which is the output for string 45 (zero-based), gets destroyed.  The likely
      cause is something setting GPIO1_16 (GPIO_48) and GPIO2_0 (not exposed) to
-     outputs.  The two GPIOs are connected together through R160 and R161 for
-     reasons that are not apparent.  If/when they are both configured as
-     outputs but not in the same high/low state, excessive current will  flow
+     outputs.  The two GPIOs are connected together through zero-ohm R160 and
+     R161 for reasons that are not apparent.  If/when they are both configured
+     as outputs but not in the same high/low state, excessive current will  flow
      betweenn them, damaging one or both.  The symptom is that string 45 works
      fine after the first boot but ceases to work after a subsequent boot.
      GPIO_48 appears to work if toggled manually and observed with a voltmeter,
      but the WS281x data signal viewed on an oscilloscope is very far from
      alright.
      
-     To prevent GPIO_48 from being treated Zed treated Marcellus Wallace, be
+     To prevent GPIO_48 from being treated Zed treated Marsellus Wallace, be
      sure to remove R161 before starting this procedure.  (On a Black, R161 is
      located near P8 (yes, P8) pin 15.)  That will disconnect GPIO2_0, which
      you can't use anyway.  (Who is Zed?  Zed's dead, baby.  Zed's dead.)
