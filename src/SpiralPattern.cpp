@@ -319,7 +319,7 @@ bool SpiralPattern::update()
         float x = 0;
         for (unsigned int i = 0; i < numStrings * heightInPixels; ++i) {
 
-            float y = std::powf(x / spiralTightnessFactor,
+            float y = ::powf(x / spiralTightnessFactor,
                                 progressiveSpringFactor + progressiveSpringCompressionResponseFactor * compressionFactor);
             if (y > 1.0) {
                 break;
