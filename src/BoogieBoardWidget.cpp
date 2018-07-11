@@ -29,37 +29,67 @@ using namespace std;
 BoogieBoardWidget::BoogieBoardWidget()
     : Widget(WidgetId::boogieBoard, 6)
 {
-    //simulationUpdateIntervalMs[2] = 10;
+    // yaw, pitch, roll, which vary from -9000 to 9000
+    simulationUpdateIntervalMs[0] = 50;
+    simulationUpdateIntervalMs[1] = 50;
+    simulationUpdateIntervalMs[2] = 50;
+    // x, y, and z acceleration, which vary from -40 to 40
+    simulationUpdateIntervalMs[3] = 200;
+    simulationUpdateIntervalMs[4] = 200;
+    simulationUpdateIntervalMs[5] = 200;
 }
 
 
 void BoogieBoardWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
+    int minPos;
+    int maxPos;
+    int step;
+    int logInterval;
+    switch (chIdx) {
+        case 0:
+        case 1:
+        case 2:
+            minPos = -9000;
+            maxPos = 9000;
+            step = 20;
+            logInterval = 100;
+            break;
+        case 3:
+        case 4:
+        case 5:
+            minPos = -40;
+            maxPos = 40;
+            step = 1;
+            logInterval = 5;
+            break;
+    }
+
     // Make sure previous position and velocity have been
     // updated in case the pattern hasn't read them.
     channels[chIdx]->getPosition();
 
     int newPosition = channels[chIdx]->getPreviousPosition();
     if (!simulatedPositionGoingDown) {
-        if (newPosition < 1023) {
-            ++newPosition;
+        if (newPosition < maxPos) {
+            newPosition += step;
         }
         else {
             simulatedPositionGoingDown = true;
         }
     }
     else {
-        if (newPosition > 0) {
-            --newPosition;
+        if (newPosition > minPos) {
+            newPosition -= step;
         }
         else {
             simulatedPositionGoingDown = false;
         }
     }
 
-    //if (newPosition % 100 == 0) {
-    //    logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
-    //}
+    if (newPosition % logInterval == 0) {
+        logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    }
 
     channels[chIdx]->setPositionAndVelocity(newPosition, 0);
     channels[chIdx]->setIsActive(true);
