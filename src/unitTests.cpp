@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "ConfigReader.h"
 #include "MeasurementMapper.h"
 
 
@@ -135,6 +136,54 @@ void measurementMapperUnitTests()
     assert(!mapper3.mapMeasurement(32767));
 
     cout << "    mapper3 passed." << endl;
+
+
+    ConfigReader config;
+    assert(config.readConfigurationFile("../config/unitTests.json"));
+
+    MeasurementMapper<int, float> mapper3config;
+    assert(mapper3config.readConfig(config.getJsonObject(), "mapper3", "unitTests mapper3config"));
+
+    assert(mapper3config.mapMeasurement(-9001));
+    cout << "    3)  -9001 -> " << mapper3config.getLastMappedMeasurement() << endl;
+    assert(0.1 - mapper3config.getLastMappedMeasurement() < 0.0001);
+
+    assert(mapper3config.mapMeasurement(-3001));
+    cout << "    3)  -3001 -> " << mapper3config.getLastMappedMeasurement() << endl;
+    assert(0.1 - mapper3config.getLastMappedMeasurement() < 0.0001);
+
+    assert(mapper3config.mapMeasurement(-3000));
+    assert(0.1 - mapper3config.getLastMappedMeasurement() < 0.0001);
+
+    assert(mapper3config.mapMeasurement(-3));
+    cout << "    3)  -3 -> " << mapper3config.getLastMappedMeasurement() << endl;
+    assert(1.0 - mapper3config.getLastMappedMeasurement() < 0.001);
+
+    assert(mapper3config.mapMeasurement(1));
+    assert(1.0 - mapper3config.getLastMappedMeasurement() < 0.0001);
+
+    assert(mapper3config.mapMeasurement(2999));
+    cout << "    3)  2999 -> " << mapper3config.getLastMappedMeasurement() << ", diff = " << 4.0 - mapper3config.getLastMappedMeasurement() << endl;
+    assert(4.0 - mapper3config.getLastMappedMeasurement() < 0.0011);
+
+    assert(mapper3config.mapMeasurement(3000));
+    cout << "    3)  3000 -> " << mapper3config.getLastMappedMeasurement() << endl;
+    assert(4.0 - mapper3config.getLastMappedMeasurement() < 0.0001);
+
+    assert(mapper3config.mapMeasurement(9000));
+    cout << "    3)  9000 -> " << mapper3config.getLastMappedMeasurement() << endl;
+    assert(4.0 - mapper3config.getLastMappedMeasurement() < 0.0001);
+
+    assert(!mapper3config.mapMeasurement(-32768));
+    assert(!mapper3config.mapMeasurement(-9002));
+    assert(!mapper3config.mapMeasurement(-2));
+    assert(!mapper3config.mapMeasurement(-1));
+    assert(!mapper3config.mapMeasurement(0));
+    assert(!mapper3config.mapMeasurement(9001));
+    assert(!mapper3config.mapMeasurement(32767));
+
+    cout << "    mapper3config passed." << endl;
+
 
     MeasurementMapper<int, float> mapper4(mapper3);
 
