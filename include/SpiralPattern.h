@@ -53,11 +53,11 @@ class SpiralPattern : public Pattern
         float progressiveSpringFactor;
         float progressiveSpringCompressionResponseFactor;
 
-        int compressionScaleFactor;
-        float compressionDivisor;
+///        int compressionScaleFactor;
+///        float compressionDivisor;
         int maxCyclicalCompression;
         int minCyclicalCompression;
-        float compressionFactorOffset;
+///        float compressionFactorOffset;
         int compressionResetTimeoutSeconds;
         int compressionTriangleAmplitude;
         int compressionTrianglePeriod;
@@ -77,6 +77,7 @@ class SpiralPattern : public Pattern
         bool resetCompression;
         int compressionPos;
         int compressionPosOffset;
+        float compressionFactor;
 
         unsigned int nextResetWidthMs;
         bool resetWidth;

@@ -101,44 +101,46 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     // -- compression --
 
-    compressionMeasmtMapper.addRange(-9001, -3000, 0.1, 0.1);
-    compressionMeasmtMapper.addRange(-3000, 0, 0.1, 1.0);
-    compressionMeasmtMapper.addRange(0, 3000, 1.0, 4.0);
-    compressionMeasmtMapper.addRange(3000, 9001, 4.0, 4.0);
+    if (compressionChannel != nullptr) {
 
-    if (!ConfigReader::getIntValue(patternConfig, "compressionScaleFactor", compressionScaleFactor, errMsgSuffix)) {
-        return false;
+        if (!compressionMeasmtMapper.readConfig(patternConfig, "compressionMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
+/*
+        if (!ConfigReader::getIntValue(patternConfig, "compressionScaleFactor", compressionScaleFactor, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " compressionScaleFactor=" + to_string(compressionScaleFactor));
+
+        if (!ConfigReader::getFloatValue(patternConfig, "compressionDivisor", compressionDivisor, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " compressionDivisor=" + to_string(compressionDivisor));
+
+        if (!ConfigReader::getIntValue(patternConfig, "minCyclicalCompression", minCyclicalCompression, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " minCyclicalCompression=" + to_string(minCyclicalCompression));
+
+        if (!ConfigReader::getIntValue(patternConfig, "maxCyclicalCompression", maxCyclicalCompression, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " maxCyclicalCompression=" + to_string(maxCyclicalCompression));
+
+        if (!ConfigReader::getFloatValue(patternConfig, "compressionFactorOffset", compressionFactorOffset, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " compressionFactorOffset=" + to_string(compressionFactorOffset));
+*/
+
+        if (!ConfigReader::getIntValue(patternConfig, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " compressionResetTimeoutSeconds=" + to_string(compressionResetTimeoutSeconds));
+
+        compressionTriangleAmplitude = maxCyclicalCompression - minCyclicalCompression;
+        compressionTrianglePeriod = compressionTriangleAmplitude * 2;
     }
-    logMsg(LOG_INFO, name + " compressionScaleFactor=" + to_string(compressionScaleFactor));
-
-    if (!ConfigReader::getFloatValue(patternConfig, "compressionDivisor", compressionDivisor, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " compressionDivisor=" + to_string(compressionDivisor));
-
-    if (!ConfigReader::getIntValue(patternConfig, "minCyclicalCompression", minCyclicalCompression, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " minCyclicalCompression=" + to_string(minCyclicalCompression));
-
-    if (!ConfigReader::getIntValue(patternConfig, "maxCyclicalCompression", maxCyclicalCompression, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " maxCyclicalCompression=" + to_string(maxCyclicalCompression));
-
-    if (!ConfigReader::getFloatValue(patternConfig, "compressionFactorOffset", compressionFactorOffset, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " compressionFactorOffset=" + to_string(compressionFactorOffset));
-
-
-    if (!ConfigReader::getIntValue(patternConfig, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " compressionResetTimeoutSeconds=" + to_string(compressionResetTimeoutSeconds));
-
-    compressionTriangleAmplitude = maxCyclicalCompression - minCyclicalCompression;
-    compressionTrianglePeriod = compressionTriangleAmplitude * 2;
 
     // -- width --
 
@@ -170,7 +172,8 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     nextResetCompressionMs = 0;
     resetCompression = true;
-    compressionPos = compressionDivisor;
+    //compressionPos = compressionDivisor;
+    compressionFactor = 1;      // TODO: need to flag it as invalid until we actually get a good measurement
     nextResetWidthMs = 0;
     resetWidth = true;
     widthPos = 1;
@@ -204,12 +207,22 @@ bool SpiralPattern::update()
         if (compressionChannel->getIsActive()) {
             isActive = true;
             if (compressionChannel->getHasNewPositionMeasurement()) {
-                gotUpdateFromWidget = true;
                 int rawCompressionPos = compressionChannel->getPosition();
-                if (resetCompression) {
-                    resetCompression = false;
-                    compressionPosOffset = rawCompressionPos;
-                }
+                if (compressionMeasmtMapper.mapMeasurement(rawCompressionPos, compressionFactor))
+                    gotUpdateFromWidget = true;
+
+                    if (resetCompression) {
+                        resetCompression = false;
+                        compressionPosOffset = rawCompressionPos;
+                    }
+
+                    logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
+                                      + ", compressionPosOffset=" + to_string(compressionPosOffset)
+                                      + ", compressionFactor=" + to_string(compressionFactor));
+
+
+                // TODO:  Put back in cyclical measurement support.
+                /*
                 compressionPos = (rawCompressionPos - compressionPosOffset) / compressionScaleFactor;
                 if (maxCyclicalCompression != 0) {
                     // This is a triangle wave function where the height of the triangle (peak-to-peak
@@ -230,6 +243,8 @@ bool SpiralPattern::update()
                 logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
                                   + ", compressionPosOffset=" + to_string(compressionPosOffset)
                                   + ", compressionPos=" + to_string(compressionPos));
+                */
+
             }
         }
     }
@@ -310,7 +325,7 @@ bool SpiralPattern::update()
 
         clearAllPixels(pixelArray);
 
-        float compressionFactor = (float) compressionPos / compressionDivisor + compressionFactorOffset;
+///        float compressionFactor = (float) compressionPos / compressionDivisor + compressionFactorOffset;
         unsigned int heightInPixels = (1.0 / compressionFactor) * (float) pixelsPerString;
         unsigned int startingPixelOffset = pixelsPerString - heightInPixels;
 
@@ -342,3 +357,4 @@ bool SpiralPattern::update()
 
     return isActive;
 }
+
