@@ -112,23 +112,23 @@
             "rotationMeasurementMapper" : [
                 {   "rawMin" : -9001,
                     "rawMax" : -3000,
-                    "mappedStart" : 0.8,
-                    "mappedEnd" : 0.8
+                    "mappedStart" : 20,
+                    "mappedEnd" : 20
                 },
                 {   "rawMin" : -3000,
                     "rawMax" : 0,
-                    "mappedStart" : 0.8,
-                    "mappedEnd" : 1.0
+                    "mappedStart" : 20,
+                    "mappedEnd" : 200
                 },
                 {   "rawMin" : 0,
                     "rawMax" : 3000,
-                    "mappedStart" : 1.0,
-                    "mappedEnd" : 4.0
+                    "mappedStart" : 200,
+                    "mappedEnd" : 20 
                 },
                 {   "rawMin" : 3000,
                     "rawMax" : 9001,
-                    "mappedStart" : 4.0,
-                    "mappedEnd" : 4.0
+                    "mappedStart" : 20,
+                    "mappedEnd" : 20
                 }
             ],
             // The raw color measurement maps to the number of steps to rotate

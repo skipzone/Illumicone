@@ -71,9 +71,10 @@ class SpiralPattern : public Pattern
         int compressionPos;
         int compressionPosOffset;
         float compressionFactor;
-        int rotationStepDelayMs;
+        int rotationStepIntervalMs;
         unsigned int nextRotationStepMs;
         int rotationOffset;
+        bool rotateCounterclockwise;
         uint8_t currentHue;
 
         MeasurementMapper<int, float> compressionMeasmtMapper;

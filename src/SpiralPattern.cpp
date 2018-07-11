@@ -141,8 +141,10 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
     resetCompression = true;
     //compressionPos = compressionDivisor;
     compressionFactor = 1;      // TODO: need to flag it as invalid until we actually get a good measurement
-    rotationStepDelayMs = 0;
+    nextRotationStepMs = 0;
+    rotationStepIntervalMs = 0;
     rotationOffset = 0;
+    rotateCounterclockwise = false;
     currentHue = 0;
 
     return true;
@@ -216,20 +218,40 @@ bool SpiralPattern::update()
         }
     }
 
+    // Get an updated rotation step interval, if available.
+    if (rotationChannel != nullptr) {
+        if (rotationChannel->getIsActive()) {
+            isActive = true;
+            if (rotationChannel->getHasNewPositionMeasurement()) {
+                int rawRotationPos = rotationChannel->getPosition();
+                if (rotationMeasmtMapper.mapMeasurement(rawRotationPos, rotationStepIntervalMs)) {
+                    gotUpdateFromWidget = true;
+                    rotateCounterclockwise = (rawRotationPos >= 0);
+                    //logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
+                    //                  + ", rotateCounterclockwise=" + to_string(rotateCounterclockwise)
+                    //                  + ", rotationStepIntervalMs=" + to_string(rotationStepIntervalMs)
+                    //                  + ", rotationOffset=" + to_string(rotationOffset));
+                }
+            }
+        }
+        else {
+            rotationStepIntervalMs = 0;
+        }
+    }
+
     // Get an updated color, if available.
     if (colorChannel != nullptr) {
         if (colorChannel->getIsActive()) {
             isActive = true;
             if (colorChannel->getHasNewPositionMeasurement()) {
                 int rawColorPos = colorChannel->getPosition();
-                logMsg(LOG_DEBUG, "new color measurement " + to_string(rawColorPos));
                 int colorSteps;
                 if (colorMeasmtMapper.mapMeasurement(rawColorPos, colorSteps)) {
                     gotUpdateFromWidget = true;
                     currentHue += colorSteps;
-                    logMsg(LOG_DEBUG, name + ":  rawColorPos=" + to_string(rawColorPos)
-                                      + ", colorSteps=" + to_string(colorSteps)
-                                      + ", currentHue=" + to_string(currentHue));
+                    //logMsg(LOG_DEBUG, name + ":  rawColorPos=" + to_string(rawColorPos)
+                    //                  + ", colorSteps=" + to_string(colorSteps)
+                    //                  + ", currentHue=" + to_string(currentHue));
                 }
             }
         }
@@ -253,6 +275,31 @@ bool SpiralPattern::update()
     }
 
 
+    // Rotate a step if we have a valid interval measurement and it is time to rotate one step.
+    if (rotationStepIntervalMs != 0) {
+        if (nextRotationStepMs == 0) {
+            nextRotationStepMs = nowMs + rotationStepIntervalMs;
+        }
+        else {
+            if ((int) (nowMs - nextRotationStepMs) >= 0) {
+                nextRotationStepMs = nowMs + rotationStepIntervalMs;
+                if (rotateCounterclockwise) {
+                    ++rotationOffset;
+                    if (rotationOffset >= numStrings) {
+                        rotationOffset = 0;
+                    }
+                }
+                else {
+                    --rotationOffset;
+                    if (rotationOffset < 0) {
+                        rotationOffset = numStrings - 1;
+                    }
+                }
+            }
+        }
+    }
+
+
     // Draw.
 
     if (gotUpdateFromWidget) {
@@ -268,7 +315,7 @@ bool SpiralPattern::update()
 
         // Range of y is [0..1].
         float xStep = 1.0 / numStrings;
-        float x = 0;
+        float x = 0.0;
         for (unsigned int i = 0; i < numStrings * heightInPixels; ++i) {
 
             float y = ::powf(x / spiralTightnessFactor,
@@ -277,7 +324,7 @@ bool SpiralPattern::update()
                 break;
             }
 
-            unsigned int stringIdx = (unsigned int) (x / xStep) % numStrings;
+            unsigned int stringIdx = ((unsigned int) (x / xStep) + rotationOffset) % numStrings;
             unsigned int pixelIdx = (flipSpring ? (1.0 - y) : y) * heightInPixels + startingPixelOffset;
             //logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx));
             // When the spiral is stretched, make sure we're
@@ -289,7 +336,6 @@ bool SpiralPattern::update()
 
             x += xStep;
         }
-
     }
 
     return isActive;

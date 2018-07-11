@@ -87,9 +87,9 @@ void BoogieBoardWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
         }
     }
 
-    if (newPosition % logInterval == 0) {
-        logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
-    }
+    //if (newPosition % logInterval == 0) {
+    //    logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    //}
 
     channels[chIdx]->setPositionAndVelocity(newPosition, 0);
     channels[chIdx]->setIsActive(true);
