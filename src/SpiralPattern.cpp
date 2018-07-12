@@ -177,13 +177,14 @@ bool SpiralPattern::update()
             isActive = true;
             if (compressionChannel->getHasNewPositionMeasurement()) {
                 int rawCompressionPos = compressionChannel->getPosition();
-                if (compressionMeasmtMapper.mapMeasurement(rawCompressionPos, compressionFactor))
+                if (compressionMeasmtMapper.mapMeasurement(rawCompressionPos, compressionFactor)) {
                     gotUpdateFromWidget = true;
 
                     if (resetCompression) {
                         resetCompression = false;
                         compressionPosOffset = rawCompressionPos;
                     }
+                }
 
                     //logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
                     //                  + ", compressionPosOffset=" + to_string(compressionPosOffset)
@@ -284,13 +285,13 @@ bool SpiralPattern::update()
             if ((int) (nowMs - nextRotationStepMs) >= 0) {
                 nextRotationStepMs = nowMs + rotationStepIntervalMs;
                 if (rotateCounterclockwise) {
-                    ++rotationOffset;
+                    rotationOffset += 2;
                     if (rotationOffset >= numStrings) {
                         rotationOffset = 0;
                     }
                 }
                 else {
-                    --rotationOffset;
+                    rotationOffset -= 2;
                     if (rotationOffset < 0) {
                         rotationOffset = numStrings - 1;
                     }
