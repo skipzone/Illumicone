@@ -17,6 +17,8 @@
 
 #include <cmath>
 
+#include <errno.h>
+
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
@@ -319,8 +321,22 @@ bool SpiralPattern::update()
         float x = 0.0;
         for (unsigned int i = 0; i < numStrings * heightInPixels; ++i) {
 
+            errno = 0;
             float y = ::powf(x / spiralTightnessFactor,
                                 progressiveSpringFactor + progressiveSpringCompressionResponseFactor * compressionFactor);
+            //logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y));
+            if (errno != 0) {
+                logSysErr(LOG_ERR,
+                          name + ":  powf indicated an error for "
+                               + " x=" + to_string(x)
+                               + " spiralTightnessFactor=" + to_string(spiralTightnessFactor)
+                               + " progressiveSpringFactor=" + to_string(progressiveSpringFactor)
+                               + " progressiveSpringCompressionResponseFactor=" + to_string(progressiveSpringCompressionResponseFactor)
+                               + " compressionFactor=" + to_string(compressionFactor)
+                               + " exp=" + to_string(progressiveSpringFactor
+                                                     + progressiveSpringCompressionResponseFactor * compressionFactor)
+                          , errno);
+            }
             if (y > 1.0) {
                 break;
             }
