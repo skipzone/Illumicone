@@ -49,10 +49,10 @@
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
-        //{   "description" : "daytime shutoff",
-        //    "startDateTime" : "06:00:00",
-        //    "endDateTime" : "21:00:00"
-        //}
+        {   "description" : "daytime shutoff",
+            "startDateTime" : "06:00:00",
+            "endDateTime" : "21:00:00"
+        }
     ],
 
     "quiescentPeriods" : [
@@ -71,7 +71,7 @@
         },
         {   "name" : "boogieBoard",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 10000
         },
         {   "name" : "fourPlay42",
@@ -140,17 +140,17 @@
             "compressionMeasurementMapper" : [
                 {   "rawMin" : -9001,
                     "rawMax" : -3000,
-                    "mappedStart" : 0.8,
-                    "mappedEnd" : 0.8
+                    "mappedStart" : 1.0,
+                    "mappedEnd" : 1.0
                 },
                 {   "rawMin" : -3000,
                     "rawMax" : 0,
-                    "mappedStart" : 0.8,
-                    "mappedEnd" : 1.0
+                    "mappedStart" : 1.0,
+                    "mappedEnd" : 1.25
                 },
                 {   "rawMin" : 0,
                     "rawMax" : 3000,
-                    "mappedStart" : 1.0,
+                    "mappedStart" : 1.25,
                     "mappedEnd" : 4.0
                 },
                 {   "rawMin" : 3000,
@@ -165,21 +165,21 @@
             // or previous string.
             "rotationMeasurementMapper" : [
                 {   "rawMin" : -9001,
-                    "rawMax" : -3000,
+                    "rawMax" : -1500,
                     "mappedStart" : 20,
                     "mappedEnd" : 20
                 },
-                {   "rawMin" : -3000,
+                {   "rawMin" : -1500,
                     "rawMax" : 0,
                     "mappedStart" : 20,
                     "mappedEnd" : 200
                 },
                 {   "rawMin" : 0,
-                    "rawMax" : 3000,
+                    "rawMax" : 1500,
                     "mappedStart" : 200,
                     "mappedEnd" : 20 
                 },
-                {   "rawMin" : 3000,
+                {   "rawMin" : 1500,
                     "rawMax" : 9001,
                     "mappedStart" : 20,
                     "mappedEnd" : 20
