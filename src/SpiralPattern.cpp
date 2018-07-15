@@ -288,7 +288,7 @@ bool SpiralPattern::update()
                 nextRotationStepMs = nowMs + rotationStepIntervalMs;
                 if (rotateCounterclockwise) {
                     rotationOffset += 2;
-                    if (rotationOffset >= numStrings) {
+                    if ((unsigned int) rotationOffset >= numStrings) {
                         rotationOffset = 0;
                     }
                 }
@@ -314,7 +314,7 @@ bool SpiralPattern::update()
         hsv2rgb(hsvCurrentColor, rgbCurrentColor);
 
         unsigned int heightInPixels = (1.0 / compressionFactor) * (float) pixelsPerString;
-        unsigned int startingPixelOffset = pixelsPerString - heightInPixels;
+        unsigned int startingPixelOffset = (heightInPixels <= pixelsPerString) ? pixelsPerString - heightInPixels : 0;
 
         // Range of y is [0..1].
         float xStep = 1.0 / numStrings;
@@ -324,7 +324,9 @@ bool SpiralPattern::update()
             errno = 0;
             float y = ::powf(x / spiralTightnessFactor,
                                 progressiveSpringFactor + progressiveSpringCompressionResponseFactor * compressionFactor);
-            //logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y));
+            //if (compressionFactor < 1.0) {
+            //    logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y));
+            //}
             if (errno != 0) {
                 logSysErr(LOG_ERR,
                           name + ":  powf indicated an error for "
@@ -342,8 +344,17 @@ bool SpiralPattern::update()
             }
 
             unsigned int stringIdx = ((unsigned int) (x / xStep) + rotationOffset) % numStrings;
-            unsigned int pixelIdx = (flipSpring ? (1.0 - y) : y) * heightInPixels + startingPixelOffset;
-            //logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx));
+            unsigned int pixelIdx;
+            if (flipSpring) {
+                pixelIdx = (uint32_t) ((1.0 - y) * (float) heightInPixels + (float) startingPixelOffset);
+            }
+            else {
+                pixelIdx = (uint32_t) (y * (float) heightInPixels + (float) startingPixelOffset);
+            }
+            //if (compressionFactor < 1.0) {
+            //    //logMsg(LOG_DEBUG, name + ":  stringIdx=" + to_string(stringIdx) + " pixelIdx=" + to_string(pixelIdx));
+            //    logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx) + " startingPixelOffset=" + to_string(startingPixelOffset) + " heightInPixels=" + to_string(heightInPixels));
+            //}
             // When the spiral is stretched, make sure we're
             // setting a pixel within the physical bounds.
             if (pixelIdx < pixelsPerString) {
