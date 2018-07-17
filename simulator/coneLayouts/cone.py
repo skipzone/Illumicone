@@ -8,9 +8,9 @@ import sys
 #-------------------------------------------------------------------------------
 # Illumicone simulator, based on code from: https://github.com/zestyping/openpixelcontrol
 
-NUM_STRINGS = 36
+NUM_STRINGS = 48
 PIXELS_PER_STRING = 100
-SCALE = 1   # You can also think of this as the length of the strands.  Use 7 for cone_med, 10 for cone_lg.
+SCALE = 7   # You can also think of this as the length of the strands.  Use 7 for cone_med, 10 for cone_lg.
 print  "scale: " + str(SCALE)
 PIXEL_DISTANCE = SCALE / PIXELS_PER_STRING
 print "\npixel distance: " + str(PIXEL_DISTANCE)
@@ -29,8 +29,8 @@ for s in range(NUM_STRINGS):
     for p in range(PIXELS_PER_STRING):
         z = HEIGHT - PIXEL_DISTANCE * p
         radius = PIXEL_DISTANCE * p + MIN_RADIUS
-        x = math.sin(theta) * radius
-        y = math.cos(theta) * radius
+        x = math.cos(theta) * radius
+        y = math.sin(theta) * radius
 
         result.append('  {"point": [%.4f, %.4f, %.4f]},' % (x, y, z))
 

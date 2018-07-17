@@ -28,12 +28,12 @@
  *  4:  Rainstick (Dr. Naked)
  *  5:  Schroeder's Plaything (Ross)
  *  6:  TriObelisk (Phyxx and Dr. Naked)
- *  7:  unassigned
+ *  7:  BoogieBoard (Connie)
  *  8:  Pump (Monte, Dr. Naked; based on Kayla's plunger)
  *  9:  Contort-O-Matic (Ray and Mishi)
  * 10:  FourPlay-4-2 (Dr. Naked, Ross)
  * 11:  FourPlay-4-3 (Dr. Naked, Ross)
- * 12:  Buck Norris (Connie)
+ * 12:  unassigned
  * 13:  unassigned
  * 14:  unassigned
  * 15:  unassigned
@@ -50,12 +50,11 @@ enum class WidgetId {
     rainstick,
     schroedersPlaything,
     triObelisk,
-    unassigned_7,
+    boogieBoard,
     pump,
     contortOMatic,
     fourPlay42,
     fourPlay43,
-    buckNorris,
     invalid = 255
 };
 

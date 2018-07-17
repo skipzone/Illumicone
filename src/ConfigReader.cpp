@@ -70,6 +70,31 @@ bool ConfigReader::getDoubleValue(const json11::Json& jsonObj,
 }
 
 
+bool ConfigReader::getFloatValue(const json11::Json& jsonObj,
+                                 const std::string& name,
+                                 float& value,
+                                 const std::string& errorMessageSuffix,
+                                 float minValue,
+                                 float maxValue)
+{
+    if (!jsonObj[name].is_number()) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].number_value();
+    if (value < minValue || value > maxValue) {
+        if (!errorMessageSuffix.empty()) {
+            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
 bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
                                     const std::string& name,
                                     std::string& rgbStr,

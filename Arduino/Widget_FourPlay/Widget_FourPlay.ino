@@ -120,13 +120,13 @@
 #if defined(SPINNAH)
 #define TX_RETRY_DELAY_MULTIPLIER 11
 #elif defined(FOURPLAY)
-#define TX_RETRY_DELAY_MULTIPLIER 7
+#define TX_RETRY_DELAY_MULTIPLIER 15
 #elif defined(FOURPLAY_4_2)
-#define TX_RETRY_DELAY_MULTIPLIER 3
-#elif defined(FOURPLAY_4_3)
 #define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(FOURPLAY_4_3)
+#define TX_RETRY_DELAY_MULTIPLIER 4
 #elif defined(TRIOBELISK)
-#define TX_RETRY_DELAY_MULTIPLIER 2
+#define TX_RETRY_DELAY_MULTIPLIER 6
 #endif
 
 // Max. retries can be 0 to 15.

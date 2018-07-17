@@ -1,0 +1,257 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "lockFilePaths" : {
+        "patternController" : "/tmp/patternController.lock",
+        "widgetRcvr" : "/tmp/widgetRcvr.lock"
+    },
+
+    "numberOfStrings" : 36,
+    "numberOfPixelsPerString" : 100,
+
+    // ----- installation configuration -----
+    "patconIpAddress" : "127.0.0.1",
+    "opcServerIpAddress": "192.168.69.100",
+    "useTcpForOpcServer" : false,
+    // ----- remote widget receiver configuration -----
+    //"patconIpAddress" : "192.168.69.103",
+    //"opcServerIpAddress": "192.168.69.103",
+    //"useTcpForOpcServer" : false,
+    // ----- Xu shop computer simulator configuration -----
+    //"patconIpAddress" : "192.168.69.11",
+    //"opcServerIpAddress": "192.168.69.11",
+    //"useTcpForOpcServer" : true,
+
+    "opcServerPortNumber" : 7890,
+    "widgetPortNumberBase" : 4200,
+
+    "shutoffPeriods" : [
+        {   "description" : "Sensory Sat. afternoon & Sun. morning shutoff",
+            "startDateTime" : "02:30:00",
+            "endDateTime" : "14:37:00"
+        }
+    ],
+
+    "quiescentPeriods" : [
+        {   "description" : "glow while people exit",
+            "startDateTime" : "02:05:00",
+            "endDateTime" : "02:30:00"
+        }
+    ],
+
+    "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+    "patternRunLoopSleepIntervalUs" : 4000,
+
+    "radioPollingLoopSleepIntervalUs" : 1000,
+
+    "widgets" : [
+        {   "name" : "rainstick",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "pump",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "fourPlay42",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "fourPlay43",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        }
+    ],
+
+    "patterns" : [
+        // ---------- stripes and rings on FourPlay-4-x ----------
+        {   "name" : "verticalStripes",
+            "enabled" : true,
+            "priority" : 6,
+            "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "RgbVerticalPattern",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                }//,
+                //{   "inputName" : "width",
+                //    "widgetName" : "fourPlay42",
+                //    "channelNumber" : 3,
+                //    "measurement" : "position"
+                //}
+            ],
+            "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 6,
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+        },
+        {   "name" : "horizontalRings",
+            "enabled" : true,
+            "priority" : 5,
+            "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "HorizontalStripePattern",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                }//,
+                //{   "inputName" : "width",
+                //    "widgetName" : "fourPlay43",
+                //    "channelNumber" : 3,
+                //    "measurement" : "position"
+                //}
+            ],
+            "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 20,            // the maximum width when cyclical values are used
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+        },
+
+        // ---------- sparkles on ForPlay-4-x last wheel ----------
+        {   "name" : "magentaOrangeSparkle",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 3,
+                    "measurement" : "velocity"
+                }
+            ],
+            "activationThreshold" : 10,
+            "deactivationThreshold" : 600,
+            "numGoodMeasurementsForReactivation" : 10,
+            "densityScaledownFactor" : 1800,
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "magenta",
+            "reverseSparkleColor" : "orange"
+        },
+        {   "name" : "aquaNavySparkle",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 3,
+                    "measurement" : "velocity"
+                }
+            ],
+            "activationThreshold" : 10,
+            "deactivationThreshold" : 600,
+            "numGoodMeasurementsForReactivation" : 10,
+            "densityScaledownFactor" : 1800,
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "aqua",
+            "reverseSparkleColor" : "navy"
+        },
+
+        // ---------- fill and burst on Pump ----------
+        {   "name" : "pumpFillAndBurst",
+            "enabled" : true,
+            "priority" : 9,
+            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "burstingPriority" : 1,
+            "patternClassName" : "FillAndBurstPattern",
+            "inputs" : [
+                {   "inputName" : "pressure",
+                    "widgetName" : "pump",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "pressurizationColor" : "96,0,0",
+            //"depressurizationColor" : "32,64,0",
+            "lowPressureCutoff" : 150,
+            "burstThreshold" : 400,
+            "flashThreshold" : 600,
+            "burstDurationMs" : 6000,
+            "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
+            "fillStepIntervalHighMs" : 50,
+            "fillStepIntervalLowMs" : 5,
+            "flashDurationMs" : 2000,
+            "flashIntervalMs" : 20
+        },
+
+        // ---------- rain on Rainstick ----------
+        {   "name" : "rain",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 2,                // average sound amplitude
+                    "measurement" : "position"
+                },
+                {   "inputName" : "emitColor",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 4,                // average gyro y-axis (corresponds to pitch and rolling the rainstick)
+                    "measurement" : "position"
+                }
+            ],
+            // TODO 3/1/2018 ross:  Add this as a defined color:  "0,64,192"
+            "emitColorDefault" : "blue",
+            "emitColorMeasmtLow" : -90,
+            "emitColorMeasmtHigh" : 90,
+            "emitColorLow" : "red",                     // same color for low and high means use the entire color wheel
+            "emitColorHigh" : "red",
+            "emitColorMeasmtMultiplier" : 0.1,          // Rainstick reports position in tenths of a degree
+            "emitColorIntegrateMeasmt" : false,
+            "emitIntervalMeasmtLow" : 30,
+            "emitIntervalMeasmtHigh" : 500,             // can go well above 600, but we want lot o' rain with moderate sound
+            "emitIntervalLowMs" : 200,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 10,
+            "emitDirectionIsUp" : false,
+            "particleMoveIntervalMs" : 10
+        }
+    ]
+
+}

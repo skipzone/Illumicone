@@ -16,7 +16,7 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=patternController
-OBJS=WidgetId.o widgetFactory.o Widget.o WidgetChannel.o QueuedWidgetChannel.o ContortOMaticWidget.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o SchroedersPlaythingWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o patternFactory.o Pattern.o AnnoyingFlashingPattern.o FillAndBurstPattern.o HorizontalStripePattern.o IndicatorRegionsPattern.o MidiActivatedRegionsPattern.o ParticlesPattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o SpinnerPattern.o SwitchActivatedRegionsPattern.o indicatorRegionFactory.o IndicatorRegion.o SimpleBlockIndicator.o json11.o ConfigReader.o log.o illumiconeUtility.o illumiconePixelUtility.o lib8tion.o colorutils.o hsv2rgb.o colorpalettes.o
+OBJS=WidgetId.o widgetFactory.o Widget.o WidgetChannel.o QueuedWidgetChannel.o BoogieBoardWidget.o ContortOMaticWidget.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o SchroedersPlaythingWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o patternFactory.o Pattern.o AnnoyingFlashingPattern.o FillAndBurstPattern.o HorizontalStripePattern.o IndicatorRegionsPattern.o MidiActivatedRegionsPattern.o ParticlesPattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o SpinnerPattern.o SpiralPattern.o SwitchActivatedRegionsPattern.o indicatorRegionFactory.o IndicatorRegion.o SimpleBlockIndicator.o json11.o ConfigReader.o log.o illumiconeUtility.o illumiconePixelUtility.o lib8tion.o colorutils.o hsv2rgb.o colorpalettes.o
 LIBS=
 
 INCLUDE=../include
@@ -49,6 +49,9 @@ stringTester: stringTester.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illu
 jsonTester: jsonTester.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
+unitTests: unitTests.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
+	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
+
 clean:
 	rm -f $(OBJS) $(PROGS)
 
@@ -60,4 +63,7 @@ clean-stringTester:
 
 clean-jsonTester:
 	rm -f jsonTester json11.o log.o illumiconeUtility.o ConfigReader.o WidgetId.o
+
+clean-unitTests:
+	rm -f unitTests json11.o log.o illumiconeUtility.o ConfigReader.o
 

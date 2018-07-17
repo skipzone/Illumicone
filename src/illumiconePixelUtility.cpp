@@ -176,7 +176,7 @@ bool stringToRgbPixel(const string& rgbString, RgbPixel& rgbPixel)
         rgbPixel = RgbPixel::Red;
     }
     else if (rgbString == "orange") {
-        rgbPixel = RgbPixel::Orange;
+        rgbPixel = RgbPixel::BsuOrange;
     }
     else if (rgbString == "yellow") {
         rgbPixel = RgbPixel::Yellow;
@@ -189,6 +189,9 @@ bool stringToRgbPixel(const string& rgbString, RgbPixel& rgbPixel)
     }
     else if (rgbString == "blue") {
         rgbPixel = RgbPixel::Blue;
+    }
+    else if (rgbString == "navy") {
+        rgbPixel = RgbPixel::Navy;
     }
     else if (rgbString == "pink") {
         rgbPixel = RgbPixel::Pink;

@@ -378,11 +378,11 @@ bool openUdpPorts()
         && openUdpPort(WidgetId::rainstick)
         && openUdpPort(WidgetId::schroedersPlaything)
         && openUdpPort(WidgetId::triObelisk)
+        && openUdpPort(WidgetId::boogieBoard)
         && openUdpPort(WidgetId::pump)
         && openUdpPort(WidgetId::contortOMatic)
         && openUdpPort(WidgetId::fourPlay42)
-        && openUdpPort(WidgetId::fourPlay43)
-        && openUdpPort(WidgetId::buckNorris);
+        && openUdpPort(WidgetId::fourPlay43);
 
     return retval;
 }

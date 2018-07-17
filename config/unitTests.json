@@ -1,0 +1,26 @@
+{
+
+    "mapper3" : [
+        {   "rawMin" : -9001,
+            "rawMax" : -3000,
+            "mappedStart" : 0.1,
+            "mappedEnd" : 0.1
+        },
+        {   "rawMin" : -3000,
+            "rawMax" : -2,
+            "mappedStart" : 0.1,
+            "mappedEnd" : 1.0
+        },
+        {   "rawMin" : 1,
+            "rawMax" : 3000,
+            "mappedStart" : 1.0,
+            "mappedEnd" : 4.0
+        },
+        {   "rawMin" : 3000,
+            "rawMax" : 9001,
+            "mappedStart" : 4.0,
+            "mappedEnd" : 4.0
+        }
+    ]
+
+}

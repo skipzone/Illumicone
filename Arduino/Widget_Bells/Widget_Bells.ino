@@ -57,8 +57,8 @@ constexpr uint16_t bellActiveThreshold[numAudioInputPins] = {100, 200, 200};
 #define TX_PIPE_ADDRESS "1wdgt"
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
-// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 11
+// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11, 13) or 15 (the max).
+#define TX_RETRY_DELAY_MULTIPLIER 15
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 15
