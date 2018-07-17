@@ -140,17 +140,17 @@
             "compressionMeasurementMapper" : [
                 {   "rawMin" : -9001,
                     "rawMax" : -3000,
-                    "mappedStart" : 1.0,
-                    "mappedEnd" : 1.0
+                    "mappedStart" : 0.1,
+                    "mappedEnd" : 0.1
                 },
                 {   "rawMin" : -3000,
                     "rawMax" : 0,
-                    "mappedStart" : 1.0,
-                    "mappedEnd" : 1.25
+                    "mappedStart" : 0.1,
+                    "mappedEnd" : 1.0
                 },
                 {   "rawMin" : 0,
                     "rawMax" : 3000,
-                    "mappedStart" : 1.25,
+                    "mappedStart" : 1.0,
                     "mappedEnd" : 4.0
                 },
                 {   "rawMin" : 3000,
@@ -220,7 +220,7 @@
                 }
             ],
             "emitColorDefault" : "white",
-            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtLow" : 200,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,
@@ -232,7 +232,6 @@
             "enabled" : true,
             "priority" : 2,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-            "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
                     "widgetName" : "bells",
@@ -241,7 +240,7 @@
                 }
             ],
             "emitColorDefault" : "purple",
-            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtLow" : 400,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,
@@ -262,7 +261,7 @@
                 }
             ],
             "emitColorDefault" : "aqua",
-            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtLow" : 300,
             "emitIntervalMeasmtHigh" : 1023,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,
