@@ -17,6 +17,8 @@
 
 #include <cmath>
 
+#include <errno.h>
+
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
@@ -54,8 +56,8 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
         else if (channelConfig.inputName == "rotation") {
             rotationChannel = channelConfig.widgetChannel;
         }
-        else if (channelConfig.inputName == "width") {
-            widthChannel = channelConfig.widgetChannel;
+        else if (channelConfig.inputName == "color") {
+            colorChannel = channelConfig.widgetChannel;
         }
         else {
             logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
@@ -101,79 +103,51 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     // -- compression --
 
-    compressionMeasmtMapper.addRange(-9001, -3000, 0.1, 0.1);
-    compressionMeasmtMapper.addRange(-3000, 0, 0.1, 1.0);
-    compressionMeasmtMapper.addRange(0, 3000, 1.0, 4.0);
-    compressionMeasmtMapper.addRange(3000, 9001, 4.0, 4.0);
+    if (compressionChannel != nullptr) {
 
-    if (!ConfigReader::getIntValue(patternConfig, "compressionScaleFactor", compressionScaleFactor, errMsgSuffix)) {
-        return false;
+        if (!compressionMeasmtMapper.readConfig(patternConfig, "compressionMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
+
+        if (!ConfigReader::getIntValue(patternConfig, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " compressionResetTimeoutSeconds=" + to_string(compressionResetTimeoutSeconds));
+
+        compressionTriangleAmplitude = maxCyclicalCompression - minCyclicalCompression;
+        compressionTrianglePeriod = compressionTriangleAmplitude * 2;
     }
-    logMsg(LOG_INFO, name + " compressionScaleFactor=" + to_string(compressionScaleFactor));
 
-    if (!ConfigReader::getFloatValue(patternConfig, "compressionDivisor", compressionDivisor, errMsgSuffix)) {
-        return false;
+
+    // -- rotation --
+
+    if (rotationChannel != nullptr) {
+        if (!rotationMeasmtMapper.readConfig(patternConfig, "rotationMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
     }
-    logMsg(LOG_INFO, name + " compressionDivisor=" + to_string(compressionDivisor));
 
-    if (!ConfigReader::getIntValue(patternConfig, "minCyclicalCompression", minCyclicalCompression, errMsgSuffix)) {
-        return false;
+
+    // -- color --
+
+    if (colorChannel != nullptr) {
+        if (!colorMeasmtMapper.readConfig(patternConfig, "colorMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
     }
-    logMsg(LOG_INFO, name + " minCyclicalCompression=" + to_string(minCyclicalCompression));
-
-    if (!ConfigReader::getIntValue(patternConfig, "maxCyclicalCompression", maxCyclicalCompression, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " maxCyclicalCompression=" + to_string(maxCyclicalCompression));
-
-    if (!ConfigReader::getFloatValue(patternConfig, "compressionFactorOffset", compressionFactorOffset, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " compressionFactorOffset=" + to_string(compressionFactorOffset));
-
-
-    if (!ConfigReader::getIntValue(patternConfig, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " compressionResetTimeoutSeconds=" + to_string(compressionResetTimeoutSeconds));
-
-    compressionTriangleAmplitude = maxCyclicalCompression - minCyclicalCompression;
-    compressionTrianglePeriod = compressionTriangleAmplitude * 2;
-
-    // -- width --
-
-    if (!ConfigReader::getIntValue(patternConfig, "widthScaleFactor", widthScaleFactor, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " widthScaleFactor=" + to_string(widthScaleFactor));
-
-    if (!ConfigReader::getIntValue(patternConfig, "minCyclicalWidth", minCyclicalWidth, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " minCyclicalWidth=" + to_string(minCyclicalWidth));
-
-    if (!ConfigReader::getIntValue(patternConfig, "maxCyclicalWidth", maxCyclicalWidth, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " maxCyclicalWidth=" + to_string(maxCyclicalWidth));
-
-    if (!ConfigReader::getIntValue(patternConfig, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix)) {
-        return false;
-    }
-    logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
-
-    widthTriangleAmplitude = maxCyclicalWidth - minCyclicalWidth;
-    widthTrianglePeriod = widthTriangleAmplitude * 2;
 
 
     // ----- initialize object data -----
 
     nextResetCompressionMs = 0;
     resetCompression = true;
-    compressionPos = compressionDivisor;
-    nextResetWidthMs = 0;
-    resetWidth = true;
-    widthPos = 1;
+    //compressionPos = compressionDivisor;
+    compressionFactor = 1;      // TODO: need to flag it as invalid until we actually get a good measurement
+    nextRotationStepMs = 0;
+    rotationStepIntervalMs = 0;
+    rotationOffset = 0;
+    rotateCounterclockwise = false;
+    currentHue = 0;
 
     return true;
 }
@@ -204,12 +178,23 @@ bool SpiralPattern::update()
         if (compressionChannel->getIsActive()) {
             isActive = true;
             if (compressionChannel->getHasNewPositionMeasurement()) {
-                gotUpdateFromWidget = true;
                 int rawCompressionPos = compressionChannel->getPosition();
-                if (resetCompression) {
-                    resetCompression = false;
-                    compressionPosOffset = rawCompressionPos;
+                if (compressionMeasmtMapper.mapMeasurement(rawCompressionPos, compressionFactor)) {
+                    gotUpdateFromWidget = true;
+
+                    if (resetCompression) {
+                        resetCompression = false;
+                        compressionPosOffset = rawCompressionPos;
+                    }
                 }
+
+                    //logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
+                    //                  + ", compressionPosOffset=" + to_string(compressionPosOffset)
+                    //                  + ", compressionFactor=" + to_string(compressionFactor));
+
+
+                // TODO:  Put back in cyclical measurement support.
+                /*
                 compressionPos = (rawCompressionPos - compressionPosOffset) / compressionScaleFactor;
                 if (maxCyclicalCompression != 0) {
                     // This is a triangle wave function where the height of the triangle (peak-to-peak
@@ -230,46 +215,51 @@ bool SpiralPattern::update()
                 logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
                                   + ", compressionPosOffset=" + to_string(compressionPosOffset)
                                   + ", compressionPos=" + to_string(compressionPos));
+                */
+
             }
         }
     }
 
-    // Get an updated stripe width, if available.
-    if (widthChannel != nullptr) {
-        if (widthChannel->getIsActive()) {
+    // Get an updated rotation step interval, if available.
+    if (rotationChannel != nullptr) {
+        if (rotationChannel->getIsActive()) {
             isActive = true;
-            if (widthChannel->getHasNewPositionMeasurement()) {
-                gotUpdateFromWidget = true;
-                int rawWidthPos = widthChannel->getPosition();
-                if (resetWidth) {
-                    resetWidth = false;
-                    widthPosOffset = rawWidthPos;
+            if (rotationChannel->getHasNewPositionMeasurement()) {
+                int rawRotationPos = rotationChannel->getPosition();
+                if (rotationMeasmtMapper.mapMeasurement(rawRotationPos, rotationStepIntervalMs)) {
+                    gotUpdateFromWidget = true;
+                    rotateCounterclockwise = (rawRotationPos >= 0);
+                    //logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
+                    //                  + ", rotateCounterclockwise=" + to_string(rotateCounterclockwise)
+                    //                  + ", rotationStepIntervalMs=" + to_string(rotationStepIntervalMs)
+                    //                  + ", rotationOffset=" + to_string(rotationOffset));
                 }
-                widthPos = (rawWidthPos - widthPosOffset) / widthScaleFactor;
-                if (maxCyclicalWidth != 0) {
-                    // This is a triangle wave function where the height of the triangle (peak-to-peak
-                    // amplitude of the waveform) is maxCyclicalWidth - minCyclicalWidth, and the
-                    // width of the base (waveform period) is twice the height.  The waveform is
-                    // offset from zero (DC offset) by minCyclicalWidth.  We left-shift the wave so
-                    // that widthPos starts out at minCyclicalWidth.
-                    int singleCycleX = abs(widthPos + widthTriangleAmplitude) % widthTrianglePeriod;
-                    //logMsg(LOG_DEBUG, name + ":  widthTriangleAmplitude=" + to_string(widthTriangleAmplitude)
-                    //                  + ", widthTrianglePeriod=" + to_string(widthTrianglePeriod)
-                    //                  + ", singleCycleX=" + to_string(singleCycleX));
-                    widthPos = abs(singleCycleX - widthTriangleAmplitude) + minCyclicalWidth;
+            }
+        }
+        else {
+            rotationStepIntervalMs = 0;
+        }
+    }
+
+    // Get an updated color, if available.
+    if (colorChannel != nullptr) {
+        if (colorChannel->getIsActive()) {
+            isActive = true;
+            if (colorChannel->getHasNewPositionMeasurement()) {
+                int rawColorPos = colorChannel->getPosition();
+                int colorSteps;
+                if (colorMeasmtMapper.mapMeasurement(rawColorPos, colorSteps)) {
+                    gotUpdateFromWidget = true;
+                    currentHue += colorSteps;
+                    //logMsg(LOG_DEBUG, name + ":  rawColorPos=" + to_string(rawColorPos)
+                    //                  + ", colorSteps=" + to_string(colorSteps)
+                    //                  + ", currentHue=" + to_string(currentHue));
                 }
-                if (widthPos < 1) {
-                    widthPos = 1;
-                }
-                //logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
-                //                  + ", widthPosOffset=" + to_string(widthPosOffset)
-                //                  + ", widthPos=" + to_string(widthPos));
             }
         }
     }
 
-    // TODO:  The next two blocks do the same thing but with different data.
-    //        Implement in one function.
 
     // Set flag to force compression back to 1 when compression channel
     // has been inactive for compressionResetTimeoutSeconds.
@@ -287,19 +277,28 @@ bool SpiralPattern::update()
         }
     }
 
-    // Set flag to force width back to 1 when width channel
-    // has been inactive for widthResetTimeoutSeconds.
-    if (isActive) {
-        nextResetWidthMs = 0;
-    }
-    else {
-        if (nextResetWidthMs == 0) {
-            nextResetWidthMs = nowMs + widthResetTimeoutSeconds * 1000;
+
+    // Rotate a step if we have a valid interval measurement and it is time to rotate one step.
+    if (rotationStepIntervalMs != 0) {
+        if (nextRotationStepMs == 0) {
+            nextRotationStepMs = nowMs + rotationStepIntervalMs;
         }
-        else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
-            //logMsg(LOG_DEBUG, name + ":  Resetting width.");
-            resetWidth = true;
-            widthPos = 1;
+        else {
+            if ((int) (nowMs - nextRotationStepMs) >= 0) {
+                nextRotationStepMs = nowMs + rotationStepIntervalMs;
+                if (rotateCounterclockwise) {
+                    rotationOffset += 2;
+                    if ((unsigned int) rotationOffset >= numStrings) {
+                        rotationOffset = 0;
+                    }
+                }
+                else {
+                    rotationOffset -= 2;
+                    if (rotationOffset < 0) {
+                        rotationOffset = numStrings - 1;
+                    }
+                }
+            }
         }
     }
 
@@ -310,35 +309,63 @@ bool SpiralPattern::update()
 
         clearAllPixels(pixelArray);
 
-        float compressionFactor = (float) compressionPos / compressionDivisor + compressionFactorOffset;
+        CHSV hsvCurrentColor((uint8_t) currentHue, 255, 255);
+        CRGB rgbCurrentColor;
+        hsv2rgb(hsvCurrentColor, rgbCurrentColor);
+
         unsigned int heightInPixels = (1.0 / compressionFactor) * (float) pixelsPerString;
-        unsigned int startingPixelOffset = pixelsPerString - heightInPixels;
+        unsigned int startingPixelOffset = (heightInPixels <= pixelsPerString) ? pixelsPerString - heightInPixels : 0;
 
         // Range of y is [0..1].
         float xStep = 1.0 / numStrings;
-        float x = 0;
+        float x = 0.0;
         for (unsigned int i = 0; i < numStrings * heightInPixels; ++i) {
 
+            errno = 0;
             float y = ::powf(x / spiralTightnessFactor,
                                 progressiveSpringFactor + progressiveSpringCompressionResponseFactor * compressionFactor);
+            //if (compressionFactor < 1.0) {
+            //    logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y));
+            //}
+            if (errno != 0) {
+                logSysErr(LOG_ERR,
+                          name + ":  powf indicated an error for "
+                               + " x=" + to_string(x)
+                               + " spiralTightnessFactor=" + to_string(spiralTightnessFactor)
+                               + " progressiveSpringFactor=" + to_string(progressiveSpringFactor)
+                               + " progressiveSpringCompressionResponseFactor=" + to_string(progressiveSpringCompressionResponseFactor)
+                               + " compressionFactor=" + to_string(compressionFactor)
+                               + " exp=" + to_string(progressiveSpringFactor
+                                                     + progressiveSpringCompressionResponseFactor * compressionFactor)
+                          , errno);
+            }
             if (y > 1.0) {
                 break;
             }
 
-            unsigned int stringIdx = (unsigned int) (x / xStep) % numStrings;
-            unsigned int pixelIdx = (flipSpring ? (1.0 - y) : y) * heightInPixels + startingPixelOffset;
-            //logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx));
+            unsigned int stringIdx = ((unsigned int) (x / xStep) + rotationOffset) % numStrings;
+            unsigned int pixelIdx;
+            if (flipSpring) {
+                pixelIdx = (uint32_t) ((1.0 - y) * (float) heightInPixels + (float) startingPixelOffset);
+            }
+            else {
+                pixelIdx = (uint32_t) (y * (float) heightInPixels + (float) startingPixelOffset);
+            }
+            //if (compressionFactor < 1.0) {
+            //    //logMsg(LOG_DEBUG, name + ":  stringIdx=" + to_string(stringIdx) + " pixelIdx=" + to_string(pixelIdx));
+            //    logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx) + " startingPixelOffset=" + to_string(startingPixelOffset) + " heightInPixels=" + to_string(heightInPixels));
+            //}
             // When the spiral is stretched, make sure we're
             // setting a pixel within the physical bounds.
             if (pixelIdx < pixelsPerString) {
                 // TODO:  set the color
-                pixelArray[stringIdx][pixelIdx].r = 255;
+                pixelArray[stringIdx][pixelIdx] = rgbCurrentColor;
             }
 
             x += xStep;
         }
-
     }
 
     return isActive;
 }
+

@@ -53,36 +53,32 @@ class SpiralPattern : public Pattern
         float progressiveSpringFactor;
         float progressiveSpringCompressionResponseFactor;
 
-        int compressionScaleFactor;
-        float compressionDivisor;
+///        int compressionScaleFactor;
+///        float compressionDivisor;
         int maxCyclicalCompression;
         int minCyclicalCompression;
-        float compressionFactorOffset;
+///        float compressionFactorOffset;
         int compressionResetTimeoutSeconds;
         int compressionTriangleAmplitude;
         int compressionTrianglePeriod;
 
-        int widthScaleFactor;
-        int maxCyclicalWidth;
-        int minCyclicalWidth;
-        int widthResetTimeoutSeconds;
-        int widthTriangleAmplitude;
-        int widthTrianglePeriod;
-
-        std::shared_ptr<WidgetChannel> rotationChannel;
         std::shared_ptr<WidgetChannel> compressionChannel;
-        std::shared_ptr<WidgetChannel> widthChannel;
+        std::shared_ptr<WidgetChannel> rotationChannel;
+        std::shared_ptr<WidgetChannel> colorChannel;
 
         unsigned int nextResetCompressionMs;
         bool resetCompression;
         int compressionPos;
         int compressionPosOffset;
-
-        unsigned int nextResetWidthMs;
-        bool resetWidth;
-        int widthPos;
-        int widthPosOffset;
+        float compressionFactor;
+        int rotationStepIntervalMs;
+        unsigned int nextRotationStepMs;
+        int rotationOffset;
+        bool rotateCounterclockwise;
+        uint8_t currentHue;
 
         MeasurementMapper<int, float> compressionMeasmtMapper;
+        MeasurementMapper<int, int> rotationMeasmtMapper;
+        MeasurementMapper<int, int> colorMeasmtMapper;
 };
 

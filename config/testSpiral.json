@@ -44,12 +44,12 @@
     "widgets" : [
         {   "name" : "boogieBoard",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 10000
         },
         {   "name" : "fourPlay42",
             "enabled" : false,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         }
     ],
@@ -61,24 +61,19 @@
             "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SpiralPattern",
             "inputs" : [
-                //{   "inputName" : "compression",
-                //    "widgetName" : "fourPlay42",
-                //    "channelNumber" : 0,
-                //    "measurement" : "position"
-                //},
                 {   "inputName" : "compression",
                     "widgetName" : "boogieBoard",
                     "channelNumber" : 1,                            // pitch, degrees * 100, (-9000, 9000)
                     "measurement" : "position"
                 },
                 {   "inputName" : "rotation",
-                    "widgetName" : "fourPlay42",
-                    "channelNumber" : 1,
+                    "widgetName" : "boogieBoard",
+                    "channelNumber" : 2,                            // roll, degrees * 100, (-9000, 9000)
                     "measurement" : "position"
                 },
-                {   "inputName" : "width",
-                    "widgetName" : "fourPlay42",
-                    "channelNumber" : 2,
+                {   "inputName" : "color",
+                    "widgetName" : "boogieBoard",
+                    "channelNumber" : 5,                            // acceleration of rotation about the z-axis (yaw)
                     "measurement" : "position"
                 }
             ],
@@ -86,26 +81,75 @@
             "spiralTightnessFactor" : 6.0,                          // the number of turns around the cone
             "progressiveSpringFactor" : 3,                          // 1 for non-progressive, >= 3 kinda looks like a bedspring
             "progressiveSpringCompressionResponseFactor" : -0.5,    // multiplied by comp fac and added to progressiveSpringFactor
-            // -- compression, fourPlay42 ch. 0 sim --
-            //"compressionScaleFactor" : 1,                           // effectively gear down a rotating widget
-            //"compressionDivisor" : 10.0,                            // so we can get fractional compression from int measurments
-            //"minCyclicalCompression" : 10,                          // the minimum compression measmt when cyclical values are used
-            //"maxCyclicalCompression" : 40,                          // the maximum compression measmt when cyclical values are used
-            //"compressionFactorOffset" : 0,                          // no measurement offset needed because of min cyclical val
-            //"compressionResetTimeoutSeconds" : 3,                   // reset to min after period of compression ch inactivity
-            // -- compression, boogieBoard ch. 1 (pitch) --
-            "compressionScaleFactor" : 1,                           // no scaledown needed
-            //"compressionDivisor" : 3000.0,                          // full 90 degrees is compression factor 3 + 1 = 4
-            "compressionDivisor" : 1000.0,                          // full tilt is ~3000.0 -> ~30 degrees, compr. factor 3 + 1 = 4
-            "minCyclicalCompression" : 0,                           // cyclical not used
-            "maxCyclicalCompression" : 0,                           // cyclical not used
-            "compressionFactorOffset" : 1.2,                          // a zero measurement means no compression
+            // The raw compression measurement maps to compression
+            // factor, which is usually in the range [0.8, 4] or so.
+            "compressionMeasurementMapper" : [
+                {   "rawMin" : -9001,
+                    "rawMax" : -3000,
+                    "mappedStart" : 0.8,
+                    "mappedEnd" : 0.8
+                },
+                {   "rawMin" : -3000,
+                    "rawMax" : 0,
+                    "mappedStart" : 0.8,
+                    "mappedEnd" : 1.0
+                },
+                {   "rawMin" : 0,
+                    "rawMax" : 3000,
+                    "mappedStart" : 1.0,
+                    "mappedEnd" : 4.0
+                },
+                {   "rawMin" : 3000,
+                    "rawMax" : 9001,
+                    "mappedStart" : 4.0,
+                    "mappedEnd" : 4.0
+                }
+            ],
             "compressionResetTimeoutSeconds" : 3,                   // reset to min after period of compression ch inactivity
-            // -- width, fourPlay42 ch. 2 --
-            "widthScaleFactor" : 1,                                 // effectively gear down a rotating widget
-            "minCyclicalWidth" : 10,                                // the minimum width when cyclical values are used
-            "maxCyclicalWidth" : 40,                                // the maximum width when cyclical values are used
-            "widthResetTimeoutSeconds" : 3                          // reset to min after period of width ch inactivity
+            // The raw rotation measurement maps to the delay, in ms, between
+            // rotation steps.  Each rotation step starts the spiral at the next
+            // or previous string.
+            "rotationMeasurementMapper" : [
+                {   "rawMin" : -9001,
+                    "rawMax" : -3000,
+                    "mappedStart" : 20,
+                    "mappedEnd" : 20
+                },
+                {   "rawMin" : -3000,
+                    "rawMax" : 0,
+                    "mappedStart" : 20,
+                    "mappedEnd" : 200
+                },
+                {   "rawMin" : 0,
+                    "rawMax" : 3000,
+                    "mappedStart" : 200,
+                    "mappedEnd" : 20 
+                },
+                {   "rawMin" : 3000,
+                    "rawMax" : 9001,
+                    "mappedStart" : 20,
+                    "mappedEnd" : 20
+                }
+            ],
+            // The raw color measurement maps to the number of steps to rotate
+            // around the color wheel.  The color wheel has 255 steps.
+            "colorMeasurementMapper" : [
+                {   "rawMin" : -999,
+                    "rawMax" : -40,
+                    "mappedStart" : -40,
+                    "mappedEnd" : -40
+                },
+                {   "rawMin" : -40,
+                    "rawMax" : 40,
+                    "mappedStart" : -40,
+                    "mappedEnd" : 40
+                },
+                {   "rawMin" : 40,
+                    "rawMax" : 999,
+                    "mappedStart" : 40,
+                    "mappedEnd" : 40
+                }
+            ]
         }
     ]
 

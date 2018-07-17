@@ -1,2 +1,2 @@
 #!/bin/bash
-~/devl/openpixelcontrol/bin/gl_server -l ~/devl/Illumicone/openpixelcontrol_layouts/cone_med_48.json -p 7890 &
+~/devl/openpixelcontrol/bin/gl_server -l ~/devl/Illumicone/simulator/coneLayouts/cone_med_48.json -p 7890 &
