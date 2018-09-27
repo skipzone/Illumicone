@@ -54,9 +54,13 @@ constexpr uint8_t maxPacketsInFifoBeforeReset = 2;
 
 constexpr double countsPerG = 8192.0;
 
-#define NUM_COLORS_PER_LAMP 3
+// Restrict pitch and roll to avoid gimbal lock.
+constexpr float maxPitchDegrees = 45;
+constexpr float maxRollDegrees = 52;
+
+#define NUM_COLORS_PER_LAMP 4
 #define NUM_LAMPS 8
-#define LAMP_MIN_INTENSITY 32
+#define LAMP_MIN_INTENSITY 24
 
 #define DMX_OUTPUT_PIN 3
 #define DMX_NUM_CHANNELS_PER_LAMP 4
@@ -544,8 +548,17 @@ void sendDmx()
     // Set the lamp to full brightness because we control its
     // overall brightness by way of the individual colors.
     dmxChannelValues[dmxChannelNum++] = 127;
-    for (uint8_t colorIdx = 0; colorIdx < NUM_COLORS_PER_LAMP; ++colorIdx) {
-      dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][colorIdx];
+    if (NUM_COLORS_PER_LAMP == 3) {
+      for (uint8_t colorIdx = 0; colorIdx < NUM_COLORS_PER_LAMP; ++colorIdx) {
+        dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][colorIdx];
+      }
+    }
+    else if (NUM_COLORS_PER_LAMP == 4) {
+      // The first color (probably red) appears before and after the other
+      // two so that we can go all the way around the color wheel.
+      dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][0] + colorChannelIntensities[lampIdx][3];
+      dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][1];
+      dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][2];      
     }
   }
   // Send zeros to any unused channels.
@@ -568,9 +581,8 @@ void sendDmx()
 
 void updateLamps()
 {
-  const float maxTiltDegrees = 45;   // restrict tilt to avoid gimbal lock
-  const float colorAngleStep = maxTiltDegrees * 2 / (NUM_COLORS_PER_LAMP - 1);
-  const float lampAngleStep = maxTiltDegrees * 2 / (NUM_LAMPS - 1);
+  constexpr float colorAngleStep = maxPitchDegrees * 2 / (NUM_COLORS_PER_LAMP - 1);
+  constexpr float lampAngleStep = maxRollDegrees * 2 / (NUM_LAMPS - 1);
 
   int colorIntensities[NUM_COLORS_PER_LAMP];
   for (uint8_t i = 0; i < NUM_COLORS_PER_LAMP; ++i) {
@@ -590,31 +602,31 @@ void updateLamps()
 
   getAverageMeasurements();
 
-  // Normalize and restrict pitch and roll to [0, maxTiltDegrees*2] degrees.
+  // Normalize and restrict pitch and roll to [0, max___Degrees*2] degrees.
   float normalizedPitch;
-  if (avgPitch <= - maxTiltDegrees) {
+  if (avgPitch <= - maxPitchDegrees) {
     normalizedPitch = 0;
   }
-  else if (avgPitch >= maxTiltDegrees) {
-    normalizedPitch = maxTiltDegrees * 2.0;
+  else if (avgPitch >= maxPitchDegrees) {
+    normalizedPitch = maxPitchDegrees * 2.0;
   }
   else {
-    normalizedPitch = avgPitch + maxTiltDegrees;
+    normalizedPitch = avgPitch + maxPitchDegrees;
   }
   float normalizedRoll;
-  if (avgRoll <= - maxTiltDegrees) {
+  if (avgRoll <= - maxRollDegrees) {
     normalizedRoll = 0;
   }
-  else if (avgRoll >= maxTiltDegrees) {
-    normalizedRoll = maxTiltDegrees * 2.0;
+  else if (avgRoll >= maxRollDegrees) {
+    normalizedRoll = maxRollDegrees * 2.0;
   }
   else {
-    normalizedRoll = avgRoll + maxTiltDegrees;
+    normalizedRoll = avgRoll + maxRollDegrees;
   }
 
   // Fade across the colors based on pitch angle.
   int colorSection = floor(normalizedPitch / colorAngleStep);
-  // Fix up colorSection if measurement is maxTiltDegrees degrees or more.
+  // Fix up colorSection if measurement is maxPitchDegrees degrees or more.
   if (colorSection >= NUM_COLORS_PER_LAMP - 1) {
       colorSection = NUM_COLORS_PER_LAMP - 2;
   }
@@ -625,7 +637,7 @@ void updateLamps()
 
   // Fade across the lamps based on roll angle.
   int lampSection = floor(normalizedRoll / lampAngleStep);
-  // Fix up lampSection if measurement is maxTiltDegrees degrees or more.
+  // Fix up lampSection if measurement is maxRollDegrees degrees or more.
   if (lampSection >= NUM_LAMPS - 1) {
       lampSection = NUM_LAMPS - 2;
   }
