@@ -11,6 +11,7 @@
  * Options *
  ***********/
 
+//#define USE_LOCAL_SENSOR
 #define ENABLE_WATCHDOG
 //#define ENABLE_DEBUG_PRINT
 
@@ -23,6 +24,7 @@
 #include <avr/wdt.h>
 #endif
 
+#ifdef USE_LOCAL_SENSOR
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
@@ -30,15 +32,58 @@
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
 #endif
+#else
+#include <SPI.h>
+#include "RF24.h"
+#endif
 
 #include "DmxSimple.h"
+
+
+/*********************************
+ * Payload Structure Definitions *
+ *********************************/
+
+union WidgetHeader {
+  struct {
+    uint8_t id       : 4;
+    bool    isActive : 1;
+    uint8_t channel  : 3;
+  };
+  uint8_t raw;
+};
+
+// pipe 0
+struct StressTestPayload {
+  WidgetHeader widgetHeader;
+  uint32_t     payloadNum;
+  uint32_t     numTxFailures;
+};
+
+// pipe 1
+struct PositionVelocityPayload {
+  WidgetHeader widgetHeader;
+  int16_t      position;
+  int16_t      velocity;
+};
+
+// pipe 2
+struct MeasurementVectorPayload {
+  WidgetHeader widgetHeader;
+  int16_t      measurements[15];
+};
+
+// pipe 5
+struct CustomPayload {
+  WidgetHeader widgetHeader;
+  uint8_t      buf[31];
+};
 
 
 /*****************
  * Configuration *
  *****************/
 
-#define DISPLAY_TX_INTERVAL_MS 250L
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 500L
 #define DMX_TX_INTERVAL_MS 33L
 
@@ -76,6 +121,38 @@ typedef uint8_t fract8;   ///< ANSI: unsigned short _Fract
 #define LIB8STATIC_ALWAYS_INLINE __attribute__ ((always_inline)) static inline
 
 
+/*********************************************
+ * Radio Configuration Common To All Widgets *
+ *********************************************/
+
+// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS (genuine Noric chips only).
+#define DATA_RATE RF24_250KBPS
+
+// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
+#define CRC_LENGTH RF24_CRC_16
+
+// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
+// ISM: 2400-2500;  ham: 2390-2450
+// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
+//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+#define RF_CHANNEL 84
+
+// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
+#define RF_POWER_LEVEL RF24_PA_MAX
+
+
+/***************************************
+ * Widget-Specific Radio Configuration *
+ ***************************************/
+
+// Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
+// 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
+#define RX_PIPE_ADDRESS "2wdgt"
+
+// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
+#define RF_POWER_LEVEL RF24_PA_MAX
+
+
 /***********
  * Globals *
  ***********/
@@ -86,6 +163,7 @@ static int32_t maSums[NUM_MA_SETS];
 static uint8_t nextSlotIdx[NUM_MA_SETS];
 static bool maSetFull[NUM_MA_SETS];
 
+#ifdef USE_LOCAL_SENSOR
 static MPU6050 mpu;               // using default I2C address 0x68
 
 // MPU control/status vars
@@ -106,6 +184,7 @@ static float mpuTemperatureC;
 static float mpuTemperatureF;
 
 static volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
+#endif
 
 static double avgYaw;
 static double avgPitch;
@@ -119,16 +198,50 @@ static double avgGyroZ;
 
 static int colorChannelIntensities[NUM_LAMPS][NUM_COLORS_PER_LAMP];
 
+#ifndef USE_LOCAL_SENSOR
+static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
+#endif
+
 
 /******************
  * Implementation *
  ******************/
 
+#ifdef USE_LOCAL_SENSOR
 void dmpDataReady() {
     mpuInterrupt = true;
 }
+#endif
 
 
+#ifndef USE_LOCAL_SENSOR
+void initRadio(
+    RF24&         radio,
+    const char*   readPipeAddress,
+    rf24_pa_dbm_e rfPowerLevel)
+{
+  radio.begin();
+
+  radio.setPALevel(rfPowerLevel);
+  //radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
+  radio.setDataRate(DATA_RATE);
+  radio.setChannel(RF_CHANNEL);
+  radio.setAutoAck(1);
+  radio.enableDynamicPayloads();
+  radio.setCRCLength(CRC_LENGTH);
+
+  radio.openReadingPipe(1, (const uint8_t*) readPipeAddress);
+
+#ifdef ENABLE_DEBUG_PRINT 
+  radio.printDetails();
+#endif
+  
+  radio.startListening();
+}
+#endif
+
+
+#ifdef USE_LOCAL_SENSOR
 void initI2c()
 {
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -144,8 +257,10 @@ void initI2c()
   Fastwire::setup(400, true);
 #endif
 }
+#endif
 
 
+#ifdef USE_LOCAL_SENSOR
 void initMpu()
 {
 #ifdef ENABLE_DEBUG_PRINT
@@ -212,6 +327,7 @@ void initMpu()
 #endif
   }
 }
+#endif
 
 
 void initDmx()
@@ -227,9 +343,14 @@ void setup()
   Serial.begin(115200);
 #endif
 
+#ifdef USE_LOCAL_SENSOR
   initI2c();
   initMpu();
+#else
+  initRadio(radio, RX_PIPE_ADDRESS, RF_POWER_LEVEL);
+#endif
   initDmx();
+
 
   // Communication with the MPU6050 has proven to be problematic.
   // If we don't hear from the unit periodically, or if we don't
@@ -344,6 +465,7 @@ int16_t getMovingAverage(uint8_t setIdx)
 }
 
 
+#ifdef USE_LOCAL_SENSOR
 void resetDmpFifo()
 {
 #ifdef ENABLE_DEBUG_PRINT
@@ -364,8 +486,10 @@ void resetDmpFifo()
     Serial.println(F("Cleared FIFO and re-sync'd."));
 #endif
 }
+#endif
 
 
+#ifdef USE_LOCAL_SENSOR
 void gatherMotionMeasurements()
 {
 //#ifdef ENABLE_DEBUG_PRINT
@@ -494,14 +618,17 @@ void gatherMotionMeasurements()
 #endif
   }
 }
+#endif
 
 
+#ifdef USE_LOCAL_SENSOR
 void gatherTemperatureMeasurement()
 {
   int16_t rawTemperature = mpu.getTemperature();
   mpuTemperatureC = (float) rawTemperature / 340.0 + 36.53;
   mpuTemperatureF = mpuTemperatureC * 9.0/5.0 + 32.0;
 }
+#endif
 
 
 void getAverageMeasurements()
@@ -537,6 +664,76 @@ void getAverageMeasurements()
   Serial.println(avgGyroZ);
 #endif
 }
+
+
+#ifndef USE_LOCAL_SENSOR
+void pollRadio()
+{
+  if (!radio.available()) {
+    return;
+  }
+
+  MeasurementVectorPayload payload;
+  constexpr uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * 9;
+
+  if (radio.getDynamicPayloadSize() != expectedPayloadSize) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("got payload with "));
+    Serial.print(radio.getDynamicPayloadSize());
+    Serial.print(F(" bytes but expected "));
+    Serial.print(expectedPayloadSize);
+    Serial.println(F(" bytes."));    
+#endif
+    return;
+  }
+  radio.read(&payload, sizeof(payload));
+
+  if (payload.widgetHeader.id != 4) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("got payload from widget "));
+    Serial.print(payload.widgetHeader.id);
+    Serial.println(F(" but expected one from widget 4 (Rainstick)."));
+#endif
+    return;
+  }
+
+  // from Widget_Rainstick.ino:
+  //payload.measurements[0] = avgMinSoundSample;
+  //payload.measurements[1] = avgMaxSoundSample;
+  //payload.measurements[2] = ppSoundSample;
+
+  avgYaw = payload.measurements[3] / 10.0;
+  avgPitch = payload.measurements[4] / 10.0;
+  avgRoll = payload.measurements[5] / 10.0;
+  avgRealAccelX = 0.0;
+  avgRealAccelY = 0.0;
+  avgRealAccelZ = 0.0;
+  avgGyroX = payload.measurements[6];
+  avgGyroY = payload.measurements[7];
+  avgGyroZ = payload.measurements[8];
+
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.print(F("avgYaw="));
+  Serial.print(avgYaw);
+  Serial.print(F(" avgPitch="));
+  Serial.print(avgPitch);
+  Serial.print(F(" avgRoll="));
+  Serial.print(avgRoll);
+  Serial.print(F(" avgRealAccelX="));
+  Serial.print(avgRealAccelX);
+  Serial.print(F(" avgRealAccelY="));
+  Serial.print(avgRealAccelY);
+  Serial.print(F(" avgRealAccelZ="));
+  Serial.print(avgRealAccelZ);
+  Serial.print(F(" avgGyroX="));
+  Serial.print(avgGyroX);
+  Serial.print(F(" avgGyroY="));
+  Serial.print(avgGyroY);
+  Serial.print(F(" avgGyroZ="));
+  Serial.println(avgGyroZ);
+#endif
+}
+#endif
 
 
 void sendDmx()
@@ -600,7 +797,9 @@ void updateLamps()
 //    }
 //  }
 
+#ifdef USE_LOCAL_SENSOR
   getAverageMeasurements();
+#endif
 
   // Normalize and restrict pitch and roll to [0, max___Degrees*2] degrees.
   float normalizedPitch;
@@ -659,12 +858,12 @@ void updateLamps()
 
 void loop()
 {
-  static int32_t lastDisplayTxMs;
   static int32_t lastTemperatureSampleMs;
   static int32_t lastDmxTxMs;
 
   uint32_t now = millis();
 
+#ifdef USE_LOCAL_SENSOR
   if (dmpReady && mpuInterrupt) {
     gatherMotionMeasurements();
   }
@@ -673,11 +872,9 @@ void loop()
     lastTemperatureSampleMs = now;
     gatherTemperatureMeasurement();
   }
-
-  if (now - lastDisplayTxMs >= DISPLAY_TX_INTERVAL_MS) {
-    lastDisplayTxMs = now;
-    getAverageMeasurements();
-  }
+#else
+  pollRadio();
+#endif
 
   if (now - lastDmxTxMs >= DMX_TX_INTERVAL_MS) {
     lastDmxTxMs = now;
