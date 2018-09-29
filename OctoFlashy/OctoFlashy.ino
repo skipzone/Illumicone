@@ -669,6 +669,8 @@ void getAverageMeasurements()
 #ifndef USE_LOCAL_SENSOR
 void pollRadio()
 {
+  wdt_reset();
+
   if (!radio.available()) {
     return;
   }
