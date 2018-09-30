@@ -13,7 +13,7 @@
 
 //#define USE_LOCAL_SENSOR
 #define ENABLE_WATCHDOG
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 
 /************
@@ -142,17 +142,15 @@ typedef uint8_t fract8;   ///< ANSI: unsigned short _Fract
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
 #define RF_CHANNEL 84
 
-// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
+// Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
+// 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
+constexpr uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
+constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 
 
 /***************************************
  * Widget-Specific Radio Configuration *
  ***************************************/
-
-// Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
-// 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
-#define RX_PIPE_ADDRESS "2wdgt"
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
@@ -223,14 +221,11 @@ void dmpDataReady() {
 
 
 #ifndef USE_LOCAL_SENSOR
-void initRadio(
-    RF24&         radio,
-    const char*   readPipeAddress,
-    rf24_pa_dbm_e rfPowerLevel)
+void initRadio()
 {
   radio.begin();
 
-  radio.setPALevel(rfPowerLevel);
+  radio.setPALevel(RF_POWER_LEVEL);
   //radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
   radio.setDataRate(DATA_RATE);
   radio.setChannel(RF_CHANNEL);
@@ -238,7 +233,10 @@ void initRadio(
   radio.enableDynamicPayloads();
   radio.setCRCLength(CRC_LENGTH);
 
-  radio.openReadingPipe(1, (const uint8_t*) readPipeAddress);
+  // Unlike widgetRcvr, we don't open pipe 0 here.
+  for (uint8_t i = 0; i < numReadPipes; ++i) {
+      radio.openReadingPipe(i, readPipeAddresses[i]);
+  }
 
 #ifdef ENABLE_DEBUG_PRINT 
   radio.printDetails();
@@ -355,7 +353,7 @@ void setup()
   initI2c();
   initMpu();
 #else
-  initRadio(radio, RX_PIPE_ADDRESS, RF_POWER_LEVEL);
+  initRadio();
 #endif
   initDmx();
 
@@ -678,70 +676,215 @@ void getAverageMeasurements()
 
 
 #ifndef USE_LOCAL_SENSOR
-void pollRadio()
+
+//void handleStressTestPayload(const StressTestPayload* payload, uint8_t payloadSize)
+//{
+//}
+
+
+bool handlePositionVelocityPayload(const PositionVelocityPayload* payload, uint8_t payloadSize)
 {
-  wdt_reset();
-
-  if (!radio.available()) {
-    return;
-  }
-
-  MeasurementVectorPayload payload;
-  constexpr uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * 9;
-
-  if (radio.getDynamicPayloadSize() != expectedPayloadSize) {
+  constexpr uint16_t expectedPayloadSize = sizeof(PositionVelocityPayload);
+  if (payloadSize != expectedPayloadSize) {
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("got payload with "));
-    Serial.print(radio.getDynamicPayloadSize());
+    Serial.print(F("got PositionVelocityPayload with "));
+    Serial.print(payloadSize);
     Serial.print(F(" bytes but expected "));
     Serial.print(expectedPayloadSize);
     Serial.println(F(" bytes."));    
 #endif
-    return;
+    return false;
   }
-  radio.read(&payload, sizeof(payload));
 
-  if (payload.widgetHeader.id != 4) {
+  if (payload->widgetHeader.id != 2       // Spinnah
+      && payload->widgetHeader.id != 6    // TriObelisk
+      && payload->widgetHeader.id != 9    // FourPlay
+      && payload->widgetHeader.id != 10   // FourPlay-4-2
+      && payload->widgetHeader.id != 11   // FourPlay-4-3
+     )
+  {
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("got payload from widget "));
-    Serial.print(payload.widgetHeader.id);
+    Serial.print(F("got PositionVelocityPayload payload from widget "));
+    Serial.print(payload->widgetHeader.id);
+    Serial.println(F(" but expected one from widget 2, 6, 9, 10, or 11."));
+#endif
+    return false;
+  }
+
+  bool gotMeasurement = false;
+  int16_t p;
+  int16_t pmax;
+  constexpr int16_t speedupFactor = 4;
+  switch (payload->widgetHeader.channel) {
+    case 0:
+//      // Vary yaw continuously between -180 and 180.
+//      pmax = 180;
+//      p = (payload->position * speedupFactor) % (pmax * 4);
+//      p = abs(p);                                 // in Arduinolandia, abs is a macro
+//      avgYaw = (p <= pmax * 2) ? p - pmax : pmax * 3 - p;
+      avgYaw = 0;   // TODO:  enable above code and remove this if we start using yaw
+      gotMeasurement = true;
+      break;
+    case 1:
+      // Vary pitch continuously between -maxPitchDegrees and maxPitchDegrees.
+      pmax = maxPitchDegrees;
+      p = (payload->position * speedupFactor) % (pmax * 4);
+      p = abs(p);                                 // in Arduinolandia, abs is a macro
+      avgPitch = (p <= pmax * 2) ? p - pmax : pmax * 3 - p;
+      gotMeasurement = true;
+      break;
+    case 2:
+      // Vary roll continuously between -maxRollDegrees and maxRollDegrees.
+      pmax = maxRollDegrees;
+      p = (payload->position * speedupFactor) % (pmax * 4);
+      p = abs(p);                                 // in Arduinolandia, abs is a macro
+      avgRoll = (p <= pmax * 2) ? p - pmax : pmax * 3 - p;
+      gotMeasurement = true;
+      break;
+    case 3:
+      ppSoundSample = payload->velocity * speedupFactor;
+      ppSoundSample = abs(ppSoundSample);
+      gotMeasurement = true;
+      break;
+    default:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.print(F("got PositionVelocityPayload payload from widget "));
+      Serial.print(payload->widgetHeader.id);
+      Serial.print(F(" for unsupported channel "));
+      Serial.println(payload->widgetHeader.channel);
+#endif
+      break;
+  }
+
+  // Clear the measurements we cannot get from this widget.
+  if (gotMeasurement) {
+    if (payload->widgetHeader.id == 2       // Spinnah
+        || payload->widgetHeader.id == 6    // TriObelisk
+       )
+    {
+      ppSoundSample = 0;
+    }
+    avgMinSoundSample = 0;
+    avgMaxSoundSample = 0;
+    avgRealAccelX = 0.0;
+    avgRealAccelY = 0.0;
+    avgRealAccelZ = 0.0;
+    avgGyroX = 0.0;
+    avgGyroY = 0.0;
+    avgGyroZ = 0.0;
+  }
+
+  return gotMeasurement;
+}
+
+
+bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uint8_t payloadSize)
+{
+  constexpr uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * 9;
+  if (payloadSize != expectedPayloadSize) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("got MeasurementVectorPayload with "));
+    Serial.print(payloadSize);
+    Serial.print(F(" bytes but expected "));
+    Serial.print(expectedPayloadSize);
+    Serial.println(F(" bytes."));    
+#endif
+    return false;
+  }
+
+  if (payload->widgetHeader.id != 4) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("got MeasurementVectorPayload payload from widget "));
+    Serial.print(payload->widgetHeader.id);
     Serial.println(F(" but expected one from widget 4 (Rainstick)."));
 #endif
-    return;
+    return false;
   }
 
-  avgMinSoundSample = payload.measurements[0];
-  avgMaxSoundSample = payload.measurements[1];
-  ppSoundSample = payload.measurements[2];
-  avgYaw = payload.measurements[3] / 10.0;
-  avgPitch = payload.measurements[4] / 10.0;
-  avgRoll = payload.measurements[5] / 10.0;
+  avgMinSoundSample = payload->measurements[0];
+  avgMaxSoundSample = payload->measurements[1];
+  ppSoundSample = payload->measurements[2];
+  avgYaw = payload->measurements[3] / 10.0;
+  avgPitch = payload->measurements[4] / 10.0;
+  avgRoll = payload->measurements[5] / 10.0;
   avgRealAccelX = 0.0;
   avgRealAccelY = 0.0;
   avgRealAccelZ = 0.0;
-  avgGyroX = payload.measurements[6];
-  avgGyroY = payload.measurements[7];
-  avgGyroZ = payload.measurements[8];
+  avgGyroX = payload->measurements[6];
+  avgGyroY = payload->measurements[7];
+  avgGyroZ = payload->measurements[8];
+
+  return true;
+}
+
+
+void pollRadio()
+{
+#ifdef ENABLE_WATCHDOG
+  wdt_reset();
+#endif
+
+  uint8_t pipeNum;
+  if (!radio.available(&pipeNum)) {
+    return;
+  }
+
+  constexpr uint8_t maxPayloadSize = 32 + sizeof(WidgetHeader);
+  uint8_t payload[maxPayloadSize];
+  uint8_t payloadSize = radio.getDynamicPayloadSize();
+  if (payloadSize > maxPayloadSize) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("got message on pipe "));
+    Serial.print(pipeNum);
+    Serial.print(F(" with payload size "));
+    Serial.print(payloadSize);
+    Serial.print(F(" but maximum payload size is "));
+    Serial.println(maxPayloadSize);
+#endif
+    return;
+  }
+  radio.read(payload, payloadSize);
+
+  bool gotMeasurements = false;
+  switch(pipeNum) {
+//    case 0:
+//        gotMeasurements = handleStressTestPayload((StressTestPayload*) payload, payloadSize);
+//        break;
+    case 1:
+        gotMeasurements = handlePositionVelocityPayload((PositionVelocityPayload*) payload, payloadSize);
+        break;
+    case 2:
+        gotMeasurements = handleMeasurementVectorPayload((MeasurementVectorPayload*) payload, payloadSize);
+        break;
+    default:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.print(F("got message on unsupported pipe "));
+      Serial.println(pipeNum);
+#endif
+      break;
+  }
 
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.print(F("avgMinSoundSample="));
-  Serial.print(avgMinSoundSample);
-  Serial.print(F(" avgMaxSoundSample="));
-  Serial.print(avgMaxSoundSample);
-  Serial.print(F(" ppSoundSample="));
-  Serial.print(ppSoundSample);
-  Serial.print(F(" avgYaw="));
-  Serial.print(avgYaw);
-  Serial.print(F(" avgPitch="));
-  Serial.print(avgPitch);
-  Serial.print(F(" avgRoll="));
-  Serial.print(avgRoll);
-  Serial.print(F(" avgGyroX="));
-  Serial.print(avgGyroX);
-  Serial.print(F(" avgGyroY="));
-  Serial.print(avgGyroY);
-  Serial.print(F(" avgGyroZ="));
-  Serial.println(avgGyroZ);
+  if (gotMeasurements) {
+    Serial.print(F("avgMinSoundSample="));
+    Serial.print(avgMinSoundSample);
+    Serial.print(F(" avgMaxSoundSample="));
+    Serial.print(avgMaxSoundSample);
+    Serial.print(F(" ppSoundSample="));
+    Serial.print(ppSoundSample);
+    Serial.print(F(" avgYaw="));
+    Serial.print(avgYaw);
+    Serial.print(F(" avgPitch="));
+    Serial.print(avgPitch);
+    Serial.print(F(" avgRoll="));
+    Serial.print(avgRoll);
+    Serial.print(F(" avgGyroX="));
+    Serial.print(avgGyroX);
+    Serial.print(F(" avgGyroY="));
+    Serial.print(avgGyroY);
+    Serial.print(F(" avgGyroZ="));
+    Serial.println(avgGyroZ);
+  }
 #endif
 }
 #endif
