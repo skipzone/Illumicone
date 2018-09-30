@@ -13,7 +13,7 @@
 
 //#define USE_LOCAL_SENSOR
 #define ENABLE_WATCHDOG
-//#define ENABLE_DEBUG_PRINT
+#define ENABLE_DEBUG_PRINT
 
 
 /************
@@ -103,6 +103,11 @@ constexpr double countsPerG = 8192.0;
 constexpr float maxPitchDegrees = 45;
 constexpr float maxRollDegrees = 52;
 
+constexpr int16_t minPpSoundForStrobe = 300;
+constexpr int16_t maxPpSoundForStrobe = 500;
+constexpr uint8_t minStrobeValue = 225;
+constexpr uint8_t maxStrobeValue = 250;
+
 #define NUM_COLORS_PER_LAMP 4
 #define NUM_LAMPS 8
 #define LAMP_MIN_INTENSITY 24
@@ -186,6 +191,9 @@ static float mpuTemperatureF;
 static volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 #endif
 
+static int16_t avgMinSoundSample;
+static int16_t avgMaxSoundSample;
+static int16_t ppSoundSample;
 static double avgYaw;
 static double avgPitch;
 static double avgRoll;
@@ -633,6 +641,9 @@ void gatherTemperatureMeasurement()
 
 void getAverageMeasurements()
 {
+  avgMinSoundSample = 0;
+  avgMaxSoundSample = 0;
+  ppSoundSample = 0;
   avgYaw = getMovingAverage(0) / 10.0;
   avgPitch = getMovingAverage(1) / 10.0;
   avgRoll = getMovingAverage(2) / 10.0;
@@ -699,11 +710,9 @@ void pollRadio()
     return;
   }
 
-  // from Widget_Rainstick.ino:
-  //payload.measurements[0] = avgMinSoundSample;
-  //payload.measurements[1] = avgMaxSoundSample;
-  //payload.measurements[2] = ppSoundSample;
-
+  avgMinSoundSample = payload.measurements[0];
+  avgMaxSoundSample = payload.measurements[1];
+  ppSoundSample = payload.measurements[2];
   avgYaw = payload.measurements[3] / 10.0;
   avgPitch = payload.measurements[4] / 10.0;
   avgRoll = payload.measurements[5] / 10.0;
@@ -715,18 +724,18 @@ void pollRadio()
   avgGyroZ = payload.measurements[8];
 
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.print(F("avgYaw="));
+  Serial.print(F("avgMinSoundSample="));
+  Serial.print(avgMinSoundSample);
+  Serial.print(F(" avgMaxSoundSample="));
+  Serial.print(avgMaxSoundSample);
+  Serial.print(F(" ppSoundSample="));
+  Serial.print(ppSoundSample);
+  Serial.print(F(" avgYaw="));
   Serial.print(avgYaw);
   Serial.print(F(" avgPitch="));
   Serial.print(avgPitch);
   Serial.print(F(" avgRoll="));
   Serial.print(avgRoll);
-  Serial.print(F(" avgRealAccelX="));
-  Serial.print(avgRealAccelX);
-  Serial.print(F(" avgRealAccelY="));
-  Serial.print(avgRealAccelY);
-  Serial.print(F(" avgRealAccelZ="));
-  Serial.print(avgRealAccelZ);
   Serial.print(F(" avgGyroX="));
   Serial.print(avgGyroX);
   Serial.print(F(" avgGyroY="));
@@ -744,9 +753,33 @@ void sendDmx()
 
   uint16_t dmxChannelNum = 1;
   for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
-    // Set the lamp to full brightness because we control its
-    // overall brightness by way of the individual colors.
-    dmxChannelValues[dmxChannelNum++] = 127;
+
+    // If the sound is sufficiently loud, flash all the lamps instead of setting their intensities.
+    if (ppSoundSample >= minPpSoundForStrobe) {
+      uint8_t strobeValue = map(constrain(ppSoundSample, minPpSoundForStrobe, minPpSoundForStrobe),
+                                minPpSoundForStrobe, maxPpSoundForStrobe, minStrobeValue, maxStrobeValue);
+      dmxChannelValues[dmxChannelNum++] = strobeValue;
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.print(F("strobeValue="));
+      Serial.print(strobeValue);
+      Serial.print(F(" ppSoundSample="));
+      Serial.print(ppSoundSample);
+      Serial.print(F(" minPpSoundForStrobe="));
+      Serial.print(minPpSoundForStrobe);
+      Serial.print(F(" maxPpSoundForStrobe="));
+      Serial.print(maxPpSoundForStrobe);
+      Serial.print(F(" minStrobeValue="));
+      Serial.print(minStrobeValue);
+      Serial.print(F(" maxStrobeValue="));
+      Serial.println(maxStrobeValue);
+#endif
+   }
+    else {
+      // Set the lamp to full brightness because we control its
+      // overall brightness by way of the individual colors.
+      dmxChannelValues[dmxChannelNum++] = 127;
+    }
+
     if (NUM_COLORS_PER_LAMP == 3) {
       for (uint8_t colorIdx = 0; colorIdx < NUM_COLORS_PER_LAMP; ++colorIdx) {
         dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][colorIdx];
@@ -760,6 +793,7 @@ void sendDmx()
       dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][2];      
     }
   }
+
   // Send zeros to any unused channels.
   while (dmxChannelNum <= DMX_NUM_CHANNELS) {
     dmxChannelValues[dmxChannelNum++] = 0;
