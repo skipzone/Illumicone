@@ -26,10 +26,17 @@
 */
 
 #define ENABLE_MOTION_DETECTION
+
+// The watchdog doesn't work correctly on Pro Mini boards.  See
+// https://andreasrohner.at/posts/Electronics/How-to-make-the-Watchdog-Timer-work-on-an-Arduino-Pro-Mini-by-replacing-the-bootloader/
+//#define ENABLE_WATCHDOG
+
 //#define ENABLE_DEBUG_PRINT
 
 
+#ifdef ENABLE_WATCHDOG
 #include <avr/wdt.h>
+#endif
 
 #ifdef ENABLE_MOTION_DETECTION
 #include "I2Cdev.h"
@@ -60,8 +67,8 @@
 
 #define SOUND_SAMPLE_INTERVAL_MS 10L
 #define SOUND_SAMPLE_SAVE_INTERVAL_MS 50L   // same as 200 Hz IMU sample frequency so MA length works for both
-#define ACTIVE_TX_INTERVAL_MS 200L
-#define INACTIVE_TX_INTERVAL_MS 2000L       // should be a multiple of ACTIVE_TX_INTERVAL_MS
+#define ACTIVE_TX_INTERVAL_MS 50L
+#define INACTIVE_TX_INTERVAL_MS 100L        // should be a multiple of ACTIVE_TX_INTERVAL_MS
 
 //#define TX_FAILURE_LED_PIN 2
 #define IMU_INTERRUPT_PIN 2
@@ -84,6 +91,8 @@ constexpr uint16_t activeSoundThreshold = 100;
 // data corruption becomes likely even before the FIFO overflows.  We'll clear
 // the FIFO when more than maxPacketsInFifoBeforeReset packets are in it.
 constexpr uint8_t maxPacketsInFifoBeforeReset = 2;
+
+#define MPU_ASSUMED_DEAD_MS 5000
 
 
 /***************************************
@@ -145,6 +154,8 @@ static float ypr[3];              // [yaw, pitch, roll] yaw/pitch/roll container
 static int16_t gyro[3];
 
 static volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
+
+static int32_t lastSuccessfulMpuReadMs;
 
 #endif
 
@@ -242,6 +253,8 @@ void initMpu()
   Serial.println(F("MPU6050 connection failed."));
 #endif
   }
+
+  lastSuccessfulMpuReadMs = millis();
 }
 
 #endif
@@ -250,7 +263,7 @@ void initMpu()
 void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.begin(57600);
+  Serial.begin(115200);
   printf_begin();
 #endif
 
@@ -271,7 +284,9 @@ void setup()
   // Communication with the MPU6050 has proven to be problematic.
   // If we don't hear from the unit periodically, or if we don't
   // get good data for a while, we need the watchdog to reset us.
+#ifdef ENABLE_WATCHDOG
   wdt_enable(WDTO_1S);     // enable the watchdog
+#endif
 }
 
 
@@ -435,7 +450,11 @@ void gatherMotionMeasurements()
       }
     }
     if (gotNonzeroData) {
+#ifdef ENABLE_WATCHDOG
       wdt_reset();
+#else
+      lastSuccessfulMpuReadMs = millis();
+#endif
     }
 
 #ifdef ENABLE_DEBUG_PRINT
@@ -568,13 +587,20 @@ void loop() {
   uint32_t now = millis();
 
 #ifdef ENABLE_MOTION_DETECTION
+#ifndef ENABLE_WATCHDOG
+  if (now - lastSuccessfulMpuReadMs >= MPU_ASSUMED_DEAD_MS) {
+      initMpu();
+  }
+#endif
   if (dmpReady && mpuInterrupt) {
     gatherMotionMeasurements();
   }
 #else
+#ifdef ENABLE_WATCHDOG
   // Normally, we kick the dog after getting good data from the MPU6050.
   // If we're not using the unit, we need to reset the watchdog.
   wdt_reset();
+#endif
 #endif
 
   if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
