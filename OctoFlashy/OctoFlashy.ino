@@ -147,6 +147,8 @@ typedef uint8_t fract8;   ///< ANSI: unsigned short _Fract
 constexpr uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
 constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 
+#define ACK_WIDGET_PACKETS false
+
 
 /***************************************
  * Widget-Specific Radio Configuration *
@@ -229,7 +231,7 @@ void initRadio()
   //radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
   radio.setDataRate(DATA_RATE);
   radio.setChannel(RF_CHANNEL);
-  radio.setAutoAck(1);
+  radio.setAutoAck(ACK_WIDGET_PACKETS);
   radio.enableDynamicPayloads();
   radio.setCRCLength(CRC_LENGTH);
 
