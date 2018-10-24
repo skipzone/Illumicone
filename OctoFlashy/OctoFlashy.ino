@@ -40,49 +40,13 @@
 #include "DmxSimple.h"
 
 
-/*********************************
- * Payload Structure Definitions *
- *********************************/
-
-union WidgetHeader {
-  struct {
-    uint8_t id       : 4;
-    bool    isActive : 1;
-    uint8_t channel  : 3;
-  };
-  uint8_t raw;
-};
-
-// pipe 0
-struct StressTestPayload {
-  WidgetHeader widgetHeader;
-  uint32_t     payloadNum;
-  uint32_t     numTxFailures;
-};
-
-// pipe 1
-struct PositionVelocityPayload {
-  WidgetHeader widgetHeader;
-  int16_t      position;
-  int16_t      velocity;
-};
-
-// pipe 2
-struct MeasurementVectorPayload {
-  WidgetHeader widgetHeader;
-  int16_t      measurements[15];
-};
-
-// pipe 5
-struct CustomPayload {
-  WidgetHeader widgetHeader;
-  uint8_t      buf[31];
-};
-
-
 /*****************
  * Configuration *
  *****************/
+
+#define LAMP_TEST_PIN 8
+#define LAMP_TEST_ACTIVE LOW
+#define LAMP_TEST_INTENSITY 255
 
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 500L
 #define DMX_TX_INTERVAL_MS 33L
@@ -109,11 +73,11 @@ constexpr uint8_t minStrobeValue = 225;
 constexpr uint8_t maxStrobeValue = 250;
 
 #define NUM_COLORS_PER_LAMP 4
-#define NUM_LAMPS 8
+#define NUM_LAMPS 9
 #define LAMP_MIN_INTENSITY 24
 
 #define DMX_OUTPUT_PIN 3
-#define DMX_NUM_CHANNELS_PER_LAMP 4
+#define DMX_NUM_CHANNELS_PER_LAMP 3
 #define DMX_NUM_CHANNELS (NUM_LAMPS * DMX_NUM_CHANNELS_PER_LAMP)
 
 // Let the scale8 function stolen from the FastLED library use assembly code if we're on an AVR chip.
@@ -156,6 +120,46 @@ constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
+
+
+/*********************************
+ * Payload Structure Definitions *
+ *********************************/
+
+union WidgetHeader {
+  struct {
+    uint8_t id       : 4;
+    bool    isActive : 1;
+    uint8_t channel  : 3;
+  };
+  uint8_t raw;
+};
+
+// pipe 0
+struct StressTestPayload {
+  WidgetHeader widgetHeader;
+  uint32_t     payloadNum;
+  uint32_t     numTxFailures;
+};
+
+// pipe 1
+struct PositionVelocityPayload {
+  WidgetHeader widgetHeader;
+  int16_t      position;
+  int16_t      velocity;
+};
+
+// pipe 2
+struct MeasurementVectorPayload {
+  WidgetHeader widgetHeader;
+  int16_t      measurements[15];
+};
+
+// pipe 5
+struct CustomPayload {
+  WidgetHeader widgetHeader;
+  uint8_t      buf[31];
+};
 
 
 /***********
@@ -359,6 +363,13 @@ void setup()
 #endif
   initDmx();
 
+#ifdef LAMP_TEST_PIN
+#if LAMP_TEST_ACTIVE == LOW
+  pinMode(LAMP_TEST_PIN, INPUT_PULLUP);
+#else
+  pinMode(LAMP_TEST_PIN, INPUT);
+#endif
+#endif
 
   // Communication with the MPU6050 has proven to be problematic.
   // If we don't hear from the unit periodically, or if we don't
@@ -899,6 +910,7 @@ void sendDmx()
   uint16_t dmxChannelNum = 1;
   for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
 
+#if DMX_NUM_CHANNELS_PER_LAMP == 4
     // If the sound is sufficiently loud, flash all the lamps instead of setting their intensities.
     if (ppSoundSample >= minPpSoundForStrobe) {
       uint8_t strobeValue = map(constrain(ppSoundSample, minPpSoundForStrobe, minPpSoundForStrobe),
@@ -924,6 +936,7 @@ void sendDmx()
       // overall brightness by way of the individual colors.
       dmxChannelValues[dmxChannelNum++] = 127;
     }
+#endif
 
     if (NUM_COLORS_PER_LAMP == 3) {
       for (uint8_t colorIdx = 0; colorIdx < NUM_COLORS_PER_LAMP; ++colorIdx) {
@@ -959,6 +972,18 @@ void sendDmx()
 
 void updateLamps()
 {
+#ifdef LAMP_TEST_PIN
+  if (digitalRead(LAMP_TEST_PIN) == LAMP_TEST_ACTIVE) {
+    for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
+      for (uint8_t colorIdx = 0; colorIdx < NUM_COLORS_PER_LAMP; ++colorIdx) {
+        colorChannelIntensities[lampIdx][colorIdx] = LAMP_TEST_INTENSITY;
+      }
+    }
+    sendDmx();
+    return;
+  }
+#endif
+
   constexpr float colorAngleStep = maxPitchDegrees * 2 / (NUM_COLORS_PER_LAMP - 1);
   constexpr float lampAngleStep = maxRollDegrees * 2 / (NUM_LAMPS - 1);
 
