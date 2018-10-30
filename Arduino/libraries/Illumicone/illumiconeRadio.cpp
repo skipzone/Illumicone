@@ -33,7 +33,8 @@ void configureRadio(
     const char*   writePipeAddress,
     uint8_t       txRetryDelayMultiplier,
     uint8_t       txMaxRetries,
-    rf24_pa_dbm_e rfPowerLevel)
+    rf24_pa_dbm_e rfPowerLevel,
+    bool          wantAcks)
 {
   radio.begin();
 
@@ -41,7 +42,7 @@ void configureRadio(
   radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
   radio.setDataRate(DATA_RATE);
   radio.setChannel(RF_CHANNEL);
-  radio.setAutoAck(1);
+  radio.setAutoAck(wantAcks);
   radio.enableDynamicPayloads();
   radio.setCRCLength(CRC_LENGTH);
 
