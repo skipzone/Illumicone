@@ -25,28 +25,23 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define ENABLE_MOTION_DETECTION
 
 // The watchdog doesn't work correctly on Pro Mini boards.  See
 // https://andreasrohner.at/posts/Electronics/How-to-make-the-Watchdog-Timer-work-on-an-Arduino-Pro-Mini-by-replacing-the-bootloader/
 //#define ENABLE_WATCHDOG
 
-//#define ENABLE_DEBUG_PRINT
+#define ENABLE_DEBUG_PRINT
 
 
 #ifdef ENABLE_WATCHDOG
 #include <avr/wdt.h>
 #endif
 
-#ifdef ENABLE_MOTION_DETECTION
 #include "I2Cdev.h"
-#endif
 
 #include "illumiconeWidget.h"
 
-#ifdef ENABLE_MOTION_DETECTION
 #include "MPU6050_6Axis_MotionApps20.h"
-#endif
 
 #ifdef ENABLE_DEBUG_PRINT
 #include "printf.h"
@@ -59,6 +54,24 @@
 #endif
 
 
+/****************************
+ * Constants and Data Types *
+ ****************************/
+
+enum class MpuMode {
+  init,
+  cycle,
+  normal
+};
+
+enum class WidgetMode {
+  init,
+  standby,
+  inactive,
+  active
+};
+
+
 /************************
  * Widget Configuration *
  ************************/
@@ -67,30 +80,36 @@
 
 #define SOUND_SAMPLE_INTERVAL_MS 10L
 #define SOUND_SAMPLE_SAVE_INTERVAL_MS 50L   // same as 200 Hz IMU sample frequency so MA length works for both
-#define ACTIVE_TX_INTERVAL_MS 50L
-#define INACTIVE_TX_INTERVAL_MS 100L        // should be a multiple of ACTIVE_TX_INTERVAL_MS
+#define ACTIVE_TX_INTERVAL_MS 100L
+#define INACTIVE_TX_INTERVAL_MS 500L
+#define STANDBY_TX_INTERVAL_MS 5000L
+
+// There must be at least YPR_MOTION_CHANGE_THRESHOLD tenths of a degree
+// motion in yaw, pitch, or roll every MOTION_TIMEOUT_MS ms to keep us
+// out of standby mode.
+#define MOTION_TIMEOUT_MS 5000L
+#define YPR_MOTION_CHANGE_THRESHOLD 1
 
 //#define TX_FAILURE_LED_PIN 2
 #define IMU_INTERRUPT_PIN 2
 // --- the real Rainstick ---
-#define MIC_SIGNAL_PIN A0
-#define MIC_POWER_PIN 8
+//#define MIC_SIGNAL_PIN A0
+//#define MIC_POWER_PIN 8
 // --- development breadboard ---
-//#define MIC_SIGNAL_PIN A3
-//#define MIC_POWER_PIN 4
+#define MIC_SIGNAL_PIN A3
+#define MIC_POWER_PIN 4
 
 #define NUM_SOUND_VALUES_TO_SEND 3
 #define NUM_MPU_VALUES_TO_SEND 6
-
-#define MA_LENGTH 8
 #define NUM_MA_SETS (NUM_SOUND_VALUES_TO_SEND + NUM_MPU_VALUES_TO_SEND)
+#define MA_LENGTH 8
 
 constexpr uint16_t activeSoundThreshold = 100;
 
-// When we haven't retrieved packets from the MPU6050's DMP's FIFO fast enough,
-// data corruption becomes likely even before the FIFO overflows.  We'll clear
-// the FIFO when more than maxPacketsInFifoBeforeReset packets are in it.
-constexpr uint8_t maxPacketsInFifoBeforeReset = 2;
+// When we haven't retrieved packets from the MPU6050's FIFO fast enough data,
+// corruption becomes likely even before the FIFO overflows.  We'll clear the
+// FIFO when more than maxPacketsInFifoBeforeForcedClear packets are in it.
+constexpr uint8_t maxPacketsInFifoBeforeForcedClear = 2;
 
 #define MPU_ASSUMED_DEAD_MS 5000
 
@@ -103,12 +122,14 @@ constexpr uint8_t maxPacketsInFifoBeforeReset = 2;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
 #define TX_PIPE_ADDRESS "2wdgt"
 
+#define WANT_ACK false
+
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11, 13) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 5
+#define TX_RETRY_DELAY_MULTIPLIER 0 // 5
 
 // Max. retries can be 0 to 15.
-#define TX_MAX_RETRIES 15
+#define TX_MAX_RETRIES 0  // 15
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
@@ -118,12 +139,14 @@ constexpr uint8_t maxPacketsInFifoBeforeReset = 2;
  * Globals *
  ***********/
 
+// standby/active control
+static WidgetMode widgetMode = WidgetMode::init;
+static MpuMode mpuMode = MpuMode::init;
+static uint32_t lastMotionDetectedMs;
+
 static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
 static MeasurementVectorPayload payload;
-
-static bool isActive;
-static bool wasActive;
 
 static uint16_t minSoundSample = UINT16_MAX;
 static uint16_t maxSoundSample;
@@ -134,16 +157,12 @@ static int16_t ppSoundSample;
 
 static int16_t maValues[NUM_MA_SETS][MA_LENGTH];
 static int32_t maSums[NUM_MA_SETS];
-static uint8_t nextSlotIdx[NUM_MA_SETS];
+static uint8_t maNextSlotIdx[NUM_MA_SETS];
 static bool maSetFull[NUM_MA_SETS];
-
-#ifdef ENABLE_MOTION_DETECTION
 
 static MPU6050 mpu;               // using default I2C address 0x68
 
-// MPU control/status vars
-static bool dmpReady = false;     // set true if DMP init was successful
-static uint8_t devStatus;         // return status after each device operation (0 = success, !0 = error)
+// MPU FIFO read buffer
 static uint16_t packetSize;       // expected DMP packet size (default is 42 bytes)
 static uint8_t packetBuffer[42];  // must be at least as large as packet size returned by dmpGetFIFOPacketSize
 
@@ -153,21 +172,62 @@ static VectorFloat gravity;       // [x, y, z] gravity vector
 static float ypr[3];              // [yaw, pitch, roll] yaw/pitch/roll container
 static int16_t gyro[3];
 
-static volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
+static volatile bool gotMpuInterrupt;
 
 static int32_t lastSuccessfulMpuReadMs;
-
-#endif
 
 
 /******************
  * Implementation *
  ******************/
 
-#ifdef ENABLE_MOTION_DETECTION
+// top half of the MPU ISR (bottom half is processMpuInterrupt)
+void handleMpuInterrupt() {
+  gotMpuInterrupt = true;
+}
 
-void dmpDataReady() {
-    mpuInterrupt = true;
+
+void setMpuMode(MpuMode newMode, uint32_t now)
+{
+  switch (newMode)
+  {
+    case MpuMode::cycle:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Setting mpuMode to cycle..."));
+#endif
+      mpu.setDMPEnabled(false);
+      // TODO:  motion detection should be configurable
+      // Set up motion detection.
+      mpu.setMotionDetectionThreshold(1);         // unit is 2mg
+      mpu.setMotionDetectionCounterDecrement(1);
+      mpu.setMotionDetectionDuration(1);          // unit is ms
+      // Put MPU-6050 in cycle mode.
+      mpuMode = MpuMode::cycle;
+      // TODO:  wake frequency should be configurable
+      mpu.setWakeFrequency(0);                    // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
+      mpu.setWakeCycleEnabled(true);
+      mpu.setIntMotionEnabled(true);
+      break;
+
+    case MpuMode::normal:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Setting mpuMode to normal..."));
+#endif
+      mpu.setIntMotionEnabled(false);
+      mpu.setWakeCycleEnabled(false);
+      clearMovingAverages();
+      mpuMode = MpuMode::normal;
+      mpu.setDMPEnabled(true);
+      lastMotionDetectedMs = now;
+      lastSuccessfulMpuReadMs = now;
+      break;
+
+    default:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("*** Invalid newMode in setMpuMode"));
+#endif
+      break;
+  }
 }
 
 
@@ -202,26 +262,20 @@ void initMpu()
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("MPU6050 connection successful.  Initializing DMP..."));
 #endif
-    devStatus = mpu.dmpInitialize();
+    uint8_t devStatus = mpu.dmpInitialize();
     if (devStatus == 0) {
   
       // supply your own gyro offsets here, scaled for min sensitivity
       // TODO 2/28/2018 ross:  What do we do about this?  Every widget could be different.
-      mpu.setXGyroOffset(220);
-      mpu.setYGyroOffset(76);
-      mpu.setZGyroOffset(-85);
-      mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
+      //mpu.setXGyroOffset(220);
+      //mpu.setYGyroOffset(76);
+      //mpu.setZGyroOffset(-85);
+      //mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
   
-      // turn on the DMP, now that it's ready
-#ifdef ENABLE_DEBUG_PRINT
-      Serial.println(F("Enabling DMP..."));
-#endif
-      mpu.setDMPEnabled(true);
-
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Enabling interrupt..."));
 #endif
-      attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), dmpDataReady, RISING);
+      attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), handleMpuInterrupt, RISING);
 
       // Get expected DMP packet size, and make sure packetBuffer is large enough.
       packetSize = mpu.dmpGetFIFOPacketSize();
@@ -229,7 +283,7 @@ void initMpu()
 #ifdef ENABLE_DEBUG_PRINT
         Serial.println(F("DMP ready."));
 #endif
-        dmpReady = true;
+        setMpuMode(MpuMode::normal, millis());
       }
       else {
         Serial.print(F("*** FIFO packet size "));
@@ -254,10 +308,8 @@ void initMpu()
 #endif
   }
 
-  lastSuccessfulMpuReadMs = millis();
+  widgetMode = WidgetMode::inactive;
 }
-
-#endif
 
 
 void setup()
@@ -267,12 +319,10 @@ void setup()
   printf_begin();
 #endif
 
-#ifdef ENABLE_MOTION_DETECTION
   initI2c();
   initMpu();
-#endif
 
-  configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
+  configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL, WANT_ACK);
 
   pinMode(MIC_POWER_PIN, OUTPUT);
   digitalWrite(MIC_POWER_PIN, HIGH);
@@ -290,16 +340,29 @@ void setup()
 }
 
 
+void clearMovingAverages()
+{
+  for (uint8_t i = 0; i < NUM_MA_SETS; ++i) {
+    for (uint8_t j = 0; j < MA_LENGTH; ++j) {
+      maValues[i][j] = 0;
+    }
+    maSums[i] = 0;
+    maNextSlotIdx[i] = 0;
+    maSetFull[i] = false;
+  }
+}
+
+
 void updateMovingAverage(uint8_t setIdx, int16_t newValue)
 {
-  maSums[setIdx] -= maValues[setIdx][nextSlotIdx[setIdx]];
+  maSums[setIdx] -= maValues[setIdx][maNextSlotIdx[setIdx]];
   maSums[setIdx] += newValue;
-  maValues[setIdx][nextSlotIdx[setIdx]] = newValue;
+  maValues[setIdx][maNextSlotIdx[setIdx]] = newValue;
 
-  ++nextSlotIdx[setIdx];
-  if (nextSlotIdx[setIdx] >= MA_LENGTH) {
+  ++maNextSlotIdx[setIdx];
+  if (maNextSlotIdx[setIdx] >= MA_LENGTH) {
      maSetFull[setIdx] = true;
-     nextSlotIdx[setIdx] = 0;
+     maNextSlotIdx[setIdx] = 0;
   }
 }
 
@@ -311,14 +374,14 @@ int16_t getMovingAverage(uint8_t setIdx)
     avg = maSums[setIdx] / (int32_t) MA_LENGTH;
   }
   else {
-    avg = nextSlotIdx[setIdx] > 0 ? (int32_t) maSums[setIdx] / (int32_t) nextSlotIdx[setIdx] : 0;
+    avg = maNextSlotIdx[setIdx] > 0 ? (int32_t) maSums[setIdx] / (int32_t) maNextSlotIdx[setIdx] : 0;
   }
 
 //#ifdef ENABLE_DEBUG_PRINT
 //  Serial.print("getMovingAverage(");
 //  Serial.print(setIdx);
 //  Serial.print("):  ");
-//  for (uint8_t i = 0; i < (maSetFull[setIdx] ? MA_LENGTH : nextSlotIdx[setIdx]); ++i) {
+//  for (uint8_t i = 0; i < (maSetFull[setIdx] ? MA_LENGTH : maNextSlotIdx[setIdx]); ++i) {
 //    Serial.print(i);
 //    Serial.print(":");
 //    Serial.print(maValues[setIdx][i]);
@@ -333,99 +396,55 @@ int16_t getMovingAverage(uint8_t setIdx)
 }
 
 
-void resetDmpFifo()
+bool detectMovingAverageChange(uint8_t setIdx, int16_t threshold)
+{
+  uint8_t latestSlotIdx;
+  if (maNextSlotIdx[setIdx] == 0) {
+    if (!maSetFull[setIdx]) {
+      return false;
+    }
+    latestSlotIdx = MA_LENGTH - 1;
+  }
+  else {
+    latestSlotIdx = maNextSlotIdx[setIdx] - 1;
+  }
+  int16_t diff = maValues[setIdx][maNextSlotIdx[setIdx]] - maValues[setIdx][latestSlotIdx];
+  return abs(diff) > threshold ? true : false;
+}
+
+
+void clearMpuFifo()
 {
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Resetting DMP FIFO..."));
+  Serial.println(F("Clearing FIFO..."));
 #endif
-    mpu.resetFIFO();
-    while (true) {
-      if (mpuInterrupt) {
-        mpuInterrupt = false;
-        uint8_t mpuIntStatus = mpu.getIntStatus();
-        if (mpuIntStatus & 0x01) {
-          mpu.resetFIFO();
-          break;
-        }
-      }
-    }
+
+  uint16_t fifoCount = mpu.getFIFOCount();
+  while (fifoCount != 0) {
+    uint8_t readLength = fifoCount >= packetSize ? packetSize : fifoCount;
+    mpu.getFIFOBytes(packetBuffer, readLength);
+    //fifoCount = mpu.getFIFOCount();
+    fifoCount -= readLength;
+  }
+
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Cleared FIFO and re-sync'd."));
+    Serial.println(F("Cleared FIFO."));
 #endif
 }
 
 
-void gatherMotionMeasurements()
+void gatherMotionMeasurements(uint32_t now)
 {
-#ifdef ENABLE_MOTION_DETECTION
+  uint16_t fifoCount = mpu.getFIFOCount();
+  while (fifoCount >= packetSize) {
+    mpu.getFIFOBytes(packetBuffer, packetSize);
+    fifoCount -= packetSize;
 
 //#ifdef ENABLE_DEBUG_PRINT
-//    Serial.println(F("gather motion"));
+//    // Careful:  We might not be able to keep up if this debug print is enabled.
+//    Serial.print(F("Got packet from fifo.  fifoCount now "));
+//    Serial.println(fifoCount);
 //#endif
-
-  mpuInterrupt = false;
-  uint8_t mpuIntStatus = mpu.getIntStatus();
-  uint16_t fifoCount = mpu.getFIFOCount();
-
-  // Check if FIFO overflowed.  If it did, clear it, then wait for another
-  // data-ready interrupt and clear the FIFO again so that we are back in
-  // sync (i.e., any partial packets have been cleared out).  Based on some
-  // brief testing, it appears that bits 0 and 1 always appear set together.
-  if (mpuIntStatus & 0x10) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("*** FIFO overflow!  fifoCount is "));
-    Serial.println(fifoCount);
-#endif
-    resetDmpFifo();
-    return;
-  }
-
-  // The MPU6050 register map document says that bit 0 indicates data ready and bit 1
-  // is reserved.  However, the I2C data analyzer dump from Jeff Rowberg found at
-  // https://www.i2cdevlib.com/tools/analyzer/1 shows that bit 0 indicates raw data
-  // ready and bit 1 indicates DMP data ready.
-  if (!(mpuIntStatus & 0x02)) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("Got interrupt but not for data ready.  mpuIntStatus="));
-    Serial.print((int) mpuIntStatus);
-    Serial.print(F(", fifoCount="));
-    Serial.println(fifoCount);
-#endif
-    return;
-  }
-
-  // If we've missed retrieving more than a few packets in time, the FIFO has
-  // probably already overflowed (even though we haven't gotten that interrupt)
-  // or otherwise become corrupted.  We need to reset it to avoid getting bad data.
-  if (fifoCount > packetSize * maxPacketsInFifoBeforeReset) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("*** Missed too many packets.  fifoCount="));
-    Serial.println(fifoCount);
-#endif
-    resetDmpFifo();
-    return;
-  }
-
-  // If the FIFO length is not a multiple of the packet size, there is a partial
-  // packet in the FIFO, either due to the FIFO being filled right now or due to
-  // some sort of FIFO corruption.  We need to reset it to avoid getting bad data.
-  if (fifoCount % packetSize != 0) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("////////// *** Partial packet in FIFO.  fifoCount="));
-    Serial.println(fifoCount);
-#endif
-    resetDmpFifo();
-    return;
-  }
-
-  while (fifoCount >= packetSize) {
-    fifoCount -= packetSize;
-    mpu.getFIFOBytes(packetBuffer, packetSize);
-#ifdef ENABLE_DEBUG_PRINT
-    // Careful:  We might not be able to keep up if this debug print is enabled.
-    Serial.print(F("Got packet from fifo.  fifoCount now "));
-    Serial.println(fifoCount);
-#endif
 
     mpu.dmpGetGyro(gyro, packetBuffer);
     mpu.dmpGetQuaternion(&quat, packetBuffer);
@@ -441,10 +460,10 @@ void gatherMotionMeasurements()
     updateMovingAverage(NUM_SOUND_VALUES_TO_SEND + 5, gyro[2]);
 
     // If we're here and we got non-zero data, communication
-    // with the MPU6050 is probably working, so kick the dog.
+    // with the MPU6050 is probably working.
     bool gotNonzeroData = false;
     for (uint8_t i = 0; i < 3; ++i) {
-      if (ypr[i] > 0.001 || gyro != 0) {
+      if (ypr[i] > 0.001 || gyro[i] != 0) {
         gotNonzeroData = true;
         break;
       }
@@ -457,24 +476,139 @@ void gatherMotionMeasurements()
 #endif
     }
 
-#ifdef ENABLE_DEBUG_PRINT
-      // Careful:  We might not be able to keep up if this debug print is enabled.
-    Serial.print("ypr:  ");
-    Serial.print(ypr[0]);
-    Serial.print(", ");
-    Serial.print(ypr[1]);
-    Serial.print(", ");
-    Serial.print(ypr[2]);
-    Serial.print("    gyro:  ");
-    Serial.print(gyro[0]);
-    Serial.print(", ");
-    Serial.print(gyro[1]);
-    Serial.print(", ");
-    Serial.println(gyro[2]);
-#endif
+  // If there was sufficient motion, keep us out of standby mode for now.
+  for (uint8_t i = NUM_SOUND_VALUES_TO_SEND; i <= NUM_SOUND_VALUES_TO_SEND + 2; ++i) {
+    if (detectMovingAverageChange(i, YPR_MOTION_CHANGE_THRESHOLD)) {
+      lastMotionDetectedMs = now;
+      break;
+    }
   }
 
-#endif  // #ifdef ENABLE_MOTION_DETECTION
+//#ifdef ENABLE_DEBUG_PRINT
+//      // Careful:  We might not be able to keep up if this debug print is enabled.
+//    Serial.print("ypr:  ");
+//    Serial.print(ypr[0]);
+//    Serial.print(", ");
+//    Serial.print(ypr[1]);
+//    Serial.print(", ");
+//    Serial.print(ypr[2]);
+//    Serial.print("    gyro:  ");
+//    Serial.print(gyro[0]);
+//    Serial.print(", ");
+//    Serial.print(gyro[1]);
+//    Serial.print(", ");
+//    Serial.println(gyro[2]);
+//#endif
+  }
+}
+
+
+void processMpuInterrupt(uint32_t now)
+{
+  static bool needClearMpuFifo;
+  uint16_t fifoCount;
+
+  uint8_t mpuIntStatus = mpu.getIntStatus();
+//#ifdef ENABLE_DEBUG_PRINT
+//  Serial.print("0x");
+//  Serial.print((int) mpuIntStatus, HEX);
+//  Serial.print(" ");
+//#endif
+
+  // Frequently, the interrupt status is zero by the time we're processing
+  // the interrupt.  Why that happens has not yet been determined.  If it
+  // is zero, there's nothing we can do because we don't know what the
+  // interrupt was for.
+  if (mpuIntStatus == 0) {
+    return;
+  }
+
+  switch (mpuMode)
+  {
+    case MpuMode::init:
+      // Don't do anything because the MPU isn't ready yet.
+      break;
+
+    case MpuMode::cycle:
+      if (mpuIntStatus & 0x40) {
+        setMpuMode(MpuMode::normal, now);
+        widgetMode = WidgetMode::inactive;
+        clearMpuFifo();
+      }
+      break;
+
+    case MpuMode::normal:
+
+      fifoCount = mpu.getFIFOCount();
+
+      // Check if FIFO overflowed.  If it did, clear it, then wait for another
+      // data-ready interrupt and clear the FIFO again so that we are back in
+      // sync (i.e., any partial packets have been cleared out).  Based on some
+      // brief testing, it appears that bits 0 and 1 always appear set together.
+      if (mpuIntStatus & 0x10) {
+#ifdef ENABLE_DEBUG_PRINT
+        Serial.print(F("*** FIFO overflow!  fifoCount is "));
+        Serial.println(fifoCount);
+#endif
+        clearMpuFifo();
+        needClearMpuFifo = true;    // clear it again after next interrupt to get in sync
+        return;
+      }
+
+      // The MPU6050 register map document says that bit 0 indicates data ready and bit 1
+      // is reserved.  However, the I2C data analyzer dump from Jeff Rowberg found at
+      // https://www.i2cdevlib.com/tools/analyzer/1 shows that bit 0 indicates raw data
+      // ready and bit 1 indicates DMP data ready.
+      if (!(mpuIntStatus & 0x02)) {
+#ifdef ENABLE_DEBUG_PRINT
+        Serial.print(F("Got interrupt but not for data ready.  mpuIntStatus=0x"));
+        Serial.print((int) mpuIntStatus, HEX);
+        Serial.print(F(", fifoCount="));
+        Serial.println(fifoCount);
+#endif
+        return;
+      }
+
+      if (needClearMpuFifo) {
+        needClearMpuFifo = false;
+        clearMpuFifo();
+        return;
+      }
+
+      // If we've missed retrieving more than a few packets in time, the FIFO has
+      // probably already overflowed (even though we haven't gotten that interrupt)
+      // or otherwise become corrupted.  We need to reset it to avoid getting bad data.
+      if (fifoCount > packetSize * maxPacketsInFifoBeforeForcedClear) {
+#ifdef ENABLE_DEBUG_PRINT
+        Serial.print(F("*** Missed too many packets.  fifoCount="));
+        Serial.println(fifoCount);
+#endif
+        clearMpuFifo();
+        return;
+      }
+
+      // If the FIFO length is not a multiple of the packet size, there is a partial
+      // packet in the FIFO, either due to the FIFO being filled right now or due to some
+      // sort of FIFO corruption.  We need to clear the FIFO to avoid getting bad data.
+      if (fifoCount % packetSize != 0) {
+#ifdef ENABLE_DEBUG_PRINT
+        Serial.print(F("////////// *** Partial packet in FIFO.  fifoCount="));
+        Serial.println(fifoCount);
+#endif
+        clearMpuFifo();
+        needClearMpuFifo = true;    // clear it again after next interrupt to get in sync
+        return;
+      }
+
+//#ifdef ENABLE_DEBUG_PRINT
+//      Serial.print(F("Got data ready interrupt 0x"));
+//      Serial.print((int) mpuIntStatus, HEX);
+//      Serial.print(F(", fifoCount="));
+//      Serial.println(fifoCount);
+//#endif
+      gatherMotionMeasurements(now);
+      break;
+  }
 }
 
 
@@ -501,7 +635,7 @@ void sampleSound()
 }
 
 
-void saveSoundSample()
+void saveSoundSample(uint32_t now)
 {
 //#ifdef ENABLE_DEBUG_PRINT
 //    Serial.print(F("saveSoundSample:  minSoundSample="));
@@ -520,15 +654,28 @@ void saveSoundSample()
   avgMaxSoundSample = getMovingAverage(1);
   ppSoundSample = avgMaxSoundSample - avgMinSoundSample;
 
-  isActive = ppSoundSample > activeSoundThreshold;
+  if (ppSoundSample > activeSoundThreshold) {
+    if (widgetMode == WidgetMode::standby) {
+      setMpuMode(MpuMode::normal, now);
+      widgetMode = WidgetMode::active;
+    }
+    else if (widgetMode == WidgetMode::inactive) {
+      widgetMode = WidgetMode::active;
+    }
+  }
+  else {
+    if (widgetMode == WidgetMode::active) {
+      widgetMode = WidgetMode::inactive;
+    }
+  }
 
 //#ifdef ENABLE_DEBUG_PRINT
 //    Serial.print(F("avgMinSoundSample="));
 //    Serial.print(avgMinSoundSample);
 //    Serial.print(F(" avgMaxSoundSample="));
-//    Serial.print(avgMaxSoundSample);
-//    Serial.print(F(" isActive="));
-//    Serial.println(isActive);
+//    Serial.println(avgMaxSoundSample);
+//    Serial.print(F(" ppSoundSample="));
+//    Serial.println(ppSoundSample);
 //#endif
 }
 
@@ -548,7 +695,7 @@ void sendMeasurements()
       payload.measurements[j] = getMovingAverage(j);
   }
 
-  payload.widgetHeader.isActive = isActive;
+  payload.widgetHeader.isActive = widgetMode == WidgetMode::active;
 
 #ifdef ENABLE_DEBUG_PRINT
   for (int i = 0; i < NUM_MPU_VALUES_TO_SEND + NUM_SOUND_VALUES_TO_SEND; ++i) {
@@ -574,34 +721,38 @@ void sendMeasurements()
     Serial.println(F("radio.write succeeded."));
 #endif
   }
-
 }
 
 
-void loop() {
-
+void loop()
+{
   static int32_t lastTxMs;
   static int32_t lastSoundSampleMs;
   static int32_t lastSoundSampleSaveMs;
+  static bool wasActive;
 
   uint32_t now = millis();
 
-#ifdef ENABLE_MOTION_DETECTION
-#ifndef ENABLE_WATCHDOG
-  if (now - lastSuccessfulMpuReadMs >= MPU_ASSUMED_DEAD_MS) {
+#ifdef ENABLE_WATCHDOG
+  // We don't get data periodically from the MPU when it
+  // is in cycle mode, so we need to kick the dog here.
+  if (mpuMode == MpuMode::cycle) {
+    wdt_reset();
+  }
+#else
+  // If we're not using the watchdog, we need to reset the MPU
+  // if we haven't received any data from it for a while
+  // (because it has probably gone out to lunch).
+  if (mpuMode == MpuMode::normal && now - lastSuccessfulMpuReadMs >= MPU_ASSUMED_DEAD_MS) {
+      mpuMode = MpuMode::init;
       initMpu();
   }
 #endif
-  if (dmpReady && mpuInterrupt) {
-    gatherMotionMeasurements();
+
+  if (gotMpuInterrupt) {
+    gotMpuInterrupt = false;
+    processMpuInterrupt(now);
   }
-#else
-#ifdef ENABLE_WATCHDOG
-  // Normally, we kick the dog after getting good data from the MPU6050.
-  // If we're not using the unit, we need to reset the watchdog.
-  wdt_reset();
-#endif
-#endif
 
   if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
     lastSoundSampleMs = now;
@@ -610,16 +761,31 @@ void loop() {
 
   if (now - lastSoundSampleSaveMs >= SOUND_SAMPLE_SAVE_INTERVAL_MS) {
     lastSoundSampleSaveMs = now;
-    saveSoundSample();
+    saveSoundSample(now);
   }
 
-  if (now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {
-    if (isActive || wasActive || now - lastTxMs >= INACTIVE_TX_INTERVAL_MS) {
-      lastTxMs = now;
-      sendMeasurements();
-      wasActive = isActive;
-    }
+  uint32_t txInterval = wasActive                          ? ACTIVE_TX_INTERVAL_MS
+                      : widgetMode == WidgetMode::active   ? ACTIVE_TX_INTERVAL_MS
+                      : widgetMode == WidgetMode::inactive ? INACTIVE_TX_INTERVAL_MS
+                      :                                      STANDBY_TX_INTERVAL_MS;
+  if (now - lastTxMs >= txInterval) {
+    lastTxMs = now;
+    sendMeasurements();
+    wasActive = widgetMode == WidgetMode::active;
   }
 
+  if (widgetMode == WidgetMode::inactive
+      && mpuMode == MpuMode::normal
+      && now - lastMotionDetectedMs >= MOTION_TIMEOUT_MS)
+  {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("Going standby because no motion from "));
+    Serial.print(lastMotionDetectedMs);
+    Serial.print(F(" to "));
+    Serial.println(now);
+#endif
+    setMpuMode(MpuMode::cycle, now);
+    widgetMode = WidgetMode::standby;
+  }
 }
 
