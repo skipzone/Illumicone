@@ -30,9 +30,10 @@
 // https://andreasrohner.at/posts/Electronics/How-to-make-the-Watchdog-Timer-work-on-an-Arduino-Pro-Mini-by-replacing-the-bootloader/
 //#define ENABLE_WATCHDOG
 
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 
+#include <avr/sleep.h>
 #ifdef ENABLE_WATCHDOG
 #include <avr/wdt.h>
 #endif
@@ -90,7 +91,16 @@ enum class WidgetMode {
 #define MOTION_TIMEOUT_MS 5000L
 #define YPR_MOTION_CHANGE_THRESHOLD 1
 
-//#define TX_FAILURE_LED_PIN 2
+// When we're not using the watchdog, we use the time elapsed since getting
+// good data from the MPU-6050 to determine if we need to re-init the little
+// bastard because he's quit working right.  MPU_ASSUMED_DEAD_MS should be
+// less than MOTION_TIMEOUT_MS so that we re-init the MPU-6050 rather than
+// putting it in cycle mode when we're not getting good data from it.
+#define MPU_ASSUMED_DEAD_MS 3000
+
+#define TX_INDICATOR_LED_PIN LED_BUILTIN
+#define TX_INDICATOR_LED_ON HIGH
+#define TX_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
 // --- the real Rainstick ---
 //#define MIC_SIGNAL_PIN A0
@@ -110,8 +120,6 @@ constexpr uint16_t activeSoundThreshold = 100;
 // corruption becomes likely even before the FIFO overflows.  We'll clear the
 // FIFO when more than maxPacketsInFifoBeforeForcedClear packets are in it.
 constexpr uint8_t maxPacketsInFifoBeforeForcedClear = 2;
-
-#define MPU_ASSUMED_DEAD_MS 5000
 
 
 /***************************************
@@ -174,23 +182,129 @@ static int16_t gyro[3];
 
 static volatile bool gotMpuInterrupt;
 
+static int32_t nextTxMs;
+static int32_t lastSoundSampleMs;
+static int32_t lastSoundSampleSaveMs;
 static int32_t lastSuccessfulMpuReadMs;
+
+static uint32_t txInterval;
 
 
 /******************
  * Implementation *
  ******************/
 
+// TODO:  Move the moving average stuff to a library.
+void clearMovingAverages();
+void updateMovingAverage(uint8_t setIdx, int16_t newValue);
+int16_t getMovingAverage(uint8_t setIdx);
+bool detectMovingAverageChange(uint8_t setIdx, int16_t threshold);
+
+
 // top half of the MPU ISR (bottom half is processMpuInterrupt)
 void handleMpuInterrupt() {
+
+  if (widgetMode == WidgetMode::standby) {
+    sleep_disable();
+  }
+
   gotMpuInterrupt = true;
+}
+
+
+void widgetWake()
+{
+  // Reinitialize all the time trackers because the ms timer has been off.
+  // Time in this little world has stood still while time in the default
+  // world marched on, so we need transmit and gather data ASAP.
+  uint32_t now = millis();
+  nextTxMs = now;
+  lastSoundSampleMs = now;
+  lastSoundSampleSaveMs = now;
+  lastSuccessfulMpuReadMs = now;
+
+  clearMovingAverages();
+}
+
+
+void widgetSleep()
+{
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+
+  // We don't want interrupts duing the timing-critical stuff below,
+  // and we don't want the ISR to disable sleep before we go to sleep.
+  noInterrupts();
+
+  // The interrupt is already attached because it is the interrupt the MPU uses.
+
+  // Turn off brown-out enable in software.  BODS must be set to
+  // one and BODSE must be set to zero within four clock cycles.
+  MCUCR = bit (BODS) | bit (BODSE);
+  // The BODS bit is automatically cleared after three clock cycles.
+  MCUCR = bit (BODS);
+
+  // Standby mode tells the ISR to disable sleep after we wake up.
+  widgetMode = WidgetMode::standby;
+
+  // sleep_cpu is guarnteed to be called because the processor always
+  // executes the next instruction after interrupts are enabled.
+  interrupts();
+  sleep_cpu();
+}
+
+
+void setWidgetMode(WidgetMode newMode, uint32_t now)
+{
+  switch (newMode) {
+
+    case WidgetMode::standby:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Widget mode changing to standby."));
+#endif
+      // widgetSleep returns after we sleep then wake up.
+      widgetSleep();
+      widgetWake();
+      widgetMode = WidgetMode::inactive;
+      break;
+
+    case WidgetMode::inactive:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Widget mode changing to inactive."));
+#endif
+      // The change in tx interval will become effective after the next
+      // transmission, which needs to happen at the shorter active interval
+      // so that the pattern controller quicly knows we've gone inactive.
+      txInterval = INACTIVE_TX_INTERVAL_MS;
+      widgetMode = WidgetMode::inactive;
+      break;
+
+    case WidgetMode::active:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Widget mode changing to active."));
+#endif
+      txInterval = ACTIVE_TX_INTERVAL_MS;
+      // The next transmission needs to be as soon as practical so that
+      // the pattern controller quickly knows that we're active again.
+      if ((int32_t) (nextTxMs - now) > ACTIVE_TX_INTERVAL_MS) {
+        nextTxMs = now + ACTIVE_TX_INTERVAL_MS;
+      }
+      widgetMode = WidgetMode::active;
+      break;
+
+    default:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("*** Invalid newMode in setWidgetMode"));
+#endif
+      break;
+  }
 }
 
 
 void setMpuMode(MpuMode newMode, uint32_t now)
 {
-  switch (newMode)
-  {
+  switch (newMode) {
+
     case MpuMode::cycle:
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Setting mpuMode to cycle..."));
@@ -264,14 +378,14 @@ void initMpu()
 #endif
     uint8_t devStatus = mpu.dmpInitialize();
     if (devStatus == 0) {
-  
+
       // supply your own gyro offsets here, scaled for min sensitivity
       // TODO 2/28/2018 ross:  What do we do about this?  Every widget could be different.
       //mpu.setXGyroOffset(220);
       //mpu.setYGyroOffset(76);
       //mpu.setZGyroOffset(-85);
       //mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
-  
+
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Enabling interrupt..."));
 #endif
@@ -308,7 +422,7 @@ void initMpu()
 #endif
   }
 
-  widgetMode = WidgetMode::inactive;
+  setWidgetMode(WidgetMode::inactive, millis());
 }
 
 
@@ -318,6 +432,9 @@ void setup()
   Serial.begin(115200);
   printf_begin();
 #endif
+
+  pinMode(TX_INDICATOR_LED_PIN, OUTPUT);
+  digitalWrite(TX_INDICATOR_LED_PIN, TX_INDICATOR_LED_OFF);
 
   initI2c();
   initMpu();
@@ -472,7 +589,7 @@ void gatherMotionMeasurements(uint32_t now)
 #ifdef ENABLE_WATCHDOG
       wdt_reset();
 #else
-      lastSuccessfulMpuReadMs = millis();
+      lastSuccessfulMpuReadMs = now;
 #endif
     }
 
@@ -523,8 +640,8 @@ void processMpuInterrupt(uint32_t now)
     return;
   }
 
-  switch (mpuMode)
-  {
+  switch (mpuMode) {
+
     case MpuMode::init:
       // Don't do anything because the MPU isn't ready yet.
       break;
@@ -532,7 +649,6 @@ void processMpuInterrupt(uint32_t now)
     case MpuMode::cycle:
       if (mpuIntStatus & 0x40) {
         setMpuMode(MpuMode::normal, now);
-        widgetMode = WidgetMode::inactive;
         clearMpuFifo();
       }
       break;
@@ -653,19 +769,14 @@ void saveSoundSample(uint32_t now)
   avgMinSoundSample = getMovingAverage(0);
   avgMaxSoundSample = getMovingAverage(1);
   ppSoundSample = avgMaxSoundSample - avgMinSoundSample;
-
   if (ppSoundSample > activeSoundThreshold) {
-    if (widgetMode == WidgetMode::standby) {
-      setMpuMode(MpuMode::normal, now);
-      widgetMode = WidgetMode::active;
-    }
-    else if (widgetMode == WidgetMode::inactive) {
-      widgetMode = WidgetMode::active;
+    if (widgetMode == WidgetMode::inactive) {
+      setWidgetMode(WidgetMode::active, now);
     }
   }
   else {
     if (widgetMode == WidgetMode::active) {
-      widgetMode = WidgetMode::inactive;
+      setWidgetMode(WidgetMode::inactive, now);
     }
   }
 
@@ -686,13 +797,15 @@ void sendMeasurements()
     Serial.println(F("send"));
 #endif
 
+  digitalWrite(TX_INDICATOR_LED_PIN, TX_INDICATOR_LED_ON);
+
   payload.measurements[0] = avgMinSoundSample;
   payload.measurements[1] = avgMaxSoundSample;
   payload.measurements[2] = ppSoundSample;
 
   // Place the MPU average values after the sound values.
   for (int i = 0, j = NUM_SOUND_VALUES_TO_SEND; i < NUM_MPU_VALUES_TO_SEND; ++i, ++j) {
-      payload.measurements[j] = getMovingAverage(j);
+    payload.measurements[j] = getMovingAverage(j);
   }
 
   payload.widgetHeader.isActive = widgetMode == WidgetMode::active;
@@ -706,29 +819,22 @@ void sendMeasurements()
 #endif
 
   if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * (NUM_MPU_VALUES_TO_SEND + NUM_SOUND_VALUES_TO_SEND))) {
-#ifdef TX_FAILURE_LED_PIN      
-    digitalWrite(TX_FAILURE_LED_PIN, HIGH);
-#endif
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write failed."));
 #endif
   }
   else {
-#ifdef TX_FAILURE_LED_PIN      
-    digitalWrite(TX_FAILURE_LED_PIN, LOW);
-#endif
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write succeeded."));
 #endif
   }
+
+  digitalWrite(TX_INDICATOR_LED_PIN, TX_INDICATOR_LED_OFF);
 }
 
 
 void loop()
 {
-  static int32_t lastTxMs;
-  static int32_t lastSoundSampleMs;
-  static int32_t lastSoundSampleSaveMs;
   static bool wasActive;
 
   uint32_t now = millis();
@@ -744,8 +850,8 @@ void loop()
   // if we haven't received any data from it for a while
   // (because it has probably gone out to lunch).
   if (mpuMode == MpuMode::normal && now - lastSuccessfulMpuReadMs >= MPU_ASSUMED_DEAD_MS) {
-      mpuMode = MpuMode::init;
-      initMpu();
+    mpuMode = MpuMode::init;
+    initMpu();
   }
 #endif
 
@@ -764,14 +870,9 @@ void loop()
     saveSoundSample(now);
   }
 
-  uint32_t txInterval = wasActive                          ? ACTIVE_TX_INTERVAL_MS
-                      : widgetMode == WidgetMode::active   ? ACTIVE_TX_INTERVAL_MS
-                      : widgetMode == WidgetMode::inactive ? INACTIVE_TX_INTERVAL_MS
-                      :                                      STANDBY_TX_INTERVAL_MS;
-  if (now - lastTxMs >= txInterval) {
-    lastTxMs = now;
+  if ((int32_t) (now - nextTxMs) >= 0) {
+    nextTxMs = now + txInterval;
     sendMeasurements();
-    wasActive = widgetMode == WidgetMode::active;
   }
 
   if (widgetMode == WidgetMode::inactive
@@ -785,7 +886,11 @@ void loop()
     Serial.println(now);
 #endif
     setMpuMode(MpuMode::cycle, now);
-    widgetMode = WidgetMode::standby;
+    setWidgetMode(WidgetMode::standby, now);
+    // Setting the widget mode to standby will put the processor to sleep.
+    // It wakes when it gets a motion detection interrupt from the MPU.
+    // Sometime after that, setWidgetMode returns, and execution resumes here.
+    // The world may be a different place then.  Just thought you should know.
   }
 }
 
