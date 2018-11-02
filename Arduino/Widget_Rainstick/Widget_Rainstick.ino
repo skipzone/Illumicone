@@ -98,9 +98,12 @@ enum class WidgetMode {
 // putting it in cycle mode when we're not getting good data from it.
 #define MPU_ASSUMED_DEAD_MS 3000
 
-#define TX_INDICATOR_LED_PIN LED_BUILTIN
-#define TX_INDICATOR_LED_ON HIGH
-#define TX_INDICATOR_LED_OFF LOW
+//#define TX_INDICATOR_LED_PIN 16
+//#define TX_INDICATOR_LED_ON HIGH
+//#define TX_INDICATOR_LED_OFF LOW
+#define IMU_NORMAL_INDICATOR_LED_PIN 16
+#define IMU_NORMAL_INDICATOR_LED_ON HIGH
+#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
 // --- the real Rainstick ---
 //#define MIC_SIGNAL_PIN A0
@@ -229,14 +232,17 @@ void widgetWake()
 
 void widgetSleep()
 {
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  sleep_enable();
-
   // We don't want interrupts duing the timing-critical stuff below,
   // and we don't want the ISR to disable sleep before we go to sleep.
   noInterrupts();
 
-  // The interrupt is already attached because it is the interrupt the MPU uses.
+  // Ignore an IMU interrupt that hasn't been serviced yet.
+  gotMpuInterrupt = false;
+
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+
+  // The interrupt is already attached because it is the interrupt the IMU uses.
 
   // Turn off brown-out enable in software.  BODS must be set to
   // one and BODSE must be set to zero within four clock cycles.
@@ -321,6 +327,9 @@ void setMpuMode(MpuMode newMode, uint32_t now)
       mpu.setWakeFrequency(0);                    // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
       mpu.setWakeCycleEnabled(true);
       mpu.setIntMotionEnabled(true);
+#ifdef IMU_NORMAL_INDICATOR_LED_PIN
+      digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_OFF);
+#endif
       break;
 
     case MpuMode::normal:
@@ -334,11 +343,17 @@ void setMpuMode(MpuMode newMode, uint32_t now)
       mpu.setDMPEnabled(true);
       lastMotionDetectedMs = now;
       lastSuccessfulMpuReadMs = now;
+#ifdef IMU_NORMAL_INDICATOR_LED_PIN
+      digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_ON);
+#endif
       break;
 
     default:
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("*** Invalid newMode in setMpuMode"));
+#endif
+#ifdef IMU_NORMAL_INDICATOR_LED_PIN
+      digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_OFF);
 #endif
       break;
   }
@@ -433,8 +448,14 @@ void setup()
   printf_begin();
 #endif
 
+#ifdef TX_INDICATOR_LED_PIN
   pinMode(TX_INDICATOR_LED_PIN, OUTPUT);
   digitalWrite(TX_INDICATOR_LED_PIN, TX_INDICATOR_LED_OFF);
+#endif
+#ifdef IMU_NORMAL_INDICATOR_LED_PIN
+  pinMode(IMU_NORMAL_INDICATOR_LED_PIN, OUTPUT);
+  digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_OFF);
+#endif
 
   initI2c();
   initMpu();
@@ -797,7 +818,9 @@ void sendMeasurements()
     Serial.println(F("send"));
 #endif
 
+#ifdef TX_INDICATOR_LED_PIN
   digitalWrite(TX_INDICATOR_LED_PIN, TX_INDICATOR_LED_ON);
+#endif
 
   payload.measurements[0] = avgMinSoundSample;
   payload.measurements[1] = avgMaxSoundSample;
@@ -829,7 +852,9 @@ void sendMeasurements()
 #endif
   }
 
+#ifdef TX_INDICATOR_LED_PIN
   digitalWrite(TX_INDICATOR_LED_PIN, TX_INDICATOR_LED_OFF);
+#endif
 }
 
 
@@ -846,12 +871,17 @@ void loop()
     wdt_reset();
   }
 #else
-  // If we're not using the watchdog, we need to reset the MPU
-  // if we haven't received any data from it for a while
-  // (because it has probably gone out to lunch).
-  if (mpuMode == MpuMode::normal && now - lastSuccessfulMpuReadMs >= MPU_ASSUMED_DEAD_MS) {
+  // If we're not using the watchdog, we need to reset the IMU
+  // if we are awake and haven't received any data from it for
+  // a while (because it has probably gone out to lunch).
+  if (now - lastSuccessfulMpuReadMs >= MPU_ASSUMED_DEAD_MS) {
     mpuMode = MpuMode::init;
     initMpu();
+    // lastMotionDetectedMs ends up with the current value returned by
+    // millis() when initMpu calls setMpuMode.  Since initializaing the
+    // MPU-6050 likely took a millisecond or more, we need to fix the
+    // value of lastMotionDetectedMs so that it isn't in the future.
+    lastMotionDetectedMs = now;
   }
 #endif
 
