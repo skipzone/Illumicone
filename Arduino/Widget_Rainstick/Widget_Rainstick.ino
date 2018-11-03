@@ -25,18 +25,11 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-// The watchdog doesn't work correctly on Pro Mini boards.  See
-// https://andreasrohner.at/posts/Electronics/How-to-make-the-Watchdog-Timer-work-on-an-Arduino-Pro-Mini-by-replacing-the-bootloader/
-//#define ENABLE_WATCHDOG
-
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 
 #include <avr/sleep.h>
-#ifdef ENABLE_WATCHDOG
 #include <avr/wdt.h>
-#endif
 
 #include "I2Cdev.h"
 
@@ -83,7 +76,12 @@ enum class WidgetMode {
 #define SOUND_SAVE_INTERVAL_MS 50L      // same as 200 Hz IMU sample frequency so MA length works for both
 #define ACTIVE_TX_INTERVAL_MS 100L
 #define INACTIVE_TX_INTERVAL_MS 500L
-#define STANDBY_TX_INTERVAL_MS 5000L
+
+// In standby mode, we'll transmit a packet with zero-valued data
+// approximately every STANDBY_TX_INTERVAL_S seconds.  Wake-ups
+// occur at 8-second intervals, so STANDBY_TX_INTERVAL_S should
+// be a multiple of 8 between 8 and 2040, inclusive.
+#define STANDBY_TX_INTERVAL_S 64
 
 // There must be at least YPR_MOTION_CHANGE_THRESHOLD tenths of a degree
 // motion in yaw, pitch, or roll every MOTION_TIMEOUT_MS ms to keep us
@@ -150,7 +148,6 @@ constexpr uint8_t maxPacketsInMpu6050FifoBeforeForcedClear = 2;
 
 static WidgetMode widgetMode = WidgetMode::init;
 static Mpu6050Mode mpu6050Mode = Mpu6050Mode::init;
-static uint32_t lastMotionDetectedMs;
 
 static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
@@ -159,7 +156,8 @@ static MeasurementVectorPayload payload;
 static uint16_t minSoundSample = UINT16_MAX;
 static uint16_t maxSoundSample;
 
-static bool isImuActive;
+// TODO:  Implement isImuActive for BoogieBoard.
+// static bool isImuActive;
 static bool isSoundActive;
 
 static constexpr uint8_t maSlotYaw = 0;
@@ -197,8 +195,11 @@ static int32_t nextTxMs;
 static int32_t lastSoundSampleMs;
 static int32_t lastSoundSaveMs;
 static int32_t lastSuccessfulMpu6050ReadMs;
+static uint32_t lastMotionDetectedMs;
 
 static uint32_t txInterval;
+
+static uint8_t stayAwakeCountdown;
 
 
 /******************
@@ -212,36 +213,66 @@ int16_t getMovingAverage(uint8_t setIdx);
 bool detectMovingAverageChange(uint8_t setIdx, int16_t threshold);
 
 
-// top half of the MPU-6050 ISR (bottom half is processMpu6050Interrupt)
-void handleMpu6050Interrupt() {
-
+ISR(WDT_vect) {
   if (widgetMode == WidgetMode::standby) {
     sleep_disable();
   }
+}
 
+
+// top half of the MPU-6050 ISR (bottom half is processMpu6050Interrupt)
+void handleMpu6050Interrupt() {
+  if (widgetMode == WidgetMode::standby) {
+    sleep_disable();
+  }
   gotMpu6050Interrupt = true;
 }
 
 
-void widgetWake()
+bool widgetWake()
 {
+  uint32_t now = millis();
+
+  if (!gotMpu6050Interrupt) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("Woken up by watchdog."));
+#endif
+    if (--stayAwakeCountdown == 0) {
+      stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
+      // Let the pattern controller know we're still alive.
+      // (The data sent will be all zeros because the averages
+      // were cleared before we went to sleep.)
+      sendMeasurements();
+    }
+    return false;
+  }
+
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.println(F("Woken up by MPU-6050."));
+#endif
+
   // Reinitialize all the time trackers because the ms timer has been off.
   // Time in this little world has stood still while time in the default
   // world marched on, so we need transmit and gather data ASAP.
-  uint32_t now = millis();
   nextTxMs = now;
   lastSoundSampleMs = now;
   lastSoundSaveMs = now;
+  lastMotionDetectedMs = now;
   lastSuccessfulMpu6050ReadMs = now;
 
-  clearMovingAverages();
-
   isSoundActive = false;
+
+  return true;
 }
 
 
 void widgetSleep()
 {
+  // After we wake up, the averages will be stale.  Clear them now
+  // so that the periodic transmissions caused by watchdog wakeup
+  // will send zero values.
+  clearMovingAverages();
+  
   // We don't want interrupts duing the timing-critical stuff below,
   // and we don't want the ISR to disable sleep before we go to sleep.
   noInterrupts();
@@ -272,6 +303,8 @@ void widgetSleep()
 
 void setWidgetMode(WidgetMode newMode, uint32_t now)
 {
+  bool stayAwake;
+  
   switch (newMode) {
 
     case WidgetMode::standby:
@@ -279,9 +312,14 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       Serial.println(F("Widget mode changing to standby."));
 #endif
       setMpu6050Mode(Mpu6050Mode::cycle, now);
-      // widgetSleep returns after we sleep then wake up.
-      widgetSleep();
-      widgetWake();
+      wdt_reset();
+      stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
+      stayAwake = false;
+      while (!stayAwake) {
+        // widgetSleep returns after we sleep then wake up.
+        widgetSleep();
+        stayAwake = widgetWake();
+      }
       widgetMode = WidgetMode::inactive;
       break;
 
@@ -349,6 +387,7 @@ void setMpu6050Mode(Mpu6050Mode newMode, uint32_t now)
 #endif
       mpu6050.setIntMotionEnabled(false);
       mpu6050.setWakeCycleEnabled(false);
+      clearMpu6050Fifo();
       mpu6050Mode = Mpu6050Mode::normal;
       mpu6050.setDMPEnabled(true);
       lastMotionDetectedMs = now;
@@ -466,25 +505,26 @@ void setup()
   pinMode(IMU_NORMAL_INDICATOR_LED_PIN, OUTPUT);
   digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_OFF);
 #endif
+  pinMode(MIC_POWER_PIN, OUTPUT);
+  digitalWrite(MIC_POWER_PIN, HIGH);
 
   initI2c();
   initMpu6050();
 
   configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL, WANT_ACK);
 
-  pinMode(MIC_POWER_PIN, OUTPUT);
-  digitalWrite(MIC_POWER_PIN, HIGH);
+  // Set the watchdog for interrupt only (no system reset) and an 8s interval.
+  // We have to turn off interrupts because the changes to the control register
+  // must be done within four clock cycles of setting WDCE (change-enable bit).
+  noInterrupts();
+  _WD_CONTROL_REG = (1 << WDCE) | (1 << WDE);
+  _WD_CONTROL_REG = (1 << WDIE) | (0 << WDE) | (1 << WDP3) | (1 << WDP0);
+///  wdt_enable(WDTO_8S);     // enable the watchdog
+  interrupts();
 
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
-
-  // Communication with the MPU6050 has proven to be problematic.
-  // If we don't hear from the unit periodically, or if we don't
-  // get good data for a while, we need the watchdog to reset us.
-#ifdef ENABLE_WATCHDOG
-  wdt_enable(WDTO_1S);     // enable the watchdog
-#endif
 }
 
 
@@ -629,11 +669,7 @@ void gatherMotionMeasurements(uint32_t now)
     if (quat.w != 0 || quat.x != 0 || quat.y != 0 || quat.z != 0
         || gyro.x != 0 || gyro.y != 0 || gyro.z != 0)
     {
-#ifdef ENABLE_WATCHDOG
-      wdt_reset();
-#else
       lastSuccessfulMpu6050ReadMs = now;
-#endif
     }
 
   // If there was sufficient motion, keep us out of standby mode for now.
@@ -692,7 +728,6 @@ void processMpu6050Interrupt(uint32_t now)
     case Mpu6050Mode::cycle:
       if (mpu6050IntStatus & 0x40) {
         setMpu6050Mode(Mpu6050Mode::normal, now);
-        clearMpu6050Fifo();
       }
       break;
 
@@ -860,10 +895,8 @@ void loop()
 {
   uint32_t now = millis();
 
-#ifndef ENABLE_WATCHDOG
-  // If we're not using the watchdog, we need to reset the IMU
-  // if we are awake and haven't received any data from it for
-  // a while (because it has probably gone out to lunch).
+  // We need to reset the IMU if we are awake and haven't received any
+  // data from it for a while (because it has probably gone out to lunch).
   if (now - lastSuccessfulMpu6050ReadMs >= MPU6050_ASSUMED_DEAD_MS) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.print(F("///// *** MPU-6050 assumed dead.  Reinitializing..."));
@@ -876,7 +909,6 @@ void loop()
     // value of lastMotionDetectedMs so that it isn't in the future.
     lastMotionDetectedMs = now;
   }
-#endif
 
   if (gotMpu6050Interrupt) {
     gotMpu6050Interrupt = false;
