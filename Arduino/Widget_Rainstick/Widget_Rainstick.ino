@@ -74,8 +74,8 @@ enum class WidgetMode {
 
 #define SOUND_SAMPLE_INTERVAL_MS 10L
 #define SOUND_SAVE_INTERVAL_MS 50L      // same as 200 Hz IMU sample frequency so MA length works for both
-#define ACTIVE_TX_INTERVAL_MS 100L
-#define INACTIVE_TX_INTERVAL_MS 500L
+#define ACTIVE_TX_INTERVAL_MS 200L
+#define INACTIVE_TX_INTERVAL_MS 2000L
 
 // In standby mode, we'll transmit a packet with zero-valued data
 // approximately every STANDBY_TX_INTERVAL_S seconds.  Wake-ups
@@ -86,7 +86,7 @@ enum class WidgetMode {
 // There must be at least YPR_MOTION_CHANGE_THRESHOLD tenths of a degree
 // motion in yaw, pitch, or roll every MOTION_TIMEOUT_MS ms to keep us
 // out of standby mode.
-#define MOTION_TIMEOUT_MS 5000L
+#define MOTION_TIMEOUT_MS 10000L
 #define YPR_MOTION_CHANGE_THRESHOLD 1
 
 // When we're not using the watchdog, we use the time elapsed since getting
@@ -99,16 +99,16 @@ enum class WidgetMode {
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
 //#define TX_INDICATOR_LED_OFF LOW
-#define IMU_NORMAL_INDICATOR_LED_PIN 16
-#define IMU_NORMAL_INDICATOR_LED_ON HIGH
-#define IMU_NORMAL_INDICATOR_LED_OFF LOW
+//#define IMU_NORMAL_INDICATOR_LED_PIN 16
+//#define IMU_NORMAL_INDICATOR_LED_ON HIGH
+//#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
 // --- the real Rainstick ---
-//#define MIC_SIGNAL_PIN A0
-//#define MIC_POWER_PIN 8
+#define MIC_SIGNAL_PIN A0
+#define MIC_POWER_PIN 8
 // --- development breadboard ---
-#define MIC_SIGNAL_PIN A3
-#define MIC_POWER_PIN 4
+//#define MIC_SIGNAL_PIN A3
+//#define MIC_POWER_PIN 4
 
 // moving average lengthf for averaging sound and IMU measurements
 #define MA_LENGTH 8
@@ -311,6 +311,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Widget mode changing to standby."));
 #endif
+      digitalWrite(MIC_POWER_PIN, LOW);
       setMpu6050Mode(Mpu6050Mode::cycle, now);
       wdt_reset();
       stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
@@ -320,6 +321,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
         widgetSleep();
         stayAwake = widgetWake();
       }
+      digitalWrite(MIC_POWER_PIN, HIGH);
       widgetMode = WidgetMode::inactive;
       break;
 
@@ -331,6 +333,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       // transmission, which needs to happen at the shorter active interval
       // so that the pattern controller quicly knows we've gone inactive.
       txInterval = INACTIVE_TX_INTERVAL_MS;
+      digitalWrite(MIC_POWER_PIN, HIGH);
       widgetMode = WidgetMode::inactive;
       break;
 
@@ -344,6 +347,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       if ((int32_t) (nextTxMs - now) > ACTIVE_TX_INTERVAL_MS) {
         nextTxMs = now + ACTIVE_TX_INTERVAL_MS;
       }
+      digitalWrite(MIC_POWER_PIN, HIGH);
       widgetMode = WidgetMode::active;
       break;
 
@@ -485,8 +489,6 @@ void initMpu6050()
   Serial.println(F("MPU6050 connection failed."));
 #endif
   }
-
-  setWidgetMode(WidgetMode::inactive, millis());
 }
 
 
@@ -506,7 +508,7 @@ void setup()
   digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_OFF);
 #endif
   pinMode(MIC_POWER_PIN, OUTPUT);
-  digitalWrite(MIC_POWER_PIN, HIGH);
+  digitalWrite(MIC_POWER_PIN, LOW);
 
   initI2c();
   initMpu6050();
@@ -525,6 +527,8 @@ void setup()
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
+
+  setWidgetMode(WidgetMode::inactive, millis());
 }
 
 
