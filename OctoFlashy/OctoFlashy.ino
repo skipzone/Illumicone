@@ -195,15 +195,13 @@ static float mpuTemperatureF;
 static volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 #endif
 
-static int16_t avgMinSoundSample;
-static int16_t avgMaxSoundSample;
-static int16_t ppSoundSample;
+static int16_t avgPpSound;
 static double avgYaw;
 static double avgPitch;
 static double avgRoll;
-static double avgRealAccelX;
-static double avgRealAccelY;
-static double avgRealAccelZ;
+static double avgLinearAccelX;
+static double avgLinearAccelY;
+static double avgLinearAccelZ;
 static double avgGyroX;
 static double avgGyroY;
 static double avgGyroZ;
@@ -652,15 +650,13 @@ void gatherTemperatureMeasurement()
 
 void getAverageMeasurements()
 {
-  avgMinSoundSample = 0;
-  avgMaxSoundSample = 0;
-  ppSoundSample = 0;
+  avgPpSound = 0;
   avgYaw = getMovingAverage(0) / 10.0;
   avgPitch = getMovingAverage(1) / 10.0;
   avgRoll = getMovingAverage(2) / 10.0;
-  avgRealAccelX = getMovingAverage(3) / countsPerG;
-  avgRealAccelY = getMovingAverage(4) / countsPerG;
-  avgRealAccelZ = getMovingAverage(5) / countsPerG;
+  avgLinearAccelX = getMovingAverage(3) / countsPerG;
+  avgLinearAccelY = getMovingAverage(4) / countsPerG;
+  avgLinearAccelZ = getMovingAverage(5) / countsPerG;
   avgGyroX = getMovingAverage(6);
   avgGyroY = getMovingAverage(7);
   avgGyroZ = getMovingAverage(8);
@@ -672,12 +668,12 @@ void getAverageMeasurements()
   Serial.print(avgPitch);
   Serial.print(F(" avgRoll="));
   Serial.print(avgRoll);
-  Serial.print(F(" avgRealAccelX="));
-  Serial.print(avgRealAccelX);
-  Serial.print(F(" avgRealAccelY="));
-  Serial.print(avgRealAccelY);
-  Serial.print(F(" avgRealAccelZ="));
-  Serial.print(avgRealAccelZ);
+  Serial.print(F(" avgLinearAccelX="));
+  Serial.print(avgLinearAccelX);
+  Serial.print(F(" avgLinearAccelY="));
+  Serial.print(avgLinearAccelY);
+  Serial.print(F(" avgLinearAccelZ="));
+  Serial.print(avgLinearAccelZ);
   Serial.print(F(" avgGyroX="));
   Serial.print(avgGyroX);
   Serial.print(F(" avgGyroY="));
@@ -755,8 +751,8 @@ bool handlePositionVelocityPayload(const PositionVelocityPayload* payload, uint8
       gotMeasurement = true;
       break;
     case 3:
-      ppSoundSample = payload->velocity * speedupFactor;
-      ppSoundSample = abs(ppSoundSample);
+      avgPpSound = payload->velocity * speedupFactor;
+      avgPpSound = abs(avgPpSound);
       gotMeasurement = true;
       break;
     default:
@@ -775,13 +771,11 @@ bool handlePositionVelocityPayload(const PositionVelocityPayload* payload, uint8
         || payload->widgetHeader.id == 6    // TriObelisk
        )
     {
-      ppSoundSample = 0;
+      avgPpSound = 0;
     }
-    avgMinSoundSample = 0;
-    avgMaxSoundSample = 0;
-    avgRealAccelX = 0.0;
-    avgRealAccelY = 0.0;
-    avgRealAccelZ = 0.0;
+    avgLinearAccelX = 0.0;
+    avgLinearAccelY = 0.0;
+    avgLinearAccelZ = 0.0;
     avgGyroX = 0.0;
     avgGyroY = 0.0;
     avgGyroZ = 0.0;
@@ -793,7 +787,9 @@ bool handlePositionVelocityPayload(const PositionVelocityPayload* payload, uint8
 
 bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uint8_t payloadSize)
 {
-  constexpr uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * 9;
+  constexpr uint8_t numExpectedValues = 13;
+  
+  constexpr uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * numExpectedValues;
   if (payloadSize != expectedPayloadSize) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.print(F("got MeasurementVectorPayload with "));
@@ -814,19 +810,25 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
     return false;
   }
 
-  avgMinSoundSample = payload->measurements[0];
-  avgMaxSoundSample = payload->measurements[1];
-  ppSoundSample = payload->measurements[2];
-  avgYaw = payload->measurements[3] / 10.0;
-  avgPitch = payload->measurements[4] / 10.0;
-  avgRoll = payload->measurements[5] / 10.0;
-  avgRealAccelX = 0.0;
-  avgRealAccelY = 0.0;
-  avgRealAccelZ = 0.0;
-  avgGyroX = payload->measurements[6];
-  avgGyroY = payload->measurements[7];
-  avgGyroZ = payload->measurements[8];
-
+  // Ignore payloads with all-zero data because the packet is probably
+  // just a heartbeat while the widget is in standby mode.
+  bool gotAllZeroData = true;
+  for (uint8_t i = 0; gotAllZeroData && i < numExpectedValues; ++i) {
+    gotAllZeroData = payload->measurements[0] == 0;
+  }
+  if (!gotAllZeroData) {
+    avgYaw = payload->measurements[0] / 10.0;
+    avgPitch = payload->measurements[1] / 10.0;
+    avgRoll = payload->measurements[2] / 10.0;
+    avgGyroX = payload->measurements[3];
+    avgGyroY = payload->measurements[4];
+    avgGyroZ = payload->measurements[5];
+    avgLinearAccelX = payload->measurements[9];
+    avgLinearAccelY = payload->measurements[10];
+    avgLinearAccelZ = payload->measurements[11];
+    avgPpSound = payload->measurements[12];
+  }
+  
   return true;
 }
 
@@ -879,12 +881,8 @@ void pollRadio()
 
 #ifdef ENABLE_DEBUG_PRINT
   if (gotMeasurements) {
-    Serial.print(F("avgMinSoundSample="));
-    Serial.print(avgMinSoundSample);
-    Serial.print(F(" avgMaxSoundSample="));
-    Serial.print(avgMaxSoundSample);
-    Serial.print(F(" ppSoundSample="));
-    Serial.print(ppSoundSample);
+    Serial.print(F(" avgPpSound="));
+    Serial.print(avgPpSound);
     Serial.print(F(" avgYaw="));
     Serial.print(avgYaw);
     Serial.print(F(" avgPitch="));
@@ -912,15 +910,15 @@ void sendDmx()
 
 #if DMX_NUM_CHANNELS_PER_LAMP == 4
     // If the sound is sufficiently loud, flash all the lamps instead of setting their intensities.
-    if (ppSoundSample >= minPpSoundForStrobe) {
-      uint8_t strobeValue = map(constrain(ppSoundSample, minPpSoundForStrobe, minPpSoundForStrobe),
+    if (avgPpSound >= minPpSoundForStrobe) {
+      uint8_t strobeValue = map(constrain(avgPpSound, minPpSoundForStrobe, minPpSoundForStrobe),
                                 minPpSoundForStrobe, maxPpSoundForStrobe, minStrobeValue, maxStrobeValue);
       dmxChannelValues[dmxChannelNum++] = strobeValue;
 #ifdef ENABLE_DEBUG_PRINT
       Serial.print(F("strobeValue="));
       Serial.print(strobeValue);
-      Serial.print(F(" ppSoundSample="));
-      Serial.print(ppSoundSample);
+      Serial.print(F(" avgPpSound="));
+      Serial.print(avgPpSound);
       Serial.print(F(" minPpSoundForStrobe="));
       Serial.print(minPpSoundForStrobe);
       Serial.print(F(" maxPpSoundForStrobe="));
