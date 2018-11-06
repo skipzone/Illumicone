@@ -11,7 +11,6 @@
  * Options *
  ***********/
 
-//#define USE_LOCAL_SENSOR
 #define ENABLE_WATCHDOG
 //#define ENABLE_DEBUG_PRINT
 
@@ -24,18 +23,8 @@
 #include <avr/wdt.h>
 #endif
 
-#ifdef USE_LOCAL_SENSOR
-#include "I2Cdev.h"
-#include "MPU6050_6Axis_MotionApps20.h"
-// Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
-// is used in I2Cdev.h
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include "Wire.h"
-#endif
-#else
 #include <SPI.h>
 #include "RF24.h"
-#endif
 
 #include "DmxSimple.h"
 
@@ -172,29 +161,6 @@ static int32_t maSums[NUM_MA_SETS];
 static uint8_t nextSlotIdx[NUM_MA_SETS];
 static bool maSetFull[NUM_MA_SETS];
 
-#ifdef USE_LOCAL_SENSOR
-static MPU6050 mpu;               // using default I2C address 0x68
-
-// MPU control/status vars
-static bool dmpReady = false;     // set true if DMP init was successful
-static uint8_t devStatus;         // return status after each device operation (0 = success, !0 = error)
-static uint16_t packetSize;       // expected DMP packet size (default is 42 bytes)
-static uint8_t packetBuffer[42];  // must be at least as large as packet size returned by dmpGetFIFOPacketSize
-
-// orientation/motion vars
-static Quaternion quat;           // [w, x, y, z] quaternion container
-static VectorFloat gravity;       // [x, y, z] gravity vector
-static float ypr[3];              // [yaw, pitch, roll] yaw/pitch/roll container
-static VectorInt16 aa;            // [x, y, z] accel sensor measurements
-static VectorInt16 aaReal;        // [x, y, z] gravity-free accel sensor measurements
-static int16_t rawAccel[3];
-static int16_t gyro[3];
-static float mpuTemperatureC;
-static float mpuTemperatureF;
-
-static volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
-#endif
-
 static int16_t avgPpSound;
 static double avgYaw;
 static double avgPitch;
@@ -208,23 +174,13 @@ static double avgGyroZ;
 
 static int colorChannelIntensities[NUM_LAMPS][NUM_COLORS_PER_LAMP];
 
-#ifndef USE_LOCAL_SENSOR
 static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
-#endif
 
 
 /******************
  * Implementation *
  ******************/
 
-#ifdef USE_LOCAL_SENSOR
-void dmpDataReady() {
-    mpuInterrupt = true;
-}
-#endif
-
-
-#ifndef USE_LOCAL_SENSOR
 void initRadio()
 {
   radio.begin();
@@ -248,96 +204,6 @@ void initRadio()
   
   radio.startListening();
 }
-#endif
-
-
-#ifdef USE_LOCAL_SENSOR
-void initI2c()
-{
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-#ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("initI2c:  I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE"));
-#endif
-  Wire.begin();
-  TWBR = 24; // 400kHz I2C clock (200kHz if CPU is 8MHz)
-#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-#ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("initI2c:  I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE"));
-#endif
-  Fastwire::setup(400, true);
-#endif
-}
-#endif
-
-
-#ifdef USE_LOCAL_SENSOR
-void initMpu()
-{
-#ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("Initializing MPU6050..."));
-#endif
-  mpu.initialize();
-
-#ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("Testing MPU6050 connection..."));
-#endif
-  if (mpu.testConnection()) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("MPU6050 connection successful.  Initializing DMP..."));
-#endif
-    devStatus = mpu.dmpInitialize();
-    if (devStatus == 0) {
-  
-      // supply your own gyro offsets here, scaled for min sensitivity
-      // TODO 2/28/2018 ross:  What do we do about this?  Every widget could be different.
-      //mpu.setXGyroOffset(220);
-      //mpu.setYGyroOffset(76);
-      //mpu.setZGyroOffset(-85);
-      //mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
-  
-      // turn on the DMP, now that it's ready
-#ifdef ENABLE_DEBUG_PRINT
-      Serial.println(F("Enabling DMP..."));
-#endif
-      mpu.setDMPEnabled(true);
-
-#ifdef ENABLE_DEBUG_PRINT
-      Serial.println(F("Enabling interrupt..."));
-#endif
-      attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), dmpDataReady, RISING);
-
-      // Get expected DMP packet size, and make sure packetBuffer is large enough.
-      packetSize = mpu.dmpGetFIFOPacketSize();
-      if (sizeof(packetBuffer) >= packetSize) {
-#ifdef ENABLE_DEBUG_PRINT
-        Serial.println(F("DMP ready."));
-#endif
-        dmpReady = true;
-      }
-      else {
-        Serial.print(F("*** FIFO packet size "));
-        Serial.print(packetSize);
-        Serial.print(F(" is larger than packetBuffer size "));
-        Serial.println(sizeof(packetBuffer));
-      }
-    }
-    else {
-      // Well, shit.
-      // 1 = initial memory load failed (most likely)
-      // 2 = DMP configuration updates failed
-#ifdef ENABLE_DEBUG_PRINT
-      Serial.print(F("*** DMP Initialization failed.  devStatus="));
-      Serial.println(devStatus);
-#endif
-    }
-  }
-  else {
-#ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("MPU6050 connection failed."));
-#endif
-  }
-}
-#endif
 
 
 void initDmx()
@@ -353,12 +219,7 @@ void setup()
   Serial.begin(115200);
 #endif
 
-#ifdef USE_LOCAL_SENSOR
-  initI2c();
-  initMpu();
-#else
   initRadio();
-#endif
   initDmx();
 
 #ifdef LAMP_TEST_PIN
@@ -369,9 +230,6 @@ void setup()
 #endif
 #endif
 
-  // Communication with the MPU6050 has proven to be problematic.
-  // If we don't hear from the unit periodically, or if we don't
-  // get good data for a while, we need the watchdog to reset us.
 #ifdef ENABLE_WATCHDOG
   wdt_enable(WDTO_1S);     // enable the watchdog
 #endif
@@ -482,172 +340,6 @@ int16_t getMovingAverage(uint8_t setIdx)
 }
 
 
-#ifdef USE_LOCAL_SENSOR
-void resetDmpFifo()
-{
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Resetting DMP FIFO..."));
-#endif
-    mpu.resetFIFO();
-    while (true) {
-      if (mpuInterrupt) {
-        mpuInterrupt = false;
-        uint8_t mpuIntStatus = mpu.getIntStatus();
-        if (mpuIntStatus & 0x01) {
-          mpu.resetFIFO();
-          break;
-        }
-      }
-    }
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("Cleared FIFO and re-sync'd."));
-#endif
-}
-#endif
-
-
-#ifdef USE_LOCAL_SENSOR
-void gatherMotionMeasurements()
-{
-//#ifdef ENABLE_DEBUG_PRINT
-//    Serial.println(F("gather motion"));
-//#endif
-
-  mpuInterrupt = false;
-  uint8_t mpuIntStatus = mpu.getIntStatus();
-  uint16_t fifoCount = mpu.getFIFOCount();
-
-  // Check if FIFO overflowed.  If it did, clear it, then wait for another
-  // data-ready interrupt and clear the FIFO again so that we are back in
-  // sync (i.e., any partial packets have been cleared out).  Based on some
-  // brief testing, it appears that bits 0 and 1 always appear set together.
-  if (mpuIntStatus & 0x10) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("*** FIFO overflow!  fifoCount is "));
-    Serial.println(fifoCount);
-#endif
-    resetDmpFifo();
-    return;
-  }
-
-  // The MPU6050 register map document says that bit 0 indicates data ready and bit 1
-  // is reserved.  However, the I2C data analyzer dump from Jeff Rowberg found at
-  // https://www.i2cdevlib.com/tools/analyzer/1 shows that bit 0 indicates raw data
-  // ready and bit 1 indicates DMP data ready.
-  if (!(mpuIntStatus & 0x02)) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("Got interrupt but not for data ready.  mpuIntStatus="));
-    Serial.print((int) mpuIntStatus);
-    Serial.print(F(", fifoCount="));
-    Serial.println(fifoCount);
-#endif
-    return;
-  }
-
-  // If we've missed retrieving more than a few packets in time, the FIFO has
-  // probably already overflowed (even though we haven't gotten that interrupt)
-  // or otherwise become corrupted.  We need to reset it to avoid getting bad data.
-  if (fifoCount > packetSize * maxPacketsInFifoBeforeReset) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("*** Missed too many packets.  fifoCount="));
-    Serial.println(fifoCount);
-#endif
-    resetDmpFifo();
-    return;
-  }
-
-  // If the FIFO length is not a multiple of the packet size, there is a partial
-  // packet in the FIFO, either due to the FIFO being filled right now or due to
-  // some sort of FIFO corruption.  We need to reset it to avoid getting bad data.
-  if (fifoCount % packetSize != 0) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("////////// *** Partial packet in FIFO.  fifoCount="));
-    Serial.println(fifoCount);
-#endif
-    resetDmpFifo();
-    return;
-  }
-
-  while (fifoCount >= packetSize) {
-    fifoCount -= packetSize;
-    mpu.getFIFOBytes(packetBuffer, packetSize);
-//#ifdef ENABLE_DEBUG_PRINT
-//    // Careful:  We might not be able to keep up if this debug print is enabled.
-//    Serial.print(F("Got packet from fifo.  fifoCount now "));
-//    Serial.println(fifoCount);
-//#endif
-
-    mpu.dmpGetGyro(gyro, packetBuffer);
-    mpu.dmpGetQuaternion(&quat, packetBuffer);
-    mpu.dmpGetGravity(&gravity, &quat);
-    mpu.dmpGetYawPitchRoll(ypr, &quat, &gravity);
-    mpu.dmpGetAccel(&aa, packetBuffer);
-    mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-
-    updateMovingAverage(0, ypr[0] * (float) 1800 / M_PI);
-    updateMovingAverage(1, ypr[1] * (float) 1800 / M_PI);
-    updateMovingAverage(2, ypr[2] * (float) 1800 / M_PI);
-    updateMovingAverage(3, aaReal.x);
-    updateMovingAverage(4, aaReal.y);
-    updateMovingAverage(5, aaReal.z);
-//    updateMovingAverage(3, aa.x);
-//    updateMovingAverage(4, aa.y);
-//    updateMovingAverage(5, aa.z);
-    updateMovingAverage(6, gyro[0]);
-    updateMovingAverage(7, gyro[1]);
-    updateMovingAverage(8, gyro[2]);
-
-#ifdef ENABLE_WATCHDOG
-    // If we're here and we got non-zero data, communication
-    // with the MPU6050 is probably working, so kick the dog.
-    bool gotNonzeroData = false;
-    for (uint8_t i = 0; i < 3; ++i) {
-      if (ypr[i] > 0.001 || gyro[i] != 0) {
-        gotNonzeroData = true;
-        break;
-      }
-    }
-    if (gotNonzeroData) {
-      wdt_reset();
-    }
-#endif
-
-#ifdef ENABLE_DEBUG_PRINT
-      // Careful:  We might not be able to keep up if this debug print is enabled.
-    Serial.print("ypr:  ");
-    Serial.print(ypr[0]);
-    Serial.print(", ");
-    Serial.print(ypr[1]);
-    Serial.print(", ");
-    Serial.print(ypr[2]);
-    Serial.print("    aaReal:  ");
-    Serial.print(aaReal.x);
-    Serial.print(", ");
-    Serial.print(aaReal.y);
-    Serial.print(", ");
-    Serial.print(aaReal.z);
-    Serial.print("    gyro:  ");
-    Serial.print(gyro[0]);
-    Serial.print(", ");
-    Serial.print(gyro[1]);
-    Serial.print(", ");
-    Serial.println(gyro[2]);
-#endif
-  }
-}
-#endif
-
-
-#ifdef USE_LOCAL_SENSOR
-void gatherTemperatureMeasurement()
-{
-  int16_t rawTemperature = mpu.getTemperature();
-  mpuTemperatureC = (float) rawTemperature / 340.0 + 36.53;
-  mpuTemperatureF = mpuTemperatureC * 9.0/5.0 + 32.0;
-}
-#endif
-
-
 void getAverageMeasurements()
 {
   avgPpSound = 0;
@@ -683,8 +375,6 @@ void getAverageMeasurements()
 #endif
 }
 
-
-#ifndef USE_LOCAL_SENSOR
 
 //void handleStressTestPayload(const StressTestPayload* payload, uint8_t payloadSize)
 //{
@@ -900,7 +590,6 @@ void pollRadio()
   }
 #endif
 }
-#endif
 
 
 void sendDmx()
@@ -1003,10 +692,6 @@ void updateLamps()
 //    }
 //  }
 
-#ifdef USE_LOCAL_SENSOR
-  getAverageMeasurements();
-#endif
-
   // Normalize and restrict pitch and roll to [0, max___Degrees*2] degrees.
   float normalizedPitch;
   if (avgPitch <= - maxPitchDegrees) {
@@ -1069,18 +754,7 @@ void loop()
 
   uint32_t now = millis();
 
-#ifdef USE_LOCAL_SENSOR
-  if (dmpReady && mpuInterrupt) {
-    gatherMotionMeasurements();
-  }
-
-  if (now - lastTemperatureSampleMs >= TEMPERATURE_SAMPLE_INTERVAL_MS) {
-    lastTemperatureSampleMs = now;
-    gatherTemperatureMeasurement();
-  }
-#else
   pollRadio();
-#endif
 
   if (now - lastDmxTxMs >= DMX_TX_INTERVAL_MS) {
     lastDmxTxMs = now;
