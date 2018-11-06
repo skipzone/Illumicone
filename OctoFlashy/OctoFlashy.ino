@@ -510,8 +510,15 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
   }
   if (!gotAllZeroData) {
     avgYaw = payload->measurements[0] / 10.0;
-    avgPitch = payload->measurements[1] / 10.0;
-    avgRoll = payload->measurements[2] / 10.0;
+    // TODO:  hack - swap pitch and roll for Tilt1 so that its pitch appears as roll to control which lamp is brightest
+    if (payload->widgetHeader.id == 1) {
+      avgRoll = payload->measurements[1] / 10.0;
+      avgPitch = payload->measurements[2] / 10.0;
+    }
+    else {
+      avgPitch = payload->measurements[1] / 10.0;
+      avgRoll = payload->measurements[2] / 10.0;
+    }
     avgGyroX = payload->measurements[3];
     avgGyroY = payload->measurements[4];
     avgGyroZ = payload->measurements[5];
