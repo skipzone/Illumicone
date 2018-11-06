@@ -801,11 +801,13 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
     return false;
   }
 
-  if (payload->widgetHeader.id != 4) {
+  if (payload->widgetHeader.id != 1
+      && payload->widgetHeader.id != 2
+      && payload->widgetHeader.id != 3) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.print(F("got MeasurementVectorPayload payload from widget "));
     Serial.print(payload->widgetHeader.id);
-    Serial.println(F(" but expected one from widget 4 (Rainstick)."));
+    Serial.println(F(" but expected one from widgets 1 (Tilt1), 2 (Tilt2), or 3 (Tilt spare)."));
 #endif
     return false;
   }
