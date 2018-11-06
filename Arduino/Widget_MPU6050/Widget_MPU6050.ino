@@ -25,14 +25,23 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#define ENABLE_DEBUG_PRINT
+
+
+/**********************************************
+ * This program is used for multiple widgets. *
+ * A specific target widget is selected here. *
+ **********************************************/
+
 //#define RAINSTICK
 #define IBG_TILT1
 //#define IBG_TILT2
 
 
-
-//#define ENABLE_DEBUG_PRINT
-
+/************
+ * Includes *
+ ************/
 
 #include <avr/sleep.h>
 #include <avr/wdt.h>
@@ -80,29 +89,35 @@ enum class WidgetMode {
 
 #define WIDGET_ID 4
 
+#define ENABLE_SOUND
+
+#define ACTIVATE_WITH_SOUND
+
+constexpr uint16_t activeSoundThreshold = 100;
+constexpr int16_t movementDetectionThreshold = 1;   // tenths of a degree change in yaw, pitch, or roll
+constexpr uint32_t inactiveTransitionDelayMs = 0;   // delay between inactivity detection and going inactive
+
+#define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
 #define SOUND_SAMPLE_INTERVAL_MS 10L
 #define SOUND_SAVE_INTERVAL_MS 50L      // same as 200 Hz IMU sample frequency so MA length works for both
 #define ACTIVE_TX_INTERVAL_MS 200L
 #define INACTIVE_TX_INTERVAL_MS 2000L
 
-// In standby mode, we'll transmit a packet with zero-valued data
-// approximately every STANDBY_TX_INTERVAL_S seconds.  Wake-ups
-// occur at 8-second intervals, so STANDBY_TX_INTERVAL_S should
-// be a multiple of 8 between 8 and 2040, inclusive.
+// In standby mode, we'll transmit a packet with zero-valued data approximately
+// every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
+// STANDBY_TX_INTERVAL_S should be a multiple of 8 between 8 and 2040, inclusive.
 #define STANDBY_TX_INTERVAL_S 64
 
-// There must be at least YPR_MOTION_CHANGE_THRESHOLD tenths of a degree
-// motion in yaw, pitch, or roll every MOTION_TIMEOUT_MS ms to keep us
-// out of standby mode.
-#define MOTION_TIMEOUT_MS 10000L
-#define YPR_MOTION_CHANGE_THRESHOLD 1
+// The MPU-6050 is placed in cycle mode, and the processor is put to sleep
+// when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 10000L
 
-// When we're not using the watchdog, we use the time elapsed since getting
-// good data from the MPU-6050 to determine if we need to re-init the little
-// bastard because he's quit working right.  MPU6050_ASSUMED_DEAD_MS should be
-// less than MOTION_TIMEOUT_MS so that we re-init the MPU-6050 rather than
-// putting it in cycle mode when we're not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_MS 3000
+// We use the time elapsed since getting good data from the MPU-6050 to determine
+// if we need to reinitialize the little bastard because he's quit working right.
+// MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
+// so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
+// not getting good data from it.
+#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -111,6 +126,10 @@ enum class WidgetMode {
 //#define IMU_NORMAL_INDICATOR_LED_ON HIGH
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
+#define RADIO_CE_PIN 9
+#define RADIO_CSN_PIN 10
+// The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
+
 // --- the real Rainstick ---
 #define MIC_SIGNAL_PIN A0
 #define MIC_POWER_PIN 8
@@ -129,15 +148,13 @@ enum class WidgetMode {
 
 // Delay between retries is 250 us multiplied by the delay multiplier.  To help
 // prevent repeated collisions, use a prime number (2, 3, 5, 7, 11, 13) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 0 // 5
+#define TX_RETRY_DELAY_MULTIPLIER 0     // use 5 when getting acks
 
 // Max. retries can be 0 to 15.
-#define TX_MAX_RETRIES 0  // 15
+#define TX_MAX_RETRIES 0                // use 15 when getting acks
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
-
-constexpr uint16_t activeSoundThreshold = 100;
 
 #endif
 
@@ -154,29 +171,28 @@ constexpr uint16_t activeSoundThreshold = 100;
 #define WIDGET_ID 2
 #endif
 
-#define SOUND_SAMPLE_INTERVAL_MS 10L
-#define SOUND_SAVE_INTERVAL_MS 50L      // same as 200 Hz IMU sample frequency so MA length works for both
-#define ACTIVE_TX_INTERVAL_MS 200L
+constexpr int16_t movementDetectionThreshold = 1;     // tenths of a degree of change in yaw, pitch, or roll
+constexpr uint32_t inactiveTransitionDelayMs = 5000;  // delay between inactivity detection and going inactive
+
+#define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
+#define ACTIVE_TX_INTERVAL_MS 25L
 #define INACTIVE_TX_INTERVAL_MS 200L
 
-// In standby mode, we'll transmit a packet with zero-valued data
-// approximately every STANDBY_TX_INTERVAL_S seconds.  Wake-ups
-// occur at 8-second intervals, so STANDBY_TX_INTERVAL_S should
-// be a multiple of 8 between 8 and 2040, inclusive.
+// In standby mode, we'll transmit a packet with zero-valued data approximately
+// every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
+// STANDBY_TX_INTERVAL_S should be a multiple of 8 between 8 and 2040, inclusive.
 #define STANDBY_TX_INTERVAL_S 64
 
-// There must be at least YPR_MOTION_CHANGE_THRESHOLD tenths of a degree
-// motion in yaw, pitch, or roll every MOTION_TIMEOUT_MS ms to keep us
-// out of standby mode.
-#define MOTION_TIMEOUT_MS 10000L
-#define YPR_MOTION_CHANGE_THRESHOLD 1
+// The MPU-6050 is placed in cycle mode, and the processor is put to sleep
+// when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 10000L
 
-// When we're not using the watchdog, we use the time elapsed since getting
-// good data from the MPU-6050 to determine if we need to re-init the little
-// bastard because he's quit working right.  MPU6050_ASSUMED_DEAD_MS should be
-// less than MOTION_TIMEOUT_MS so that we re-init the MPU-6050 rather than
-// putting it in cycle mode when we're not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_MS 3000
+// We use the time elapsed since getting good data from the MPU-6050 to determine
+// if we need to reinitialize the little bastard because he's quit working right.
+// MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
+// so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
+// not getting good data from it.
+#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -185,29 +201,19 @@ constexpr uint16_t activeSoundThreshold = 100;
 //#define IMU_NORMAL_INDICATOR_LED_ON HIGH
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
-// --- the real Tilt1 or Tilt2 ---
-#define MIC_SIGNAL_PIN A0
-#define MIC_POWER_PIN 8
-// --- development breadboard ---
-//#define MIC_SIGNAL_PIN A3
-//#define MIC_POWER_PIN 4
+#define RADIO_CE_PIN 9
+#define RADIO_CSN_PIN 10
+// The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
 
-// moving average lengthf for averaging sound and IMU measurements
+// moving average length for averaging IMU measurements
 #define MA_LENGTH 8
-
-constexpr uint16_t activeSoundThreshold = 100;
 
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
 #define TX_PIPE_ADDRESS "2wdgt"
 
 #define WANT_ACK false
-
-// Delay between retries is 250 us multiplied by the delay multiplier.  To help
-// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11, 13) or 15 (the max).
 #define TX_RETRY_DELAY_MULTIPLIER 0
-
-// Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 0
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
@@ -220,9 +226,10 @@ constexpr uint16_t activeSoundThreshold = 100;
  * Common Widget Configuration *
  *******************************/
 
-// When we aren't retrieving packets from the MPU-6050's FIFO fast enough, FIFO overflow
-// and resulting data corruption become likely.  To help prevent that, we'll clear the
-// FIFO when more than maxPacketsInMpu6050FifoBeforeForcedClear packets are in it.
+// When we aren't retrieving packets from the MPU-6050's FIFO fast enough, FIFO
+// overflow and resulting data corruption become likely.  To help prevent that,
+// we'll clear the FIFO when more than maxPacketsInMpu6050FifoBeforeForcedClear
+// packets are in it.
 constexpr uint8_t maxPacketsInMpu6050FifoBeforeForcedClear = 2;
 
 
@@ -233,16 +240,17 @@ constexpr uint8_t maxPacketsInMpu6050FifoBeforeForcedClear = 2;
 static WidgetMode widgetMode = WidgetMode::init;
 static Mpu6050Mode mpu6050Mode = Mpu6050Mode::init;
 
-static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
+static RF24 radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 
 static MeasurementVectorPayload payload;
 
+#ifdef ENABLE_SOUND
 static uint16_t minSoundSample = UINT16_MAX;
 static uint16_t maxSoundSample;
-
-// TODO:  Implement isImuActive for BoogieBoard.
-// static bool isImuActive;
 static bool isSoundActive;
+#endif
+
+static bool isImuActive;
 
 static constexpr uint8_t maSlotYaw = 0;
 static constexpr uint8_t maSlotPitch = 1;
@@ -256,12 +264,16 @@ static constexpr uint8_t maSlotAccelZ = 8;
 static constexpr uint8_t maSlotLinearAccelX = 9;
 static constexpr uint8_t maSlotLinearAccelY = 10;
 static constexpr uint8_t maSlotLinearAccelZ = 11;
-static constexpr uint8_t maSlotPpSound = 12;
-
+static constexpr uint8_t maSlotTemperature = 12;
+#ifdef ENABLE_SOUND
+static constexpr uint8_t maSlotPpSound = 13;
+static constexpr uint8_t numMaSets = 14;
+#else
+static constexpr uint8_t numMaSets = 13;
+#endif
 static constexpr uint8_t firstYprMaSlot = maSlotYaw;
 static constexpr uint8_t lastYprMaSlot = maSlotRoll;
 
-static constexpr uint8_t numMaSets = 13;
 static int16_t maValues[numMaSets][MA_LENGTH];
 static int32_t maSums[numMaSets];
 static uint8_t maNextSlotIdx[numMaSets];
@@ -276,10 +288,13 @@ static uint8_t packetBuffer[42];  // must be at least as large as packet size re
 static volatile bool gotMpu6050Interrupt;
 
 static int32_t nextTxMs;
-static int32_t lastSoundSampleMs;
-static int32_t lastSoundSaveMs;
+static int32_t lastTemperatureSampleMs;
 static int32_t lastSuccessfulMpu6050ReadMs;
 static uint32_t lastMotionDetectedMs;
+#ifdef ENABLE_SOUND
+static int32_t lastSoundSampleMs;
+static int32_t lastSoundSaveMs;
+#endif
 
 static uint32_t txInterval;
 
@@ -290,7 +305,7 @@ static uint8_t stayAwakeCountdown;
  * Implementation *
  ******************/
 
-// TODO:  Move the moving average stuff to a library.
+// TODO:  Move the moving average stuff to a class in a library.
 void clearMovingAverages();
 void updateMovingAverage(uint8_t setIdx, int16_t newValue);
 int16_t getMovingAverage(uint8_t setIdx);
@@ -339,12 +354,15 @@ bool widgetWake()
   // Time in this little world has stood still while time in the default
   // world marched on, so we need transmit and gather data ASAP.
   nextTxMs = now;
-  lastSoundSampleMs = now;
-  lastSoundSaveMs = now;
+  lastTemperatureSampleMs = now;
   lastMotionDetectedMs = now;
   lastSuccessfulMpu6050ReadMs = now;
-
+  isImuActive = true;
+#ifdef ENABLE_SOUND
+  lastSoundSampleMs = now;
+  lastSoundSaveMs = now;
   isSoundActive = false;
+#endif
 
   return true;
 }
@@ -395,7 +413,9 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Widget mode changing to standby."));
 #endif
+#ifdef ENABLE_SOUND
       digitalWrite(MIC_POWER_PIN, LOW);
+#endif
       setMpu6050Mode(Mpu6050Mode::cycle, now);
       wdt_reset();
       stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
@@ -405,7 +425,9 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
         widgetSleep();
         stayAwake = widgetWake();
       }
+#ifdef ENABLE_SOUND
       digitalWrite(MIC_POWER_PIN, HIGH);
+#endif
       widgetMode = WidgetMode::inactive;
       break;
 
@@ -417,7 +439,9 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       // transmission, which needs to happen at the shorter active interval
       // so that the pattern controller quicly knows we've gone inactive.
       txInterval = INACTIVE_TX_INTERVAL_MS;
+#ifdef ENABLE_SOUND
       digitalWrite(MIC_POWER_PIN, HIGH);
+#endif
       widgetMode = WidgetMode::inactive;
       break;
 
@@ -431,7 +455,9 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       if ((int32_t) (nextTxMs - now) > ACTIVE_TX_INTERVAL_MS) {
         nextTxMs = now + ACTIVE_TX_INTERVAL_MS;
       }
+#ifdef ENABLE_SOUND
       digitalWrite(MIC_POWER_PIN, HIGH);
+#endif
       widgetMode = WidgetMode::active;
       break;
 
@@ -478,6 +504,7 @@ void setMpu6050Mode(Mpu6050Mode newMode, uint32_t now)
       clearMpu6050Fifo();
       mpu6050Mode = Mpu6050Mode::normal;
       mpu6050.setDMPEnabled(true);
+      lastTemperatureSampleMs = now;
       lastMotionDetectedMs = now;
       lastSuccessfulMpu6050ReadMs = now;
 #ifdef IMU_NORMAL_INDICATOR_LED_PIN
@@ -591,8 +618,10 @@ void setup()
   pinMode(IMU_NORMAL_INDICATOR_LED_PIN, OUTPUT);
   digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_OFF);
 #endif
+#ifdef ENABLE_SOUND
   pinMode(MIC_POWER_PIN, OUTPUT);
   digitalWrite(MIC_POWER_PIN, LOW);
+#endif
 
   initI2c();
   initMpu6050();
@@ -605,7 +634,6 @@ void setup()
   noInterrupts();
   _WD_CONTROL_REG = (1 << WDCE) | (1 << WDE);
   _WD_CONTROL_REG = (1 << WDIE) | (0 << WDE) | (1 << WDP3) | (1 << WDP0);
-///  wdt_enable(WDTO_8S);     // enable the watchdog
   interrupts();
 
   payload.widgetHeader.id = WIDGET_ID;
@@ -708,6 +736,32 @@ void clearMpu6050Fifo()
 }
 
 
+void gatherTemperatureMeasurement()
+{
+  int16_t rawTemperature = mpu6050.getTemperature();
+
+  // TODO:  comment this out
+  float temperatureC = (float) rawTemperature / 340.0 + 36.53;
+  float temperatureF = temperatureC * 9.0/5.0 + 32.0;
+
+  float temperatureFTimes10 = (float) rawTemperature / 18.8889 + 977.54;
+  updateMovingAverage(maSlotTemperature, temperatureFTimes10);
+
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.print(F("rawTemp="));
+  Serial.print(rawTemperature);
+  // TODO:  comment this out
+  Serial.print(F("  tempC="));
+  Serial.print(temperatureC);
+  // TODO:  comment this out
+  Serial.print(F("  tempF="));
+  Serial.println(temperatureF);
+  Serial.print(F("  temp10F="));
+  Serial.println(temperatureFTimes10);
+#endif
+}
+
+
 void gatherMotionMeasurements(uint32_t now)
 {
   uint16_t fifoCount = mpu6050.getFIFOCount();
@@ -760,9 +814,10 @@ void gatherMotionMeasurements(uint32_t now)
       lastSuccessfulMpu6050ReadMs = now;
     }
 
-  // If there was sufficient motion, keep us out of standby mode for now.
+  isImuActive = false;
   for (uint8_t i = firstYprMaSlot; i < lastYprMaSlot; ++i) {
-    if (detectMovingAverageChange(i, YPR_MOTION_CHANGE_THRESHOLD)) {
+    if (detectMovingAverageChange(i, movementDetectionThreshold)) {
+      isImuActive = true;
       lastMotionDetectedMs = now;
       break;
     }
@@ -777,11 +832,23 @@ void gatherMotionMeasurements(uint32_t now)
 //    Serial.print(", ");
 //    Serial.print(ypr[2]);
 //    Serial.print("    gyro:  ");
-//    Serial.print(gyro[0]);
+//    Serial.print(gyro.x);
 //    Serial.print(", ");
-//    Serial.print(gyro[1]);
+//    Serial.print(gyro.y);
 //    Serial.print(", ");
-//    Serial.println(gyro[2]);
+//    Serial.print(gyro.z);
+//    Serial.print("    accel:  ");
+//    Serial.print(accel.x);
+//    Serial.print(", ");
+//    Serial.print(accel.y);
+//    Serial.print(", ");
+//    Serial.print(accel.z);
+//    Serial.print("    linear accel:  ");
+//    Serial.print(linearAccel.x);
+//    Serial.print(", ");
+//    Serial.print(linearAccel.y);
+//    Serial.print(", ");
+//    Serial.println(linearAccel.z);
 //#endif
   }
 }
@@ -799,10 +866,11 @@ void processMpu6050Interrupt(uint32_t now)
 //  Serial.print(" ");
 //#endif
 
-  // Frequently, the interrupt status is zero by the time we're processing
-  // the interrupt.  Why that happens has not yet been determined.  If it
-  // is zero, there's nothing we can do because we don't know what the
-  // interrupt was for.
+  // Frequently, the interrupt status is zero by the time we're processing the
+  // interrupt.  Why that happens has not yet been determined but is probably
+  // due to multiple interrupts arriving before the first is handled.  If the
+  // status is zero, there's nothing we can do because we don't know what the
+  // interrupt was for (or if it even still needs to be handled).
   if (mpu6050IntStatus == 0) {
     return;
   }
@@ -833,14 +901,15 @@ void processMpu6050Interrupt(uint32_t now)
         Serial.println(fifoCount);
 #endif
         clearMpu6050Fifo();
-        needClearMpu6050Fifo = true;    // clear it again after next interrupt to get in sync
+        // Clear the FIFO again after next interrupt to make sure we're in sync.
+        needClearMpu6050Fifo = true;
         return;
       }
 
-      // The MPU6050 register map document says that bit 0 indicates data ready and bit 1
-      // is reserved.  However, the I2C data analyzer dump from Jeff Rowberg found at
-      // https://www.i2cdevlib.com/tools/analyzer/1 shows that bit 0 indicates raw data
-      // ready and bit 1 indicates DMP data ready.
+      // The MPU6050 register map document says that bit 0 indicates data ready
+      // and bit 1 is reserved.  However, the I2C data analyzer dump from Jeff
+      // Rowberg found at https://www.i2cdevlib.com/tools/analyzer/1 shows that
+      // bit 0 indicates raw data ready and bit 1 indicates DMP data ready.
       if (!(mpu6050IntStatus & 0x02)) {
 #ifdef ENABLE_DEBUG_PRINT
         Serial.print(F("Got interrupt but not for data ready.  mpu6050IntStatus=0x"));
@@ -857,9 +926,9 @@ void processMpu6050Interrupt(uint32_t now)
         return;
       }
 
-      // If we've missed retrieving more than a few packets in time, the FIFO may
-      // overflow (if it hasn't already), causing data corruption.  We need to
-      // clear it now to avoid getting bad data.
+      // If we've missed retrieving more than a few packets in time, the FIFO
+      // may overflow (if it hasn't already), causing data corruption.  We need
+      // to clear it now to avoid getting bad data.
       if (fifoCount > packetSize * maxPacketsInMpu6050FifoBeforeForcedClear) {
 #ifdef ENABLE_DEBUG_PRINT
         Serial.print(F("*** Missed too many packets.  fifoCount="));
@@ -869,16 +938,18 @@ void processMpu6050Interrupt(uint32_t now)
         return;
       }
 
-      // If the FIFO length is not a multiple of the packet size, there is a partial
-      // packet in the FIFO, either due to the FIFO being filled right now or due to some
-      // sort of FIFO corruption.  We need to clear the FIFO to avoid getting bad data.
+      // If the FIFO length is not a multiple of the packet size, there is a
+      // partial packet in the FIFO, either due to the FIFO being filled right
+      // now or due to some sort of FIFO corruption.  Just to be safe, we'll
+      // clear the FIFO to avoid getting bad data.
       if (fifoCount % packetSize != 0) {
 #ifdef ENABLE_DEBUG_PRINT
         Serial.print(F("*** Partial packet in FIFO.  fifoCount="));
         Serial.println(fifoCount);
 #endif
         clearMpu6050Fifo();
-        needClearMpu6050Fifo = true;    // clear it again after next interrupt to get in sync
+        // Clear the FIFO again after next interrupt to make sure we're in sync.
+        needClearMpu6050Fifo = true;
         return;
       }
 
@@ -893,6 +964,8 @@ void processMpu6050Interrupt(uint32_t now)
   }
 }
 
+
+#ifdef ENABLE_SOUND
 
 void sampleSound()
 {
@@ -936,6 +1009,8 @@ void saveSoundPeakToPeak(uint32_t now)
   maxSoundSample = 0;
   minSoundSample = UINT16_MAX;
 }
+
+#endif
 
 
 void sendMeasurements()
@@ -981,13 +1056,15 @@ void sendMeasurements()
 
 void loop()
 {
+  static uint32_t inactiveStartMs;
+
   uint32_t now = millis();
 
   // We need to reset the IMU if we are awake and haven't received any
   // data from it for a while (because it has probably gone out to lunch).
-  if (now - lastSuccessfulMpu6050ReadMs >= MPU6050_ASSUMED_DEAD_MS) {
+  if (now - lastSuccessfulMpu6050ReadMs >= MPU6050_ASSUMED_DEAD_TIMEOUT_MS) {
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("///// *** MPU-6050 assumed dead.  Reinitializing..."));
+    Serial.print(F("*** MPU-6050 assumed dead.  Reinitializing..."));
 #endif
     mpu6050Mode = Mpu6050Mode::init;
     initMpu6050();
@@ -1003,6 +1080,12 @@ void loop()
     processMpu6050Interrupt(now);
   }
 
+  if (now - lastTemperatureSampleMs >= TEMPERATURE_SAMPLE_INTERVAL_MS) {
+    lastTemperatureSampleMs = now;
+    gatherTemperatureMeasurement();
+  }
+
+#ifdef ENABLE_SOUND
   if (now - lastSoundSampleMs >= SOUND_SAMPLE_INTERVAL_MS) {
     lastSoundSampleMs = now;
     sampleSound();
@@ -1012,16 +1095,30 @@ void loop()
     lastSoundSaveMs = now;
     saveSoundPeakToPeak(now);
   }
+#endif
 
   // TODO:  activity indicator depends on which actual widget this is so make configurable
-  if (isSoundActive) {
+  bool isActive = false;
+#if defined(ACTIVATE_WITH_MOVEMENT)
+  isActive |= isImuActive;
+#endif
+#if defined(ACTIVATE_WITH_SOUND)
+  isActive |= isSoundActive;
+#endif
+  if (isActive) {
     if (widgetMode == WidgetMode::inactive) {
       setWidgetMode(WidgetMode::active, now);
+      inactiveStartMs = 0;
     }
   }
   else {
     if (widgetMode == WidgetMode::active) {
-      setWidgetMode(WidgetMode::inactive, now);
+      if (inactiveStartMs == 0) {
+        inactiveStartMs = now;
+      }
+      else if (now - inactiveStartMs >= inactiveTransitionDelayMs) {
+        setWidgetMode(WidgetMode::inactive, now);
+      }
     }
   }
 
@@ -1032,7 +1129,7 @@ void loop()
 
   if (widgetMode == WidgetMode::inactive
       && mpu6050Mode == Mpu6050Mode::normal
-      && now - lastMotionDetectedMs >= MOTION_TIMEOUT_MS)
+      && now - lastMotionDetectedMs >= MOVEMENT_TIMEOUT_FOR_SLEEP_MS)
   {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.print(F("Going standby because no motion from "));
