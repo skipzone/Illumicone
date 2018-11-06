@@ -26,7 +26,7 @@
 */
 
 
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 
 /**********************************************
@@ -93,13 +93,18 @@ enum class WidgetMode {
 
 #define ACTIVATE_WITH_SOUND
 
-constexpr uint16_t activeSoundThreshold = 100;
-constexpr int16_t movementDetectionThreshold = 1;   // tenths of a degree change in yaw, pitch, or roll
-constexpr uint32_t inactiveTransitionDelayMs = 0;   // delay between inactivity detection and going inactive
+static constexpr uint16_t activeSoundThreshold = 100;
+static constexpr int16_t movementDetectionThreshold = 1;   // tenths of a degree change in yaw, pitch, or roll
+static constexpr uint32_t inactiveTransitionDelayMs = 0;   // delay between inactivity detection and going inactive
+
+static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;         // unit is 2 mg
+static constexpr uint8_t mpu6050MotionDetectionCounterDecrement = 1;
+static constexpr uint8_t mpu6050MotionDetectionDuration = 1;          // unit is ms
+static constexpr uint8_t mpu6050WakeFrequency = 1;                    // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
 
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
 #define SOUND_SAMPLE_INTERVAL_MS 10L
-#define SOUND_SAVE_INTERVAL_MS 50L      // same as 200 Hz IMU sample frequency so MA length works for both
+#define SOUND_SAVE_INTERVAL_MS 50L
 #define ACTIVE_TX_INTERVAL_MS 200L
 #define INACTIVE_TX_INTERVAL_MS 2000L
 
@@ -137,7 +142,7 @@ constexpr uint32_t inactiveTransitionDelayMs = 0;   // delay between inactivity 
 //#define MIC_SIGNAL_PIN A3
 //#define MIC_POWER_PIN 4
 
-// moving average lengthf for averaging sound and IMU measurements
+// moving average length for averaging sound and IMU measurements
 #define MA_LENGTH 8
 
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
@@ -171,8 +176,15 @@ constexpr uint32_t inactiveTransitionDelayMs = 0;   // delay between inactivity 
 #define WIDGET_ID 2
 #endif
 
-constexpr int16_t movementDetectionThreshold = 1;     // tenths of a degree of change in yaw, pitch, or roll
-constexpr uint32_t inactiveTransitionDelayMs = 5000;  // delay between inactivity detection and going inactive
+#define ACTIVATE_WITH_MOVEMENT
+
+static constexpr int16_t movementDetectionThreshold = 5;    // tenths of a degree of change in yaw, pitch, or roll
+static constexpr uint32_t inactiveTransitionDelayMs = 5000; // delay between inactivity detection and going inactive
+
+static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;         // unit is 2 mg
+static constexpr uint8_t mpu6050MotionDetectionCounterDecrement = 1;
+static constexpr uint8_t mpu6050MotionDetectionDuration = 1;          // unit is ms
+static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
 
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
 #define ACTIVE_TX_INTERVAL_MS 25L
@@ -206,7 +218,7 @@ constexpr uint32_t inactiveTransitionDelayMs = 5000;  // delay between inactivit
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
 
 // moving average length for averaging IMU measurements
-#define MA_LENGTH 8
+#define MA_LENGTH 20
 
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
@@ -479,15 +491,13 @@ void setMpu6050Mode(Mpu6050Mode newMode, uint32_t now)
       Serial.println(F("Setting mpu6050Mode to cycle..."));
 #endif
       mpu6050.setDMPEnabled(false);
-      // TODO:  motion detection should be configurable
       // Set up motion detection.
-      mpu6050.setMotionDetectionThreshold(1);         // unit is 2mg
-      mpu6050.setMotionDetectionCounterDecrement(1);
-      mpu6050.setMotionDetectionDuration(1);          // unit is ms
+      mpu6050.setMotionDetectionThreshold(mpu6050MotionDetectionThreshold);
+      mpu6050.setMotionDetectionCounterDecrement(mpu6050MotionDetectionCounterDecrement);
+      mpu6050.setMotionDetectionDuration(mpu6050MotionDetectionDuration);
       // Put MPU-6050 in cycle mode.
       mpu6050Mode = Mpu6050Mode::cycle;
-      // TODO:  wake frequency should be configurable
-      mpu6050.setWakeFrequency(0);                    // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
+      mpu6050.setWakeFrequency(mpu6050WakeFrequency);
       mpu6050.setWakeCycleEnabled(true);
       mpu6050.setIntMotionEnabled(true);
 #ifdef IMU_NORMAL_INDICATOR_LED_PIN
