@@ -35,8 +35,9 @@
  **********************************************/
 
 //#define RAINSTICK
-#define IBG_TILT1
-//#define IBG_TILT2
+//#define IBG_TILT_1
+//#define IBG_TILT_2
+#define IBG_TILT_TEST
 
 
 /************
@@ -164,16 +165,18 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                    // 0 = 1.2
 #endif
 
 
-/***************************************************************
- * Idaho Botanical Garden Tilt1 and Tilt2 Widget Configuration *
- ***************************************************************/
+/******************************************************
+ * Idaho Botanical Garden TILT_x Widget Configuration *
+ ******************************************************/
 
-#if defined(IBG_TILT1) || defined(IBG_TILT2)
+#if defined(IBG_TILT_1) || defined(IBG_TILT_2) || defined(IBG_TILT_TEST)
 
-#ifdef IBG_TILT1
+#if defined(IBG_TILT_1)
 #define WIDGET_ID 1
-#else
+#elif defined(IBG_TILT_2)
 #define WIDGET_ID 2
+#elif defined(IBG_TILT_TEST)
+#define WIDGET_ID 3
 #endif
 
 #define ACTIVATE_WITH_MOVEMENT
@@ -197,7 +200,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 
 // The MPU-6050 is placed in cycle mode, and the processor is put to sleep
 // when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
-#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 10000L
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 60000L
 
 // We use the time elapsed since getting good data from the MPU-6050 to determine
 // if we need to reinitialize the little bastard because he's quit working right.
