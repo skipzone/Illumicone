@@ -29,44 +29,93 @@
 #include "DmxSimple.h"
 
 
-/*****************
- * Configuration *
- *****************/
+/*********************************************
+ * Implementation and Behavior Configuration *
+ *********************************************/
 
+#define IMU_INTERRUPT_PIN 2
+#define DMX_OUTPUT_PIN 3
 #define LAMP_TEST_PIN 8
+
 #define LAMP_TEST_ACTIVE LOW
 #define LAMP_TEST_INTENSITY 255
 
-#define TEMPERATURE_SAMPLE_INTERVAL_MS 500L
 #define DMX_TX_INTERVAL_MS 33L
 
-#define IMU_INTERRUPT_PIN 2
-
-#define NUM_MA_SETS 9
-#define MA_LENGTH 8
-
-// When we haven't retrieved packets from the MPU6050's DMP's FIFO fast enough,
-// data corruption becomes likely even before the FIFO overflows.  We'll clear
-// the FIFO when more than maxPacketsInFifoBeforeReset packets are in it.
-constexpr uint8_t maxPacketsInFifoBeforeReset = 2;
-
-constexpr double countsPerG = 8192.0;
-
-// Restrict pitch and roll to avoid gimbal lock.
-constexpr float maxPitchDegrees = 45;
-constexpr float maxRollDegrees = 52;
+// Restrict color and lamp selection angles to avoid gimbal lock.
+constexpr float maxColorAngleDegrees = 45;
+constexpr float maxLampAngleDegrees = 45;
 
 constexpr int16_t minPpSoundForStrobe = 300;
 constexpr int16_t maxPpSoundForStrobe = 500;
 constexpr uint8_t minStrobeValue = 225;
 constexpr uint8_t maxStrobeValue = 250;
 
-#define NUM_COLORS_PER_LAMP 4
 #define NUM_LAMPS 9
+
 #define LAMP_MIN_INTENSITY 24
 
-#define DMX_OUTPUT_PIN 3
+// With RGB lamps, enable red-green-blue-red wraparound as widget value
+// varies from one extreme to another.  (Without wraparound, the lamp
+// color would be red at one extreme and blue at the other, with no way
+// to go from blue through violet and magenta back to red.)
+#define ENABLE_COLOR_WRAPAROUND
+
+// The cheap-o RGB "PAR" lamps have a fourth DMX channel for strobe and intensity.
+//#define LAMP_HAS_CONTROL_CHANNEL
+
+// With four-channel dimmers, it can be convenient to leave the fourth channel
+// unused so that each dimmer controls one tri-color lamp arrangement.
+//#define SKIP_DIMMER_FOURTH_CHANNEL
+
+
+/***********************
+ * Radio Configuration *
+ ***********************/
+
+// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS (genuine Noric chips only).
+#define DATA_RATE RF24_250KBPS
+
+// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
+#define CRC_LENGTH RF24_CRC_16
+
+// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
+// ISM: 2400-2500;  ham: 2390-2450
+// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
+//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+// Illumicone widgets use channel 84.  IBG widgets use channel 97.
+#define RF_CHANNEL 97
+
+// Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
+// 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
+constexpr uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
+constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
+
+#define ACK_WIDGET_PACKETS false
+
+// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
+#define RF_POWER_LEVEL RF24_PA_MAX
+
+
+/*************************
+ * Don't mess with these *
+ *************************/
+
+#ifdef ENABLE_COLOR_WRAPAROUND
+  // With RGB lamps, we want to fade from red to green to blue then back to red as
+  // the corresponding value from the widget goes from one extreme to the other.
+  // To facilitate that, we track four color intensities, with both the first and
+  // last representing the red intensity.
+  #define NUM_COLORS_PER_LAMP 4
+#else
+  #define NUM_COLORS_PER_LAMP 3
+#endif
+
+#if defined(LAMP_HAS_CONTROL_CHANNEL) || defined(SKIP_DIMMER_FOURTH_CHANNEL)
+#define DMX_NUM_CHANNELS_PER_LAMP 4
+#else
 #define DMX_NUM_CHANNELS_PER_LAMP 3
+#endif
 #define DMX_NUM_CHANNELS (NUM_LAMPS * DMX_NUM_CHANNELS_PER_LAMP)
 
 // Let the scale8 function stolen from the FastLED library use assembly code if we're on an AVR chip.
@@ -79,41 +128,9 @@ typedef uint8_t fract8;   ///< ANSI: unsigned short _Fract
 #define LIB8STATIC_ALWAYS_INLINE __attribute__ ((always_inline)) static inline
 
 
-/*********************************************
- * Radio Configuration Common To All Widgets *
- *********************************************/
-
-// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS (genuine Noric chips only).
-#define DATA_RATE RF24_250KBPS
-
-// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
-#define CRC_LENGTH RF24_CRC_16
-
-// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
-// ISM: 2400-2500;  ham: 2390-2450
-// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
-//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 84
-
-// Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
-// 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
-constexpr uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
-constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
-
-#define ACK_WIDGET_PACKETS false
-
-
-/***************************************
- * Widget-Specific Radio Configuration *
- ***************************************/
-
-// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
-
-
-/*********************************
- * Payload Structure Definitions *
- *********************************/
+/**********************************************************
+ * Widget Packet Header and Payload Structure Definitions *
+ **********************************************************/
 
 union WidgetHeader {
   struct {
@@ -155,22 +172,9 @@ struct CustomPayload {
  * Globals *
  ***********/
 
-// moving average variables
-static int16_t maValues[NUM_MA_SETS][MA_LENGTH];
-static int32_t maSums[NUM_MA_SETS];
-static uint8_t nextSlotIdx[NUM_MA_SETS];
-static bool maSetFull[NUM_MA_SETS];
-
-static int16_t avgPpSound;
-static double avgYaw;
-static double avgPitch;
-static double avgRoll;
-static double avgLinearAccelX;
-static double avgLinearAccelY;
-static double avgLinearAccelZ;
-static double avgGyroX;
-static double avgGyroY;
-static double avgGyroZ;
+static double currentColorAngle;
+static double currentLampAngle;
+static int16_t currentPpSound;
 
 static int colorChannelIntensities[NUM_LAMPS][NUM_COLORS_PER_LAMP];
 
@@ -297,90 +301,6 @@ LIB8STATIC_ALWAYS_INLINE uint8_t scale8(uint8_t i, fract8 scale)
 }
 
 
-void updateMovingAverage(uint8_t setIdx, int16_t newValue)
-{
-  maSums[setIdx] -= maValues[setIdx][nextSlotIdx[setIdx]];
-  maSums[setIdx] += newValue;
-  maValues[setIdx][nextSlotIdx[setIdx]] = newValue;
-
-  ++nextSlotIdx[setIdx];
-  if (nextSlotIdx[setIdx] >= MA_LENGTH) {
-     maSetFull[setIdx] = true;
-     nextSlotIdx[setIdx] = 0;
-  }
-}
-
-
-int16_t getMovingAverage(uint8_t setIdx)
-{
-  int32_t avg;
-  if (maSetFull[setIdx]) {
-    avg = maSums[setIdx] / (int32_t) MA_LENGTH;
-  }
-  else {
-    avg = nextSlotIdx[setIdx] > 0 ? (int32_t) maSums[setIdx] / (int32_t) nextSlotIdx[setIdx] : 0;
-  }
-
-//#ifdef ENABLE_DEBUG_PRINT
-//  Serial.print("getMovingAverage(");
-//  Serial.print(setIdx);
-//  Serial.print("):  ");
-//  for (uint8_t i = 0; i < (maSetFull[setIdx] ? MA_LENGTH : nextSlotIdx[setIdx]); ++i) {
-//    Serial.print(i);
-//    Serial.print(":");
-//    Serial.print(maValues[setIdx][i]);
-//    Serial.print("  ");
-//  }
-//  Serial.print(maSums[setIdx]);
-//  Serial.print("  ");
-//  Serial.println(avg);
-//#endif
-
-  return avg;
-}
-
-
-void getAverageMeasurements()
-{
-  avgPpSound = 0;
-  avgYaw = getMovingAverage(0) / 10.0;
-  avgPitch = getMovingAverage(1) / 10.0;
-  avgRoll = getMovingAverage(2) / 10.0;
-  avgLinearAccelX = getMovingAverage(3) / countsPerG;
-  avgLinearAccelY = getMovingAverage(4) / countsPerG;
-  avgLinearAccelZ = getMovingAverage(5) / countsPerG;
-  avgGyroX = getMovingAverage(6);
-  avgGyroY = getMovingAverage(7);
-  avgGyroZ = getMovingAverage(8);
-
-#ifdef ENABLE_DEBUG_PRINT
-  Serial.print(F("avgYaw="));
-  Serial.print(avgYaw);
-  Serial.print(F(" avgPitch="));
-  Serial.print(avgPitch);
-  Serial.print(F(" avgRoll="));
-  Serial.print(avgRoll);
-  Serial.print(F(" avgLinearAccelX="));
-  Serial.print(avgLinearAccelX);
-  Serial.print(F(" avgLinearAccelY="));
-  Serial.print(avgLinearAccelY);
-  Serial.print(F(" avgLinearAccelZ="));
-  Serial.print(avgLinearAccelZ);
-  Serial.print(F(" avgGyroX="));
-  Serial.print(avgGyroX);
-  Serial.print(F(" avgGyroY="));
-  Serial.print(avgGyroY);
-  Serial.print(F(" avgGyroZ="));
-  Serial.println(avgGyroZ);
-#endif
-}
-
-
-//void handleStressTestPayload(const StressTestPayload* payload, uint8_t payloadSize)
-//{
-//}
-
-
 bool handlePositionVelocityPayload(const PositionVelocityPayload* payload, uint8_t payloadSize)
 {
   constexpr uint16_t expectedPayloadSize = sizeof(PositionVelocityPayload);
@@ -415,34 +335,33 @@ bool handlePositionVelocityPayload(const PositionVelocityPayload* payload, uint8
   int16_t pmax;
   constexpr int16_t speedupFactor = 4;
   switch (payload->widgetHeader.channel) {
-    case 0:
+//    case 0:
 //      // Vary yaw continuously between -180 and 180.
 //      pmax = 180;
 //      p = (payload->position * speedupFactor) % (pmax * 4);
 //      p = abs(p);                                 // in Arduinolandia, abs is a macro
-//      avgYaw = (p <= pmax * 2) ? p - pmax : pmax * 3 - p;
-      avgYaw = 0;   // TODO:  enable above code and remove this if we start using yaw
-      gotMeasurement = true;
-      break;
+//      currentSomethingAngle = (p <= pmax * 2) ? p - pmax : pmax * 3 - p;
+//      gotMeasurement = true;
+//      break;
     case 1:
-      // Vary pitch continuously between -maxPitchDegrees and maxPitchDegrees.
-      pmax = maxPitchDegrees;
+      // Vary color selection angle continuously between -maxColorAngleDegrees and maxColorAngleDegrees.
+      pmax = maxColorAngleDegrees;
       p = (payload->position * speedupFactor) % (pmax * 4);
       p = abs(p);                                 // in Arduinolandia, abs is a macro
-      avgPitch = (p <= pmax * 2) ? p - pmax : pmax * 3 - p;
+      currentColorAngle = (p <= pmax * 2) ? p - pmax : pmax * 3 - p;
       gotMeasurement = true;
       break;
     case 2:
-      // Vary roll continuously between -maxRollDegrees and maxRollDegrees.
-      pmax = maxRollDegrees;
+      // Vary lamp selection angle continuously between -maxLampAngleDegrees and maxLampAngleDegrees.
+      pmax = maxLampAngleDegrees;
       p = (payload->position * speedupFactor) % (pmax * 4);
       p = abs(p);                                 // in Arduinolandia, abs is a macro
-      avgRoll = (p <= pmax * 2) ? p - pmax : pmax * 3 - p;
+      currentLampAngle = (p <= pmax * 2) ? p - pmax : pmax * 3 - p;
       gotMeasurement = true;
       break;
     case 3:
-      avgPpSound = payload->velocity * speedupFactor;
-      avgPpSound = abs(avgPpSound);
+      currentPpSound = payload->velocity * speedupFactor;
+      currentPpSound = abs(currentPpSound);
       gotMeasurement = true;
       break;
     default:
@@ -461,14 +380,8 @@ bool handlePositionVelocityPayload(const PositionVelocityPayload* payload, uint8
         || payload->widgetHeader.id == 6    // TriObelisk
        )
     {
-      avgPpSound = 0;
+      currentPpSound = 0;
     }
-    avgLinearAccelX = 0.0;
-    avgLinearAccelY = 0.0;
-    avgLinearAccelZ = 0.0;
-    avgGyroX = 0.0;
-    avgGyroY = 0.0;
-    avgGyroZ = 0.0;
   }
 
   return gotMeasurement;
@@ -477,27 +390,29 @@ bool handlePositionVelocityPayload(const PositionVelocityPayload* payload, uint8
 
 bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uint8_t payloadSize)
 {
-  constexpr uint8_t numExpectedValues = 13;
-  
-  constexpr uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * numExpectedValues;
-  if (payloadSize != expectedPayloadSize) {
+  if (payload->widgetHeader.id < 1 || payload->widgetHeader.id > 4) {
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("got MeasurementVectorPayload with "));
-    Serial.print(payloadSize);
-    Serial.print(F(" bytes but expected "));
-    Serial.print(expectedPayloadSize);
-    Serial.println(F(" bytes."));    
+    Serial.print(F("got MeasurementVectorPayload payload from widget "));
+    Serial.print(payload->widgetHeader.id);
+    Serial.println(F(" but expected one from widgets 1 (Tilt-1), 2 (Tilt-2), 3 (Tilt-Test), or 4 (Rainstick)."));
 #endif
     return false;
   }
 
-  if (payload->widgetHeader.id != 1
-      && payload->widgetHeader.id != 2
-      && payload->widgetHeader.id != 3) {
+// TODO:  Enable the next two lines and remove the third when Rainstick is running current firmware.
+//  // Rainstick sends everything the tilt widgets send plus a peak-to-peak sound value.
+//  uint8_t numExpectedValues = payload->widgetHeader.id <= 3 ? 13 : 14;
+  uint8_t numExpectedValues = 13;
+  uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * numExpectedValues;
+  if (payloadSize != expectedPayloadSize) {
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("got MeasurementVectorPayload payload from widget "));
+    Serial.print(F("got MeasurementVectorPayload from widget "));
     Serial.print(payload->widgetHeader.id);
-    Serial.println(F(" but expected one from widgets 1 (Tilt1), 2 (Tilt2), or 3 (Tilt spare)."));
+    Serial.print(F(" with "));
+    Serial.print(payloadSize);
+    Serial.print(F(" bytes but expected "));
+    Serial.print(expectedPayloadSize);
+    Serial.println(F(" bytes."));    
 #endif
     return false;
   }
@@ -508,24 +423,29 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
   for (uint8_t i = 0; gotAllZeroData && i < numExpectedValues; ++i) {
     gotAllZeroData = payload->measurements[0] == 0;
   }
-  if (!gotAllZeroData) {
-    avgYaw = payload->measurements[0] / 10.0;
-    // TODO:  hack - swap pitch and roll for Tilt1 so that its pitch appears as roll to control which lamp is brightest
-    if (payload->widgetHeader.id == 1) {
-      avgRoll = payload->measurements[1] / 10.0;
-      avgPitch = payload->measurements[2] / 10.0;
-    }
-    else {
-      avgPitch = payload->measurements[1] / 10.0;
-      avgRoll = payload->measurements[2] / 10.0;
-    }
-    avgGyroX = payload->measurements[3];
-    avgGyroY = payload->measurements[4];
-    avgGyroZ = payload->measurements[5];
-    avgLinearAccelX = payload->measurements[9];
-    avgLinearAccelY = payload->measurements[10];
-    avgLinearAccelZ = payload->measurements[11];
-    avgPpSound = payload->measurements[12];
+  if (gotAllZeroData) {
+    return false;
+  }
+  
+  switch (payload->widgetHeader.id) {
+    case 1:
+      // Tilt-1's pitch is the lamp selection angle.
+      currentLampAngle = payload->measurements[1] / 10.0;
+      break;
+    case 2:
+      // Tilt-2's pitch is the color selection angle.
+      currentColorAngle = payload->measurements[1] / 10.0;
+      break;
+    case 3:
+      // Tilt-Test's pitch is the lamp selection angle, and its roll is the color selection angle.
+      currentLampAngle = payload->measurements[1] / 10.0;
+      currentColorAngle = payload->measurements[2] / 10.0;
+    case 4:
+      // Rainstick's pitch is the color selection angle, and its pitch is the color selection angle.
+      currentColorAngle = payload->measurements[1] / 10.0;
+      currentLampAngle = payload->measurements[2] / 10.0;
+      currentPpSound = payload->measurements[13];
+    break;
   }
   
   return true;
@@ -534,10 +454,6 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
 
 void pollRadio()
 {
-#ifdef ENABLE_WATCHDOG
-  wdt_reset();
-#endif
-
   uint8_t pipeNum;
   if (!radio.available(&pipeNum)) {
     return;
@@ -561,9 +477,6 @@ void pollRadio()
 
   bool gotMeasurements = false;
   switch(pipeNum) {
-//    case 0:
-//        gotMeasurements = handleStressTestPayload((StressTestPayload*) payload, payloadSize);
-//        break;
     case 1:
         gotMeasurements = handlePositionVelocityPayload((PositionVelocityPayload*) payload, payloadSize);
         break;
@@ -580,20 +493,12 @@ void pollRadio()
 
 #ifdef ENABLE_DEBUG_PRINT
   if (gotMeasurements) {
-    Serial.print(F(" avgPpSound="));
-    Serial.print(avgPpSound);
-    Serial.print(F(" avgYaw="));
-    Serial.print(avgYaw);
-    Serial.print(F(" avgPitch="));
-    Serial.print(avgPitch);
-    Serial.print(F(" avgRoll="));
-    Serial.print(avgRoll);
-    Serial.print(F(" avgGyroX="));
-    Serial.print(avgGyroX);
-    Serial.print(F(" avgGyroY="));
-    Serial.print(avgGyroY);
-    Serial.print(F(" avgGyroZ="));
-    Serial.println(avgGyroZ);
+    Serial.print(F(" currentColorAngle="));
+    Serial.print(currentColorAngle);
+    Serial.print(F(" currentLampAngle="));
+    Serial.print(currentLampAngle);
+    Serial.print(F(" currentPpSound="));
+    Serial.println(currentPpSound);
   }
 #endif
 }
@@ -606,17 +511,17 @@ void sendDmx()
   uint16_t dmxChannelNum = 1;
   for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
 
-#if DMX_NUM_CHANNELS_PER_LAMP == 4
+#if defined(LAMP_HAS_CONTROL_CHANNEL)
     // If the sound is sufficiently loud, flash all the lamps instead of setting their intensities.
-    if (avgPpSound >= minPpSoundForStrobe) {
-      uint8_t strobeValue = map(constrain(avgPpSound, minPpSoundForStrobe, minPpSoundForStrobe),
+    if (currentPpSound >= minPpSoundForStrobe) {
+      uint8_t strobeValue = map(constrain(currentPpSound, minPpSoundForStrobe, minPpSoundForStrobe),
                                 minPpSoundForStrobe, maxPpSoundForStrobe, minStrobeValue, maxStrobeValue);
       dmxChannelValues[dmxChannelNum++] = strobeValue;
 #ifdef ENABLE_DEBUG_PRINT
       Serial.print(F("strobeValue="));
       Serial.print(strobeValue);
-      Serial.print(F(" avgPpSound="));
-      Serial.print(avgPpSound);
+      Serial.print(F(" currentPpSound="));
+      Serial.print(currentPpSound);
       Serial.print(F(" minPpSoundForStrobe="));
       Serial.print(minPpSoundForStrobe);
       Serial.print(F(" maxPpSoundForStrobe="));
@@ -626,26 +531,23 @@ void sendDmx()
       Serial.print(F(" maxStrobeValue="));
       Serial.println(maxStrobeValue);
 #endif
-   }
+    }
     else {
       // Set the lamp to full brightness because we control its
       // overall brightness by way of the individual colors.
       dmxChannelValues[dmxChannelNum++] = 127;
     }
+#elif defined(SKIP_DIMMER_FOURTH_CHANNEL)
+    dmxChannelValues[dmxChannelNum++] = 0;
 #endif
 
-    if (NUM_COLORS_PER_LAMP == 3) {
-      for (uint8_t colorIdx = 0; colorIdx < NUM_COLORS_PER_LAMP; ++colorIdx) {
-        dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][colorIdx];
-      }
-    }
-    else if (NUM_COLORS_PER_LAMP == 4) {
-      // The first color (probably red) appears before and after the other
-      // two so that we can go all the way around the color wheel.
-      dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][0] + colorChannelIntensities[lampIdx][3];
-      dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][1];
-      dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][2];      
-    }
+#if (NUM_COLORS_PER_LAMP == 4)
+    dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][0] + colorChannelIntensities[lampIdx][3];
+#else
+    dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][0];
+#endif
+    dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][1];
+    dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][2];      
   }
 
   // Send zeros to any unused channels.
@@ -671,7 +573,7 @@ void updateLamps()
 #ifdef LAMP_TEST_PIN
   if (digitalRead(LAMP_TEST_PIN) == LAMP_TEST_ACTIVE) {
     for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
-      for (uint8_t colorIdx = 0; colorIdx < NUM_COLORS_PER_LAMP; ++colorIdx) {
+      for (uint8_t colorIdx = 0; colorIdx < 3; ++colorIdx) {
         colorChannelIntensities[lampIdx][colorIdx] = LAMP_TEST_INTENSITY;
       }
     }
@@ -680,8 +582,8 @@ void updateLamps()
   }
 #endif
 
-  constexpr float colorAngleStep = maxPitchDegrees * 2 / (NUM_COLORS_PER_LAMP - 1);
-  constexpr float lampAngleStep = maxRollDegrees * 2 / (NUM_LAMPS - 1);
+  constexpr float colorAngleStep = maxColorAngleDegrees * 2 / (NUM_COLORS_PER_LAMP - 1);
+  constexpr float lampAngleStep = maxLampAngleDegrees * 2 / (NUM_LAMPS - 1);
 
   int colorIntensities[NUM_COLORS_PER_LAMP];
   for (uint8_t i = 0; i < NUM_COLORS_PER_LAMP; ++i) {
@@ -693,55 +595,49 @@ void updateLamps()
     lampIntensities[i] = LAMP_MIN_INTENSITY;
   }
 
-//  for (uint8_t i = 0; i < NUM_LAMPS; ++i) {
-//    for (uint8_t j = 0; j < NUM_COLORS_PER_LAMP; ++j) {
-//      colorChannelIntensities[i][j] = 0;
-//    }
-//  }
-
-  // Normalize and restrict pitch and roll to [0, max___Degrees*2] degrees.
-  float normalizedPitch;
-  if (avgPitch <= - maxPitchDegrees) {
-    normalizedPitch = 0;
+  // Normalize and restrict color and lamp selection angles to [0, max___Degrees*2] degrees.
+  float normalizedColorAngle;
+  if (currentColorAngle <= - maxColorAngleDegrees) {
+    normalizedColorAngle = 0;
   }
-  else if (avgPitch >= maxPitchDegrees) {
-    normalizedPitch = maxPitchDegrees * 2.0;
+  else if (currentColorAngle >= maxColorAngleDegrees) {
+    normalizedColorAngle = maxColorAngleDegrees * 2.0;
   }
   else {
-    normalizedPitch = avgPitch + maxPitchDegrees;
+    normalizedColorAngle = currentColorAngle + maxColorAngleDegrees;
   }
-  float normalizedRoll;
-  if (avgRoll <= - maxRollDegrees) {
-    normalizedRoll = 0;
+  float normalizedLampAngle;
+  if (currentLampAngle <= - maxLampAngleDegrees) {
+    normalizedLampAngle = 0;
   }
-  else if (avgRoll >= maxRollDegrees) {
-    normalizedRoll = maxRollDegrees * 2.0;
+  else if (currentLampAngle >= maxLampAngleDegrees) {
+    normalizedLampAngle = maxLampAngleDegrees * 2.0;
   }
   else {
-    normalizedRoll = avgRoll + maxRollDegrees;
+    normalizedLampAngle = currentLampAngle + maxLampAngleDegrees;
   }
 
-  // Fade across the colors based on pitch angle.
-  int colorSection = floor(normalizedPitch / colorAngleStep);
-  // Fix up colorSection if measurement is maxPitchDegrees degrees or more.
+  // Fade across the colors based on color selection angle.
+  int colorSection = floor(normalizedColorAngle / colorAngleStep);
+  // Fix up colorSection if measurement is maxColorAngleDegrees degrees or more.
   if (colorSection >= NUM_COLORS_PER_LAMP - 1) {
       colorSection = NUM_COLORS_PER_LAMP - 2;
   }
   colorIntensities[colorSection] =
-    map(normalizedPitch, colorAngleStep * colorSection, colorAngleStep * (colorSection + 1), 255, 0);
+    map(normalizedColorAngle, colorAngleStep * colorSection, colorAngleStep * (colorSection + 1), 255, 0);
   colorIntensities[colorSection + 1] =
-    map(normalizedPitch, colorAngleStep * colorSection, colorAngleStep * (colorSection + 1), 0, 255);
+    map(normalizedColorAngle, colorAngleStep * colorSection, colorAngleStep * (colorSection + 1), 0, 255);
 
-  // Fade across the lamps based on roll angle.
-  int lampSection = floor(normalizedRoll / lampAngleStep);
-  // Fix up lampSection if measurement is maxRollDegrees degrees or more.
+  // Fade across the lamps based on lamp selection angle.
+  int lampSection = floor(normalizedLampAngle / lampAngleStep);
+  // Fix up lampSection if measurement is maxLampAngleDegrees degrees or more.
   if (lampSection >= NUM_LAMPS - 1) {
       lampSection = NUM_LAMPS - 2;
   }
   lampIntensities[lampSection] =
-    map(normalizedRoll, lampAngleStep * lampSection, lampAngleStep * (lampSection + 1), 255, LAMP_MIN_INTENSITY);
+    map(normalizedLampAngle, lampAngleStep * lampSection, lampAngleStep * (lampSection + 1), 255, LAMP_MIN_INTENSITY);
   lampIntensities[lampSection + 1] =
-    map(normalizedRoll, lampAngleStep * lampSection, lampAngleStep * (lampSection + 1), LAMP_MIN_INTENSITY, 255);
+    map(normalizedLampAngle, lampAngleStep * lampSection, lampAngleStep * (lampSection + 1), LAMP_MIN_INTENSITY, 255);
 
   // For each lamp, scale the intensity of its colors by the corresponding color intensity.
   for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
@@ -756,7 +652,6 @@ void updateLamps()
 
 void loop()
 {
-  static int32_t lastTemperatureSampleMs;
   static int32_t lastDmxTxMs;
 
   uint32_t now = millis();
@@ -767,5 +662,9 @@ void loop()
     lastDmxTxMs = now;
     updateLamps();
   }
+
+#ifdef ENABLE_WATCHDOG
+  wdt_reset();
+#endif
 }
 
