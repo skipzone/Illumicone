@@ -35,9 +35,9 @@
  **********************************************/
 
 //#define RAINSTICK
-//#define IBG_TILT_1
+#define IBG_TILT_1
 //#define IBG_TILT_2
-#define IBG_TILT_TEST
+//#define IBG_TILT_TEST
 
 
 /************
@@ -146,6 +146,8 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                    // 0 = 1.2
 // moving average length for averaging sound and IMU measurements
 #define MA_LENGTH 8
 
+// ----- Radio Configuration -----
+
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
 #define TX_PIPE_ADDRESS "2wdgt"
@@ -158,6 +160,18 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                    // 0 = 1.2
 
 // Max. retries can be 0 to 15.
 #define TX_MAX_RETRIES 0                // use 15 when getting acks
+
+// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS (genuine Noric chips only).
+#define DATA_RATE RF24_250KBPS
+
+// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
+#define CRC_LENGTH RF24_CRC_16
+
+// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
+// ISM: 2400-2500;  ham: 2390-2450
+// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
+//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+#define RF_CHANNEL 84
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
@@ -190,8 +204,19 @@ static constexpr uint8_t mpu6050MotionDetectionDuration = 1;          // unit is
 static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
 
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
+
+// Use a different transmit interval for each of the widgets so that their
+// transmissions are staggered, thus reducing collisions.
+#if defined(IBG_TILT_1)
 #define ACTIVE_TX_INTERVAL_MS 25L
 #define INACTIVE_TX_INTERVAL_MS 200L
+#elif defined(IBG_TILT_2)
+#define ACTIVE_TX_INTERVAL_MS 26L
+#define INACTIVE_TX_INTERVAL_MS 201L
+#elif defined(IBG_TILT_TEST)
+#define ACTIVE_TX_INTERVAL_MS 27L
+#define INACTIVE_TX_INTERVAL_MS 202L
+#endif
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
 // every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
@@ -200,7 +225,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 
 // The MPU-6050 is placed in cycle mode, and the processor is put to sleep
 // when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
-#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 60000L
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 20000L
 
 // We use the time elapsed since getting good data from the MPU-6050 to determine
 // if we need to reinitialize the little bastard because he's quit working right.
@@ -223,6 +248,8 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 // moving average length for averaging IMU measurements
 #define MA_LENGTH 20
 
+// ----- Radio Configuration -----
+
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
 #define TX_PIPE_ADDRESS "2wdgt"
@@ -230,6 +257,18 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 #define WANT_ACK false
 #define TX_RETRY_DELAY_MULTIPLIER 0
 #define TX_MAX_RETRIES 0
+
+// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS (genuine Noric chips only).
+#define DATA_RATE RF24_250KBPS
+
+// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
+#define CRC_LENGTH RF24_CRC_16
+
+// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
+// ISM: 2400-2500;  ham: 2390-2450
+// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
+//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+#define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
@@ -639,7 +678,7 @@ void setup()
   initI2c();
   initMpu6050();
 
-  configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL, WANT_ACK);
+  configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE, RF_CHANNEL);
 
   // Set the watchdog for interrupt only (no system reset) and an 8s interval.
   // We have to turn off interrupts because the changes to the control register
