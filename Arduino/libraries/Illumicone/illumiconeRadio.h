@@ -28,11 +28,13 @@
 #pragma once
 
 void configureRadio(
-    RF24&         radio,
-    const char*   writePipeAddress,
-    uint8_t       txRetryDelayMultiplier,
-    uint8_t       txMaxRetries,
-    rf24_pa_dbm_e rfPowerLevel,
-    bool          wantAcks = true);
-
+  RF24&             radio,
+  const char*       writePipeAddress,
+  bool              wantAcks,
+  uint8_t           txRetryDelayMultiplier,
+  uint8_t           txMaxRetries,
+  rf24_crclength_e  crcLength,
+  rf24_pa_dbm_e     rfPowerLevel,
+  rf24_datarate_e   dataRate,
+  uint8_t           channel);
 

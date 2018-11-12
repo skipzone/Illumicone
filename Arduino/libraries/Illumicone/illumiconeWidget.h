@@ -32,26 +32,6 @@
 #include "illumiconeRadio.h"
 
 
-/*********************************************
- * Radio Configuration Common To All Widgets *
- *********************************************/
-
-// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS (genuine Noric chips only).
-#define DATA_RATE RF24_250KBPS
-
-// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
-#define CRC_LENGTH RF24_CRC_16
-
-// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
-// ISM: 2400-2500;  ham: 2390-2450
-// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
-//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 84
-
-// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
-
-
 /*********************************
  * Payload Structure Definitions *
  *********************************/
