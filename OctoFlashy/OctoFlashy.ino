@@ -428,23 +428,53 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
   }
   
   switch (payload->widgetHeader.id) {
+
     case 1:
       // Tilt-1's pitch is the lamp selection angle.
       currentLampAngle = payload->measurements[1] / 10.0;
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.print(F("got pitch "));
+      Serial.print(currentLampAngle);
+      Serial.println(F(" for lamp angle from widget 1"));
+#endif
       break;
+
     case 2:
       // Tilt-2's pitch is the color selection angle.
       currentColorAngle = payload->measurements[1] / 10.0;
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.print(F("got pitch "));
+      Serial.print(currentColorAngle);
+      Serial.println(F(" for color angle from widget 2"));
+#endif
       break;
+
     case 3:
       // Tilt-Test's pitch is the lamp selection angle, and its roll is the color selection angle.
       currentLampAngle = payload->measurements[1] / 10.0;
       currentColorAngle = payload->measurements[2] / 10.0;
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.print(F("got pitch "));
+      Serial.print(currentLampAngle);
+      Serial.print(F(" for lamp angle and roll "));
+      Serial.print(currentColorAngle);
+      Serial.println(F(" for color angle from widget 2"));
+#endif
+      break;
+
     case 4:
       // Rainstick's pitch is the color selection angle, and its pitch is the color selection angle.
       currentColorAngle = payload->measurements[1] / 10.0;
       currentLampAngle = payload->measurements[2] / 10.0;
       currentPpSound = payload->measurements[13];
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.print(F("got pitch "));
+      Serial.print(currentColorAngle);
+      Serial.print(F(" for color angle, roll "));
+      Serial.print(currentLampAngle);
+      Serial.print(F(" for lamp angle, and p-p sound "));
+      Serial.println(currentPpSound);
+#endif
     break;
   }
   
