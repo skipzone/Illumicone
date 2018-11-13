@@ -51,22 +51,22 @@ constexpr int16_t maxPpSoundForStrobe = 500;
 constexpr uint8_t minStrobeValue = 225;
 constexpr uint8_t maxStrobeValue = 250;
 
-#define NUM_LAMPS 9
+#define NUM_LAMPS 5
 
-#define LAMP_MIN_INTENSITY 24
+#define LAMP_MIN_INTENSITY 128
 
 // With RGB lamps, enable red-green-blue-red wraparound as widget value
 // varies from one extreme to another.  (Without wraparound, the lamp
 // color would be red at one extreme and blue at the other, with no way
 // to go from blue through violet and magenta back to red.)
-#define ENABLE_COLOR_WRAPAROUND
+//#define ENABLE_COLOR_WRAPAROUND
 
 // The cheap-o RGB "PAR" lamps have a fourth DMX channel for strobe and intensity.
 //#define LAMP_HAS_CONTROL_CHANNEL
 
 // With four-channel dimmers, it can be convenient to leave the fourth channel
 // unused so that each dimmer controls one tri-color lamp arrangement.
-//#define SKIP_DIMMER_FOURTH_CHANNEL
+#define SKIP_DIMMER_FOURTH_CHANNEL
 
 
 /***********************
@@ -567,8 +567,6 @@ void sendDmx()
       // overall brightness by way of the individual colors.
       dmxChannelValues[dmxChannelNum++] = 127;
     }
-#elif defined(SKIP_DIMMER_FOURTH_CHANNEL)
-    dmxChannelValues[dmxChannelNum++] = 0;
 #endif
 
 #if (NUM_COLORS_PER_LAMP == 4)
@@ -578,6 +576,10 @@ void sendDmx()
 #endif
     dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][1];
     dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][2];      
+
+#ifdef SKIP_DIMMER_FOURTH_CHANNEL
+    dmxChannelValues[dmxChannelNum++] = 0;
+#endif
   }
 
   // Send zeros to any unused channels.
