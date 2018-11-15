@@ -52,8 +52,8 @@
   #define STATS_PRINT_INTERVAL_MS 1000L
   //#define LED_PIN 2
   #define TX_PIPE_ADDRESS "0wdgt"       // 0 for tx stress
-  #define TX_RETRY_DELAY_MULTIPLIER 7
   #define PAYLOAD_TYPE StressTestPayload
+
 #elif defined(FOURPLAY_4_2)
   #define WIDGET_ID 10
   #define NUM_ENCODERS 4
@@ -67,6 +67,7 @@
   #define NUM_STEPS_PER_REV 20
   #define TX_PIPE_ADDRESS "1wdgt"
   #define PAYLOAD_TYPE PositionVelocityPayload
+
 #elif defined(FOURPLAY_4_3)
   #define WIDGET_ID 11
   #define NUM_ENCODERS 4
@@ -80,30 +81,40 @@
   #define NUM_STEPS_PER_REV 20
   #define TX_PIPE_ADDRESS "1wdgt"
   #define PAYLOAD_TYPE PositionVelocityPayload
+
 #elif defined(PUMP)
   #define WIDGET_ID 8
   #define TX_INTERVAL_MS 250L
   #define TX_PIPE_ADDRESS "1wdgt"
   #define PAYLOAD_TYPE PositionVelocityPayload
+
 #else
   #error Unspecified or unrecognized widget simulation.
 #endif
 
+// ---------- radio configuration (common to all configurations above) ----------
 
-/***************************************
- * Widget-Specific Radio Configuration *
- ***************************************/
+// Set WANT_ACK to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
+// to 0 for fire-and-forget.  To enable retries and delivery failure detection,
+// set WANT_ACK to true.  The delay between retries is 250 us multiplied by
+// TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
+// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
+#define WANT_ACK false
+#define TX_RETRY_DELAY_MULTIPLIER 0     // use 2 when getting acks
+#define TX_MAX_RETRIES 0                // use 15 when getting acks
 
-// Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
-// 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
-// defined in widget configuration
+// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
+// works with genuine Nordic Semiconductor chips only, not the counterfeits.)
+#define DATA_RATE RF24_1MBPS
 
-// Delay between retries is 250 us multiplied by the delay multiplier.  To help
-// prevent repeated collisions, use a prime number (2, 3, 5, 7, 11) or 15 (the max).
-#define TX_RETRY_DELAY_MULTIPLIER 2
+// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
+#define CRC_LENGTH RF24_CRC_16
 
-// Max. retries can be 0 to 15.
-#define TX_MAX_RETRIES 15
+// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
+// ISM: 2400-2500;  ham: 2390-2450
+// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
+//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+#define RF_CHANNEL 84
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
@@ -135,7 +146,9 @@ void setup()
   printf_begin();
 #endif
 
-  configureRadio(radio, TX_PIPE_ADDRESS, TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES, RF_POWER_LEVEL);
+  configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
+                 TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
+                 RF_CHANNEL);
   
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
@@ -301,17 +314,9 @@ void doFourPlay4x(uint32_t now)
         payload.position = position[wheelIdx];
         payload.velocity = rpm;
     
-        if (!radio.write(&payload, sizeof(payload))) {
-#ifdef TX_FAILURE_LED_PIN      
-          digitalWrite(TX_FAILURE_LED_PIN, HIGH);
-#endif
-        }
-        else {
-#ifdef TX_FAILURE_LED_PIN
-          digitalWrite(TX_FAILURE_LED_PIN, LOW);
-#endif
-        }
+        radio.write(&payload, sizeof(payload));
       }
+
       numVelocitySamples = 0;
       wasActive = anyWheelsActive;
     }
@@ -333,16 +338,7 @@ void doPump(uint32_t now)
     payload.position = 1023 - Esplora.readSlider();   // seems that the API author holds the board upside down
     payload.velocity = 1;
     
-    if (!radio.write(&payload, sizeof(payload))) {
-#ifdef TX_FAILURE_LED_PIN      
-      digitalWrite(TX_FAILURE_LED_PIN, HIGH);
-#endif
-    }
-    else {
-#ifdef TX_FAILURE_LED_PIN
-      digitalWrite(TX_FAILURE_LED_PIN, LOW);
-#endif
-    }
+    radio.write(&payload, sizeof(payload));
   }
 }
 #endif

@@ -33,8 +33,8 @@
  *  9:  Contort-O-Matic (Ray and Mishi)
  * 10:  FourPlay-4-2 (Dr. Naked, Ross)
  * 11:  FourPlay-4-3 (Dr. Naked, Ross)
- * 12:  unassigned
- * 13:  unassigned
+ * 12:  unassigned (future Maracas)
+ * 13:  unassigned (future Mike)
  * 14:  unassigned
  * 15:  unassigned
  *
