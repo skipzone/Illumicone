@@ -21,7 +21,7 @@
         "widgetRcvr" : "/tmp/widgetRcvr.lock"
     },
 
-    "numberOfStrings" : 36,
+    "numberOfStrings" : 48,
     "numberOfPixelsPerString" : 100,
 
     "patconIpAddress" : "127.0.0.1",
@@ -84,12 +84,12 @@
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         }
     ],
@@ -252,6 +252,8 @@
             "sparkleChangeIntervalMs" : 50,
             "sparkleColor" : "yellow"
         },
+
+        // ---------- fill and burst on Pump ----------
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
             "priority" : 9,
@@ -265,12 +267,17 @@
                     "measurement" : "position"
                 }
             ],
-            "lowPressureCutoff" : 150,
-            "burstThreshold" : 400,
             "pressurizationColor" : "96,0,0",
             "depressurizationColor" : "32,64,0",
+            "lowPressureCutoff" : 150,
+            "burstThreshold" : 400,
+            "flashThreshold" : 600,
+            "burstDurationMs" : 6000,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
-            "fillStepIntervalMs" : 20
+            "fillStepIntervalHighMs" : 50,
+            "fillStepIntervalLowMs" : 5,
+            "flashDurationMs" : 4000,
+            "flashIntervalMs" : 20
         },
         {   "name" : "eyeFlash",
             "enabled" : true,
@@ -290,27 +297,43 @@
             "allStringsSameColor" : false,
             "flashChangeIntervalMs" : 50
         },
+
+        // ---------- rain on Rainstick ----------
         {   "name" : "rain",
             "enabled" : true,
-            "priority" : 3,
+            "priority" : 2,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
                     "widgetName" : "rainstick",
-                    "channelNumber" : 2,        // average sound amplitude
+                    "channelNumber" : 13,               // average sound peak-to-peak amplitude
+                    "measurement" : "position"
+                },
+                {   "inputName" : "emitColor",
+                    "widgetName" : "rainstick",
+                    //"channelNumber" : 4,                // average gyro y-axis (corresponds to pitch and rolling the rainstick)
+                    "channelNumber" : 1,                // average pitch, which is really rolling the Rainstick
                     "measurement" : "position"
                 }
             ],
-            "emitColor" : "0,64,192",
-            "emitIntervalMeasmtLow" : 600,
-            "emitIntervalMeasmtHigh" : 1023,
-            "emitIntervalLowMs" : 250,
+            // TODO 3/1/2018 ross:  Add this as a defined color:  "0,64,192"
+            "emitColorDefault" : "blue",
+            "emitColorMeasmtLow" : -90,
+            "emitColorMeasmtHigh" : 90,
+            "emitColorLow" : "red",                     // same color for low and high means use the entire color wheel
+            "emitColorHigh" : "red",
+            "emitColorMeasmtMultiplier" : 0.1,          // Rainstick reports position in tenths of a degree
+            "emitColorIntegrateMeasmt" : false,
+            "emitIntervalMeasmtLow" : 30,
+            "emitIntervalMeasmtHigh" : 500,             // can go well above 600, but we want a lot o' rain with moderate sound
+            "emitIntervalLowMs" : 200,
             "emitIntervalHighMs" : 10,
-            "emitBatchSize" : 5,
+            "emitBatchSize" : 10,
             "emitDirectionIsUp" : false,
             "particleMoveIntervalMs" : 10
         },
+
         {   "name" : "spray",
             "enabled" : true,
             "priority" : 3,
