@@ -34,7 +34,7 @@ class PumpWidget : public Widget
 
     private:
 
-    static constexpr int maxPosition = 500;
+    static constexpr int maxPosition = 700;
 
     bool pressurizing;
 

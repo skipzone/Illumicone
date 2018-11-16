@@ -758,6 +758,7 @@ struct CRGB {
         Plum=0xDDA0DD,
         PowderBlue=0xB0E0E6,
         Purple=0x800080,
+        RainstickBlue=0x0040C0,
         Red=0xFF0000,
         RosyBrown=0xBC8F8F,
         RoyalBlue=0x4169E1,
