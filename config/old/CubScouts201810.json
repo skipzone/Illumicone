@@ -1,0 +1,191 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "lockFilePaths" : {
+        "patternController" : "/tmp/patternController.lock",
+        "widgetRcvr" : "/tmp/widgetRcvr.lock"
+    },
+
+    "numberOfStrings" : 48,
+    "numberOfPixelsPerString" : 100,
+
+    "patconIpAddress" : "127.0.0.1",
+    "opcServerIpAddress": "127.0.0.1",
+    "opcServerPortNumber" : 7890,
+    "useTcpForOpcServer" : true,
+    "widgetPortNumberBase" : 4200,
+
+    "shutoffPeriods" : [
+    ],
+
+    "quiescentPeriods" : [
+    ],
+
+    "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+    "patternRunLoopSleepIntervalUs" : 500,
+
+    "radioPollingLoopSleepIntervalUs" : 1000,
+
+    "widgets" : [
+        {   "name" : "boogieBoard",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : true,
+            "autoInactiveMs" : 10000
+        },
+        {   "name" : "rainstick",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        }
+    ],
+
+    "patterns" : [
+        {   "name" : "spring",
+            "enabled" : true,
+            "priority" : 5,
+            "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SpiralPattern",
+            "inputs" : [
+                {   "inputName" : "compression",
+                    "widgetName" : "boogieBoard",
+                    "channelNumber" : 1,                            // pitch, degrees * 100, (-9000, 9000)
+                    "measurement" : "position"
+                },
+                {   "inputName" : "rotation",
+                    "widgetName" : "boogieBoard",
+                    "channelNumber" : 2,                            // roll, degrees * 100, (-9000, 9000)
+                    "measurement" : "position"
+                },
+                {   "inputName" : "color",
+                    "widgetName" : "boogieBoard",
+                    "channelNumber" : 5,                            // acceleration of rotation about the z-axis (yaw)
+                    "measurement" : "position"
+                }
+            ],
+            "flipSpring" : false,                                   // flip upside down; meaningful for a progressive spring
+            "spiralTightnessFactor" : 6.0,                          // the number of turns around the cone
+            "progressiveSpringFactor" : 3,                          // 1 for non-progressive, >= 3 kinda looks like a bedspring
+            "progressiveSpringCompressionResponseFactor" : -0.5,    // multiplied by comp fac and added to progressiveSpringFactor
+            // The raw compression measurement maps to compression
+            // factor, which is usually in the range [0.8, 4] or so.
+            "compressionMeasurementMapper" : [
+                {   "rawMin" : -9001,
+                    "rawMax" : -6000,
+                    "mappedStart" : 0.05,
+                    "mappedEnd" : 0.05
+                },
+                {   "rawMin" : -6000,
+                    "rawMax" : 0,
+                    "mappedStart" : 0.05,
+                    "mappedEnd" : 1.0
+                },
+                {   "rawMin" : 0,
+                    "rawMax" : 6000,
+                    "mappedStart" : 1.0,
+                    "mappedEnd" : 4.0
+                },
+                {   "rawMin" : 6000,
+                    "rawMax" : 9001,
+                    "mappedStart" : 4.0,
+                    "mappedEnd" : 4.0
+                }
+            ],
+            "compressionResetTimeoutSeconds" : 3,                   // reset to min after period of compression ch inactivity
+            // The raw rotation measurement maps to the delay, in ms, between
+            // rotation steps.  Each rotation step starts the spiral at the next
+            // or previous string.
+            "rotationMeasurementMapper" : [
+                {   "rawMin" : -9001,
+                    "rawMax" : -6000,
+                    "mappedStart" : 20,
+                    "mappedEnd" : 20
+                },
+                {   "rawMin" : -6000,
+                    "rawMax" : 0,
+                    "mappedStart" : 20,
+                    "mappedEnd" : 200
+                },
+                {   "rawMin" : 0,
+                    "rawMax" : 6000,
+                    "mappedStart" : 200,
+                    "mappedEnd" : 20 
+                },
+                {   "rawMin" : 6000,
+                    "rawMax" : 9001,
+                    "mappedStart" : 20,
+                    "mappedEnd" : 20
+                }
+            ],
+            // The raw color measurement maps to the number of steps to rotate
+            // around the color wheel.  The color wheel has 255 steps.
+            "colorMeasurementMapper" : [
+                {   "rawMin" : -999,
+                    "rawMax" : -400,
+                    "mappedStart" : -40,
+                    "mappedEnd" : -40
+                },
+                {   "rawMin" : -400,
+                    "rawMax" : 400,
+                    "mappedStart" : -40,
+                    "mappedEnd" : 40
+                },
+                {   "rawMin" : 400,
+                    "rawMax" : 999,
+                    "mappedStart" : 40,
+                    "mappedEnd" : 40
+                }
+            ]
+        },
+
+        // ---------- rain on Rainstick ----------
+        {   "name" : "rain",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 2,                // average sound amplitude
+                    "measurement" : "position"
+                },
+                {   "inputName" : "emitColor",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 4,                // average gyro y-axis (corresponds to pitch and rolling the rainstick)
+                    "measurement" : "position"
+                }
+            ],
+            // TODO 3/1/2018 ross:  Add this as a defined color:  "0,64,192"
+            "emitColorDefault" : "blue",
+            "emitColorMeasmtLow" : -90,
+            "emitColorMeasmtHigh" : 90,
+            "emitColorLow" : "red",                     // same color for low and high means use the entire color wheel
+            "emitColorHigh" : "red",
+            "emitColorMeasmtMultiplier" : 0.1,          // Rainstick reports position in tenths of a degree
+            "emitColorIntegrateMeasmt" : false,
+            "emitIntervalMeasmtLow" : 30,
+            "emitIntervalMeasmtHigh" : 500,             // can go well above 600, but we want lot o' rain with moderate sound
+            "emitIntervalLowMs" : 200,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 10,
+            "emitDirectionIsUp" : false,
+            "particleMoveIntervalMs" : 10
+        }
+    ]
+
+}

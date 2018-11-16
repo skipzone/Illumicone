@@ -19,6 +19,7 @@
 
 #include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
+#include "log.h"
 #include "SpinnahWidget.h"
 #include "WidgetId.h"
 
@@ -57,6 +58,9 @@ void SpinnahWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
         int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
         channels[chIdx]->setPositionAndVelocity(newPosition, newVelocity);
         channels[chIdx]->setIsActive(true);
+        //logMsg(LOG_DEBUG, "spinnah chIdx=" + to_string(chIdx)
+        //                  + " newPosition=" + to_string(newPosition)
+        //                  + " newVelocity=" + to_string(newVelocity));
     }
     else {
         channels[chIdx]->setIsActive(false);

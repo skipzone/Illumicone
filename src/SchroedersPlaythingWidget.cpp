@@ -52,6 +52,6 @@ void SchroedersPlaythingWidget::updateChannelSimulatedMeasurements(unsigned int 
     channels[chIdx]->setPositionAndVelocity(pos.raw, vel.raw);
     channels[chIdx]->setIsActive(true);
 
-    logMsg(LOG_DEBUG, "added MIDI_NOTE_ON message for note " + to_string(currentNote));
+    //logMsg(LOG_DEBUG, "added MIDI_NOTE_ON message for note " + to_string(currentNote));
 }
 
