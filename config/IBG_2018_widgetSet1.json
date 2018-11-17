@@ -70,12 +70,12 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "boogieBoard",
-            "enabled" : true,
+            "enabled" : false,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 10000
         },
         {   "name" : "eye",
-            "enabled" : true,
+            "enabled" : false,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 500
         },
@@ -100,7 +100,7 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "schroedersPlaything",
-            "enabled" : true,
+            "enabled" : false,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 8000
         },
@@ -110,7 +110,7 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "triObelisk",
-            "enabled" : true,
+            "enabled" : false,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         }
@@ -120,7 +120,7 @@
 
         // ---------- spring on Boogie Board ----------
         {   "name" : "spring",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 5,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SpiralPattern",
@@ -367,7 +367,7 @@
 
         // ---------- sparkles on Triobelisk (multiple) ----------
         {   "name" : "magentaGreenSparkle",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -432,7 +432,7 @@
 
         // ---------- eye flash ----------
         {   "name" : "eyeFlash",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 2,
             "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "AnnoyingFlashingPattern",
@@ -601,7 +601,7 @@
 
         // ---------- 60-key keyboard for 100x48 cone on Schroeder's Plaything ----------
         {   "name" : "schroedersPlaything",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 3,
             "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "MidiActivatedRegionsPattern",
