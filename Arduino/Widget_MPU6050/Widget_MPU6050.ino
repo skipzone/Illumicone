@@ -34,8 +34,8 @@
  * A specific target widget is selected here. *
  **********************************************/
 
-#define RAINSTICK
-//#define IBG_TILT_1
+//#define RAINSTICK
+#define IBG_TILT_1
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
 
@@ -181,7 +181,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                    // 0 = 1.2
 
 
 /******************************************************
- * Idaho Botanical Garden TILT_x Widget Configuration *
+ * Idaho Botanical Garden Tilt_x Widget Configuration *
  ******************************************************/
 
 #if defined(IBG_TILT_1) || defined(IBG_TILT_2) || defined(IBG_TILT_TEST)
@@ -207,16 +207,16 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
 
 // Use a different transmit interval for each of the widgets so that their
-// transmissions are staggered, thus reducing collisions.
+// transmissions are staggered, thus (hopefully) reducing collisions.
 #if defined(IBG_TILT_1)
-#define ACTIVE_TX_INTERVAL_MS 25L
+#define ACTIVE_TX_INTERVAL_MS 23L
 #define INACTIVE_TX_INTERVAL_MS 200L
 #elif defined(IBG_TILT_2)
-#define ACTIVE_TX_INTERVAL_MS 26L
-#define INACTIVE_TX_INTERVAL_MS 201L
+#define ACTIVE_TX_INTERVAL_MS 29L
+#define INACTIVE_TX_INTERVAL_MS 210L
 #elif defined(IBG_TILT_TEST)
-#define ACTIVE_TX_INTERVAL_MS 27L
-#define INACTIVE_TX_INTERVAL_MS 202L
+#define ACTIVE_TX_INTERVAL_MS 37L
+#define INACTIVE_TX_INTERVAL_MS 220L
 #endif
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
@@ -266,7 +266,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-#define DATA_RATE RF24_1MBPS
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED.
 #define CRC_LENGTH RF24_CRC_16
