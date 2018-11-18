@@ -86,7 +86,7 @@ constexpr uint8_t rfChannel = 84;
 constexpr rf24_pa_dbm_e rfPowerLevel = RF24_PA_MAX;
 
 // RF24_250KBPS or RF24_1MBPS
-constexpr rf24_datarate_e dataRate = RF24_250KBPS;
+constexpr rf24_datarate_e dataRate = RF24_1MBPS;
 
 constexpr uint8_t txRetryDelayMultiplier = 15;  // 250 us additional delay multiplier (0-15)
 constexpr uint8_t txMaxRetries = 15;            // max retries (0-15)
