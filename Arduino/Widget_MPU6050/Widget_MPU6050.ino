@@ -34,8 +34,8 @@
  * A specific target widget is selected here. *
  **********************************************/
 
-//#define RAINSTICK
-#define IBG_TILT_1
+#define RAINSTICK
+//#define IBG_TILT_1
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
 
