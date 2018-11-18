@@ -388,7 +388,7 @@
             "reverseSparkleColor" : "green"
         },
         {   "name" : "aquaRedSparkle",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -409,7 +409,7 @@
             "reverseSparkleColor" : "red"
         },
         {   "name" : "yellowBlueSparkle",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
