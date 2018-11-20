@@ -57,6 +57,10 @@
             "startDateTime" : "22:00:00",
             "endDateTime" : "17:30:00"
         },
+        {   "description" : "outside event hours 19 Nov.",
+            "startDateTime" : "2018-11-19 20:57:00",
+            "endDateTime" : "2018-11-19 22:00:00"
+        },
         {   "description" : "before event opening",
             "startDateTime" : "2018-11-21 17:30:00",
             "endDateTime" : "2018-11-21 22:00:00"
@@ -69,8 +73,12 @@
 
     "quiescentPeriods" : [
         {   "description" : "go home",
-            "startDateTime" : "21:55:00",
+            "startDateTime" : "21:30:00",
             "endDateTime" : "22:00:00"
+        },
+        {   "description" : "go home on 19 Nov.",
+            "startDateTime" : "2018-11-19 20:56:00",
+            "endDateTime" : "2018-11-19 22:00:00"
         }
     ],
 
