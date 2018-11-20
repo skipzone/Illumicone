@@ -53,9 +53,25 @@
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
+        {   "description" : "outside event hours shutoff",
+            "startDateTime" : "22:00:00",
+            "endDateTime" : "17:30:00"
+        },
+        {   "description" : "before event opening",
+            "startDateTime" : "2018-11-21 17:30:00",
+            "endDateTime" : "2018-11-21 22:00:00"
+        },
+        {   "description" : "after event closing",
+            "startDateTime" : "2019-01-01 22:00:00",
+            "endDateTime" : "2019-01-31 23:59:59"
+        }
     ],
 
     "quiescentPeriods" : [
+        {   "description" : "go home",
+            "startDateTime" : "21:55:00",
+            "endDateTime" : "22:00:00"
+        }
     ],
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
