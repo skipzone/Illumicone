@@ -1,0 +1,9 @@
+Host ic2-widpatcon2-tunnel
+    HostName myEc2Instance.com
+    User illumicone
+    RemoteForward 50114 localhost:22
+    PubkeyAuthentication yes
+    StrictHostKeyChecking false
+    PasswordAuthentication no
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
