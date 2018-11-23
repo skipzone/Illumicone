@@ -1,0 +1,12 @@
+[Unit]
+Description=AutoSSH tunnel service on local port 50114
+After=network.target
+
+[Service]
+User=illumicone
+Type=forking
+ExecStart=/usr/bin/autossh -M 0 -f -T -N ic2-widpatcon2-tunnel
+
+[Install]
+WantedBy=multi-user.target
+
