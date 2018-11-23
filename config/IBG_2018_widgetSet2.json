@@ -55,7 +55,7 @@
     "shutoffPeriods" : [
         {   "description" : "outside event hours shutoff",
             "startDateTime" : "22:00:00",
-            "endDateTime" : "17:30:00"
+            "endDateTime" : "17:10:00"
         },
         {   "description" : "outside event hours 19 Nov.",
             "startDateTime" : "2018-11-19 20:57:00",
@@ -329,7 +329,7 @@
             "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
             "deactivationThreshold" : 999,
             "numGoodMeasurementsForReactivation" : 1,
-            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : true,
             "sparkleChangeIntervalMs" : 50
         },
@@ -348,7 +348,7 @@
             "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
             "deactivationThreshold" : 999,
             "numGoodMeasurementsForReactivation" : 1,
-            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "gold",
@@ -369,7 +369,7 @@
             "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
             "deactivationThreshold" : 999,
             "numGoodMeasurementsForReactivation" : 1,
-            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "red",
@@ -390,7 +390,7 @@
             "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
             "deactivationThreshold" : 999,
             "numGoodMeasurementsForReactivation" : 1,
-            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "green",
