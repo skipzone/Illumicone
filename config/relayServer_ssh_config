@@ -1,0 +1,15 @@
+Host widpatcon
+    HostName localhost
+    User illumicone
+    Port 50103
+    PubkeyAuthentication yes
+    StrictHostKeyChecking false
+    PasswordAuthentication no
+Host ic2widpatcon2
+    HostName localhost
+    User illumicone
+    Port 50114
+    PubkeyAuthentication yes
+    StrictHostKeyChecking false
+    PasswordAuthentication no
+
