@@ -366,7 +366,7 @@
                     "measurement" : "position"
                 }
             ],
-            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+            "activationThreshold" : 50,         // rainy, windy night 23 Nov. needs > 500!
             "deactivationThreshold" : 999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
@@ -376,7 +376,7 @@
             "reverseSparkleColor" : "red"
         },
         {   "name" : "greenSparkle_Bells",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
