@@ -327,7 +327,7 @@
                 }
             ],
             "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
-            "deactivationThreshold" : 999,
+            "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : true,
@@ -346,7 +346,7 @@
                 }
             ],
             "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
-            "deactivationThreshold" : 999,
+            "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
@@ -355,7 +355,7 @@
             "reverseSparkleColor" : "gold"
         },
         {   "name" : "redSparkle_Bells",
-            "enabled" : true,
+            "enabled" : false,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -367,7 +367,7 @@
                 }
             ],
             "activationThreshold" : 50,         // rainy, windy night 23 Nov. needs > 500!
-            "deactivationThreshold" : 999,
+            "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
@@ -376,7 +376,7 @@
             "reverseSparkleColor" : "red"
         },
         {   "name" : "greenSparkle_Bells",
-            "enabled" : false,
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -388,7 +388,7 @@
                 }
             ],
             "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
-            "deactivationThreshold" : 999,
+            "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
