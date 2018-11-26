@@ -1,7 +1,7 @@
 Burning Man 2017 On-Playa Fix-It Items
 --------------------------------------
 
-[ ]
+[X]
 TriObelisk sends shit velocity values when wheel spins counterclockwise.  The
 oscillation between positive and negative values is what causes the flashing
 that people like.
@@ -63,7 +63,7 @@ a day after we placed the widget.
 
 
 
-[ ]
+[X]
 Pump needs to be more robust.
 
 Pump's leather cup was inverted on Monday night (Tuesday ~3 AM, actually), and
@@ -78,11 +78,8 @@ come unscrewed from the cup.
 
 
 
-[ ]
+[X]
 More than half of the keys of Schroeder's Plaything no longer work.  The
 whiteouts the day after we placed the keyboard are the likely cause.  (The
 keyboard sat outside at camp for almost a week with no problem.)
-
-
-
 
