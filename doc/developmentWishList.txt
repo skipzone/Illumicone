@@ -76,6 +76,8 @@ Web control
 
 - Use Apache or other web server on ic-widpatcon (Raspberry Pi 3)
 
+- Limited-control web page for venues to override quiescent and shutdown periods
+
 
 
 Run patternController and widgetRcvr as services
