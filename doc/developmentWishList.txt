@@ -98,11 +98,13 @@ Logging improvements
 
 - specify log path on command line or with environment variable
 
-- Binary widget message log in widgetRcvr
+- compact widget message log in widgetRcvr
 
-- Binary widget measurement log in patternController
+- compact widget measurement log in patternController
 
-- Programs to extract data from binary logs
+- Programs or shell scripts to extract data from compact logs
+
+- replay compact logs through widgetRcvr and patternController
 
 - Throttling of quiescent and shutdown mode messages
 
