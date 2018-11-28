@@ -27,11 +27,31 @@
 
 //#define ENABLE_DEBUG_PRINT
 
+
+/************
+ * Includes *
+ ************/
+
+#include <avr/sleep.h>
+#include <avr/wdt.h>
+
 #include "illumiconeWidget.h"
 
 #ifdef ENABLE_DEBUG_PRINT
 #include "printf.h"
 #endif
+
+
+/****************************
+ * Constants and Data Types *
+ ****************************/
+
+enum class WidgetMode {
+  init,
+  standby,
+  inactive,
+  active
+};
 
 
 /************************
@@ -106,6 +126,11 @@
   #define NUM_STEPS_PER_REV 24
 #endif
 
+// In standby mode, we'll transmit a packet with zero-valued data approximately
+// every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
+// STANDBY_TX_INTERVAL_S should be a multiple of 8 between 8 and 2040, inclusive.
+#define STANDBY_TX_INTERVAL_S 64
+
 // ---------- radio configuration ----------
 
 // Nwdgt, where N indicates the payload type (0: stress test; 1: position
@@ -154,6 +179,8 @@
  * Globals *
  ***********/
 
+static WidgetMode widgetMode = WidgetMode::init;
+
 RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
 PositionVelocityPayload payload;
@@ -187,6 +214,10 @@ const int8_t g_greyCodeToEncoderStepMap[] = {
 
 volatile uint8_t g_pincEncoderStates;
 
+static volatile bool gotPinInterrupt;
+
+static uint8_t stayAwakeCountdown;
+
 
 /******************
  * Implementation *
@@ -203,9 +234,16 @@ void setUpPinChangeInterrupt(uint8_t pin)
 // Service pin change interrupt for D0 - D7.
 ISR (PCINT2_vect)
 {
+  gotPinInterrupt = true;
+
   uint8_t encoderStates = PIND >> 2;
   uint8_t curStates = encoderStates;
   uint8_t lastStates = g_lastPortDEncoderStates;
+
+  if (widgetMode == WidgetMode::standby) {
+    sleep_disable();
+    return;
+  }
 
   for (uint8_t i = 0; i < 3; ++i) {  // TODO: replace magic number 3
     uint8_t idx = ((lastStates & 0b11) << 2) | (curStates & 0b11);
@@ -221,9 +259,16 @@ ISR (PCINT2_vect)
 // Service pin change interrupt for A0 - A5.
 ISR (PCINT1_vect)
 {
+  gotPinInterrupt = true;
+
   uint8_t encoderStates = PINC;
   uint8_t curStates = encoderStates;
   uint8_t lastStates = g_lastPortCEncoderStates;
+
+  if (widgetMode == WidgetMode::standby) {
+    sleep_disable();
+    return;
+  }
 
 #ifdef ENABLE_DEBUG_PRINT
   g_pincEncoderStates = encoderStates;
@@ -237,6 +282,149 @@ ISR (PCINT1_vect)
   }
 
   g_lastPortCEncoderStates = encoderStates;
+}
+
+
+bool widgetWake()
+{
+  uint32_t now = millis();
+
+  if (!gotPinInterrupt) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("Woken up by watchdog."));
+#endif
+    if (--stayAwakeCountdown == 0) {
+      stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
+      // Let the pattern controller know we're still alive.
+      // (The data sent will be all zeros because the averages
+      // were cleared before we went to sleep.)
+      sendMeasurements();
+    }
+    return false;
+  }
+
+  gotPinInterrupt = false;
+
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.println(F("Woken up by pin interrupt."));
+#endif
+
+  // Reinitialize all the time trackers because the ms timer has been off.
+  // Time in this little world has stood still while time in the default
+  // world marched on, so we need transmit and gather data ASAP.
+  nextTxMs = now;
+  lastTemperatureSampleMs = now;
+  lastMotionDetectedMs = now;
+  lastSuccessfulMpu6050ReadMs = now;
+  isImuActive = true;
+#ifdef ENABLE_SOUND
+  lastSoundSampleMs = now;
+  lastSoundSaveMs = now;
+  isSoundActive = false;
+#endif
+
+  return true;
+}
+
+
+void widgetSleep()
+{
+  // After we wake up, the averages will be stale.  Clear them now
+  // so that the periodic transmissions caused by watchdog wakeup
+  // will send zero values.
+  clearMovingAverages();
+  
+  // We don't want interrupts duing the timing-critical stuff below,
+  // and we don't want the ISR to disable sleep before we go to sleep.
+  noInterrupts();
+
+  gotPinInterrupt = false;
+
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+
+  // The interrupt is already attached because it is the interrupt the IMU uses.
+
+  // Turn off brown-out enable in software.  BODS must be set to
+  // one and BODSE must be set to zero within four clock cycles.
+  MCUCR = bit (BODS) | bit (BODSE);
+  // The BODS bit is automatically cleared after three clock cycles.
+  MCUCR = bit (BODS);
+
+  // Standby mode tells the ISR to disable sleep after we wake up.
+  widgetMode = WidgetMode::standby;
+
+  // sleep_cpu is guarnteed to be called because the processor always
+  // executes the next instruction after interrupts are enabled.
+  interrupts();
+  sleep_cpu();
+}
+
+
+void setWidgetMode(WidgetMode newMode, uint32_t now)
+{
+  bool stayAwake;
+  
+  switch (newMode) {
+
+    case WidgetMode::standby:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Widget mode changing to standby."));
+#endif
+#ifdef ENABLE_SOUND
+      digitalWrite(MIC_POWER_PIN, LOW);
+#endif
+      setMpu6050Mode(Mpu6050Mode::cycle, now);
+      wdt_reset();
+      stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
+      stayAwake = false;
+      while (!stayAwake) {
+        // widgetSleep returns after we sleep then wake up.
+        widgetSleep();
+        stayAwake = widgetWake();
+      }
+#ifdef ENABLE_SOUND
+      digitalWrite(MIC_POWER_PIN, HIGH);
+#endif
+      widgetMode = WidgetMode::inactive;
+      break;
+
+    case WidgetMode::inactive:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Widget mode changing to inactive."));
+#endif
+      // The change in tx interval will become effective after the next
+      // transmission, which needs to happen at the shorter active interval
+      // so that the pattern controller quicly knows we've gone inactive.
+      txInterval = INACTIVE_TX_INTERVAL_MS;
+#ifdef ENABLE_SOUND
+      digitalWrite(MIC_POWER_PIN, HIGH);
+#endif
+      widgetMode = WidgetMode::inactive;
+      break;
+
+    case WidgetMode::active:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Widget mode changing to active."));
+#endif
+      txInterval = ACTIVE_TX_INTERVAL_MS;
+      // The next transmission needs to be as soon as practical so that
+      // the pattern controller quickly knows that we're active again.
+      if ((int32_t) (nextTxMs - now) > ACTIVE_TX_INTERVAL_MS) {
+        nextTxMs = now + ACTIVE_TX_INTERVAL_MS;
+      }
+#ifdef ENABLE_SOUND
+      digitalWrite(MIC_POWER_PIN, HIGH);
+#endif
+      widgetMode = WidgetMode::active;
+      break;
+
+    default:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("*** Invalid newMode in setWidgetMode"));
+#endif
+      break;
+  }
 }
 
 
