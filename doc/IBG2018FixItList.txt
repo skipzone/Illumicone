@@ -8,7 +8,7 @@ threshold.  Maybe implement histeresis, too.
 
 
 
-[ ]
+[X]
 Need to put some foam padding on Rainstick's holder to cushion Rainstick when
 people slam it into the holder--sometimes repeatedly.
 
@@ -19,7 +19,7 @@ Bottom (green sparkle) bell needs to be fixed.  Seems to have an intermittent
 connection at the microphone.
 
 
-[ ]
+[X]
 Middle (red sparkle) bell needs to be fixed.  It jabbers sometimes.  Also, it is
 too sensitive, often responding to wind noise.
 
@@ -48,4 +48,10 @@ String 41 is flakey about 2/3rds of the way down--intermittent, bad data, possib
 
 [ ]
 String 27 is bad after the 52nd pixel--intermittent, bad data, possibly due to sustained, heavy rain on 30 Nov.  Power seems ok.
+
+
+
+[ ]
+Bells channel 1 never shows as inactive.  When that (the red) bell goes inactive, sparkle continues until the pattern forces it inactive (apparently).
+
 
