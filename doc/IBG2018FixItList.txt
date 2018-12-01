@@ -31,3 +31,21 @@ out one wheel at a time with one that has been reworked.
 
 
 
+[ ]
+String 20 appears to have a bad connection up top.
+
+
+
+[ ]
+The connections for strings ? and ? are swapped at the top disk.
+
+
+
+[ ]
+String 41 is flakey about 2/3rds of the way down--intermittent, bad data, possibly due to sustained, heavy rain on 30 Nov.  Power seems ok.
+
+
+
+[ ]
+String 27 is bad after the 52nd pixel--intermittent, bad data, possibly due to sustained, heavy rain on 30 Nov.  Power seems ok.
+
