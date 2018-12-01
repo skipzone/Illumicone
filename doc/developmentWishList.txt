@@ -237,3 +237,13 @@ HTML for web interface)
 
 - command line (via custom CLI program) or web interface?
 
+
+
+Replacement for LEDscape and the Beaglebone
+-------------------------------------------
+
+While LEDscape works fine, it would be nice to have something that doesn't
+depend on having an OS.  An FPGA solution with differential drivers would be
+cool.
+
+
