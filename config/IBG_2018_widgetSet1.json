@@ -53,13 +53,21 @@
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
-        {   "description" : "outside event hours shutoff",
+        //{   "description" : "outside event hours shutoff",
+        //    "startDateTime" : "22:00:00",
+        //    "endDateTime" : "17:00:00"
+        //},
+        {   "description" : "outside event hours shutoff with daytime dry-out",
             "startDateTime" : "22:00:00",
-            "endDateTime" : "17:30:00"
+            "endDateTime" : "07:00:00"
         },
         {   "description" : "outside event hours 19 Nov.",
             "startDateTime" : "2018-11-19 20:57:00",
             "endDateTime" : "2018-11-19 22:00:00"
+        },
+        {   "description" : "outside event hours 20 Nov.",
+            "startDateTime" : "2018-11-20 20:00:00",
+            "endDateTime" : "2018-11-20 22:00:00"
         },
         {   "description" : "before event opening",
             "startDateTime" : "2018-11-21 17:30:00",
@@ -72,13 +80,25 @@
     ],
 
     "quiescentPeriods" : [
+        {   "description" : "daytime dry-out",
+            "startDateTime" : "07:00:00",
+            "endDateTime" : "17:00:00",
+            "quiescentColor" : "192,192,192"
+        },
         {   "description" : "go home",
             "startDateTime" : "21:30:00",
-            "endDateTime" : "22:00:00"
+            "endDateTime" : "22:00:00",
+            "quiescentColor" : "navy"
         },
         {   "description" : "go home on 19 Nov.",
             "startDateTime" : "2018-11-19 20:56:00",
-            "endDateTime" : "2018-11-19 22:00:00"
+            "endDateTime" : "2018-11-19 22:00:00",
+            "quiescentColor" : "navy"
+        },
+        {   "description" : "go home on 20 Nov.",
+            "startDateTime" : "2018-11-20 19:55:00",
+            "endDateTime" : "2018-11-20 22:00:00",
+            "quiescentColor" : "navy"
         }
     ],
 

@@ -21,12 +21,15 @@
 #include <time.h>
 #include <string>
 
+#include "json11.hpp"
+
 
 struct SchedulePeriod {
     bool isDaily;
     std::string description;
     time_t startTime;
     time_t endTime;
+    json11::Json periodConfigObj;
 };
 
 
