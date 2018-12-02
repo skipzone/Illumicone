@@ -94,6 +94,11 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
+    if (!ConfigReader::getBoolValue(patternConfig, "emitIntervalUseMeasmtAbsValue", emitIntervalUseMeasmtAbsValue, errMsgSuffix)) {
+        return false;
+    }
+    logMsg(LOG_INFO, name + " emitIntervalUseMeasmtAbsValue=" + (emitIntervalUseMeasmtAbsValue ? "true" : "false"));
+
     if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtLow", emitIntervalMeasmtLow, errMsgSuffix)) {
         return false;
     }
@@ -293,7 +298,10 @@ bool ParticlesPattern::update()
     {
         //logMsg(LOG_DEBUG, "emitRateChannel has a new measurement");
 
-        int emitIntervalMeasmt = emitRateUsePositionMeasmt ? emitRateChannel->getPosition() : abs(emitRateChannel->getVelocity());
+        int emitIntervalMeasmt = emitRateUsePositionMeasmt ? emitRateChannel->getPosition() : emitRateChannel->getVelocity();
+        if (emitIntervalUseMeasmtAbsValue) {
+            emitIntervalMeasmt = abs(emitIntervalMeasmt);
+        }
 
         // Don't emit anything if the measurement is below the lower limit.
         if (emitIntervalMeasmt < emitIntervalMeasmtLow) {

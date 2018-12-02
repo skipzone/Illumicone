@@ -15,7 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// IBG 2018 widget set 1:  colored spray on Bells
+// IBG 2018 widget set 3:  colored spray on Bells, sparkles on Baton
 
 {
     "lockFilePaths" : {
@@ -110,6 +110,11 @@
     "radioPollingLoopSleepIntervalUs" : 1000,
 
     "widgets" : [
+        {   "name" : "baton",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
         {   "name" : "bells",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
@@ -138,6 +143,90 @@
     ],
 
     "patterns" : [
+
+        // ---------- sparkles on Baton (multiple) ----------
+        {   "name" : "multicolorSparkle_Baton",
+            "enabled" : false,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "baton",
+                    "channelNumber" : 3,        // gyro X
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 50,
+            "deactivationThreshold" : 999,
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 1600,
+            "useRandomColors" : true,
+            "sparkleChangeIntervalMs" : 50
+        },
+        {   "name" : "goldSparkle_Baton",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "baton",
+                    "channelNumber" : 3,        // gyro X
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 50,
+            "deactivationThreshold" : 999,
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 1600,
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "gold",
+            "reverseSparkleColor" : "gold"
+        },
+        {   "name" : "redSparkle_Baton",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "baton",
+                    "channelNumber" : 4,        // gyro Y
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 50,
+            "deactivationThreshold" : 999,
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 1600,
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "red",
+            "reverseSparkleColor" : "red"
+        },
+        {   "name" : "greenSparkle_Baton",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "baton",
+                    "channelNumber" : 5,        // gyro Z
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 50,
+            "deactivationThreshold" : 999,
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 1600,
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "green",
+            "reverseSparkleColor" : "green"
+        },
 
         // ---------- colored sprays on Bells (multiple) ----------
         {   "name" : "sprayWhite",

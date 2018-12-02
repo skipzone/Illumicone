@@ -34,7 +34,8 @@
  * A specific target widget is selected here. *
  **********************************************/
 
-#define RAINSTICK
+//#define RAINSTICK
+#define BATON
 //#define IBG_TILT_1
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
@@ -166,6 +167,92 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                    // 0 = 1.2
 #define DATA_RATE RF24_1MBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
+#define CRC_LENGTH RF24_CRC_16
+
+// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
+// ISM: 2400-2500;  ham: 2390-2450
+// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
+//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+#define RF_CHANNEL 84
+
+// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
+#define RF_POWER_LEVEL RF24_PA_MAX
+
+#endif
+
+
+/******************************
+ * Baton Widget Configuration *
+ ******************************/
+
+#ifdef BATON
+
+#define WIDGET_ID 12
+
+#define ACTIVATE_WITH_MOVEMENT
+
+static constexpr int16_t movementDetectionThreshold = 5;    // tenths of a degree of change in yaw, pitch, or roll
+static constexpr uint32_t inactiveTransitionDelayMs = 5000; // delay between inactivity detection and going inactive
+
+static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;         // unit is 2 mg
+static constexpr uint8_t mpu6050MotionDetectionCounterDecrement = 1;
+static constexpr uint8_t mpu6050MotionDetectionDuration = 1;          // unit is ms
+static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
+
+#define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
+#define ACTIVE_TX_INTERVAL_MS 41L
+#define INACTIVE_TX_INTERVAL_MS 2000L
+
+// In standby mode, we'll transmit a packet with zero-valued data approximately
+// every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
+// STANDBY_TX_INTERVAL_S should be a multiple of 8 between 8 and 2040, inclusive.
+#define STANDBY_TX_INTERVAL_S 64
+
+// The MPU-6050 is placed in cycle mode, and the processor is put to sleep
+// when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 10000L
+
+// We use the time elapsed since getting good data from the MPU-6050 to determine
+// if we need to reinitialize the little bastard because he's quit working right.
+// MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
+// so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
+// not getting good data from it.
+#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+
+//#define TX_INDICATOR_LED_PIN 16
+//#define TX_INDICATOR_LED_ON HIGH
+//#define TX_INDICATOR_LED_OFF LOW
+//#define IMU_NORMAL_INDICATOR_LED_PIN 16
+//#define IMU_NORMAL_INDICATOR_LED_ON HIGH
+//#define IMU_NORMAL_INDICATOR_LED_OFF LOW
+#define IMU_INTERRUPT_PIN 2
+#define RADIO_CE_PIN 9
+#define RADIO_CSN_PIN 10
+// The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
+
+// moving average length for averaging IMU measurements
+#define MA_LENGTH 20
+
+// ---------- radio configuration ----------
+
+// Nwdgt, where N indicates the payload type (0: stress test; 1: position
+// and velocity; 2: measurement vector; 3,4: undefined; 5: custom)
+#define TX_PIPE_ADDRESS "2wdgt"
+
+// Set WANT_ACK to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
+// to 0 for fire-and-forget.  To enable retries and delivery failure detection,
+// set WANT_ACK to true.  The delay between retries is 250 us multiplied by
+// TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
+// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
+#define WANT_ACK false
+#define TX_RETRY_DELAY_MULTIPLIER 0
+#define TX_MAX_RETRIES 0
+
+// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
+// works with genuine Nordic Semiconductor chips only, not the counterfeits.)
+#define DATA_RATE RF24_1MBPS
+
+// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED.
 #define CRC_LENGTH RF24_CRC_16
 
 // nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)

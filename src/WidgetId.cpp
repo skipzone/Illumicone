@@ -45,6 +45,8 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
             return WidgetId::fourPlay42;
         case 11:
             return WidgetId::fourPlay43;
+        case 12:
+            return WidgetId::baton;
         default:
             return WidgetId::invalid;
     }
@@ -79,6 +81,8 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 10;
         case WidgetId::fourPlay43:
             return 11;
+        case WidgetId::baton:
+            return 12;
         case WidgetId::invalid:
             return 255;
     }
@@ -113,6 +117,8 @@ std::string widgetIdToString(WidgetId widgetId)
             return "fourPlay42";
         case WidgetId::fourPlay43:
             return "fourPlay43";
+        case WidgetId::baton:
+            return "baton";
         case WidgetId::invalid:
             return "invalid";
     }
