@@ -53,9 +53,13 @@
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
-        {   "description" : "outside event hours shutoff",
+        //{   "description" : "outside event hours shutoff",
+        //    "startDateTime" : "22:00:00",
+        //    "endDateTime" : "17:10:00"
+        //},
+        {   "description" : "outside event hours shutoff with daytime dry-out",
             "startDateTime" : "22:00:00",
-            "endDateTime" : "17:10:00"
+            "endDateTime" : "07:00:00"
         },
         {   "description" : "outside event hours 19 Nov.",
             "startDateTime" : "2018-11-19 20:57:00",
@@ -355,7 +359,7 @@
             "reverseSparkleColor" : "gold"
         },
         {   "name" : "redSparkle_Bells",
-            "enabled" : false,
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
