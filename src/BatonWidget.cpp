@@ -27,7 +27,7 @@ using namespace std;
 
 
 BatonWidget::BatonWidget()
-    : Widget(WidgetId::rainstick, 13)
+    : Widget(WidgetId::baton, 13)
 {
     // Simulate acceleration.
     simulationUpdateIntervalMs[6] = 10;
