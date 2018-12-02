@@ -1,6 +1,12 @@
 Fix-It Items from Idaho Botanical Garden - Winter Garden aGlow 2018
 -------------------------------------------------------------------
 
+
+[ ] Need to be able to set color and intensity for quiescent mode so that we
+can use the mode to run the pixels in the daytime to try to dry them out.
+
+
+
 [ ]
 Bells needs to go active immediately when sound passes the activation threshold
 and needs to stay active for some number of ms after sound decreases below
@@ -8,20 +14,9 @@ threshold.  Maybe implement histeresis, too.
 
 
 
-[X]
-Need to put some foam padding on Rainstick's holder to cushion Rainstick when
-people slam it into the holder--sometimes repeatedly.
-
-
-
-[X]
-Bottom (green sparkle) bell needs to be fixed.  Seems to have an intermittent
-connection at the microphone.
-
-
-[X]
-Middle (red sparkle) bell needs to be fixed.  It jabbers sometimes.  Also, it is
-too sensitive, often responding to wind noise.
+[ ]
+Bells channel 1 never shows as inactive.  When that (the red) bell goes
+inactive, sparkle continues until the pattern forces it inactive (apparently).
 
 
 
@@ -34,24 +29,58 @@ out one wheel at a time with one that has been reworked.
 [ ]
 String 20 appears to have a bad connection up top.
 
-
-
-[ ]
-The connections for strings ? and ? are swapped at the top disk.
+20181201:  Replaced with spare.
 
 
 
 [ ]
-String 41 is flakey about 2/3rds of the way down--intermittent, bad data, possibly due to sustained, heavy rain on 30 Nov.  Power seems ok.
+The connections for strings ?15 and ?16 are swapped at the top disk.
 
 
 
 [ ]
-String 27 is bad after the 52nd pixel--intermittent, bad data, possibly due to sustained, heavy rain on 30 Nov.  Power seems ok.
+String 27 is bad after the 52nd pixel--intermittent, bad data, possibly
+due to sustained, heavy rain on 30 Nov.  Power seems ok.
+
+20181201:  Replaced with spare.
 
 
 
-[ ]
-Bells channel 1 never shows as inactive.  When that (the red) bell goes inactive, sparkle continues until the pattern forces it inactive (apparently).
+[ ] All bell stopped working on Dec. 1st, probably due to the microphones
+getting wet from the heavy rain.
+
+
+
+[X]
+Bottom (green sparkle) bell needs to be fixed.  Seems to have an intermittent
+connection at the microphone.
+
+20181129:  Fixed.
+
+
+
+[X]
+Need to put some foam padding on Rainstick's holder to cushion Rainstick when
+people slam it into the holder--sometimes repeatedly.
+
+20181129:  Added foam padding.
+
+
+
+[X]
+Middle (red sparkle) bell needs to be fixed.  It jabbers sometimes.  Also, it is
+too sensitive, often responding to wind noise.
+
+20181130:  Fixed.
+
+
+
+[X]
+String 41 is flakey about 2/3rds of the way down--intermittent, bad data,
+possibly due to sustained, heavy rain on 30 Nov.  Power seems ok.
+
+20181201:  Seems to have fixed itself, perhaps because all string turned on at
+75% intensity white to warm and dry out the bulbs.
+
 
 
