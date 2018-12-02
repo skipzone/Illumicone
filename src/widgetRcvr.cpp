@@ -382,7 +382,8 @@ bool openUdpPorts()
         && openUdpPort(WidgetId::pump)
         && openUdpPort(WidgetId::contortOMatic)
         && openUdpPort(WidgetId::fourPlay42)
-        && openUdpPort(WidgetId::fourPlay43);
+        && openUdpPort(WidgetId::fourPlay43)
+        && openUdpPort(WidgetId::baton);
 
     return retval;
 }
