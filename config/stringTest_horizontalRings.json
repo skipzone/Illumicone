@@ -1,0 +1,148 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+// IBG 2018 widget set 2:  sparkles on Bells
+
+{
+    "lockFilePaths" : {
+        "patternController" : "/tmp/patternController.lock",
+        "widgetRcvr" : "/tmp/widgetRcvr.lock"
+    },
+
+    "numberOfStrings" : 48,
+    "numberOfPixelsPerString" : 100,
+
+    // ----- on-site configuration -----
+    //"patconIpAddress" : "127.0.0.1",
+    //"opcServerIpAddress": "192.168.69.100",
+    //"useTcpForOpcServer" : false,
+
+    // ----- remote widget receiver configuration -----
+    //"patconIpAddress" : "192.168.69.103",
+    //"opcServerIpAddress": "192.168.69.103",
+    //"useTcpForOpcServer" : false,
+
+    // ----- Xu shop computer simulator configuration -----
+    //"patconIpAddress" : "192.168.69.11",
+    //"opcServerIpAddress": "192.168.69.11",
+    //"useTcpForOpcServer" : true,
+
+    // ----- perry/floyd simulator configuration -----
+    //"patconIpAddress" : "192.168.76.124",
+    //"opcServerIpAddress": "192.168.76.124",
+    //"useTcpForOpcServer" : true,
+
+    // ----- local simulator -----
+    "patconIpAddress" : "127.0.0.1",
+    "opcServerIpAddress": "127.0.0.1",
+    "useTcpForOpcServer" : true,
+
+    "opcServerPortNumber" : 7890,
+    "widgetPortNumberBase" : 4200,
+
+    "shutoffPeriods" : [
+    ],
+
+    "quiescentPeriods" : [
+    ],
+
+    "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+    "patternRunLoopSleepIntervalUs" : 4000,
+
+    "radioPollingLoopSleepIntervalUs" : 1000,
+
+    "widgets" : [
+        {   "name" : "fourPlay42",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "fourPlay43",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : true,
+            "autoInactiveMs" : 5000
+        }
+    ],
+
+    "patterns" : [
+
+        // ---------- stripes and rings on FourPlay-4-x ----------
+        {   "name" : "verticalStripes",
+            "enabled" : true,
+            "priority" : 6,
+            "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "RgbVerticalPattern",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "width",
+                    "widgetName" : "fourPlay42",
+                    "channelNumber" : 3,
+                    "measurement" : "position"
+                }
+            ],
+            "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 6,
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+        },
+        {   "name" : "horizontalRings",
+            "enabled" : true,
+            "priority" : 5,
+            "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "HorizontalStripePattern",
+            "inputs" : [
+                {   "inputName" : "redPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "greenPosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "bluePosition",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                },
+                {   "inputName" : "width",
+                    "widgetName" : "fourPlay43",
+                    "channelNumber" : 3,
+                    "measurement" : "position"
+                }
+            ],
+            "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 20,            // the maximum width when cyclical values are used
+            "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+        }
+    ]
+
+}
