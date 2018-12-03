@@ -2,7 +2,15 @@ Fix-It Items from Idaho Botanical Garden - Winter Garden aGlow 2018
 -------------------------------------------------------------------
 
 
-[ ] Need to be able to set color and intensity for quiescent mode so that we
+[ ] on 2 Dec., 4 more strings have gone partially bad
+
+
+
+[ ] on 1 Dec., moisture intrusion destroyed the mic boards in the middle and bottom board
+
+
+
+[X] Need to be able to set color and intensity for quiescent mode so that we
 can use the mode to run the pixels in the daytime to try to dry them out.
 
 
