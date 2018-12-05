@@ -61,7 +61,7 @@
         //},
         {   "description" : "outside event hours shutoff with daytime dry-out",
             "startDateTime" : "22:00:00",
-            "endDateTime" : "07:00:00"
+            "endDateTime" : "08:00:00"
         },
         {   "description" : "outside event hours 19 Nov.",
             "startDateTime" : "2018-11-19 20:57:00",
@@ -83,7 +83,7 @@
 
     "quiescentPeriods" : [
         {   "description" : "daytime dry-out",
-            "startDateTime" : "07:00:00",
+            "startDateTime" : "08:00:00",
             "endDateTime" : "17:00:00",
             "quiescentColor" : "192,192,192"
         },
@@ -375,10 +375,10 @@
                 }
             ],
             "pressurizationColor" : "96,0,0",
-            "depressurizationColor" : "32,64,0",
-            "lowPressureCutoff" : 150,
-            "burstThreshold" : 400,
-            "flashThreshold" : 600,
+            //"depressurizationColor" : "32,64,0",
+            "lowPressureCutoff" : 300,
+            "burstThreshold" : 450,
+            "flashThreshold" : 530,
             "burstDurationMs" : 6000,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalHighMs" : 50,
