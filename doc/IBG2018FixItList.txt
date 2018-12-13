@@ -1,9 +1,11 @@
 Fix-It Items from Idaho Botanical Garden - Winter Garden aGlow 2018
 -------------------------------------------------------------------
 
+[ ] On 12 Dec., lost ssh reverse tunnel sometime after approx. 7:45 AM. Maybe need to add ExitOnForwardFailure to ssh config.
 
-[ ] on 2 Dec., 4 more strings have gone partially bad
 
+[X] on 2 Dec., 4 more strings have gone partially bad
+Then they fixed themselves after the weather dried out. 
 
 
 [ ] on 1 Dec., moisture intrusion destroyed the mic boards in the middle and bottom board
