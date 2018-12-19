@@ -236,12 +236,12 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
     }
 
     logMsg(LOG_INFO,
-           "Got stress test payload; Id = " + to_string((int) payload->widgetHeader.id)
-           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
-           + ", ch = " + to_string((int) payload->widgetHeader.channel)
-           + ", seq = " + to_string(payload->payloadNum)
-           + ", fails = " + to_string(payload->numTxFailures)
-           + " (" + to_string(payload->numTxFailures * 100 / payload->payloadNum) + "% )");
+           "test, id=" + to_string((int) payload->widgetHeader.id)
+           + ", " + string(payload->widgetHeader.isActive ? "a" : "i")
+           + ", ch=" + to_string((int) payload->widgetHeader.channel)
+           + ", seq=" + to_string(payload->payloadNum)
+           + ", fails=" + to_string(payload->numTxFailures)
+           + "(" + to_string(payload->numTxFailures * 100 / payload->payloadNum) + "%)");
 
     UdpPayload udpPayload;
     udpPayload.id       = payload->widgetHeader.id;
@@ -264,11 +264,11 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
     }
 
     logMsg(LOG_INFO,
-           "Got Got position+velocity payload; Id = " + to_string((int) payload->widgetHeader.id)
-           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
-           + ", ch = " + to_string((int) payload->widgetHeader.channel)
-           + ", position = " + to_string(payload->position)
-           + ", velocity = " + to_string(payload->velocity));
+           "pv, id=" + to_string((int) payload->widgetHeader.id)
+           + ", " + string(payload->widgetHeader.isActive ? "a" : "i")
+           + ", ch=" + to_string((int) payload->widgetHeader.channel)
+           + ", p=" + to_string(payload->position)
+           + ", v=" + to_string(payload->velocity));
 
     UdpPayload udpPayload;
     udpPayload.id       = payload->widgetHeader.id;
@@ -291,16 +291,16 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
 
     unsigned int numMeasurements = (payloadSize - 1) / sizeof(int16_t);
 
-    logMsg(LOG_INFO,
-           "Got measurement vector payload; Id = " + to_string((int) payload->widgetHeader.id)
-           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
-           + ", ch = " + to_string((int) payload->widgetHeader.channel)
-           + ", numMeasurements = " + to_string(numMeasurements));
     stringstream sstr;
     for (unsigned int i = 0; i < numMeasurements; ++i) {
-        sstr << "  " << setfill(' ') << setw(6) << payload->measurements[i];
+        sstr << " " << setfill(' ') << setw(6) << payload->measurements[i];
     }
-    logMsg(LOG_INFO, "Measurements:" + sstr.str());
+    logMsg(LOG_INFO,
+           "mvec, id=" + to_string((int) payload->widgetHeader.id)
+           + ", " + string(payload->widgetHeader.isActive ? "a" : "i")
+           + ", ch=" + to_string((int) payload->widgetHeader.channel)
+           + ", n=" + to_string(numMeasurements)
+           + ";" + sstr.str());
 
     // Map the measurements to position measurements on the channel
     // corresponding to the measurement's position in the array.
@@ -326,16 +326,16 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
 
     unsigned int bufLen = payloadSize - 1;
 
-    logMsg(LOG_INFO,
-           "Got custom payload; Id = " + to_string((int) payload->widgetHeader.id)
-           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
-           + ", ch = " + to_string((int) payload->widgetHeader.channel)
-           + ", bufLen = " + to_string(bufLen));
     stringstream sstr;
     for (unsigned int i = 0; i < bufLen; ++i) {
         sstr << " 0x" << hex << (int) payload->buf[i];
     }
-    logMsg(LOG_INFO, "Contents: " + sstr.str());
+    logMsg(LOG_INFO,
+           "custom, id=" + to_string((int) payload->widgetHeader.id)
+           + ", " + string(payload->widgetHeader.isActive ? "a" : "i")
+           + ", ch=" + to_string((int) payload->widgetHeader.channel)
+           + ", bufLen=" + to_string(bufLen)
+           + ";" + sstr.str());
 
     switch (intToWidgetId(payload->widgetHeader.id)) {
         case WidgetId::contortOMatic:
