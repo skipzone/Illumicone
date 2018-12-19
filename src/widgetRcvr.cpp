@@ -82,6 +82,15 @@ constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
 constexpr uint8_t rfChannel = 84;
 
+// Probably no need to ever set auto acknowledgement to false because the sender
+// can control whether or not acks are sent by using the NO_ACK bit.  Set
+// autoAck false to prevent a misconfigured widget from creating unnecessary
+// radio traffic (and to prevent any widgets expectig acks from working).
+// TODO:  Set autoAck true after all widgets have been reprogrammed with
+//        firmware that can send the NO_ACK big.  (As of 18 Dec. 2018, none
+//        of them work right in that regard.)
+constexpr bool autoAck = false;
+
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 constexpr rf24_pa_dbm_e rfPowerLevel = RF24_PA_MAX;
 
@@ -400,7 +409,7 @@ bool configureRadio()
     radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
     radio.setDataRate(dataRate);
     radio.setChannel(rfChannel);
-    radio.setAutoAck(true);
+    radio.setAutoAck(autoAck);
     radio.enableDynamicPayloads();
     radio.setCRCLength(crcLength);
 
