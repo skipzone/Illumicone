@@ -244,10 +244,10 @@
                     "measurement" : "position"
                 }
             ],
-            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+            "activationThreshold" : 10,         // not sure what this should be--needs to be higher than wind noise
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
-            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
+            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "gold",
@@ -310,7 +310,7 @@
                 },
                 {   "inputName" : "greenPosition",
                     "widgetName" : "fourPlay42",
-                    "channelNumber" : 1,
+                    "channelNumber" : 3,
                     "measurement" : "position"
                 },
                 {   "inputName" : "bluePosition",
@@ -320,7 +320,7 @@
                 },
                 {   "inputName" : "width",
                     "widgetName" : "fourPlay42",
-                    "channelNumber" : 3,
+                    "channelNumber" : 1,
                     "measurement" : "position"
                 }
             ],
@@ -364,7 +364,7 @@
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
             "priority" : 9,
-            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "opacity" : 60,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "burstingPriority" : 1,
             "patternClassName" : "FillAndBurstPattern",
             "inputs" : [
@@ -374,11 +374,12 @@
                     "measurement" : "position"
                 }
             ],
-            "pressurizationColor" : "96,0,0",
+            //"pressurizationColor" : "96,0,0",
+            "pressurizationColor" : "orange",
             //"depressurizationColor" : "32,64,0",
             "lowPressureCutoff" : 300,
             "burstThreshold" : 450,
-            "flashThreshold" : 530,
+            "flashThreshold" : 600,
             "burstDurationMs" : 6000,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
             "fillStepIntervalHighMs" : 50,
