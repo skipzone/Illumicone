@@ -89,7 +89,7 @@ constexpr uint8_t rfChannel = 84;
 // TODO:  Set autoAck true after all widgets have been reprogrammed with
 //        firmware that can send the NO_ACK big.  (As of 18 Dec. 2018, none
 //        of them work right in that regard.)
-constexpr bool autoAck = false;
+constexpr bool autoAck = true;
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 constexpr rf24_pa_dbm_e rfPowerLevel = RF24_PA_MAX;
