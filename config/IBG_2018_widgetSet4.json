@@ -82,9 +82,14 @@
     ],
 
     "quiescentPeriods" : [
-        {   "description" : "daytime dry-out",
-            "startDateTime" : "08:00:00",
-            "endDateTime" : "17:00:00",
+        //{   "description" : "daytime dry-out",
+        //    "startDateTime" : "08:00:00",
+        //    "endDateTime" : "17:00:00",
+        //    "quiescentColor" : "192,192,192"
+        //},
+        {   "description" : "daytime dry-out on 21 Dec.",
+            "startDateTime" : "2018-12-21 08:00:00",
+            "endDateTime" : "2018-12-21 16:00:00",
             "quiescentColor" : "192,192,192"
         },
         {   "description" : "go home",
@@ -377,7 +382,7 @@
             //"pressurizationColor" : "96,0,0",
             "pressurizationColor" : "orange",
             //"depressurizationColor" : "32,64,0",
-            "lowPressureCutoff" : 300,
+            "lowPressureCutoff" : 200,
             "burstThreshold" : 450,
             "flashThreshold" : 600,
             "burstDurationMs" : 6000,
