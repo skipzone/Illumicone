@@ -16,6 +16,7 @@
 */
 
 
+#include "BatonWidget.h"
 #include "BellsWidget.h"
 #include "BoogieBoardWidget.h"
 #include "ContortOMaticWidget.h"
@@ -55,6 +56,8 @@ Widget* widgetFactory(WidgetId id) {
             return new FourPlay42Widget;
         case WidgetId::fourPlay43:
             return new FourPlay43Widget;
+        case WidgetId::baton:
+            return new BatonWidget;
         default:
             logMsg(LOG_ERR, "Unsupported id passed to widgetFactory.");
             return nullptr;

@@ -33,9 +33,9 @@
  *  9:  Contort-O-Matic (Ray and Mishi)
  * 10:  FourPlay-4-2 (Dr. Naked, Ross)
  * 11:  FourPlay-4-3 (Dr. Naked, Ross)
- * 12:  unassigned (future Maracas)
- * 13:  unassigned (future Mike)
- * 14:  unassigned
+ * 12:  Baton
+ * 13:  unassigned (future Maracas)
+ * 14:  unassigned (future Mike)
  * 15:  unassigned
  *
  * For stress tests, widget ids are reused as needed because stress-test
@@ -55,6 +55,7 @@ enum class WidgetId {
     contortOMatic,
     fourPlay42,
     fourPlay43,
+    baton,
     invalid = 255
 };
 

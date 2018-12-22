@@ -446,7 +446,7 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
         }
         time_t endTime = mktime(&tmTime);
 
-        SchedulePeriod newSchedulePeriod = {isDaily, desc, startTime, endTime};
+        SchedulePeriod newSchedulePeriod = {isDaily, desc, startTime, endTime, periodConfigObj};
         schedulePeriods.emplace_back(newSchedulePeriod);
     }
 

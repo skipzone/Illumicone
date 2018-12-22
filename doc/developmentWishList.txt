@@ -237,3 +237,26 @@ HTML for web interface)
 
 - command line (via custom CLI program) or web interface?
 
+
+
+Replacement for LEDscape and the Beaglebone
+-------------------------------------------
+
+While LEDscape works fine, it would be nice to have something that doesn't
+depend on having an OS.  An FPGA solution with differential drivers would be
+cool.
+
+
+
+Widget data
+-----------
+
+- make it possible for multiple patterns to get data from the same widget
+  channel without loss
+
+- provide filters for widget data
+
+- provide a way to aggregate multiple widget channels into one (ex.: calculate
+  vector magnitude from multiple similar channels)
+
+

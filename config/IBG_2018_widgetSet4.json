@@ -15,7 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// IBG 2018 widget set 1:  colored spray on Bells
+// IBG 2018 widget set 4:  sparkles on Bells, colored spray on Baton
 
 {
     "lockFilePaths" : {
@@ -82,9 +82,14 @@
     ],
 
     "quiescentPeriods" : [
-        {   "description" : "daytime dry-out",
-            "startDateTime" : "08:00:00",
-            "endDateTime" : "17:00:00",
+        //{   "description" : "daytime dry-out",
+        //    "startDateTime" : "08:00:00",
+        //    "endDateTime" : "17:00:00",
+        //    "quiescentColor" : "192,192,192"
+        //},
+        {   "description" : "daytime dry-out on 21 Dec.",
+            "startDateTime" : "2018-12-21 08:00:00",
+            "endDateTime" : "2018-12-21 16:00:00",
             "quiescentColor" : "192,192,192"
         },
         {   "description" : "go home",
@@ -110,6 +115,11 @@
     "radioPollingLoopSleepIntervalUs" : 1000,
 
     "widgets" : [
+        {   "name" : "baton",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
         {   "name" : "bells",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
@@ -139,72 +149,156 @@
 
     "patterns" : [
 
-        // ---------- colored sprays on Bells (multiple) ----------
-        {   "name" : "sprayWhite",
+        // ---------- colored sprays on Baton (multiple) ----------
+        {   "name" : "sprayWhite_Baton",
             "enabled" : true,
             "priority" : 2,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
-                    "widgetName" : "bells",
-                    "channelNumber" : 0,
+                    "widgetName" : "baton",
+                    "channelNumber" : 3,        // gyro X
                     "measurement" : "position"
                 }
             ],
             "emitColorDefault" : "white",
             "emitIntervalUseMeasmtAbsValue" : true,
-            "emitIntervalMeasmtLow" : 200,
-            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalMeasmtLow" : 50,
+            "emitIntervalMeasmtHigh" : 300,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,
             "emitBatchSize" : 15,
             "emitDirectionIsUp" : true,
             "particleMoveIntervalMs" : 6
         },
-        {   "name" : "sprayPurple",
+        {   "name" : "sprayPurple_Baton",
             "enabled" : true,
             "priority" : 2,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
-                    "widgetName" : "bells",
-                    "channelNumber" : 1,
+                    "widgetName" : "baton",
+                    "channelNumber" : 4,        // gyro Y
                     "measurement" : "position"
                 }
             ],
             "emitColorDefault" : "purple",
             "emitIntervalUseMeasmtAbsValue" : true,
-            "emitIntervalMeasmtLow" : 400,
-            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalMeasmtLow" : 50,
+            "emitIntervalMeasmtHigh" : 300,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,
             "emitBatchSize" : 15,
             "emitDirectionIsUp" : true,
             "particleMoveIntervalMs" : 18
         },
-        {   "name" : "sprayAqua",
+        {   "name" : "sprayAqua_Baton",
             "enabled" : true,
             "priority" : 2,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
-                    "widgetName" : "bells",
-                    "channelNumber" : 2,
+                    "widgetName" : "baton",
+                    "channelNumber" : 5,        // gyro Z
                     "measurement" : "position"
                 }
             ],
             "emitColorDefault" : "aqua",
             "emitIntervalUseMeasmtAbsValue" : true,
-            "emitIntervalMeasmtLow" : 300,
-            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalMeasmtLow" : 50,
+            "emitIntervalMeasmtHigh" : 300,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,
             "emitBatchSize" : 15,
             "emitDirectionIsUp" : true,
             "particleMoveIntervalMs" : 12
+        },
+
+        // ---------- sparkles on Bells (multiple) ----------
+        {   "name" : "multicolorSparkle_Bells",
+            "enabled" : false,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+            "deactivationThreshold" : 9999,
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
+            "useRandomColors" : true,
+            "sparkleChangeIntervalMs" : 50
+        },
+        {   "name" : "goldSparkle_Bells",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 10,         // not sure what this should be--needs to be higher than wind noise
+            "deactivationThreshold" : 9999,
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "gold",
+            "reverseSparkleColor" : "gold"
+        },
+        {   "name" : "redSparkle_Bells",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "bells",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 50,         // rainy, windy night 23 Nov. needs > 500!
+            "deactivationThreshold" : 9999,
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "red",
+            "reverseSparkleColor" : "red"
+        },
+        {   "name" : "greenSparkle_Bells",
+            "enabled" : true,
+            "priority" : 7,
+            "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "SparklePattern",
+            "inputs" : [
+                {   "inputName" : "density",
+                    "widgetName" : "bells",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                }
+            ],
+            "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+            "deactivationThreshold" : 9999,
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
+            "useRandomColors" : false,
+            "sparkleChangeIntervalMs" : 50,
+            "forwardSparkleColor" : "green",
+            "reverseSparkleColor" : "green"
         },
 
         // ---------- stripes and rings on FourPlay-4-x ----------
@@ -221,7 +315,7 @@
                 },
                 {   "inputName" : "greenPosition",
                     "widgetName" : "fourPlay42",
-                    "channelNumber" : 1,
+                    "channelNumber" : 3,
                     "measurement" : "position"
                 },
                 {   "inputName" : "bluePosition",
@@ -231,7 +325,7 @@
                 },
                 {   "inputName" : "width",
                     "widgetName" : "fourPlay42",
-                    "channelNumber" : 3,
+                    "channelNumber" : 1,
                     "measurement" : "position"
                 }
             ],
@@ -275,7 +369,7 @@
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
             "priority" : 9,
-            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "opacity" : 60,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "burstingPriority" : 1,
             "patternClassName" : "FillAndBurstPattern",
             "inputs" : [
@@ -285,10 +379,11 @@
                     "measurement" : "position"
                 }
             ],
-            "pressurizationColor" : "96,0,0",
-            "depressurizationColor" : "32,64,0",
-            "lowPressureCutoff" : 150,
-            "burstThreshold" : 400,
+            //"pressurizationColor" : "96,0,0",
+            "pressurizationColor" : "orange",
+            //"depressurizationColor" : "32,64,0",
+            "lowPressureCutoff" : 200,
+            "burstThreshold" : 450,
             "flashThreshold" : 600,
             "burstDurationMs" : 6000,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step

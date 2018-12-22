@@ -3,6 +3,7 @@
 We assign these ports:
 
     50103 ic-widpatcon
+    50113 ic2-widpatcon
     50114 ic2-widpatcon2
 
 Replace myEc2Instance.com with the name or IP address of the relay server.  An
