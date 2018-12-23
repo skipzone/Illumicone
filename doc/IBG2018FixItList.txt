@@ -1,19 +1,20 @@
 Fix-It Items from Idaho Botanical Garden - Winter Garden aGlow 2018
 -------------------------------------------------------------------
 
-[ ] On 12 Dec., lost ssh reverse tunnel sometime after approx. 7:45 AM. Maybe need to add ExitOnForwardFailure to ssh config.
-
-
-[X] on 2 Dec., 4 more strings have gone partially bad
-Then they fixed themselves after the weather dried out. 
-
-
-[ ] on 1 Dec., moisture intrusion destroyed the mic boards in the middle and bottom board
+[ ]
+All new strings need to have pins soldered.
 
 
 
-[X] Need to be able to set color and intensity for quiescent mode so that we
-can use the mode to run the pixels in the daytime to try to dry them out.
+[ ]
+On 12 Dec., lost ssh reverse tunnel sometime after approx. 7:45 AM. Maybe need
+to add ExitOnForwardFailure to ssh config.
+
+
+
+[ ]
+on 1 Dec., moisture intrusion destroyed the mic boards in the middle and bottom
+bells
 
 
 
@@ -30,34 +31,61 @@ inactive, sparkle continues until the pattern forces it inactive (apparently).
 
 
 
-[ ]
+[X]
+on 2 Dec., 4 more strings have gone partially bad.  Then they fixed themselves
+after the weather dried out. 
+
+
+
+[X] Need to be able to set color and intensity for quiescent mode so that we
+can use the mode to run the pixels in the daytime to try to dry them out.
+
+
+
+[X]
 Magnets on all FourPlay-4-x wheels need to be re-glued with epoxy.  Maybe swap
 out one wheel at a time with one that has been reworked.
 
 
+[X]
+20181221:  String 16 has a bad connection up top.  Positive wire pulled out of Delphi
+connector, same as string 20.  Replaced with string 27.
 
-[ ]
+
+
+[X]
 String 20 appears to have a bad connection up top.
 
 20181201:  Replaced with spare.
 
+20181221:  Positive wire pulled out of Delphi connector.  It appears that the
+wire is too thin to crimp properly.  Soldered all three pins.
 
 
-[ ]
+
+[X]
 The connections for strings ?15 and ?16 are swapped at the top disk.
 
+20181221:  Fixed.
 
 
-[ ]
+
+[X]
 String 27 is bad after the 52nd pixel--intermittent, bad data, possibly
 due to sustained, heavy rain on 30 Nov.  Power seems ok.
 
 20181201:  Replaced with spare.
 
+20181221:  String working fine.  Must have dried out.  Used as replacement for
+string 16.
 
 
-[ ] All bell stopped working on Dec. 1st, probably due to the microphones
+
+[X] All bell stopped working on Dec. 1st, probably due to the microphones
 getting wet from the heavy rain.
+
+Top bell (the original one) started working again after drying out.  The
+microphones of the other two appear to be hopelessly damaged.
 
 
 
