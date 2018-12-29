@@ -87,9 +87,9 @@
         //    "endDateTime" : "17:00:00",
         //    "quiescentColor" : "192,192,192"
         //},
-        {   "description" : "daytime dry-out on 21 Dec.",
-            "startDateTime" : "2018-12-21 08:00:00",
-            "endDateTime" : "2018-12-21 16:00:00",
+        {   "description" : "daytime dry-out with early startup",
+            "startDateTime" : "08:00:00",
+            "endDateTime" : "16:00:00",
             "quiescentColor" : "192,192,192"
         },
         {   "description" : "go home",
@@ -233,7 +233,7 @@
             "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
-            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
+            "densityScaledownFactor" : 4096,    // 25% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : true,
             "sparkleChangeIntervalMs" : 50
         },
@@ -252,7 +252,7 @@
             "activationThreshold" : 10,         // not sure what this should be--needs to be higher than wind noise
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
-            "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "densityScaledownFactor" : 4096,    // 25% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "gold",
@@ -273,7 +273,7 @@
             "activationThreshold" : 50,         // rainy, windy night 23 Nov. needs > 500!
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
-            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
+            "densityScaledownFactor" : 4096,    // 25% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "red",
@@ -294,7 +294,7 @@
             "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
-            "densityScaledownFactor" : 4096,    // 50% sparkle when bells's intensity (position) is at maximum
+            "densityScaledownFactor" : 4096,    // 25% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "green",
@@ -336,7 +336,7 @@
         {   "name" : "horizontalRings",
             "enabled" : true,
             "priority" : 5,
-            "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "HorizontalStripePattern",
             "inputs" : [
                 {   "inputName" : "redPosition",
@@ -382,7 +382,7 @@
             //"pressurizationColor" : "96,0,0",
             "pressurizationColor" : "orange",
             //"depressurizationColor" : "32,64,0",
-            "lowPressureCutoff" : 200,
+            "lowPressureCutoff" : 150,
             "burstThreshold" : 450,
             "flashThreshold" : 600,
             "burstDurationMs" : 6000,
@@ -397,7 +397,7 @@
         {   "name" : "rain",
             "enabled" : true,
             "priority" : 2,
-            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "opacity" : 95,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
