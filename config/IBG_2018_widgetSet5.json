@@ -56,8 +56,8 @@
 
     "shutoffPeriods" : [
         {   "description" : "outside event hours shutoff, 31 Dec. - 1 Jan.",
-            "startDateTime" : "20181231 22:00:00",
-            "endDateTime" : "20190101 17:00:00"
+            "startDateTime" : "2018-12-31 22:00:00",
+            "endDateTime" : "2019-01-01 17:00:00"
         },
         {   "description" : "outside event hours shutoff, 1 Jan. - 4 Jan.",
             "startDateTime" : "2019-01-01 22:00:00",
