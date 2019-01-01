@@ -2,6 +2,12 @@ Fix-It Items from Idaho Botanical Garden - Winter Garden aGlow 2018
 -------------------------------------------------------------------
 
 [ ]
+Weird bug in vertical stripes pattern:  When width > 1, string 27 turns on
+when a stripe passes through (or next to?) string 1.
+
+
+
+[ ]
 All new strings need to have pins soldered.
 
 

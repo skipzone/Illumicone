@@ -32,9 +32,9 @@ BellsWidget::BellsWidget()
     : Widget(WidgetId::bells, 3)
     , simStep(INT_MIN + stepSize)
 {
-    simulationUpdateIntervalMs[0] = 10;
-    simulationUpdateIntervalMs[1] = 10;
-    simulationUpdateIntervalMs[2] = 10;
+    simulationUpdateIntervalMs[0] = 20;
+    simulationUpdateIntervalMs[1] = 20;
+    simulationUpdateIntervalMs[2] = 20;
 }
 
 

@@ -47,10 +47,15 @@ class SparklePattern : public Pattern {
 
     private:
 
+        void setIsActive(bool nowActive, unsigned int nowMs);
+
         std::shared_ptr<WidgetChannel> densityChannel;
 
         // pattern configuration
         int densityScaledownFactor;
+        bool doAutoDecay;
+        float decayConstant;
+        unsigned int decayResetMs;
         int activationThreshold;
         int deactivationThreshold;
         CRGB forwardSparkleColor;
@@ -64,5 +69,7 @@ class SparklePattern : public Pattern {
         unsigned int nextSparkleChangeMs;
         int numPixelsPerStringToSparkle;
         unsigned int sparkleChangeIntervalMs;
+        unsigned int decayStartMs;
+        unsigned int inactiveStartMs;
 };
 

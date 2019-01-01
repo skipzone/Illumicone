@@ -15,7 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// IBG 2018 widget set 4:  sparkles on Bells, colored spray on Baton
+// IBG 2018 widget set 5:  only gold sparkles on Bells, colored spray on Baton
 
 {
     "lockFilePaths" : {
@@ -225,6 +225,8 @@
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 4096,    // 25% sparkle when bells's intensity (position) is at maximum
+            "decayConstant" : 0.5,              // it is annoying af when a kid endlessly whacks the bell, so diminish the sparkle
+            "decayResetMs" : 3000,              // until the little shit quits for a while
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "gold",

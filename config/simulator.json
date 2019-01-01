@@ -40,8 +40,8 @@
     //"useTcpForOpcServer" : true,
 
     // ----- perry/floyd simulator configuration -----
-    "patconIpAddress" : "192.168.76.135",
-    "opcServerIpAddress": "192.168.76.135",
+    "patconIpAddress" : "192.168.76.11",
+    "opcServerIpAddress": "192.168.76.11",
     "useTcpForOpcServer" : true,
 
     // ----- local simulator -----
@@ -71,7 +71,7 @@
         },
         {   "name" : "bells",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "boogieBoard",
@@ -86,7 +86,7 @@
         },
         {   "name" : "fourPlay42",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay43",
@@ -462,7 +462,7 @@
             "sparkleChangeIntervalMs" : 50
         },
         {   "name" : "goldSparkle_Bells",
-            "enabled" : false,
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -477,6 +477,8 @@
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+            "decayConstant" : 0.5,
+            "decayResetMs" : 3000,
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "gold",
