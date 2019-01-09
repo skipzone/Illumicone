@@ -2,6 +2,18 @@ Fix-It Items from Idaho Botanical Garden - Winter Garden aGlow 2018
 -------------------------------------------------------------------
 
 [ ]
+Figure out what caused the millions of zero-length invalid packets logged by
+widgetRcvr.
+
+
+
+[ ]
+Send a vector of measurements for widgets with multiple channels.  Also,
+request an ack for the first inactive message.
+
+
+
+[ ]
 Weird bug in vertical stripes pattern:  When width > 1, string 27 turns on
 when a stripe passes through (or next to?) string 1.
 

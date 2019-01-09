@@ -59,24 +59,24 @@
             "startDateTime" : "2018-12-31 22:00:00",
             "endDateTime" : "2019-01-01 17:00:00"
         },
-        {   "description" : "outside event hours shutoff, 1 Jan. - 4 Jan.",
-            "startDateTime" : "2019-01-01 22:00:00",
-            "endDateTime" : "2019-01-04 17:00:00"
-        },
+        //{   "description" : "outside event hours shutoff, 1 Jan. - 4 Jan.",
+        //    "startDateTime" : "2019-01-01 22:00:00",
+        //    "endDateTime" : "2019-01-04 17:00:00"
+        //},
         {   "description" : "outside event hours shutoff, 4 Jan. - 5 Jan.",
-            "startDateTime" : "2019-01-04 22:00:00",
+            "startDateTime" : "2019-01-04 21:30:00",
             "endDateTime" : "2019-01-05 17:00:00"
         },
         {   "description" : "after event closing on 5 Jan.",
-            "startDateTime" : "2019-01-05 22:00:00",
+            "startDateTime" : "2019-01-05 21:30:00",
             "endDateTime" : "2019-01-31 23:59:59"
         }
     ],
 
     "quiescentPeriods" : [
         {   "description" : "go home",
-            "startDateTime" : "21:30:00",
-            "endDateTime" : "22:00:00",
+            "startDateTime" : "21:00:00",
+            "endDateTime" : "21:30:00",
             "quiescentColor" : "navy"
         }
     ],
@@ -225,7 +225,7 @@
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 4096,    // 25% sparkle when bells's intensity (position) is at maximum
-            "decayConstant" : 0.5,              // it is annoying af when a kid endlessly whacks the bell, so diminish the sparkle
+            "decayConstant" : 0.25,             // it is annoying af when a kid endlessly whacks the bell, so diminish the sparkle
             "decayResetMs" : 3000,              // until the little shit quits for a while
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
@@ -233,7 +233,7 @@
             "reverseSparkleColor" : "gold"
         },
         {   "name" : "redSparkle_Bells",
-            "enabled" : false,
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -248,13 +248,15 @@
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 4096,    // 25% sparkle when bells's intensity (position) is at maximum
+            "decayConstant" : 0.25,             // it is annoying af when a kid endlessly whacks the bell, so diminish the sparkle
+            "decayResetMs" : 3000,              // until the little shit quits for a while
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "red",
             "reverseSparkleColor" : "red"
         },
         {   "name" : "greenSparkle_Bells",
-            "enabled" : false,
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -269,6 +271,8 @@
             "deactivationThreshold" : 9999,
             "numGoodMeasurementsForReactivation" : 1,
             "densityScaledownFactor" : 4096,    // 25% sparkle when bells's intensity (position) is at maximum
+            "decayConstant" : 0.25,             // it is annoying af when a kid endlessly whacks the bell, so diminish the sparkle
+            "decayResetMs" : 3000,              // until the little shit quits for a while
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
             "forwardSparkleColor" : "green",
@@ -356,7 +360,7 @@
             //"pressurizationColor" : "96,0,0",
             "pressurizationColor" : "orange",
             //"depressurizationColor" : "32,64,0",
-            "lowPressureCutoff" : 150,
+            "lowPressureCutoff" : 200,
             "burstThreshold" : 450,
             "flashThreshold" : 600,
             "burstDurationMs" : 6000,
