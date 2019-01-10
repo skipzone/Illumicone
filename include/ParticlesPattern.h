@@ -67,6 +67,7 @@ class ParticlesPattern : public Pattern {
         int emitIntervalMeasmtLow;
         int emitIntervalHighMs;
         int emitIntervalLowMs;
+        bool emitIntervalUseMeasmtAbsValue;
         bool emitRateUsePositionMeasmt;
         unsigned int particleMoveIntervalMs;
 

@@ -29,21 +29,25 @@
 
 
 void configureRadio(
-    RF24&         radio,
-    const char*   writePipeAddress,
-    uint8_t       txRetryDelayMultiplier,
-    uint8_t       txMaxRetries,
-    rf24_pa_dbm_e rfPowerLevel)
+  RF24&             radio,
+  const char*       writePipeAddress,
+  bool              wantAcks,
+  uint8_t           txRetryDelayMultiplier,
+  uint8_t           txMaxRetries,
+  rf24_crclength_e  crcLength,
+  rf24_pa_dbm_e     rfPowerLevel,
+  rf24_datarate_e   dataRate,
+  uint8_t           channel)
 {
   radio.begin();
 
   radio.setPALevel(rfPowerLevel);
   radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
-  radio.setDataRate(DATA_RATE);
-  radio.setChannel(RF_CHANNEL);
-  radio.setAutoAck(1);
+  radio.setDataRate(dataRate);
+  radio.setChannel(channel);
+  radio.setAutoAck(wantAcks);
   radio.enableDynamicPayloads();
-  radio.setCRCLength(CRC_LENGTH);
+  radio.setCRCLength(crcLength);
 
   radio.openWritingPipe((const uint8_t*) writePipeAddress);
 

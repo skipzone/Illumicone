@@ -19,6 +19,7 @@
 #include <climits>
 #include <iostream>
 
+#include <math.h>
 #include <stdlib.h>
 
 #include "ConfigReader.h"
@@ -43,7 +44,8 @@ SparklePattern::SparklePattern(const std::string& name)
 
 bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    nextSparkleChangeMs = 0;
+    decayStartMs = 0;
+    inactiveStartMs = 0; 
 
 
     // ----- get pattern configuration -----
@@ -73,6 +75,18 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
         return false;
     }
     logMsg(LOG_INFO, name + " densityScaledownFactor=" + to_string(densityScaledownFactor));
+
+    if (!ConfigReader::getFloatValue(patternConfig, "decayConstant", decayConstant)) {
+        doAutoDecay = false;
+        logMsg(LOG_INFO, name + " auto decay is not enabled");
+    }
+    else {
+        doAutoDecay = true;
+        if (!ConfigReader::getUnsignedIntValue(patternConfig, "decayResetMs", decayResetMs, errMsgSuffix, 1)) {
+            return false;
+        }
+        logMsg(LOG_INFO, name + " decayConstant=" + to_string(decayConstant) + " decayResetMs=" + to_string(decayResetMs));
+    }
 
     if (!ConfigReader::getUnsignedIntValue(patternConfig, "sparkleChangeIntervalMs", sparkleChangeIntervalMs, errMsgSuffix, 1)) {
         return false;
@@ -136,6 +150,27 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 }
 
 
+void SparklePattern::setIsActive(bool nowActive, unsigned int nowMs)
+{
+    if (nowActive) {
+        if (!isActive) {
+            nextSparkleChangeMs = nowMs;
+            // Reset the auto decay if we've been inactive long enough.
+            if (doAutoDecay && (nowMs - inactiveStartMs >= decayResetMs || decayStartMs == 0)) {
+                decayStartMs = nowMs;
+            }
+            inactiveStartMs = 0;
+        }
+    }
+    else {
+        if (inactiveStartMs == 0) {
+            inactiveStartMs = nowMs;
+        }
+    }
+    isActive = nowActive;
+}
+
+
 bool SparklePattern::update()
 {
     // Don't do anything if no input channel was assigned.
@@ -143,13 +178,13 @@ bool SparklePattern::update()
         return false;
     }
 
+    unsigned int nowMs = getNowMs();
+
     // If the widget channel has gone inactive, turn off this pattern.
     if (!densityChannel->getIsActive()) {
-        isActive = false;
+        setIsActive(false, nowMs);
         return false;
     }
-
-    unsigned int nowMs = getNowMs();
 
     if ((usePositionMeasurement && densityChannel->getHasNewPositionMeasurement())
         || (!usePositionMeasurement && densityChannel->getHasNewVelocityMeasurement()))
@@ -161,7 +196,7 @@ bool SparklePattern::update()
         // If the latest measurement is below the activation threshold, turn off this pattern.
         if (curMeasmt <= activationThreshold) {
             //logMsg(LOG_DEBUG, to_string(curMeasmt) + " is below sparkle activation threshold " + to_string(activationThreshold));
-            isActive = false;
+            setIsActive(false, nowMs);
             return false;
         }
 
@@ -170,7 +205,7 @@ bool SparklePattern::update()
             //logMsg(LOG_DEBUG, to_string(curMeasmt) + " is above sparkle deactivation threshold "
             //                  + to_string(deactivationThreshold));
             goodMeasurementCount = 0;
-            isActive = false;
+            setIsActive(false, nowMs);
             return false;
         }
 
@@ -181,24 +216,28 @@ bool SparklePattern::update()
         if (++goodMeasurementCount < numGoodMeasurementsForReactivation) {
             //logMsg(LOG_DEBUG, to_string(goodMeasurementCount) + " of " + to_string(numGoodMeasurementsForReactivation)
             //                  + " good measurements received for reactivation.");
-            isActive = false;
+            setIsActive(false, nowMs);
             return false;
         }
         // It wouldn't overflow for, like, fucking forever, but we'll prevent
         // that from happening because defensive programming n' shit.
         goodMeasurementCount = numGoodMeasurementsForReactivation;
 
-        if (!isActive) {
-            isActive = true;
-            nextSparkleChangeMs = nowMs;
-        }
+        setIsActive(true, nowMs);
 
-        float sparkePercentage = min((float) curMeasmt / (float) densityScaledownFactor, (float) 1);
-        numPixelsPerStringToSparkle = sparkePercentage * (float) pixelsPerString;
+        float decayFactor = 1.0;
+        if (doAutoDecay) {
+            float decaySeconds = (nowMs - decayStartMs) / 1000.0;
+            decayFactor = expf(-1.0 * decayConstant * decaySeconds);
+        }
+        float sparkleFactor = std::min(((float) curMeasmt / (float) densityScaledownFactor) * decayFactor, (float) 1);
+
+        numPixelsPerStringToSparkle = sparkleFactor * (float) pixelsPerString;
         motionIsReverse = curMeasmtIsNegative;
 
         //logMsg(LOG_DEBUG, "curMeasmt=" + to_string(curMeasmt)
-        //                  + ", sparkePercentage=" + to_string(sparkePercentage)
+        //                  + ", decayFactor=" + to_string(decayFactor)
+        //                  + ", sparkleFactor=" + to_string(sparkleFactor)
         //                  + ", numPixelsPerStringToSparkle=" + to_string(numPixelsPerStringToSparkle)
         //                  + ", motionIsReverse=" + to_string(motionIsReverse));
     }

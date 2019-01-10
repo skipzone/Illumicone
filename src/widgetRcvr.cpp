@@ -82,11 +82,20 @@ constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
 constexpr uint8_t rfChannel = 84;
 
+// Probably no need to ever set auto acknowledgement to false because the sender
+// can control whether or not acks are sent by using the NO_ACK bit.  Set
+// autoAck false to prevent a misconfigured widget from creating unnecessary
+// radio traffic (and to prevent any widgets expectig acks from working).
+// TODO:  Set autoAck true after all widgets have been reprogrammed with
+//        firmware that can send the NO_ACK big.  (As of 18 Dec. 2018, none
+//        of them work right in that regard.)
+constexpr bool autoAck = true;
+
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 constexpr rf24_pa_dbm_e rfPowerLevel = RF24_PA_MAX;
 
 // RF24_250KBPS or RF24_1MBPS
-constexpr rf24_datarate_e dataRate = RF24_250KBPS;
+constexpr rf24_datarate_e dataRate = RF24_1MBPS;
 
 constexpr uint8_t txRetryDelayMultiplier = 15;  // 250 us additional delay multiplier (0-15)
 constexpr uint8_t txMaxRetries = 15;            // max retries (0-15)
@@ -227,12 +236,12 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
     }
 
     logMsg(LOG_INFO,
-           "Got stress test payload; Id = " + to_string((int) payload->widgetHeader.id)
-           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
-           + ", ch = " + to_string((int) payload->widgetHeader.channel)
-           + ", seq = " + to_string(payload->payloadNum)
-           + ", fails = " + to_string(payload->numTxFailures)
-           + " (" + to_string(payload->numTxFailures * 100 / payload->payloadNum) + "% )");
+           "stest: id=" + to_string((int) payload->widgetHeader.id)
+           + " a=" + to_string(payload->widgetHeader.isActive)
+           + " ch=" + to_string((int) payload->widgetHeader.channel)
+           + " seq=" + to_string(payload->payloadNum)
+           + " fails=" + to_string(payload->numTxFailures)
+           + "(" + to_string(payload->numTxFailures * 100 / payload->payloadNum) + "%)");
 
     UdpPayload udpPayload;
     udpPayload.id       = payload->widgetHeader.id;
@@ -255,11 +264,11 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
     }
 
     logMsg(LOG_INFO,
-           "Got Got position+velocity payload; Id = " + to_string((int) payload->widgetHeader.id)
-           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
-           + ", ch = " + to_string((int) payload->widgetHeader.channel)
-           + ", position = " + to_string(payload->position)
-           + ", velocity = " + to_string(payload->velocity));
+           "pv: id=" + to_string((int) payload->widgetHeader.id)
+           + " a=" + to_string(payload->widgetHeader.isActive)
+           + " ch=" + to_string((int) payload->widgetHeader.channel)
+           + " p=" + to_string(payload->position)
+           + " v=" + to_string(payload->velocity));
 
     UdpPayload udpPayload;
     udpPayload.id       = payload->widgetHeader.id;
@@ -282,16 +291,16 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
 
     unsigned int numMeasurements = (payloadSize - 1) / sizeof(int16_t);
 
-    logMsg(LOG_INFO,
-           "Got measurement vector payload; Id = " + to_string((int) payload->widgetHeader.id)
-           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
-           + ", ch = " + to_string((int) payload->widgetHeader.channel)
-           + ", numMeasurements = " + to_string(numMeasurements));
     stringstream sstr;
     for (unsigned int i = 0; i < numMeasurements; ++i) {
-        sstr << "  " << setfill(' ') << setw(6) << payload->measurements[i];
+        sstr << " " << setfill(' ') << setw(6) << payload->measurements[i];
     }
-    logMsg(LOG_INFO, "Measurements:" + sstr.str());
+    logMsg(LOG_INFO,
+           "mvec: id=" + to_string((int) payload->widgetHeader.id)
+           + " a=" + to_string(payload->widgetHeader.isActive)
+           + " ch=" + to_string((int) payload->widgetHeader.channel)
+           + " n=" + to_string(numMeasurements)
+           + sstr.str());
 
     // Map the measurements to position measurements on the channel
     // corresponding to the measurement's position in the array.
@@ -317,16 +326,16 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
 
     unsigned int bufLen = payloadSize - 1;
 
-    logMsg(LOG_INFO,
-           "Got custom payload; Id = " + to_string((int) payload->widgetHeader.id)
-           + ", " + string(payload->widgetHeader.isActive ? "active  " : "inactive")
-           + ", ch = " + to_string((int) payload->widgetHeader.channel)
-           + ", bufLen = " + to_string(bufLen));
     stringstream sstr;
     for (unsigned int i = 0; i < bufLen; ++i) {
         sstr << " 0x" << hex << (int) payload->buf[i];
     }
-    logMsg(LOG_INFO, "Contents: " + sstr.str());
+    logMsg(LOG_INFO,
+           "custom: id=" + to_string((int) payload->widgetHeader.id)
+           + " a=" + to_string(payload->widgetHeader.isActive)
+           + " ch=" + to_string((int) payload->widgetHeader.channel)
+           + " bufLen=" + to_string(bufLen)
+           + sstr.str());
 
     switch (intToWidgetId(payload->widgetHeader.id)) {
         case WidgetId::contortOMatic:
@@ -382,7 +391,8 @@ bool openUdpPorts()
         && openUdpPort(WidgetId::pump)
         && openUdpPort(WidgetId::contortOMatic)
         && openUdpPort(WidgetId::fourPlay42)
-        && openUdpPort(WidgetId::fourPlay43);
+        && openUdpPort(WidgetId::fourPlay43)
+        && openUdpPort(WidgetId::baton);
 
     return retval;
 }
@@ -399,7 +409,7 @@ bool configureRadio()
     radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
     radio.setDataRate(dataRate);
     radio.setChannel(rfChannel);
-    radio.setAutoAck(true);
+    radio.setAutoAck(autoAck);
     radio.enableDynamicPayloads();
     radio.setCRCLength(crcLength);
 

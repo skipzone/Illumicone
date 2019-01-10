@@ -173,12 +173,12 @@ void Widget::pollForUdpRx()
         }
 
         logMsg(LOG_INFO, 
-            "got UDP payload; length = " + to_string(rxByteCount)
-            + ", id = " + to_string((int) payload.id)
-            + ", channel = " + to_string((int) payload.channel)
-            + ", isActive = " + to_string((int) payload.isActive)
-            + ", position = " + to_string(payload.position)
-            + ", velocity = " + to_string(payload.velocity));
+            "payload: len=" + to_string(rxByteCount)
+            + " id=" + to_string((int) payload.id)
+            + " ch=" + to_string((int) payload.channel)
+            + " a=" + to_string((int) payload.isActive)
+            + " p=" + to_string(payload.position)
+            + " v=" + to_string(payload.velocity));
 
         if (payload.channel < channels.size()) {
             channels[payload.channel]->setPositionAndVelocity(payload.position, payload.velocity);

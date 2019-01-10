@@ -24,10 +24,24 @@
     "numberOfStrings" : 36,
     "numberOfPixelsPerString" : 100,
 
+    // ----- installation configuration -----
+    //"patconIpAddress" : "127.0.0.1",
+    //"opcServerIpAddress": "192.168.69.100",
+    //"useTcpForOpcServer" : false,
+    // ----- remote widget receiver configuration -----
+    //"patconIpAddress" : "192.168.69.103",
+    //"opcServerIpAddress": "192.168.69.103",
+    //"useTcpForOpcServer" : false,
+    // ----- Xu shop computer simulator configuration -----
+    //"patconIpAddress" : "192.168.69.11",
+    //"opcServerIpAddress": "192.168.69.11",
+    //"useTcpForOpcServer" : true,
+    // ----- local simulator configuration -----
     "patconIpAddress" : "127.0.0.1",
     "opcServerIpAddress": "127.0.0.1",
-    "opcServerPortNumber" : 7890,
     "useTcpForOpcServer" : true,
+
+    "opcServerPortNumber" : 7890,
     "widgetPortNumberBase" : 4200,
 
     "shutoffPeriods" : [
@@ -37,21 +51,9 @@
     ],
 
     "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
-    "patternRunLoopSleepIntervalUs" : 500,
-
-    "radioPollingLoopSleepIntervalUs" : 1000,
+    "patternRunLoopSleepIntervalUs" : 4000,
 
     "widgets" : [
-        {   "name" : "eye",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 500
-        },
-        {   "name" : "spinnah",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
         {   "name" : "bells",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
@@ -69,7 +71,7 @@
         },
         {   "name" : "triObelisk",
             "enabled" : true,
-            "generateSimulatedMeasurements" : false,
+            "generateSimulatedMeasurements" : true,
             "autoInactiveMs" : 5000
         },
         {   "name" : "pump",
@@ -77,24 +79,20 @@
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
-        {   "name" : "contortOMatic",
+        {   "name" : "fourPlay42",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
-        {   "name" : "fourPlay42",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : true,
-            "autoInactiveMs" : 5000
-        },
         {   "name" : "fourPlay43",
             "enabled" : true,
-            "generateSimulatedMeasurements" : true,
+            "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         }
     ],
 
     "patterns" : [
+        // ---------- stripes and rings on FourPlay-4-x ----------
         {   "name" : "verticalStripes",
             "enabled" : true,
             "priority" : 6,
@@ -122,8 +120,8 @@
                     "measurement" : "position"
                 }
             ],
-            "widthScaleFactor" : 6,             // effectively gear down a rotating widget
-            "maxCyclicalWidth" : 12,
+            "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+            "maxCyclicalWidth" : 6,
             "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
         {   "name" : "horizontalRings",
@@ -157,8 +155,11 @@
             "maxCyclicalWidth" : 20,            // the maximum width when cyclical values are used
             "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
         },
+
+        // ---------- sparkes on Bells (single) ----------
+        /*
         {   "name" : "multicolorSparkle",
-            "enabled" : false,
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -175,7 +176,7 @@
             "sparkleChangeIntervalMs" : 50
         },
         {   "name" : "whiteSparkle",
-            "enabled" : false,
+            "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "SparklePattern",
@@ -190,9 +191,103 @@
             "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "white"
+            "forwardSparkleColor" : "white",
+            "reverseSparkleColor" : "white"
         },
-        {   "name" : "magentaSparkle",
+        */
+
+        // ---------- spray on Bells (single) ----------
+        /*
+        {   "name" : "spray",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorDefault" : "white",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 8
+        },
+        */
+
+        // ---------- colored sprays on Bells (multiple) ----------
+        {   "name" : "sprayWhite",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "bells",
+                    "channelNumber" : 0,
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorDefault" : "white",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 8
+        },
+        {   "name" : "sprayPink",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "bells",
+                    "channelNumber" : 1,
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorDefault" : "pink",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 4
+        },
+        {   "name" : "sprayGreen",
+            "enabled" : true,
+            "priority" : 2,
+            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
+            "inputs" : [
+                {   "inputName" : "emitRate",
+                    "widgetName" : "bells",
+                    "channelNumber" : 2,
+                    "measurement" : "position"
+                }
+            ],
+            "emitColorDefault" : "green",
+            "emitIntervalMeasmtLow" : 100,
+            "emitIntervalMeasmtHigh" : 1023,
+            "emitIntervalLowMs" : 250,
+            "emitIntervalHighMs" : 10,
+            "emitBatchSize" : 15,
+            "emitDirectionIsUp" : true,
+            "particleMoveIntervalMs" : 12
+        },
+
+        // ---------- sparkles on TriObelisk ----------
+        {   "name" : "magentaGreenSparkle",
             "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
@@ -204,15 +299,16 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "activationThreshold" : 10,                 // 20 is what we used with Shirley's Web in 2016
             "deactivationThreshold" : 300,
-            "numGoodMeasurementsForReactivation" : 10,
-            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "magenta"
+            "forwardSparkleColor" : "magenta",
+            "reverseSparkleColor" : "green"
         },
-        {   "name" : "aquaSparkle",
+        {   "name" : "aquaRedSparkle",
             "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
@@ -224,15 +320,16 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "activationThreshold" : 10,                 // 20 is what we used with Shirley's Web in 2016
             "deactivationThreshold" : 300,
-            "numGoodMeasurementsForReactivation" : 10,
-            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "aqua"
+            "forwardSparkleColor" : "aqua",
+            "reverseSparkleColor" : "red"
         },
-        {   "name" : "yellowSparkle",
+        {   "name" : "yellowBlueSparkle",
             "enabled" : true,
             "priority" : 7,
             "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
@@ -244,14 +341,17 @@
                     "measurement" : "velocity"
                 }
             ],
-            "activationThreshold" : 20,         // 20 is what we used with Shirley's Web in 2016
+            "activationThreshold" : 10,                 // 20 is what we used with Shirley's Web in 2016
             "deactivationThreshold" : 300,
-            "numGoodMeasurementsForReactivation" : 10,
-            "densityScaledownFactor" : 1200,    // 1200 is the equivalent value that we used with Shirley's Web in 2016
+            "numGoodMeasurementsForReactivation" : 1,
+            "densityScaledownFactor" : 1200,            // 1200 is the equivalent value that we used with Shirley's Web in 2016
             "useRandomColors" : false,
             "sparkleChangeIntervalMs" : 50,
-            "sparkleColor" : "yellow"
+            "forwardSparkleColor" : "yellow",
+            "reverseSparkleColor" : "blue"
         },
+
+        // ---------- fill and burst on Pump ----------
         {   "name" : "pumpFillAndBurst",
             "enabled" : true,
             "priority" : 9,
@@ -265,375 +365,59 @@
                     "measurement" : "position"
                 }
             ],
+            "pressurizationColor" : "96,0,0",
+            //"depressurizationColor" : "32,64,0",
             "lowPressureCutoff" : 150,
             "burstThreshold" : 400,
-            "pressurizationColor" : "96,0,0",
-            "depressurizationColor" : "32,64,0",
+            "flashThreshold" : 600,
+            "burstDurationMs" : 6000,
             "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
-            "fillStepIntervalMs" : 20
+            "fillStepIntervalHighMs" : 50,
+            "fillStepIntervalLowMs" : 5,
+            "flashDurationMs" : 2000,
+            "flashIntervalMs" : 20
         },
-        {   "name" : "eyeFlash",
-            "enabled" : true,
-            "priority" : 2,
-            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-            "patternClassName" : "AnnoyingFlashingPattern",
-            "inputs" : [
-                {   "inputName" : "intensity",
-                    "widgetName" : "eye",
-                    "channelNumber" : 0,
-                    "measurement" : "position"
-                }
-            ],
-            "autoDisableTimeoutMs" : 1500,      // pattern disables itself after being active for this amount of time
-            "activationThreshold" : 300,        // 300 is a basic LED flashlight from a few feet away
-            "reactivationThreshold" : 200,      // pattern re-enables itself when measurement drops below this value
-            "allStringsSameColor" : false,
-            "flashChangeIntervalMs" : 50
-        },
+
+        // ---------- rain on Rainstick ----------
         {   "name" : "rain",
             "enabled" : true,
-            "priority" : 3,
+            "priority" : 2,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
                     "widgetName" : "rainstick",
-                    "channelNumber" : 2,        // average sound amplitude
+                    "channelNumber" : 2,                // average sound amplitude
+                    "measurement" : "position"
+                },
+                {   "inputName" : "emitColor",
+                    "widgetName" : "rainstick",
+                    "channelNumber" : 4,                // average gyro y-axis (corresponds to pitch and rolling the rainstick)
                     "measurement" : "position"
                 }
             ],
-            "emitColor" : "0,64,192",
-            "emitIntervalMeasmtLow" : 600,
-            "emitIntervalMeasmtHigh" : 1023,
+            // TODO 3/1/2018 ross:  Add this as a defined color:  "0,64,192"
+            "emitColorDefault" : "blue",
+            "emitColorMeasmtLow" : -90,
+            "emitColorMeasmtHigh" : 90,
+            "emitColorLow" : "red",                     // same color for low and high means use the entire color wheel
+            "emitColorHigh" : "red",
+            "emitColorMeasmtMultiplier" : 0.1,          // Rainstick reports position in tenths of a degree
+            "emitColorIntegrateMeasmt" : false,
+            "emitIntervalMeasmtLow" : 10, //600,
+            "emitIntervalMeasmtHigh" : 200, //1023,
             "emitIntervalLowMs" : 250,
             "emitIntervalHighMs" : 10,
             "emitBatchSize" : 5,
             "emitDirectionIsUp" : false,
             "particleMoveIntervalMs" : 10
         },
-        {   "name" : "spray",
-            "enabled" : true,
-            "priority" : 3,
-            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-            "patternClassName" : "ParticlesPattern",
-            "inputs" : [
-                {   "inputName" : "emitRate",
-                    "widgetName" : "bells",
-                    "channelNumber" : 0,
-                    "measurement" : "position"
-                }
-            ],
-            "emitColor" : "white",
-            "emitIntervalMeasmtLow" : 100,
-            "emitIntervalMeasmtHigh" : 1023,
-            "emitIntervalLowMs" : 250,
-            "emitIntervalHighMs" : 10,
-            "emitBatchSize" : 15,
-            "emitDirectionIsUp" : true,
-            "particleMoveIntervalMs" : 8
-        },
-        {   "name" : "contortOMaticSpinner",
-            "enabled" : true,
-            "priority" : 2,
-            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-            "patternClassName" : "SpinnerPattern",
-            "inputs" : [
-                {   "inputName" : "spinnerPosition",
-                    "widgetName" : "spinnah",
-                    "channelNumber" : 0,
-                    "measurement" : "position"
-                }
-            ],
-            "selectedBlockAnimationIntervalMs" : 3000,
-            "indicatorClassName" : "SimpleBlockIndicator",
-            "numberOfIndicators" : 16,
-            "indicators" : [
-                {   "index" : 0,
-                    "upperLeftStringIdx" : 0,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "blue",
-                    //"fadeIntervalMs" : 1001,
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 1,
-                    "upperLeftStringIdx" : 2,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 2,
-                    "upperLeftStringIdx" : 4,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 3,
-                    "upperLeftStringIdx" : 6,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 4,
-                    "upperLeftStringIdx" : 9,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 5,
-                    "upperLeftStringIdx" : 11,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 6,
-                    "upperLeftStringIdx" : 13,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 7,
-                    "upperLeftStringIdx" : 15,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 8,
-                    "upperLeftStringIdx" : 18,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 9,
-                    "upperLeftStringIdx" : 20,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 10,
-                    "upperLeftStringIdx" : 22,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 11,
-                    "upperLeftStringIdx" : 24,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 12,
-                    "upperLeftStringIdx" : 27,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 13,
-                    "upperLeftStringIdx" : 29,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 14,
-                    "upperLeftStringIdx" : 31,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 250
-                },
-                {   "index" : 15,
-                    "upperLeftStringIdx" : 33,
-                    "upperLeftPixelIdx" : 78,
-                    "widthInStrings" : 4,
-                    "heightInPixels" : 20,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 250
-                }
-            ]
-        },
-        {   "name" : "contortOMatic",
-            "enabled" : true,
-            "priority" : 2,
-            "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-            "patternClassName" : "SwitchActivatedRegionsPattern",
-            "inputs" : [
-                {   "inputName" : "switchArray",
-                    "widgetName" : "contortOMatic",
-                    "channelNumber" : 0,
-                    "measurement" : "position"
-                }
-            ],
-            "selectedBlockAnimationIntervalMs" : 3000,
-            "indicatorClassName" : "SimpleBlockIndicator",
-            "numberOfIndicators" : 16,
-            "indicators" : [
-                    //"fadeIntervalMs" : 1001,
-                {   "index" : 0,
-                    "upperLeftStringIdx" : 0,
-                    "upperLeftPixelIdx" : 0,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 73
-                },
-                {   "index" : 1,
-                    "upperLeftStringIdx" : 9,
-                    "upperLeftPixelIdx" : 0,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 73
-                },
-                {   "index" : 2,
-                    "upperLeftStringIdx" : 18,
-                    "upperLeftPixelIdx" : 0,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 73
-                },
-                {   "index" : 3,
-                    "upperLeftStringIdx" : 27,
-                    "upperLeftPixelIdx" : 0,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 73
-                },
 
-                {   "index" : 4,
-                    "upperLeftStringIdx" : 0,
-                    "upperLeftPixelIdx" : 15,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 113
-                },
-                {   "index" : 5,
-                    "upperLeftStringIdx" : 9,
-                    "upperLeftPixelIdx" : 15,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 113
-                },
-                {   "index" : 6,
-                    "upperLeftStringIdx" : 18,
-                    "upperLeftPixelIdx" : 15,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 113
-                },
-                {   "index" : 7,
-                    "upperLeftStringIdx" : 27,
-                    "upperLeftPixelIdx" : 15,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 113
-                },
-
-                {   "index" : 8,
-                    "upperLeftStringIdx" : 0,
-                    "upperLeftPixelIdx" : 30,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 149
-                },
-                {   "index" : 9,
-                    "upperLeftStringIdx" : 9,
-                    "upperLeftPixelIdx" : 30,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 149
-                },
-                {   "index" : 10,
-                    "upperLeftStringIdx" : 18,
-                    "upperLeftPixelIdx" : 30,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 149
-                },
-                {   "index" : 11,
-                    "upperLeftStringIdx" : 27,
-                    "upperLeftPixelIdx" : 30,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 149
-                },
-
-                {   "index" : 12,
-                    "upperLeftStringIdx" : 0,
-                    "upperLeftPixelIdx" : 45,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "red",
-                    "flashIntervalMs" : 181
-                },
-                {   "index" : 13,
-                    "upperLeftStringIdx" : 9,
-                    "upperLeftPixelIdx" : 45,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "blue",
-                    "flashIntervalMs" : 181
-                },
-                {   "index" : 14,
-                    "upperLeftStringIdx" : 18,
-                    "upperLeftPixelIdx" : 45,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "yellow",
-                    "flashIntervalMs" : 181
-                },
-                {   "index" : 15,
-                    "upperLeftStringIdx" : 27,
-                    "upperLeftPixelIdx" : 45,
-                    "widthInStrings" : 9,
-                    "heightInPixels" : 15,
-                    "foregroundHsv" : "green",
-                    "flashIntervalMs" : 181
-                }
-
-            ]
-        },
+        // ---------- 60-key keyboard for 100x36 cone on Schroeder's Plaything ----------
         {   "name" : "schroedersPlaything",
             "enabled" : true,
-            "priority" : 1,
-            "opacity" : 100,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "priority" : 3,
+            "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
             "patternClassName" : "MidiActivatedRegionsPattern",
             "inputs" : [
                 {   "inputName" : "midiInput",

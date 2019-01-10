@@ -1,0 +1,262 @@
+Illumicone Software/Firmware Development Wishlist
+=================================================
+
+(Skills required or to be learned are in parenthesis under headings.)
+
+While there are no hard rules about which languages and platforms we will
+consider for projects on this wish list (other than absolutely and completely
+avoiding Windows except on your own development system as the host for Linux
+running in a VM or the Arduino IDE), we prefer the following:
+
+    programming and scripting languages:  C++, Python, bash
+
+    development and testing OS:  macOS or Ubuntu Linux
+
+    configuration data storage:  JSON-format text files
+
+    microcontroller hardware and development environment:  Arduino
+
+The controller hosts (ic-widpatcon, which receives widget data and generates the
+patterns, and ic-strdrv, which sends the pattern data to the LED strings) run
+Debian Linux tailored for Raspberry Pi or Beaglebone.  See rpiSetupNotes.txt and
+bbbSetupNotes.txt for details about specific releases and versions.  All of
+Illumicone's software is developed and tested on macOS or Linux.  So, being com-
+fortable with working (or wanting to learn to work) in a UNIX-like environment
+is essential.
+
+If you have a Windows PC that you want to use for Illumicone development, you
+can run Ubuntu Linux in a virtual machine under Windows using VirtualBox, which
+is free.  If you have a Mac or Macbook running a reasonably recent version of
+OS X or macOS, you're good to go as-is.  If you want to try doing development on
+Windows using something like Cygwin, you're on your own, and don't expect much
+sympathy when your life gets hard.
+
+The firmware for the widget and other microcontrollers is developed using the
+Arduino IDE, which is available for free for macOS, Linux, and Windows.
+
+
+
+Makefile
+--------
+
+(GNU make)
+
+- detect dependencies properly
+
+- install to /usr/local/...
+
+
+
+Controller environment
+----------------------
+
+(Linux system admin)
+
+- run patternController and widgetRcvr from /usr/local/bin
+
+- locate config files somewhere other than ~/devl/Illumicone/config (maybe use
+  an environment variable such as $ILLUMICONE_DIR to indicate location)
+
+- remove any hard-coded dependencies on ~/devl/Illumicone path
+
+- modify scripts in sbin to depend on $PATH rather than predefined paths
+
+
+
+Web control
+-----------
+
+(Apache setup and admin, HTML, C++ and maybe Python for back end)
+
+- View system state, widget statistics, etc. on mobile device
+
+- Change configuration (enable/disable widgets, change settings)
+
+- Temporary config changes or permanent changes via writing to JSON config
+
+- Use Apache or other web server on ic-widpatcon (Raspberry Pi 3)
+
+- Limited-control web page for venues to override quiescent and shutdown periods
+
+
+
+Run patternController and widgetRcvr as services
+------------------------------------------------
+
+(C++, Linux system programming and admin)
+
+- Daemonize?
+
+- Use systemd System and Service Manager
+
+
+
+Logging improvements
+--------------------
+
+(C++, maybe Python for data extraction, bash scripting)
+
+- specify log path on command line or with environment variable
+
+- compact widget message log in widgetRcvr
+
+- compact widget measurement log in patternController
+
+- Programs or shell scripts to extract data from compact logs
+
+- replay compact logs through widgetRcvr and patternController
+
+- Throttling of quiescent and shutdown mode messages
+
+- Log going active from quiescent or shutdown mode
+
+- Automatic log rollover
+
+- Automatic compression of old logs
+
+- Write to main log file via file handle other than just stdout
+
+
+
+Virtual pixels
+--------------
+
+(C++, O-O design)
+
+- class design and implementation
+
+- modify existing patterns to use virtual pixels where appropriate
+
+
+
+Two-way widget communication
+----------------------------
+
+(C++, Arduino)
+
+- get configuration from widgetRcvr
+
+
+
+Muliple idle patterns
+---------------------
+
+(C++)
+
+- Use existing pattern framework but with auto-generated widget data if needed
+
+
+
+Better wireless communication for widgets
+-----------------------------------------
+
+(C++, Arduino)
+
+- Mesh network using existing NRF24L01 modules?
+
+
+
+New patterns
+------------
+
+(C++)
+
+- snow globe
+
+
+
+Widget firmware
+---------------
+
+(C++, Arduino)
+
+- firmware for new Maracas widgets, with 9-axis motion sensor to measure
+  absolute direction of shakes
+
+- Sleep mode for all widgets to extend battery life (MPU-6050-based widgets
+  already done)
+
+
+
+System manager
+--------------
+
+(hardware design, C++, Arduino, Linux system admin, HTML)
+
+- Turn off DC-DC converters on top disk when in shutdown mode
+
+- Monitor input voltage
+
+- Control boot timing and order of ic-widpatcon and ic-strdrv
+
+- Signal shutdown to ic-widpatcon and ic-strdrv when input power off for too
+  long or backup battery voltage too low
+
+- Monitor temperature, control enclosure fan
+
+- Provide status information for display on web page
+
+- Provide means of shutting down, restarting, and power-cycling router,
+  ic-widpatcon, and ic-strdrv 
+
+- Provide independent status/control web page (via ESP8266 or similar)
+
+- enable and use own WiFi AP whenever illumicone WiFi network is unreachable
+
+
+
+Access through reverse ssh tunneling via cellular WiFi hotspot
+--------------------------------------------------------------
+
+(Linux system admin, networking)
+
+- ic-widpatcon and ic2-widpatcon2 are already done--see sshReverseTunnel.txt
+
+- determine if absence of WiFi hotspot or other Internet access to relay server
+  causes problems when autossh-tunnel.service is running
+
+- ic-strdrv for when ic-widpatcon is unreachable (will the existing method work
+  on the version of Linux running on the Beaglebone?)
+
+- web pages on ic-widpatcon
+
+- web pages on system manager
+
+
+
+Remote monitoring and control via amateur radio
+-----------------------------------------------
+
+(amateur radio license, Linux system admin, networking, C++ or Python for CLI,
+HTML for web interface)
+
+- TCP/IP over AX.25, preferrably at 9600 baud or higher
+
+- how to secure configuration changes and command entry without encryption
+  (which is illegal on amateur radio)--one-time pad for passcodes?
+
+- command line (via custom CLI program) or web interface?
+
+
+
+Replacement for LEDscape and the Beaglebone
+-------------------------------------------
+
+While LEDscape works fine, it would be nice to have something that doesn't
+depend on having an OS.  An FPGA solution with differential drivers would be
+cool.
+
+
+
+Widget data
+-----------
+
+- make it possible for multiple patterns to get data from the same widget
+  channel without loss
+
+- provide filters for widget data
+
+- provide a way to aggregate multiple widget channels into one (ex.: calculate
+  vector magnitude from multiple similar channels)
+
+

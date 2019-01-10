@@ -318,15 +318,29 @@ void turnOnSafetyLights()
     fillSolid(rgbFinalFrame, RgbPixel::Black);
     for (auto&& stringPixels : rgbFinalFrame) {
         // TODO ross 7/22/2017:  get the safety color from config
+        stringPixels[0] = RgbPixel::Magenta;
         stringPixels[numberOfPixelsPerString - 1] = RgbPixel::Magenta;
     }
     sendOpcMessage();
 }
 
 
-void setAllPixelsToQuiescentColor()
+void setAllPixelsToQuiescentColor(SchedulePeriod& selectedSchedulePeriod)
 {
-    fillSolid(rgbFinalFrame, RgbPixel::Navy);
+    RgbPixel quiescentColor = RgbPixel::Navy;
+    string errMsgSuffix =
+        " in " + selectedSchedulePeriod.description
+        + " quiescent period configuration.  Using default instead.";
+    string rgbStr;
+    ConfigReader::getRgbPixelValue(selectedSchedulePeriod.periodConfigObj,
+                                   "quiescentColor",
+                                   rgbStr,
+                                   quiescentColor,
+                                   errMsgSuffix,
+                                   true,
+                                   RgbPixel::Navy);
+
+    fillSolid(rgbFinalFrame, quiescentColor);
     sendOpcMessage();
 }
 
@@ -605,9 +619,11 @@ void tearDownPatterns()
 }
 
 
-bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, string& periodDescription)
+bool timeIsInPeriod(
+    time_t now,
+    const vector<SchedulePeriod>& schedulePeriods,
+    SchedulePeriod& selectedSchedulePeriod)
 {
-
     // For daily events, we need a tm structure containing the current
     // time so that we can set a daily event's date to today.
     struct tm result1;
@@ -632,13 +648,13 @@ bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, s
             // than the start time (which actually occurs on the previous day).
             if (endTimeToday < startTimeToday) {
                 if (now >= startTimeToday || now <= endTimeToday) {
-                    periodDescription = schedulePeriod.description;
+                    selectedSchedulePeriod = schedulePeriod;
                     return true;
                 }
             }
             else {
                 if (now >= startTimeToday && now <= endTimeToday) {
-                    periodDescription = schedulePeriod.description;
+                    selectedSchedulePeriod = schedulePeriod;
                     return true;
                 }
             }
@@ -648,7 +664,7 @@ bool timeIsInPeriod(time_t now, const vector<SchedulePeriod>& schedulePeriods, s
             //logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
             //                  + to_string(schedulePeriod.startTime) + ", endTime=" + to_string(schedulePeriod.endTime));
             if (now >= schedulePeriod.startTime && now <= schedulePeriod.endTime) {
-                periodDescription = schedulePeriod.description;
+                selectedSchedulePeriod = schedulePeriod;
                 return true;
             }
         }
@@ -1012,22 +1028,22 @@ int main(int argc, char **argv)
 
             // TODO:  Log appropriate messages at both the start and end of each period.
 
-            string periodDesc;
-            if (timeIsInPeriod(now, shutoffPeriods, periodDesc)) {
+            SchedulePeriod selectedSchedulePeriod;
+            if (timeIsInPeriod(now, shutoffPeriods, selectedSchedulePeriod)) {
                 inPeriod = true;
-//                if (periodDesc != lastPeriodDesc) {
-                    lastPeriodDesc = periodDesc;
-                    logMsg(LOG_INFO, "In \"" + periodDesc + "\" shutoff period.");
+//                if (selectedSchedulePeriod.description != lastPeriodDesc) {
+                    lastPeriodDesc = selectedSchedulePeriod.description;
+                    logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" shutoff period.");
 //                }
                 turnOffAllPixels();
             }
-            else if (timeIsInPeriod(now, quiescentPeriods, periodDesc)) {
+            else if (timeIsInPeriod(now, quiescentPeriods, selectedSchedulePeriod)) {
                 inPeriod = true;
-//                if (periodDesc != lastPeriodDesc) {
-                    lastPeriodDesc = periodDesc;
-                    logMsg(LOG_INFO, "In \"" + periodDesc + "\" quiescent period.");
+//                if (selectedSchedulePeriod.description != lastPeriodDesc) {
+                    lastPeriodDesc = selectedSchedulePeriod.description;
+                    logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" quiescent period.");
 //                }
-                setAllPixelsToQuiescentColor();
+                setAllPixelsToQuiescentColor(selectedSchedulePeriod);
             }
             else {
                 inPeriod = false;

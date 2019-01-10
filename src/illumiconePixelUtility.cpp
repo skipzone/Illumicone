@@ -104,41 +104,50 @@ void rgb2hsv(const RgbConeStrings& rgbConeStrings, HsvConeStrings& hsvConeString
 
 bool stringToHsvPixel(const string& hsvString, HsvPixel& hsvPixel)
 {
-    if (hsvString == "transparent") {
-        // TODO 8/8/2017 ross:  use the defined transparent color
-        hsvPixel.setHSV(0, 0, 0);
+    if (hsvString == "aqua") {
+        hsvPixel.setHSV(HUE_AQUA, 255, 255);
     }
     else if (hsvString == "black") {
         // TODO 8/8/2017 ross:  use the defined black color
         hsvPixel.setHSV(1, 0, 0);
     }
-    else if (hsvString == "white") {
-        // TODO 8/8/2017 ross:  use the defined white color
-        hsvPixel.setHSV(0, 0, 255);
-    }
-    else if (hsvString == "red") {
-        hsvPixel.setHSV(HUE_RED, 255, 255);
-    }
-    else if (hsvString == "orange") {
-        hsvPixel.setHSV(HUE_ORANGE, 255, 255);
-    }
-    else if (hsvString == "yellow") {
-        hsvPixel.setHSV(HUE_YELLOW, 255, 255);
+    else if (hsvString == "blue") {
+        hsvPixel.setHSV(HUE_BLUE, 255, 255);
     }
     else if (hsvString == "green") {
         hsvPixel.setHSV(HUE_GREEN, 255, 255);
     }
-    else if (hsvString == "aqua") {
-        hsvPixel.setHSV(HUE_AQUA, 255, 255);
+    else if (hsvString == "orange") {
+        hsvPixel.setHSV(HUE_ORANGE, 255, 255);
     }
-    else if (hsvString == "blue") {
-        hsvPixel.setHSV(HUE_BLUE, 255, 255);
+    else if (hsvString == "pink") {
+        hsvPixel.setHSV(HUE_PINK, 255, 255);
     }
     else if (hsvString == "purple") {
         hsvPixel.setHSV(HUE_PURPLE, 255, 255);
     }
-    else if (hsvString == "pink") {
-        hsvPixel.setHSV(HUE_PINK, 255, 255);
+    else if (hsvString == "red") {
+        hsvPixel.setHSV(HUE_RED, 255, 255);
+    }
+    else if (hsvString == "transparent") {
+        // TODO 8/8/2017 ross:  use the defined transparent color
+        hsvPixel.setHSV(0, 0, 0);
+    }
+    else if (hsvString == "white") {
+        // TODO 8/8/2017 ross:  use the defined white color
+        hsvPixel.setHSV(0, 0, 255);
+    }
+    else if (hsvString == "yellow") {
+        hsvPixel.setHSV(HUE_YELLOW, 255, 255);
+    }
+    // Use rgb->hsv mapping for undefined HUE_xxx colors (even though they look like shit).
+    else if (hsvString == "gold" || hsvString == "magenta" || hsvString == "navy"
+             || hsvString == "rainstickBlue" || hsvString == "teal" || hsvString == "violet")
+    {
+        RgbPixel rgbPixel;
+        stringToRgbPixel(hsvString, rgbPixel);
+        rgb2hsv(rgbPixel, hsvPixel);
+        hsvPixel.value = 255;   // try to make it look less shitty
     }
     else {
         int h, s, v;
@@ -161,37 +170,29 @@ void hsvPixelToString(const HsvPixel& hsvPixel, string& hsvString)
 
 bool stringToRgbPixel(const string& rgbString, RgbPixel& rgbPixel)
 {
-    if (rgbString == "transparent") {
-        // TODO 8/20/2017 ross:  use the defined transparent color
-        rgbPixel = RgbPixel::Black;
+    if (rgbString == "aqua") {
+        rgbPixel = RgbPixel::Aqua;
     }
     else if (rgbString == "black") {
         rgbPixel = RgbPixel::Black;
     }
-    else if (rgbString == "white") {
-        // TODO 8/20/2017 ross:  use the defined white color
-        rgbPixel = RgbPixel::White;
-    }
-    else if (rgbString == "red") {
-        rgbPixel = RgbPixel::Red;
-    }
-    else if (rgbString == "orange") {
-        rgbPixel = RgbPixel::BsuOrange;
-    }
-    else if (rgbString == "yellow") {
-        rgbPixel = RgbPixel::Yellow;
+    else if (rgbString == "blue") {
+        rgbPixel = RgbPixel::Blue;
     }
     else if (rgbString == "green") {
         rgbPixel = RgbPixel::Lime;
     }
-    else if (rgbString == "aqua") {
-        rgbPixel = RgbPixel::Aqua;
+    else if (rgbString == "gold") {
+        rgbPixel = RgbPixel::DarkGoldenrod;
     }
-    else if (rgbString == "blue") {
-        rgbPixel = RgbPixel::Blue;
+    else if (rgbString == "magenta") {
+        rgbPixel = RgbPixel::Magenta;
     }
     else if (rgbString == "navy") {
         rgbPixel = RgbPixel::Navy;
+    }
+    else if (rgbString == "orange") {
+        rgbPixel = RgbPixel::BsuOrange;
     }
     else if (rgbString == "pink") {
         rgbPixel = RgbPixel::Pink;
@@ -199,11 +200,28 @@ bool stringToRgbPixel(const string& rgbString, RgbPixel& rgbPixel)
     else if (rgbString == "purple") {
         rgbPixel = RgbPixel::Purple;
     }
-    else if (rgbString == "magenta") {
-        rgbPixel = RgbPixel::Magenta;
+    else if (rgbString == "rainstickBlue") {
+        rgbPixel = RgbPixel::RainstickBlue;
+    }
+    else if (rgbString == "red") {
+        rgbPixel = RgbPixel::Red;
+    }
+    else if (rgbString == "teal") {
+        rgbPixel = RgbPixel::Teal;
+    }
+    else if (rgbString == "transparent") {
+        // TODO 8/20/2017 ross:  use the defined transparent color
+        rgbPixel = RgbPixel::Black;
     }
     else if (rgbString == "violet") {
         rgbPixel = RgbPixel::Violet;
+    }
+    else if (rgbString == "white") {
+        // TODO 8/20/2017 ross:  use the defined white color
+        rgbPixel = RgbPixel::White;
+    }
+    else if (rgbString == "yellow") {
+        rgbPixel = RgbPixel::Yellow;
     }
     else {
         int r, g, b;

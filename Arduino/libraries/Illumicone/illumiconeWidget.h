@@ -32,50 +32,6 @@
 #include "illumiconeRadio.h"
 
 
-/* Widget Id Assignment
- *
- *  0:  reserved
- *  1:  Eye (Ray)
- *  2:  Shirley's Web (Reiley)
- *  3:  Bells (Ray)
- *  4:  Rainstick (Dr. Naked)
- *  5:  Schroeder's Plaything (Ross)
- *  6:  TriObelisk (Phyxx and Dr. Naked)
- *  7:  Squawk Box (James)
- *  8:  Plunger (Monte, based on Kayla's original)
- *  9:  Contort-O-Matic (Ray and Mishi)
- * 10:  FourPlay-4-2
- * 11:  FourPlay-4-3
- * 12:  Buck Norris
- * 13:  unassigned
- * 14:  unassigned
- * 15:  unassigned
- *
- * For stress tests, widget ids are reused as needed because stress-test
- * payloads are handled separately from all other types of payloads.
- */
-
-
-/*********************************************
- * Radio Configuration Common To All Widgets *
- *********************************************/
-
-// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS (genuine Noric chips only).
-#define DATA_RATE RF24_250KBPS
-
-// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
-#define CRC_LENGTH RF24_CRC_16
-
-// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
-// ISM: 2400-2500;  ham: 2390-2450
-// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
-//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 84
-
-// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
-
-
 /*********************************
  * Payload Structure Definitions *
  *********************************/

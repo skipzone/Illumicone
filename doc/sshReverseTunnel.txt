@@ -1,0 +1,182 @@
+11/21/2018 -- Set up reverse tunneling using ic2-widpatcon2 as the example
+
+We assign these ports:
+
+    50103 ic-widpatcon
+    50113 ic2-widpatcon
+    50114 ic2-widpatcon2
+
+Replace myEc2Instance.com with the name or IP address of the relay server.  An
+Amazon Web Services (AWS) Elastic Compute Cloud (EC2) server is assumed.
+
+
+
+Basic Setup
+===========
+
+Create user illumicone on myEc2Instance.com and create an ssh key pair for it.
+
+sudo adduser illumicone
+sudo su - illumicone
+mkdir .ssh
+chmod 700 .ssh
+cd .ssh
+touch authorized_keys
+chmod 600 authorized_keys
+ssh-keygen
+exit
+
+
+Share ssh public keys between myEc2Instance.com and ic2-widpatcon2.com.
+
+From the host with ssh access to myEc2Instance.com as ec2-user:
+
+    scp ~/.ssh/id_rsa.pub ec2-user@myEc2Instance.com:myhost_id_rsa.pub
+
+As ec2-user on myEc2Instance.com:
+
+    sudo cp myhost_id_rsa.pub ~illumicone/
+    sudo chown illumicone.illumicone ~illumicone/myhost_id_rsa.pub
+    sudo su - illumicone
+    cat myhost_id_rsa.pub >> .ssh/authorized_keys
+    rm myhost_id_rsa.pub
+    exit
+
+From the host that now has ssh access to myEc2Instance.com as illumicone:
+
+    scp illumicone@myEc2Instance.com:.ssh/id_rsa.pub illumicone_ec2_id_rsa.pub
+    scp illumicone_ec2_id_rsa.pub illumicone@ic2-widpatcon2.local:
+
+On ic2-widpatcon2.local:
+    cat illumicone_ec2_id_rsa.pub >> ~/.ssh/authorized_keys
+    rm illumicone_ec2_id_rsa.pub
+    scp ~/.ssh/id_rsa.pub illumicone@myEc2Instance.com:illumicone_ic2-widpatcon2_id_rsa.pub
+
+As illumicone on myEc2Instance.com:
+    cat illumicone_ic2-widpatcon2_id_rsa.pub >> ~/.ssh/authorized_keys
+    rm illumicone_ic2-widpatcon2_id_rsa.pub
+
+
+Test:  Open a reverse tunnel from the AWS EC2 instance back to ic2-widpatcon2.
+Then, on another host, ssh to myEc2Instance.com and open a terminal session on
+ic2-widpatcon2.
+
+On ic2-widpatcon2:
+
+    ssh -f -N -T -R50114:localhost:22 illumicone@myEc2Instance.com
+
+From a host that has ssh access to myEc2Instance.com as illumicone:
+
+    ssh illumicone@myEc2Instance.com
+
+In the ssh session on myEc2Instance.com:
+
+    ssh -p 50114 illumicone@localhost
+
+
+On myEc2Instance.com, create .ssh/config with this content:
+
+Host ic2widpatcon2
+    HostName localhost
+    User illumicone
+    Port 50114
+    PubkeyAuthentication yes
+    StrictHostKeyChecking false
+    PasswordAuthentication no
+
+
+Test .ssh/config.
+
+ssh ic2widpatcon2
+
+
+
+autossh
+=======
+
+install autossh on ic2-widpatcon2.
+
+sudo apt-get autossh
+
+
+Test autossh.
+
+autossh -M 0 -fN -o "PubkeyAuthentication=yes" -o "StrictHostKeyChecking=false" -o "PasswordAuthentication=no" -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3" -R50114:localhost:22 illumicone@myEc2Instance.com
+
+(Log in from myEc2Instance.com.)
+
+
+On ic2-widpatcon2, create .ssh/config with this content:
+
+Host ic2-widpatcon2-tunnel
+    HostName myEc2Instance.com
+    User illumicone
+    RemoteForward 50114 localhost:22
+    PubkeyAuthentication yes
+    StrictHostKeyChecking false
+    PasswordAuthentication no
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+
+Test .ssh/config.
+
+autossh -M 0 -f -T -N ic2-widpatcon2-tunnel
+
+
+
+Start autossh During Boot
+=========================
+
+Create /etc/systemd/system/autossh-tunnel.service with this content:
+
+[Unit]
+Description=AutoSSH tunnel service on local port 50114
+After=network.target
+
+[Service]
+User=illumicone
+Type=forking
+ExecStart=/usr/bin/autossh -M 0 -f -T -N ic2-widpatcon2-tunnel
+
+[Install]
+WantedBy=multi-user.target
+
+
+Tell systemd that we changed something.
+
+systemctl daemon-reload
+
+
+Start the service.
+
+systemctl start autossh-tunnel.service
+
+
+Enable the service startup at boot time.
+
+systemctl enable autossh-tunnel.service
+
+
+
+Misc. Commands
+==============
+
+Show the open tunnels:
+
+sudo netstat -tpln | grep ssh
+sudo lsof -i -n | grep ssh
+
+
+autossh-tunnel.service troubleshooting commands:
+
+systemctl status autossh-tunnel.service
+sudo journalctl -xe
+
+
+Transfer files between myEc2Instance.com and ic2-widpatcon2 through the tunnel:
+
+scp -P 50114 some/File illumicone@127.0.0.1:
+scp -P 50114 illumicone@127.0.0.1:some/file to/local/path
+
+

@@ -36,7 +36,7 @@ class BellsWidget : public Widget
 
         constexpr static int doStrikeAtStepNum = -2048;
         constexpr static int stepNumAtStrike = 1024;
-        constexpr static int stepSize = 10;
+        constexpr static int stepSize = 1;
 
         int simStep;
 

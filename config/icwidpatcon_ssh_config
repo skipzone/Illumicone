@@ -1,0 +1,9 @@
+Host ic-widpatcon-tunnel
+    HostName chroma-cat.com
+    User illumicone
+    RemoteForward 50103 localhost:22
+    PubkeyAuthentication yes
+    StrictHostKeyChecking false
+    PasswordAuthentication no
+    ServerAliveInterval 60
+    ServerAliveCountMax 3

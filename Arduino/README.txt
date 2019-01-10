@@ -1,3 +1,5 @@
+RDM values are the retry delay multipliers used when acks are wanted.
+
 Arduino Sketch Name        Used for Widget(s)         RDM
 -------------------------- ------------------------- ----
 Widget_Bells               Bells                      15
@@ -18,7 +20,7 @@ Widget_FourPlay            FourPlay                   15
 
 Widget_Plunger             Pump                       13
 
-Widget_Rainstick           Rainstick                   5
+Widget_MPU6050             Rainstick                   5
 
 Widget_SchroedersPlaything Schroeder's Plaything       2
 

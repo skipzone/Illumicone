@@ -228,10 +228,11 @@
             "emitDirectionIsUp" : true,
             "particleMoveIntervalMs" : 6
         },
-        {   "name" : "sprayPink",
+        {   "name" : "sprayPurple",
             "enabled" : true,
             "priority" : 2,
             "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+            "patternClassName" : "ParticlesPattern",
             "inputs" : [
                 {   "inputName" : "emitRate",
                     "widgetName" : "bells",
