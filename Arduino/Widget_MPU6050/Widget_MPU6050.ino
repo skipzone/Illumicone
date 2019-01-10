@@ -107,7 +107,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                    // 0 = 1.2
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
 #define SOUND_SAMPLE_INTERVAL_MS 10L
 #define SOUND_SAVE_INTERVAL_MS 50L
-#define ACTIVE_TX_INTERVAL_MS 200L
+#define ACTIVE_TX_INTERVAL_MS 93L
 #define INACTIVE_TX_INTERVAL_MS 2000L
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
@@ -117,7 +117,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                    // 0 = 1.2
 
 // The MPU-6050 is placed in cycle mode, and the processor is put to sleep
 // when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
-#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 10000L
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 20000L
 
 // We use the time elapsed since getting good data from the MPU-6050 to determine
 // if we need to reinitialize the little bastard because he's quit working right.
@@ -1185,7 +1185,7 @@ void sendMeasurements()
   }
 #endif
 
-  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * numMaSets)) {
+  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * numMaSets, !WANT_ACK)) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write failed."));
 #endif

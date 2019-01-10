@@ -27,11 +27,31 @@
 
 //#define ENABLE_DEBUG_PRINT
 
+
+/************
+ * Includes *
+ ************/
+
+#include <avr/sleep.h>
+#include <avr/wdt.h>
+
 #include "illumiconeWidget.h"
 
 #ifdef ENABLE_DEBUG_PRINT
 #include "printf.h"
 #endif
+
+
+/****************************
+ * Constants and Data Types *
+ ****************************/
+
+enum class WidgetMode {
+  init,
+  standby,
+  inactive,
+  active
+};
 
 
 /************************
@@ -60,14 +80,20 @@
   #define NUM_ENCODERS 1
   #define ACTIVE_TX_INTERVAL_MS 100L
   #define INACTIVE_TX_INTERVAL_MS 1000L
+  #define INACTIVITY_TIMEOUT_FOR_SLEEP_MS 10000L
   //#define TX_FAILURE_LED_PIN 2
+  //#define TX_FAILURE_LED_ON HIGH
+  //#define TX_FAILURE_LED_OFF LOW
   #define ENCODER_0_A_PIN 2
   #define ENCODER_0_B_PIN 3
 #elif defined(TRIOBELISK)
   #define NUM_ENCODERS 3
   #define ACTIVE_TX_INTERVAL_MS 10L
   #define INACTIVE_TX_INTERVAL_MS 1000L
+  #define INACTIVITY_TIMEOUT_FOR_SLEEP_MS 10000L
   //#define TX_FAILURE_LED_PIN 2
+  //#define TX_FAILURE_LED_ON HIGH
+  //#define TX_FAILURE_LED_OFF LOW
   #define ENCODER_0_A_PIN 2
   #define ENCODER_0_B_PIN 3
   #define ENCODER_1_A_PIN 4
@@ -77,8 +103,11 @@
 #else
   #define NUM_ENCODERS 4
   #define ACTIVE_TX_INTERVAL_MS 10L
-  #define INACTIVE_TX_INTERVAL_MS 1000L
+  #define INACTIVE_TX_INTERVAL_MS 2000L
+  #define INACTIVITY_TIMEOUT_FOR_SLEEP_MS 10000L
   //#define TX_FAILURE_LED_PIN 2
+  //#define TX_FAILURE_LED_ON HIGH
+  //#define TX_FAILURE_LED_OFF LOW
   #define ENCODER_0_A_PIN 2
   #define ENCODER_0_B_PIN 3
   #define ENCODER_1_A_PIN 4
@@ -105,6 +134,11 @@
 #elif defined(TRIOBELISK)
   #define NUM_STEPS_PER_REV 24
 #endif
+
+// In standby mode, we'll transmit a packet with zero-valued data approximately
+// every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
+// STANDBY_TX_INTERVAL_S should be a multiple of 8 between 8 and 2040, inclusive.
+#define STANDBY_TX_INTERVAL_S 64
 
 // ---------- radio configuration ----------
 
@@ -154,9 +188,11 @@
  * Globals *
  ***********/
 
-RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
+static WidgetMode widgetMode = WidgetMode::init;
 
-PositionVelocityPayload payload;
+static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
+
+static PositionVelocityPayload payload;
 
 static bool g_anyEncoderActive;
 static bool g_encoderActive[NUM_ENCODERS];
@@ -165,7 +201,7 @@ static volatile uint8_t g_lastPortDEncoderStates;
 static volatile int g_encoderValues[NUM_ENCODERS];
 static uint32_t g_encoderRpms[NUM_ENCODERS];
 
-const int8_t g_greyCodeToEncoderStepMap[] = {
+static const int8_t g_greyCodeToEncoderStepMap[] = {
        // last this
    0,  //  00   00
   -1,  //  00   01
@@ -185,7 +221,16 @@ const int8_t g_greyCodeToEncoderStepMap[] = {
    0,  //  11   11
 };
 
-volatile uint8_t g_pincEncoderStates;
+static volatile uint8_t g_pincEncoderStates;
+
+static volatile bool gotPinInterrupt;
+
+static int32_t nextTxMs;
+static uint32_t txInterval;
+
+static uint32_t lastActiveMs;
+
+static uint8_t stayAwakeCountdown;
 
 
 /******************
@@ -200,12 +245,26 @@ void setUpPinChangeInterrupt(uint8_t pin)
 }
 
 
+ISR(WDT_vect) {
+  if (widgetMode == WidgetMode::standby) {
+    sleep_disable();
+  }
+}
+
+
 // Service pin change interrupt for D0 - D7.
-ISR (PCINT2_vect)
+ISR(PCINT2_vect)
 {
+  gotPinInterrupt = true;
+
   uint8_t encoderStates = PIND >> 2;
   uint8_t curStates = encoderStates;
   uint8_t lastStates = g_lastPortDEncoderStates;
+
+  if (widgetMode == WidgetMode::standby) {
+    sleep_disable();
+    return;
+  }
 
   for (uint8_t i = 0; i < 3; ++i) {  // TODO: replace magic number 3
     uint8_t idx = ((lastStates & 0b11) << 2) | (curStates & 0b11);
@@ -219,11 +278,18 @@ ISR (PCINT2_vect)
 
 
 // Service pin change interrupt for A0 - A5.
-ISR (PCINT1_vect)
+ISR(PCINT1_vect)
 {
+  gotPinInterrupt = true;
+
   uint8_t encoderStates = PINC;
   uint8_t curStates = encoderStates;
   uint8_t lastStates = g_lastPortCEncoderStates;
+
+  if (widgetMode == WidgetMode::standby) {
+    sleep_disable();
+    return;
+  }
 
 #ifdef ENABLE_DEBUG_PRINT
   g_pincEncoderStates = encoderStates;
@@ -240,11 +306,131 @@ ISR (PCINT1_vect)
 }
 
 
+bool widgetWake()
+{
+  uint32_t now = millis();
+
+  if (!gotPinInterrupt) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("Woken up by watchdog."));
+#endif
+    if (--stayAwakeCountdown == 0) {
+      stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
+      // Let the pattern controller know we're still alive.
+      sendMeasurements(now);
+    }
+    return false;
+  }
+
+  gotPinInterrupt = false;
+
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.println(F("Woken up by pin interrupt."));
+#endif
+
+  // Reinitialize all the time trackers because the ms timer has been off.
+  // Time in this little world has stood still while time in the default
+  // world marched on, so we need transmit and gather data ASAP.
+  nextTxMs = now;
+  lastActiveMs = now;
+
+  return true;
+}
+
+
+void widgetSleep()
+{
+  // We don't want interrupts duing the timing-critical stuff below,
+  // and we don't want the ISR to disable sleep before we go to sleep.
+  noInterrupts();
+
+  gotPinInterrupt = false;
+
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+
+  // The interrupt is already attached because it is the interrupt the IMU uses.
+
+  // Turn off brown-out enable in software.  BODS must be set to
+  // one and BODSE must be set to zero within four clock cycles.
+  MCUCR = bit (BODS) | bit (BODSE);
+  // The BODS bit is automatically cleared after three clock cycles.
+  MCUCR = bit (BODS);
+
+  // Standby mode tells the ISR to disable sleep after we wake up.
+  widgetMode = WidgetMode::standby;
+
+  // sleep_cpu is guarnteed to be called because the processor always
+  // executes the next instruction after interrupts are enabled.
+  interrupts();
+  sleep_cpu();
+}
+
+
+void setWidgetMode(WidgetMode newMode, uint32_t now)
+{
+  bool stayAwake;
+  
+  switch (newMode) {
+
+    case WidgetMode::standby:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Widget mode changing to standby."));
+#endif
+      wdt_reset();
+      stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
+      stayAwake = false;
+      while (!stayAwake) {
+        // widgetSleep returns after we sleep then wake up.
+        widgetSleep();
+        stayAwake = widgetWake();
+      }
+      widgetMode = WidgetMode::inactive;
+      break;
+
+    case WidgetMode::inactive:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Widget mode changing to inactive."));
+#endif
+      // The change in tx interval will become effective after the next
+      // transmission, which needs to happen at the shorter active interval
+      // so that the pattern controller quicly knows we've gone inactive.
+      txInterval = INACTIVE_TX_INTERVAL_MS;
+      widgetMode = WidgetMode::inactive;
+      break;
+
+    case WidgetMode::active:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("Widget mode changing to active."));
+#endif
+      txInterval = ACTIVE_TX_INTERVAL_MS;
+      // The next transmission needs to be as soon as practical so that
+      // the pattern controller quickly knows that we're active again.
+      if ((int32_t) (nextTxMs - now) > ACTIVE_TX_INTERVAL_MS) {
+        nextTxMs = now + ACTIVE_TX_INTERVAL_MS;
+      }
+      widgetMode = WidgetMode::active;
+      break;
+
+    default:
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("*** Invalid newMode in setWidgetMode"));
+#endif
+      break;
+  }
+}
+
+
 void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.begin(57600);
+  Serial.begin(115200);
   printf_begin();
+#endif
+
+#ifdef TX_FAILURE_LED_PIN      
+  pinMode(TX_FAILURE_LED_PIN, OUTPUT);
+  digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
 #endif
 
 #ifdef ENCODER_0_A_PIN
@@ -286,6 +472,14 @@ void setup()
                  TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
                  RF_CHANNEL);
   
+  // Set the watchdog for interrupt only (no system reset) and an 8s interval.
+  // We have to turn off interrupts because the changes to the control register
+  // must be done within four clock cycles of setting WDCE (change-enable bit).
+  noInterrupts();
+  _WD_CONTROL_REG = (1 << WDCE) | (1 << WDE);
+  _WD_CONTROL_REG = (1 << WDIE) | (0 << WDE) | (1 << WDP3) | (1 << WDP0);
+  interrupts();
+
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
 
@@ -312,16 +506,16 @@ void setup()
   setUpPinChangeInterrupt(ENCODER_3_A_PIN);
   setUpPinChangeInterrupt(ENCODER_3_B_PIN);
 #endif
+
+  setWidgetMode(WidgetMode::inactive, millis());
 }
 
 
-void gatherMeasurements()
+void gatherMeasurements(uint32_t now)
 {
   static int32_t lastEncoderValues[NUM_ENCODERS];
   static uint32_t lastEncoderInactiveMs[NUM_ENCODERS];
   static uint32_t lastEncoderChangeMs[NUM_ENCODERS];
-
-  unsigned long now = millis();
 
   for (int i = 0; i < NUM_ENCODERS; ++i) {
     bool encoderChanged = false;
@@ -354,10 +548,25 @@ void gatherMeasurements()
   }
 
   g_anyEncoderActive = false;
-  for (int i = 0; i < NUM_ENCODERS; g_anyEncoderActive |= g_encoderActive[i++]);
+  for (int i = 0; i < NUM_ENCODERS; ++i) {
+    if (g_encoderActive[i]) {
+      g_anyEncoderActive = true;
+      break;
+    }
+  }
 #ifdef ENCODER_ACTIVE_PIN
   digitalWrite(ENCODER_ACTIVE_PIN, g_anyEncoderActive);
 #endif
+  if (g_anyEncoderActive) {
+    lastActiveMs = now;
+    if (widgetMode == WidgetMode::inactive) {
+      setWidgetMode(WidgetMode::active, now);
+    }
+  }
+  else if (!g_anyEncoderActive && widgetMode == WidgetMode::active) {
+    setWidgetMode(WidgetMode::inactive, now);
+  }
+
 
 #ifdef ENABLE_DEBUG_PRINT
 //  for (int i = 0; i < NUM_ENCODERS; ++i) {
@@ -374,13 +583,12 @@ void gatherMeasurements()
 }
 
 
-void sendMeasurements()
+void sendMeasurements(uint32_t now)
 {
   static int32_t lastEncoderValues[NUM_ENCODERS];
   static uint32_t lastRpmUpdateMs[NUM_ENCODERS];
   static int32_t encoderSteps[NUM_ENCODERS];
   static int16_t encoderRpms[NUM_ENCODERS];
-  uint32_t now = millis();
 
   for (int i = 0; i < NUM_ENCODERS; ++i) {
 
@@ -416,18 +624,21 @@ void sendMeasurements()
     payload.position = g_encoderValues[i];
     payload.velocity = encoderRpms[i];
     
-#ifdef ENABLE_DEBUG_PRINT
-  if (i == 2 && g_encoderActive[0]) printf("%d:  payload.position=%d, payload.velocity=%d\n", i, payload.position, payload.velocity);
-#endif
+//#ifdef ENABLE_DEBUG_PRINT
+//  if (i == 2 && g_encoderActive[0]) printf("%d:  payload.position=%d, payload.velocity=%d\n", i, payload.position, payload.velocity);
+//#endif
   
-    if (!radio.write(&payload, sizeof(payload))) {
+    if (!radio.write(&payload, sizeof(payload), !WANT_ACK)) {
 #ifdef TX_FAILURE_LED_PIN      
-      digitalWrite(TX_FAILURE_LED_PIN, HIGH);
+      digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_ON);
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.println(F("tx failed."));
+#endif      
 #endif
     }
     else {
 #ifdef TX_FAILURE_LED_PIN
-      digitalWrite(TX_FAILURE_LED_PIN, LOW);
+      digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
 #endif
     }
   }
@@ -438,18 +649,36 @@ void loop() {
 
   static int32_t lastTxMs;
 
-  gatherMeasurements();
-
   uint32_t now = millis();
-  if (now - lastTxMs >= (g_anyEncoderActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
 
-#ifdef ENABLE_DEBUG_PRINT
-//    printf("g_pincEncoderStates=%x\n", g_pincEncoderStates);
-#endif
-    
-    sendMeasurements();
-    lastTxMs = now;
+  gatherMeasurements(now);
+
+//  if (now - lastTxMs >= (g_anyEncoderActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
+//
+//#ifdef ENABLE_DEBUG_PRINT
+////    printf("g_pincEncoderStates=%x\n", g_pincEncoderStates);
+//#endif
+//    
+//    sendMeasurements();
+//    lastTxMs = now;
+//  }
+  if ((int32_t) (now - nextTxMs) >= 0) {
+    nextTxMs = now + txInterval;
+    sendMeasurements(now);
   }
 
+  if (widgetMode == WidgetMode::inactive
+      && now - lastActiveMs >= INACTIVITY_TIMEOUT_FOR_SLEEP_MS)
+  {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print(F("Going standby because no motion from "));
+    Serial.print(lastActiveMs);
+    Serial.print(F(" to "));
+    Serial.println(now);
+#endif
+    setWidgetMode(WidgetMode::standby, now);
+    // Setting the widget mode to standby will put the processor to sleep.
+    // When it wakes due to a pin interupt, execution eventually resumes here.
+  }
 }
 
