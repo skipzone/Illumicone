@@ -11428,7 +11428,7 @@ Source: http://www.buerklin.com, http://catalog.tycoelectronics.com</description
 <description>TDK i6A Series - 1/16th Brick Power Module</description>
 <wire x1="-15.24" y1="11.43" x2="16.51" y2="11.43" width="0.127" layer="21"/>
 <wire x1="16.51" y1="11.43" x2="16.51" y2="-11.43" width="0.127" layer="21"/>
-<wire x1="16.51" y1="-11.43" x2="-16.51" y2="-11.43" width="0.127" layer="27"/>
+<wire x1="16.51" y1="-11.43" x2="-16.51" y2="-11.43" width="0.127" layer="21"/>
 <wire x1="-16.51" y1="-11.43" x2="-16.51" y2="10.16" width="0.127" layer="21"/>
 <wire x1="-16.51" y1="10.16" x2="-15.24" y2="11.43" width="0.127" layer="21"/>
 <pad name="PIN1" x="-13.97" y="7.62" drill="1.1" diameter="2.54"/>
@@ -11835,6 +11835,8 @@ Commonly used for small ceramic capacitors. Like our 0.1uF (http://www.sparkfun.
 <vertex x="1.3945" y="0.452" curve="-90"/>
 <vertex x="1.8364" y="-0.0051" curve="-90.012967"/>
 </polygon>
+<text x="-2.54" y="1.905" size="1.27" layer="25">&gt;NAME</text>
+<text x="-2.54" y="-3.175" size="1.27" layer="27">&gt;VALUE</text>
 </package>
 </packages>
 <symbols>
@@ -11874,7 +11876,7 @@ Commonly used for small ceramic capacitors. Like our 0.1uF (http://www.sparkfun.
 </libraries>
 <attributes>
 <attribute name="DESIGNER" value="Ross"/>
-<attribute name="VERSION" value="1.0"/>
+<attribute name="VERSION" value="1.0a"/>
 </attributes>
 <variantdefs>
 </variantdefs>
@@ -11890,7 +11892,7 @@ Commonly used for small ceramic capacitors. Like our 0.1uF (http://www.sparkfun.
 <part name="SUPPLY2" library="supply2" deviceset="GND" device=""/>
 <part name="SUPPLY3" library="supply2" deviceset="GND" device=""/>
 <part name="R1" library="rcl" deviceset="R-US_" device="0204/7" value="10k"/>
-<part name="R2" library="rcl" deviceset="R-US_" device="0204/7"/>
+<part name="R2" library="rcl" deviceset="R-US_" device="0204/7" value="200"/>
 <part name="R3" library="rcl" deviceset="R-US_" device="0204/7" value="4.75k"/>
 <part name="R4" library="rcl" deviceset="R-US_" device="0204/7" value="3.83k"/>
 <part name="C1" library="rcl" deviceset="CPOL-US" device="E5-10.5" value="100 uF 50 V"/>
