@@ -31,43 +31,63 @@
 
 
 Log::Log()
-    : useSystemLog(false)
+    : lout(&std::cout)
+    , lerr(&std::cerr)
+    , logName("noname")
+    , logTo(LogTo::nowhere)
 {
 }
 
 
 Log::~Log()
 {
+    stopLogging();
 }
 
 
-const std::string Log::getLogMsgTimestamp()
+const std::string Log::getTimestamp(TimestampType timestampType)
 {
     uint64_t nowMs = getNowMs64();
-    uint32_t ms = nowMs % 1000;
     time_t now = nowMs / 1000;
-
     struct tm result;
     struct tm tmStruct = *localtime_r(&now, &result);
+
     char buf[20];
-    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmStruct);
-
+    uint32_t ms;
     std::stringstream sstr;
-    sstr << buf << "." << std::setfill('0') << std::setw(3) << ms << ":  ";
+    std::string timestamp;
 
-    std::string str = sstr.str();
-    return str;
+    switch (timestampType) {
+
+        case TimestampType::delimitedYmdHmsn:
+            std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmStruct);
+            ms = nowMs % 1000;
+            sstr << buf << "." << std::setfill('0') << std::setw(3) << ms;
+            timestamp = sstr.str();
+            break;
+
+        case TimestampType::compactYmdHm:
+            std::strftime(buf, sizeof(buf), "%Y%m%d_%H%M", &tmStruct);
+            timestamp = buf;
+            break;
+    }
+
+    return timestamp;
 }
 
 
 void Log::logMsg(int priority, const std::string& message)
 {
+    if (logTo == LogTo::nowhere) return;
+
     logMsg(priority, "%s", message.c_str());
 }
 
 
 void Log::logMsg(int priority, const char* format, ...)
 {
+    if (logTo == LogTo::nowhere) return;
+
     va_list args;
     va_start(args, format);
     vlogMsg(priority, format, args);
@@ -77,12 +97,16 @@ void Log::logMsg(int priority, const char* format, ...)
 
 void Log::logMsg(int priority, int errNum, const std::string& message)
 {
+    if (logTo == LogTo::nowhere) return;
+
     logMsg(priority, errNum, "%s", message.c_str());
 }
 
 
 void Log::logMsg(int priority, int errNum, const char* format, ...)
 {
+    if (logTo == LogTo::nowhere) return;
+
     std::string errNumStr = "  " + std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")";
 
     std::string formatWithErrNumStr = format + errNumStr;
@@ -96,41 +120,94 @@ void Log::logMsg(int priority, int errNum, const char* format, ...)
 
 void Log::vlogMsg(int priority, const char* format, va_list args)
 {
-    if (useSystemLog) {
+    if (logTo == LogTo::nowhere) return;
+
+    if (logTo == LogTo::systemLog) {
         vsyslog(priority, format, args);
     }
     else {
         char buf[stringBufSize];
         vsnprintf(buf, sizeof(buf), format, args);
 
+
+
         if (priority > LOG_WARNING) {
-            std::cout << getLogMsgTimestamp() << buf << std::endl;
+            *lout << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  " << buf << std::endl;
         }
         else if (priority == LOG_WARNING) {
-            std::cerr << getLogMsgTimestamp() << "///// Warning:  " << buf << " /////" << std::endl;
+            *lerr << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  ///// Warning:  " << buf << " /////" << std::endl;
         }
         else {
-            std::cerr << getLogMsgTimestamp() << "*** " << buf << std::endl;
+            *lerr << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  *** " << buf << std::endl;
         }
     }
 }
 
 
-void Log::startLogging(bool useSystemLog, const char* appName)
+bool Log::startLogging(const std::string& logName, LogTo logTo)
 {
-    this->useSystemLog = useSystemLog;
+    stopLogging();
 
-    if (useSystemLog) {
-        openlog(appName, LOG_PID | LOG_CONS, LOG_USER);
+    this->logName = logName;
+    this->logTo = logTo;
+
+    bool successful = false;
+    int errNum;
+    switch (logTo) {
+
+        case LogTo::nowhere:
+        case LogTo::console:
+            lout = &std::cout;
+            lerr = &std::cerr;
+            successful = true;
+            break;
+
+        case LogTo::systemLog:
+            openlog(logName.c_str(), LOG_PID | LOG_CONS | LOG_NDELAY, LOG_USER);
+            successful = true;
+            break;
+
+        case LogTo::file:
+        case LogTo::fileWithTimestamp:
+            if (logTo == LogTo::fileWithTimestamp) {
+                logFileName = logName + "_" + getTimestamp(TimestampType::compactYmdHm) + ".log";
+            }
+            else {
+                logFileName = logName + ".log";
+            }
+
+            flog.open(logFileName.c_str(), std::ios_base::out | std::ios_base::app);
+            if (flog.is_open()) {
+                lout = lerr = &flog;
+                successful = true;
+            }
+            else {
+                errNum = errno;
+                std::cerr << std::string(__PRETTY_FUNCTION__)
+                    << ":  Unable to open output file " << logFileName << "; "
+                    << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ").";
+            }
+            break;
     }
+
+    return successful;
 }
 
 
 void Log::stopLogging()
 {
-    if (useSystemLog) {
+    if (logTo == LogTo::systemLog) {
         closelog();
     }
+    else if ((logTo == LogTo::file || logTo == LogTo::fileWithTimestamp) && flog.is_open()) {
+        flog.close();
+    }
+    logTo = LogTo::nowhere;
+
+    // We shouldn't attempt to write anything anywhere, but make
+    // sure that lout and lerr are valid in case an attempt is made.
+    lout = &std::cout;
+    lerr = &std::cerr;
 }
 
 

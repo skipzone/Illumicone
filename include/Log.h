@@ -17,7 +17,8 @@
 
 #pragma once
 
-
+#include <fstream>
+#include <ostream>
 #include <string>
 
 #include <stdarg.h>
@@ -27,6 +28,14 @@
 class Log
 {
     public:
+
+        enum class LogTo {
+            nowhere,
+            console,
+            file,
+            fileWithTimestamp,
+            systemLog
+        };
 
         Log();
         virtual ~Log();
@@ -40,16 +49,25 @@ class Log
         void logMsg(int priority, int errNum, const char* format, ...) __attribute__ ((format (printf, 4, 5)));
         void vlogMsg(int priority, const char* format, va_list args);
 
-        void startLogging(bool useSystemLog, const char* appName);
+        bool startLogging(const std::string& logName, LogTo logTo);
         void stopLogging();
 
     private:
 
+        enum class TimestampType {
+            delimitedYmdHmsn,       // yyyy-mm-dd hh:mm:ss.nnn
+            compactYmdHm            // yyyymmdd_hhmm
+        };
+
         constexpr static unsigned int stringBufSize = 1024;
 
-        bool useSystemLog;
+        std::ofstream flog;
+        std::ostream* lout;
+        std::ostream* lerr;
+        std::string logFileName;
+        std::string logName;
+        LogTo logTo;
 
-        const std::string getLogMsgTimestamp();
-
+        const std::string getTimestamp(TimestampType timestampType);
 };
 

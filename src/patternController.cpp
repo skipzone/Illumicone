@@ -943,7 +943,7 @@ int main(int argc, char **argv)
     }
     configFileName = argv[1];
 
-    //logger.startLogging(true, "patternController");
+    logger.startLogging("patternController", Log::LogTo::file);
 
     if (!registerSignalHandlers()) {
         return(EXIT_FAILURE);
@@ -1064,7 +1064,7 @@ int main(int argc, char **argv)
     if (!doTeardown()) {
         return(EXIT_FAILURE);
     }
-    //logger.stopLogging();
+    logger.stopLogging();
     return EXIT_SUCCESS;
 }
 
