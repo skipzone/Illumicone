@@ -17,11 +17,13 @@
 
 #pragma once
 
+//#include <cstdio>
 #include <fstream>
 #include <ostream>
 #include <string>
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <syslog.h>
 
 
@@ -34,6 +36,8 @@ class Log
             console,
             file,
             fileWithTimestamp,
+            redirect,
+            redirectWithTimestamp,
             systemLog
         };
 
@@ -64,11 +68,15 @@ class Log
         std::ofstream flog;
         std::ostream* lout;
         std::ostream* lerr;
-        std::string logFilePath;
+        std::string expandedLogFilePath;
         std::string logFilePathName;
         std::string logName;
         LogTo logTo;
+        int redirectionFd;
+        int saveStdoutFd;
+        int saveStderrFd;
 
         const std::string getTimestamp(TimestampType timestampType);
+        bool resolveLogFilePathName(const std::string& logFilePath = "");
 };
 

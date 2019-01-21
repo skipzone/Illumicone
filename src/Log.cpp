@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
@@ -130,8 +131,6 @@ void Log::vlogMsg(int priority, const char* format, va_list args)
         char buf[stringBufSize];
         vsnprintf(buf, sizeof(buf), format, args);
 
-
-
         if (priority > LOG_WARNING) {
             *lout << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  " << buf << std::endl;
         }
@@ -145,13 +144,42 @@ void Log::vlogMsg(int priority, const char* format, va_list args)
 }
 
 
+bool Log::resolveLogFilePathName(const std::string& logFilePath)
+{
+    if (!logFilePath.empty()) {
+        // Expand the tilde and any environment variables the path might contain.
+        wordexp_t p;
+        if (wordexp(logFilePath.c_str(), &p, WRDE_NOCMD | WRDE_UNDEF) != 0 || p.we_wordc != 1) {
+            std::cerr << std::string(__FUNCTION__)
+                << ":  Invalid log file path \"" << logFilePath << "\"." << std::endl;
+            return false;
+        }
+        expandedLogFilePath = p.we_wordv[0];
+        wordfree(&p);
+
+        // We expect the path to end in a slash.
+        if (expandedLogFilePath.back() != '/') {
+            expandedLogFilePath += "/";
+        }
+    }
+
+    if (logTo == LogTo::fileWithTimestamp || logTo == LogTo::redirectWithTimestamp) {
+        logFilePathName = expandedLogFilePath + logName + "_" + getTimestamp(TimestampType::compactYmdHm) + ".log";
+    }
+    else {
+        logFilePathName = expandedLogFilePath + logName + ".log";
+    }
+
+    return true;
+}
+
+
 bool Log::startLogging(const std::string& logName, LogTo logTo, const std::string& logFilePath)
 {
     stopLogging();
 
     this->logName = logName;
     this->logTo = logTo;
-    this->logFilePath = logFilePath;
 
     bool successful = false;
     int errNum;
@@ -171,41 +199,59 @@ bool Log::startLogging(const std::string& logName, LogTo logTo, const std::strin
 
         case LogTo::file:
         case LogTo::fileWithTimestamp:
-
-            // Expand the tilde and any environment variables the path might contain.
-            wordexp_t p;
-            if (wordexp(logFilePath.c_str(), &p, WRDE_NOCMD | WRDE_UNDEF) != 0 || p.we_wordc != 1) {
-                std::cerr << std::string(__FUNCTION__)
-                    << ":  Invalid log file path \"" << logFilePath << "\"." << std::endl;
-                break;
-            }
-            this->logFilePath = p.we_wordv[0];
-            wordfree(&p);
-
-            // We expect the path to end in a slash.
-            if (this->logFilePath.back() != '/') {
-                this->logFilePath += "/";
-            }
-
-            if (this->logTo == LogTo::fileWithTimestamp) {
-                logFilePathName = this->logFilePath + this->logName + "_" + getTimestamp(TimestampType::compactYmdHm) + ".log";
-            }
-            else {
-                logFilePathName = this->logFilePath + this->logName + ".log";
-            }
-
-            flog.open(logFilePathName.c_str(), std::ios_base::out | std::ios_base::app);
-            if (flog.is_open()) {
-                lout = lerr = &flog;
-                successful = true;
-            }
-            else {
-                errNum = errno;
-                std::cerr << std::string(__FUNCTION__)
-                    << ":  Unable to open output file " << logFilePathName << "; "
-                    << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
+            if (resolveLogFilePathName(logFilePath)) {
+                flog.open(logFilePathName.c_str(), std::ios_base::out | std::ios_base::app);
+                if (flog.is_open()) {
+                    lout = lerr = &flog;
+                    successful = true;
+                }
+                else {
+                    errNum = errno;
+                    std::cerr << std::string(__FUNCTION__)
+                        << ":  Unable to open output file " << logFilePathName << "; "
+                        << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
+                }
             }
             break;
+
+        case LogTo::redirect:
+        case LogTo::redirectWithTimestamp:
+            if (resolveLogFilePathName(logFilePath)) {
+                redirectionFd = open(logFilePathName.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0644);
+                if (redirectionFd != -1) {
+                    saveStdoutFd = dup(fileno(stdout));
+                    saveStderrFd = dup(fileno(stderr));
+                    if (saveStdoutFd != -1
+                        && saveStderrFd != -1
+                        && dup2(redirectionFd, fileno(stdout)) != -1
+                        && dup2(redirectionFd, fileno(stderr)) != -1)
+                    {
+                        lout = &std::cout;
+                        lerr = &std::cerr;
+                        successful = true;
+                    }
+                    else {
+                        errNum = errno;
+                        // We should have more granular error detection so that we can close the
+                        // right descriptors, but the world is probably fucked anyway so who cares.
+                        close(redirectionFd);
+                        std::cerr << std::string(__FUNCTION__)
+                            << ":  Unable to save or duplicate file descriptors; "
+                            << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
+                    }
+                }
+                else {
+                    errNum = errno;
+                    std::cerr << std::string(__FUNCTION__)
+                        << ":  Unable to open redirection output file " << logFilePathName << "; "
+                        << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
+                }
+            }
+            break;
+    }
+
+    if (!successful) {
+        this->logTo = LogTo::nowhere;
     }
 
     return successful;
@@ -214,12 +260,35 @@ bool Log::startLogging(const std::string& logName, LogTo logTo, const std::strin
 
 void Log::stopLogging()
 {
-    if (logTo == LogTo::systemLog) {
-        closelog();
+    switch (this->logTo) {
+
+        case LogTo::nowhere:
+        case LogTo::console:
+            break;
+
+        case LogTo::systemLog:
+            closelog();
+            break;
+
+        case LogTo::file:
+        case LogTo::fileWithTimestamp:
+            if (flog.is_open()) {
+                flog.close();
+            }
+            break;
+
+        case LogTo::redirect:
+        case LogTo::redirectWithTimestamp:
+            fflush(stdout);
+            fflush(stderr);
+            close(redirectionFd);
+            dup2(saveStdoutFd, fileno(stdout));
+            close(saveStdoutFd);
+            dup2(saveStderrFd, fileno(stderr));
+            close(saveStderrFd);
+            break;
     }
-    else if ((logTo == LogTo::file || logTo == LogTo::fileWithTimestamp) && flog.is_open()) {
-        flog.close();
-    }
+
     logTo = LogTo::nowhere;
 
     // We shouldn't attempt to write anything anywhere, but make
@@ -227,6 +296,4 @@ void Log::stopLogging()
     lout = &std::cout;
     lerr = &std::cerr;
 }
-
-
 

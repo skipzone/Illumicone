@@ -115,7 +115,7 @@ bool openUdpPort(WidgetId widgetId)
     unsigned int widgetIdNumber = widgetIdToInt(widgetId);
     unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
 
-    logger.logMsg(LOG_INFO, "Creating and binding socket for " + widgetIdToString(intToWidgetId(widgetIdNumber)));
+    logger.logMsg(LOG_INFO, "Creating and binding socket for %s.", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
 
     memset(&widgetSockAddr[widgetIdNumber], 0, sizeof(struct sockaddr_in));
 
@@ -124,20 +124,16 @@ bool openUdpPort(WidgetId widgetId)
     widgetSockAddr[widgetIdNumber].sin_port = htons(0);
 
     if ((widgetSock[widgetIdNumber] = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        logSysErr(LOG_ERR,
-                  "Failed to create socket for " + widgetIdToString(intToWidgetId(widgetIdNumber)) + ".",
-                  errno);
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket for %s.", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
         return false;
     }
 
     if (::bind(widgetSock[widgetIdNumber], (struct sockaddr *) &widgetSockAddr[widgetIdNumber], sizeof(struct sockaddr_in)) < 0) {
-        logSysErr(LOG_ERR,
-                  "bind failed for " + widgetIdToString(intToWidgetId(widgetIdNumber)) + ".",
-                  errno);
+        logger.logMsg(LOG_ERR, errno, "bind failed for %s.", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
         return false;
     }
 
-    logger.logMsg(LOG_INFO, "Setting address to " + patconIpAddress + ":" + to_string(portNumber));
+    logger.logMsg(LOG_INFO, "Setting address to %s:%d", patconIpAddress.c_str(), portNumber);
 
     inet_pton(AF_INET, patconIpAddress.c_str(), &widgetSockAddr[widgetIdNumber].sin_addr.s_addr);
     widgetSockAddr[widgetIdNumber].sin_port = htons(portNumber);
@@ -156,12 +152,10 @@ bool sendUdp(const UdpPayload& payload)
                                     sizeof(struct sockaddr_in));
 
     if (bytesSentCount != sizeof(payload)) {
-        logger.logMsg(LOG_ERR,
-               "UPD payload size is " + to_string(sizeof(payload))
-               + ", but " + to_string(bytesSentCount) + " bytes were sent.");
+        logger.logMsg(LOG_ERR, "UPD payload size is %d, but %d bytes were sent.", sizeof(payload), bytesSentCount);
         return false;
     }
-    //logger.logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
+    //logger.logMsg(LOG_DEBUG, "Sent %d-byte payload via UDP.", bytesSentCount);
 
     return true;
 }
@@ -193,7 +187,7 @@ void handleContortOMaticCalibrationDataPayload(const ContortOMaticCalibrationDat
     for (unsigned int i = 0; i < 8; ++i) {
         sstr << " " << to_string(i + padNumOffset) << ":" << payload->capSenseReferenceValues[i];
     }
-    logger.logMsg(LOG_INFO, "Cap sense reference values: " + sstr.str());
+    logger.logMsg(LOG_INFO, "Cap sense reference values: %s", sstr.str().c_str());
 }
 
 
@@ -203,8 +197,8 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
         case 0:
             if (payloadSize != sizeof(ContortOMaticTouchDataPayload)) {
                 logger.logMsg(LOG_ERR,
-                       "Got ContortOMaticTouchDataPayload payload with size " + to_string(payloadSize)
-                       + ", but size " + to_string(sizeof(ContortOMaticTouchDataPayload)) + " was expected.");
+                              "Got ContortOMaticTouchDataPayload payload with size %d, but size %d was expected.",
+                              payloadSize, sizeof(ContortOMaticTouchDataPayload));
                 return;
             }
             handleContortOMaticTouchDataPayload(reinterpret_cast<const ContortOMaticTouchDataPayload*>(payload));
@@ -213,8 +207,8 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
         case 1:
             if (payloadSize != sizeof(ContortOMaticCalibrationDataPayload)) {
                 logger.logMsg(LOG_ERR,
-                       "Got ContortOMaticCalibrationDataPayload payload with size " + to_string(payloadSize)
-                       + ", but size " + to_string(sizeof(ContortOMaticCalibrationDataPayload)) + " was expected.");
+                              "Got ContortOMaticCalibrationDataPayload payload with size %d, but size %d was expected.",
+                              payloadSize, sizeof(ContortOMaticCalibrationDataPayload));
                 return;
             }
             handleContortOMaticCalibrationDataPayload(reinterpret_cast<const ContortOMaticCalibrationDataPayload*>(payload));
@@ -222,8 +216,8 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
 
         default:
             logger.logMsg(LOG_ERR,
-                   "Got ContortOMatic payload on channel " + to_string(payload->widgetHeader.channel)
-                   + ", but there is no payload subtype assigned to that channel.");
+                          "Got ContortOMatic payload on channel %d, but there is no payload subtype assigned to that channel.",
+                          payload->widgetHeader.channel);
     }
 }
 
@@ -232,18 +226,19 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
 {
     if (payloadSize != sizeof(StressTestPayload)) {
         logger.logMsg(LOG_ERR,
-               "Got StressTestPayload payload with size " + to_string(payloadSize)
-               + ", but size " + to_string(sizeof(StressTestPayload)) + " was expected.");
+                      "Got StressTestPayload payload with size %d, but size %d was expected.",
+                      payloadSize, sizeof(StressTestPayload));
         return;
     }
 
     logger.logMsg(LOG_INFO,
-           "stest: id=" + to_string((int) payload->widgetHeader.id)
-           + " a=" + to_string(payload->widgetHeader.isActive)
-           + " ch=" + to_string((int) payload->widgetHeader.channel)
-           + " seq=" + to_string(payload->payloadNum)
-           + " fails=" + to_string(payload->numTxFailures)
-           + "(" + to_string(payload->numTxFailures * 100 / payload->payloadNum) + "%)");
+                  "stest: id=%d a=%d ch=%d seq=%d fails=%d(%d%%)",
+                  payload->widgetHeader.id,
+                  payload->widgetHeader.isActive,
+                  payload->widgetHeader.channel,
+                  payload->payloadNum,
+                  payload->numTxFailures,
+                  payload->numTxFailures * 100 / payload->payloadNum);
 
     UdpPayload udpPayload;
     udpPayload.id       = payload->widgetHeader.id;
@@ -260,17 +255,18 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
 {
     if (payloadSize != sizeof(PositionVelocityPayload)) {
         logger.logMsg(LOG_ERR,
-               "Got PositionVelocityPayload payload with size " + to_string(payloadSize)
-               + ", but size " + to_string(sizeof(PositionVelocityPayload)) + " was expected.");
+                      "Got PositionVelocityPayload payload with size %d, but size %d was expected.",
+                      payloadSize, sizeof(PositionVelocityPayload));
         return;
     }
 
     logger.logMsg(LOG_INFO,
-           "pv: id=" + to_string((int) payload->widgetHeader.id)
-           + " a=" + to_string(payload->widgetHeader.isActive)
-           + " ch=" + to_string((int) payload->widgetHeader.channel)
-           + " p=" + to_string(payload->position)
-           + " v=" + to_string(payload->velocity));
+                  "pv: id=%d a=%d ch=%d p=%d v=%d",
+                  payload->widgetHeader.id,
+                  payload->widgetHeader.isActive,
+                  payload->widgetHeader.channel,
+                  payload->position,
+                  payload->velocity);
 
     UdpPayload udpPayload;
     udpPayload.id       = payload->widgetHeader.id;
@@ -298,11 +294,12 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
         sstr << " " << setfill(' ') << setw(6) << payload->measurements[i];
     }
     logger.logMsg(LOG_INFO,
-           "mvec: id=" + to_string((int) payload->widgetHeader.id)
-           + " a=" + to_string(payload->widgetHeader.isActive)
-           + " ch=" + to_string((int) payload->widgetHeader.channel)
-           + " n=" + to_string(numMeasurements)
-           + sstr.str());
+                  "mvec: id=%d a=%d ch=%d n=%d %s",
+                  payload->widgetHeader.id,
+                  payload->widgetHeader.isActive,
+                  payload->widgetHeader.channel,
+                  numMeasurements,
+                  sstr.str().c_str());
 
     // Map the measurements to position measurements on the channel
     // corresponding to the measurement's position in the array.
@@ -333,18 +330,19 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
         sstr << " 0x" << hex << (int) payload->buf[i];
     }
     logger.logMsg(LOG_INFO,
-           "custom: id=" + to_string((int) payload->widgetHeader.id)
-           + " a=" + to_string(payload->widgetHeader.isActive)
-           + " ch=" + to_string((int) payload->widgetHeader.channel)
-           + " bufLen=" + to_string(bufLen)
-           + sstr.str());
+                  "custom: id=%d a=%d ch=%d bufLen=%d %s",
+                  payload->widgetHeader.id,
+                  payload->widgetHeader.isActive,
+                  payload->widgetHeader.channel,
+                  bufLen,
+                  sstr.str().c_str());
 
     switch (intToWidgetId(payload->widgetHeader.id)) {
         case WidgetId::contortOMatic:
             handleContortOMaticPayload(payload, payloadSize);
             break;
         default:
-            logger.logMsg(LOG_ERR, "There is no payload handler defined for widget id " + to_string((int) payload->widgetHeader.id));
+            logger.logMsg(LOG_ERR, "There is no payload handler defined for widget id %d.", payload->widgetHeader.id);
     }
 }
 
@@ -543,7 +541,14 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
-    logger.startLogging("widgetRcvr", Log::LogTo::file);
+    if (!logger.startLogging("widgetRcvr", Log::LogTo::redirect)) {
+        exit(EXIT_FAILURE);
+    }
+fprintf(stdout, "test output to stdout\n");
+fprintf(stderr, "test output to stderr\n");
+printf("test printf output\n");
+cout << "test output via cout" << endl;
+cerr << "test output via cerr" << endl;
 
     logger.logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
 
@@ -573,9 +578,14 @@ int main(int argc, char** argv)
     radio.startListening();
     logger.logMsg(LOG_INFO, "Now listening for widget data.");
 
-    runLoop();
+//    runLoop();
     
     logger.stopLogging();
+fprintf(stdout, "after stopLogging, test output to stdout\n");
+fprintf(stderr, "after stopLogging, test output to stderr\n");
+printf("after stopLogging, test printf output\n");
+cout << "after stopLogging, test output via cout" << endl;
+cerr << "after stopLogging, test output via cerr" << endl;
 
     return 0;
 }
