@@ -544,11 +544,6 @@ int main(int argc, char** argv)
     if (!logger.startLogging("widgetRcvr", Log::LogTo::redirect)) {
         exit(EXIT_FAILURE);
     }
-fprintf(stdout, "test output to stdout\n");
-fprintf(stderr, "test output to stderr\n");
-printf("test printf output\n");
-cout << "test output via cout" << endl;
-cerr << "test output via cerr" << endl;
 
     logger.logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
 
@@ -581,11 +576,6 @@ cerr << "test output via cerr" << endl;
 //    runLoop();
     
     logger.stopLogging();
-fprintf(stdout, "after stopLogging, test output to stdout\n");
-fprintf(stderr, "after stopLogging, test output to stderr\n");
-printf("after stopLogging, test printf output\n");
-cout << "after stopLogging, test output via cout" << endl;
-cerr << "after stopLogging, test output via cerr" << endl;
 
     return 0;
 }
