@@ -24,6 +24,7 @@
 
 #include "ConfigReader.h"
 #include "illumiconeTypes.h"
+#include "Log.h"
 #include "pixeltypes.h"
 
 using namespace std;
