@@ -573,7 +573,7 @@ int main(int argc, char** argv)
     radio.startListening();
     logger.logMsg(LOG_INFO, "Now listening for widget data.");
 
-//    runLoop();
+    runLoop();
     
     logger.stopLogging();
 
