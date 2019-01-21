@@ -49,7 +49,7 @@ class Log
         void logMsg(int priority, int errNum, const char* format, ...) __attribute__ ((format (printf, 4, 5)));
         void vlogMsg(int priority, const char* format, va_list args);
 
-        bool startLogging(const std::string& logName, LogTo logTo);
+        bool startLogging(const std::string& logName, LogTo logTo = LogTo::console, const std::string& logFilePath = ".");
         void stopLogging();
 
     private:
@@ -64,7 +64,8 @@ class Log
         std::ofstream flog;
         std::ostream* lout;
         std::ostream* lerr;
-        std::string logFileName;
+        std::string logFilePath;
+        std::string logFilePathName;
         std::string logName;
         LogTo logTo;
 

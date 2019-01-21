@@ -543,6 +543,8 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
+    logger.startLogging("widgetRcvr", Log::LogTo::file);
+
     logger.logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
 
     // If the config file is really a symbolic link,
@@ -573,6 +575,8 @@ int main(int argc, char** argv)
 
     runLoop();
     
+    logger.stopLogging();
+
     return 0;
 }
 

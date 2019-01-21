@@ -15,15 +15,20 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ConfigReader.h"
 #include <fstream>
-#include "json11.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
 
+#include "ConfigReader.h"
+#include "json11.hpp"
+#include "Log.h"
+
 using namespace std;
 using namespace json11;
+
+
+Log logger;                     // this is the global Log object used everywhere
 
 
 int main(int argc, char **argv) {
@@ -33,6 +38,8 @@ int main(int argc, char **argv) {
         return 2;
     }
     string jsonFileName(argv[1]);
+
+    logger.startLogging("jsonTester", Log::LogTo::console);
 
     ConfigReader config;
     if (!config.readConfigurationFile(jsonFileName)) {
@@ -81,6 +88,8 @@ int main(int argc, char **argv) {
             cout << "        measurement:  " << input["measurement"].string_value() << endl;
         }
     }
+
+    logger.stopLogging();
 
     return 0;
 }

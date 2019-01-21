@@ -23,8 +23,10 @@
 #include "ConfigReader.h"
 #include "MeasurementMapper.h"
 
-
 using namespace std;
+
+
+Log logger;                     // this is the global Log object used everywhere
 
 
 void measurementMapperUnitTests()
@@ -271,7 +273,11 @@ int main(int argc, char **argv)
 {
     cout << "Illumicone unit tests." << endl;
 
+    logger.startLogging("unitTests", Log::LogTo::console);
+
     measurementMapperUnitTests();
+
+    logger.stopLogging();
 
     cout << "All unit tests passed." << endl;
 }

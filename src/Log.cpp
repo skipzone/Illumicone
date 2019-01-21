@@ -25,6 +25,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #include "illumiconeUtility.h"
 #include "Log.h"
@@ -144,16 +145,17 @@ void Log::vlogMsg(int priority, const char* format, va_list args)
 }
 
 
-bool Log::startLogging(const std::string& logName, LogTo logTo)
+bool Log::startLogging(const std::string& logName, LogTo logTo, const std::string& logFilePath)
 {
     stopLogging();
 
     this->logName = logName;
     this->logTo = logTo;
+    this->logFilePath = logFilePath;
 
     bool successful = false;
     int errNum;
-    switch (logTo) {
+    switch (this->logTo) {
 
         case LogTo::nowhere:
         case LogTo::console:
@@ -163,29 +165,45 @@ bool Log::startLogging(const std::string& logName, LogTo logTo)
             break;
 
         case LogTo::systemLog:
-            openlog(logName.c_str(), LOG_PID | LOG_CONS | LOG_NDELAY, LOG_USER);
+            openlog(this->logName.c_str(), LOG_PID | LOG_CONS | LOG_NDELAY, LOG_USER);
             successful = true;
             break;
 
         case LogTo::file:
         case LogTo::fileWithTimestamp:
-            if (logTo == LogTo::fileWithTimestamp) {
-                logFileName = logName + "_" + getTimestamp(TimestampType::compactYmdHm) + ".log";
+
+            // Expand the tilde and any environment variables the path might contain.
+            wordexp_t p;
+            if (wordexp(logFilePath.c_str(), &p, WRDE_NOCMD | WRDE_UNDEF) != 0 || p.we_wordc != 1) {
+                std::cerr << std::string(__FUNCTION__)
+                    << ":  Invalid log file path \"" << logFilePath << "\"." << std::endl;
+                break;
             }
-            else {
-                logFileName = logName + ".log";
+            this->logFilePath = p.we_wordv[0];
+            wordfree(&p);
+
+            // We expect the path to end in a slash.
+            if (this->logFilePath.back() != '/') {
+                this->logFilePath += "/";
             }
 
-            flog.open(logFileName.c_str(), std::ios_base::out | std::ios_base::app);
+            if (this->logTo == LogTo::fileWithTimestamp) {
+                logFilePathName = this->logFilePath + this->logName + "_" + getTimestamp(TimestampType::compactYmdHm) + ".log";
+            }
+            else {
+                logFilePathName = this->logFilePath + this->logName + ".log";
+            }
+
+            flog.open(logFilePathName.c_str(), std::ios_base::out | std::ios_base::app);
             if (flog.is_open()) {
                 lout = lerr = &flog;
                 successful = true;
             }
             else {
                 errNum = errno;
-                std::cerr << std::string(__PRETTY_FUNCTION__)
-                    << ":  Unable to open output file " << logFileName << "; "
-                    << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ").";
+                std::cerr << std::string(__FUNCTION__)
+                    << ":  Unable to open output file " << logFilePathName << "; "
+                    << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
             }
             break;
     }
