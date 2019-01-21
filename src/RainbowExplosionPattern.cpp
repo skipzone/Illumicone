@@ -19,14 +19,16 @@
 
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "RainbowExplosionPattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 RainbowExplosionPattern::RainbowExplosionPattern(const std::string& name)
@@ -43,57 +45,57 @@ bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetI
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["activationThreshold"].is_number()) {
-        logMsg(LOG_ERR, "activationThreshold not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "activationThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
     activationThreshold = patternConfig["activationThreshold"].int_value();
-    logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
+    logger.logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
     if (!patternConfig["explosionThreshold"].is_number()) {
-        logMsg(LOG_ERR, "explosionThreshold not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "explosionThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
     explosionThreshold = patternConfig["explosionThreshold"].int_value();
-    logMsg(LOG_INFO, name + " explosionThreshold=" + to_string(explosionThreshold));
+    logger.logMsg(LOG_INFO, name + " explosionThreshold=" + to_string(explosionThreshold));
 
     if (!patternConfig["accumulatorResetUpperLimit"].is_number()) {
-        logMsg(LOG_ERR, "accumulatorResetUpperLimit not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "accumulatorResetUpperLimit not specified in " + name + " pattern configuration.");
         return false;
     }
     accumulatorResetUpperLimit = patternConfig["accumulatorResetUpperLimit"].int_value();
-    logMsg(LOG_INFO, name + " accumulatorResetUpperLimit=" + to_string(accumulatorResetUpperLimit));
+    logger.logMsg(LOG_INFO, name + " accumulatorResetUpperLimit=" + to_string(accumulatorResetUpperLimit));
 
     if (!patternConfig["minFizzleFill"].is_number()) {
-        logMsg(LOG_ERR, "minFizzleFill not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "minFizzleFill not specified in " + name + " pattern configuration.");
         return false;
     }
     minFizzleFill = patternConfig["minFizzleFill"].int_value();
-    logMsg(LOG_INFO, name + " minFizzleFill=" + to_string(minFizzleFill));
+    logger.logMsg(LOG_INFO, name + " minFizzleFill=" + to_string(minFizzleFill));
 
     if (!patternConfig["maxFizzleFill"].is_number()) {
-        logMsg(LOG_ERR, "maxFizzleFill not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "maxFizzleFill not specified in " + name + " pattern configuration.");
         return false;
     }
     maxFizzleFill = patternConfig["maxFizzleFill"].int_value();
-    logMsg(LOG_INFO, name + " maxFizzleFill=" + to_string(maxFizzleFill));
+    logger.logMsg(LOG_INFO, name + " maxFizzleFill=" + to_string(maxFizzleFill));
 
     if (!patternConfig["fillStepSize"].is_number()) {
-        logMsg(LOG_ERR, "fillStepSize not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "fillStepSize not specified in " + name + " pattern configuration.");
         return false;
     }
     fillStepSize = patternConfig["fillStepSize"].int_value();
-    logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
+    logger.logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
 
     if (!patternConfig["fillStepIntervalMs"].is_number()) {
-        logMsg(LOG_ERR, "fillStepIntervalMs not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "fillStepIntervalMs not specified in " + name + " pattern configuration.");
         return false;
     }
     fillStepIntervalMs = patternConfig["fillStepIntervalMs"].int_value();
-    logMsg(LOG_INFO, name + " fillStepIntervalMs=" + to_string(fillStepIntervalMs));
+    logger.logMsg(LOG_INFO, name + " fillStepIntervalMs=" + to_string(fillStepIntervalMs));
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_WARNING, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_WARNING, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -103,14 +105,14 @@ bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetI
             intensityChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+        logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
+            logger.logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }

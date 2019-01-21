@@ -35,9 +35,9 @@ class Log
         Log& operator =(const Log&) = delete;
 
         void logMsg(int priority, const std::string& message);
-        void logMsg(int priority, const char* format, ...) __attribute__ ((format (printf, 2, 3)));
+        void logMsg(int priority, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
         void logMsg(int priority, int errNum, const std::string& message);
-        void logMsg(int priority, int errNum, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
+        void logMsg(int priority, int errNum, const char* format, ...) __attribute__ ((format (printf, 4, 5)));
         void vlogMsg(int priority, const char* format, va_list args);
 
         void startLogging(bool useSystemLog, const char* appName);

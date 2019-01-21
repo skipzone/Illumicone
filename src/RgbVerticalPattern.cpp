@@ -20,14 +20,16 @@
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "RgbVerticalPattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 RgbVerticalPattern::RgbVerticalPattern(const std::string& name)
@@ -41,29 +43,29 @@ bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Wi
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["widthScaleFactor"].is_number()) {
-        logMsg(LOG_ERR, "widthScaleFactor not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "widthScaleFactor not specified in " + name + " pattern configuration.");
         return false;
     }
     widthScaleFactor = patternConfig["widthScaleFactor"].int_value();
-    logMsg(LOG_INFO, name + " widthScaleFactor=" + to_string(widthScaleFactor));
+    logger.logMsg(LOG_INFO, name + " widthScaleFactor=" + to_string(widthScaleFactor));
 
     if (!patternConfig["maxCyclicalWidth"].is_number()) {
-        logMsg(LOG_ERR, "maxCyclicalWidth not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "maxCyclicalWidth not specified in " + name + " pattern configuration.");
         return false;
     }
     maxCyclicalWidth = patternConfig["maxCyclicalWidth"].int_value();
-    logMsg(LOG_INFO, name + " maxCyclicalWidth=" + to_string(maxCyclicalWidth));
+    logger.logMsg(LOG_INFO, name + " maxCyclicalWidth=" + to_string(maxCyclicalWidth));
 
     if (!patternConfig["widthResetTimeoutSeconds"].is_number()) {
-        logMsg(LOG_ERR, "widthResetTimeoutSeconds not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "widthResetTimeoutSeconds not specified in " + name + " pattern configuration.");
         return false;
     }
     widthResetTimeoutSeconds = patternConfig["widthResetTimeoutSeconds"].int_value();
-    logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
+    logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -82,14 +84,14 @@ bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Wi
             widthChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+        logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
+            logger.logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }
@@ -164,7 +166,7 @@ bool RgbVerticalPattern::update()
                 if (widthPos < 1) {
                     widthPos = 1;
                 }
-                //logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
+                //logger.logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
                 //                  + ", widthPosOffset=" + to_string(widthPosOffset)
                 //                  + ", widthPos=" + to_string(widthPos));
             }
@@ -181,7 +183,7 @@ bool RgbVerticalPattern::update()
             nextResetWidthMs = nowMs + widthResetTimeoutSeconds * 1000;
         }
         else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
-            logMsg(LOG_DEBUG, name + ":  Resetting width.");
+            logger.logMsg(LOG_DEBUG, name + ":  Resetting width.");
             resetWidth = true;
             widthPos = 1;
         }
@@ -208,7 +210,7 @@ bool RgbVerticalPattern::update()
         int bWidthLowIndex = bPos - leftExtraWidth;
         int bWidthHighIndex = bPos + rightExtraWidth;
 
-        //logMsg(LOG_DEBUG, name
+        //logger.logMsg(LOG_DEBUG, name
         //    + ":  leftExtraWidth=" + to_string(leftExtraWidth)
         //    + ", rightExtraWidth=" + to_string(rightExtraWidth)
         //    + ", rPos=" + to_string(rPos)

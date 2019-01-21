@@ -20,10 +20,13 @@
 #include "ConfigReader.h"
 #include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "BoogieBoardWidget.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 BoogieBoardWidget::BoogieBoardWidget()
@@ -88,7 +91,7 @@ void BoogieBoardWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
     }
 
     //if (newPosition % logInterval == 0) {
-    //    logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    //    logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
     //}
 
     channels[chIdx]->setPositionAndVelocity(newPosition, 0);

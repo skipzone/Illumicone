@@ -17,8 +17,11 @@
 
 
 #include "indicatorRegionFactory.h"
-#include "log.h"
+#include "Log.h"
 #include "SimpleBlockIndicator.h"
+
+
+extern Log logger;
 
 
 IndicatorRegion* indicatorRegionFactory(const std::string& indicatorClassName)
@@ -27,7 +30,7 @@ IndicatorRegion* indicatorRegionFactory(const std::string& indicatorClassName)
         return new SimpleBlockIndicator();
     }
 
-    logMsg(LOG_ERR, "Unsupported indicator class name \"" + indicatorClassName + ".");
+    logger.logMsg(LOG_ERR, "Unsupported indicator class name \"" + indicatorClassName + ".");
     return nullptr;
 }
 

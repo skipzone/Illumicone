@@ -19,11 +19,14 @@
 
 #include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "SpinnahWidget.h"
 #include "WidgetId.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 SpinnahWidget::SpinnahWidget()
@@ -58,7 +61,7 @@ void SpinnahWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
         int newVelocity = newPosition % 51 * 10;    // limit to 500 rpm
         channels[chIdx]->setPositionAndVelocity(newPosition, newVelocity);
         channels[chIdx]->setIsActive(true);
-        //logMsg(LOG_DEBUG, "spinnah chIdx=" + to_string(chIdx)
+        //logger.logMsg(LOG_DEBUG, "spinnah chIdx=" + to_string(chIdx)
         //                  + " newPosition=" + to_string(newPosition)
         //                  + " newVelocity=" + to_string(newVelocity));
     }

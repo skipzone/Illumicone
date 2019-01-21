@@ -15,7 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// TODO 7/31/2017 ross:  Use logMsg in place of cerr.
+// TODO 7/31/2017 ross:  Use logger.logMsg in place of cerr.
 
 #include <fstream>
 #include <iostream>
@@ -23,10 +23,13 @@
 
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
-#include "log.h"
+#include "Log.h"
 
 using namespace std;
 using namespace json11;
+
+
+extern Log logger;
 
 
 bool ConfigReader::getBoolValue(const json11::Json& jsonObj,
@@ -36,7 +39,7 @@ bool ConfigReader::getBoolValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_bool()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a boolean value" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a boolean value" + errorMessageSuffix);
         }
         return false;
     }
@@ -54,14 +57,14 @@ bool ConfigReader::getDoubleValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].number_value();
     if (value < minValue || value > maxValue) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
         }
         return false;
@@ -79,14 +82,14 @@ bool ConfigReader::getFloatValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].number_value();
     if (value < minValue || value > maxValue) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
         }
         return false;
@@ -105,7 +108,7 @@ bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_string()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
         }
         return false;
     }
@@ -113,7 +116,7 @@ bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
     if (rgbStr.empty()) {
         if (!allowEmptyString) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
             }
             return false;
         }
@@ -122,7 +125,7 @@ bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
     }
     if (!stringToHsvPixel(rgbStr, value)) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not a valid HSV color" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not a valid HSV color" + errorMessageSuffix);
         }
         return false;
     }
@@ -139,14 +142,14 @@ bool ConfigReader::getIntValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].int_value();
     if (value < minValue || value > maxValue) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
         }
         return false;
@@ -165,7 +168,7 @@ bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_string()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
         }
         return false;
     }
@@ -173,7 +176,7 @@ bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
     if (rgbStr.empty()) {
         if (!allowEmptyString) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
             }
             return false;
         }
@@ -182,7 +185,7 @@ bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
     }
     if (!stringToRgbPixel(rgbStr, value)) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not a valid RGB color" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not a valid RGB color" + errorMessageSuffix);
         }
         return false;
     }
@@ -198,14 +201,14 @@ bool ConfigReader::getStringValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_string()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].string_value();
     if (!allowEmptyString && value.empty()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
         }
         return false;
     }
@@ -222,14 +225,14 @@ bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].int_value();
     if (value < minValue || value > maxValue) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
         }
         return false;
@@ -312,7 +315,7 @@ std::string ConfigReader::getLockFilePath(const string& serviceName)
 {
     Json lockFilePathsObj = configObj["lockFilePaths"];
     if (!lockFilePathsObj.is_object()) {
-        logMsg(LOG_ERR, "lockFilePaths is missing from configuration or is not a JSON object.");
+        logger.logMsg(LOG_ERR, "lockFilePaths is missing from configuration or is not a JSON object.");
         return "";
     }
     return lockFilePathsObj[serviceName].string_value();

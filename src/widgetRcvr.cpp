@@ -34,11 +34,13 @@
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
 #include "illumiconeWidgetTypes.h"
-#include "log.h"
+#include "Log.h"
 #include "WidgetId.h"
 
-
 using namespace std;
+
+
+Log logger;
 
 static ConfigReader config;
 static string lockFilePath;
@@ -113,7 +115,7 @@ bool openUdpPort(WidgetId widgetId)
     unsigned int widgetIdNumber = widgetIdToInt(widgetId);
     unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
 
-    logMsg(LOG_INFO, "Creating and binding socket for " + widgetIdToString(intToWidgetId(widgetIdNumber)));
+    logger.logMsg(LOG_INFO, "Creating and binding socket for " + widgetIdToString(intToWidgetId(widgetIdNumber)));
 
     memset(&widgetSockAddr[widgetIdNumber], 0, sizeof(struct sockaddr_in));
 
@@ -135,7 +137,7 @@ bool openUdpPort(WidgetId widgetId)
         return false;
     }
 
-    logMsg(LOG_INFO, "Setting address to " + patconIpAddress + ":" + to_string(portNumber));
+    logger.logMsg(LOG_INFO, "Setting address to " + patconIpAddress + ":" + to_string(portNumber));
 
     inet_pton(AF_INET, patconIpAddress.c_str(), &widgetSockAddr[widgetIdNumber].sin_addr.s_addr);
     widgetSockAddr[widgetIdNumber].sin_port = htons(portNumber);
@@ -154,12 +156,12 @@ bool sendUdp(const UdpPayload& payload)
                                     sizeof(struct sockaddr_in));
 
     if (bytesSentCount != sizeof(payload)) {
-        logMsg(LOG_ERR,
+        logger.logMsg(LOG_ERR,
                "UPD payload size is " + to_string(sizeof(payload))
                + ", but " + to_string(bytesSentCount) + " bytes were sent.");
         return false;
     }
-    //logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
+    //logger.logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
 
     return true;
 }
@@ -191,7 +193,7 @@ void handleContortOMaticCalibrationDataPayload(const ContortOMaticCalibrationDat
     for (unsigned int i = 0; i < 8; ++i) {
         sstr << " " << to_string(i + padNumOffset) << ":" << payload->capSenseReferenceValues[i];
     }
-    logMsg(LOG_INFO, "Cap sense reference values: " + sstr.str());
+    logger.logMsg(LOG_INFO, "Cap sense reference values: " + sstr.str());
 }
 
 
@@ -200,7 +202,7 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
     switch (payload->widgetHeader.channel) {          // channel is actually payload subtype
         case 0:
             if (payloadSize != sizeof(ContortOMaticTouchDataPayload)) {
-                logMsg(LOG_ERR,
+                logger.logMsg(LOG_ERR,
                        "Got ContortOMaticTouchDataPayload payload with size " + to_string(payloadSize)
                        + ", but size " + to_string(sizeof(ContortOMaticTouchDataPayload)) + " was expected.");
                 return;
@@ -210,7 +212,7 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
 
         case 1:
             if (payloadSize != sizeof(ContortOMaticCalibrationDataPayload)) {
-                logMsg(LOG_ERR,
+                logger.logMsg(LOG_ERR,
                        "Got ContortOMaticCalibrationDataPayload payload with size " + to_string(payloadSize)
                        + ", but size " + to_string(sizeof(ContortOMaticCalibrationDataPayload)) + " was expected.");
                 return;
@@ -219,7 +221,7 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
             break;
 
         default:
-            logMsg(LOG_ERR,
+            logger.logMsg(LOG_ERR,
                    "Got ContortOMatic payload on channel " + to_string(payload->widgetHeader.channel)
                    + ", but there is no payload subtype assigned to that channel.");
     }
@@ -229,13 +231,13 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
 void handleStressTestPayload(const StressTestPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize != sizeof(StressTestPayload)) {
-        logMsg(LOG_ERR,
+        logger.logMsg(LOG_ERR,
                "Got StressTestPayload payload with size " + to_string(payloadSize)
                + ", but size " + to_string(sizeof(StressTestPayload)) + " was expected.");
         return;
     }
 
-    logMsg(LOG_INFO,
+    logger.logMsg(LOG_INFO,
            "stest: id=" + to_string((int) payload->widgetHeader.id)
            + " a=" + to_string(payload->widgetHeader.isActive)
            + " ch=" + to_string((int) payload->widgetHeader.channel)
@@ -257,13 +259,13 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
 void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize != sizeof(PositionVelocityPayload)) {
-        logMsg(LOG_ERR,
+        logger.logMsg(LOG_ERR,
                "Got PositionVelocityPayload payload with size " + to_string(payloadSize)
                + ", but size " + to_string(sizeof(PositionVelocityPayload)) + " was expected.");
         return;
     }
 
-    logMsg(LOG_INFO,
+    logger.logMsg(LOG_INFO,
            "pv: id=" + to_string((int) payload->widgetHeader.id)
            + " a=" + to_string(payload->widgetHeader.isActive)
            + " ch=" + to_string((int) payload->widgetHeader.channel)
@@ -284,7 +286,7 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
 void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize < (1 + sizeof(int16_t))) {
-        logMsg(LOG_ERR, "Got MeasurementVectorPayload without any data.");
+        logger.logMsg(LOG_ERR, "Got MeasurementVectorPayload without any data.");
         return;
     }
     // TODO 8/3/2017 ross:  might be a good idea to make sure payloadSize is odd
@@ -295,7 +297,7 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
     for (unsigned int i = 0; i < numMeasurements; ++i) {
         sstr << " " << setfill(' ') << setw(6) << payload->measurements[i];
     }
-    logMsg(LOG_INFO,
+    logger.logMsg(LOG_INFO,
            "mvec: id=" + to_string((int) payload->widgetHeader.id)
            + " a=" + to_string(payload->widgetHeader.isActive)
            + " ch=" + to_string((int) payload->widgetHeader.channel)
@@ -320,7 +322,7 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
 void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
 {
     if (payloadSize < 2) {
-        logMsg(LOG_ERR, "Got CustomPayload without any data.");
+        logger.logMsg(LOG_ERR, "Got CustomPayload without any data.");
         return;
     }
 
@@ -330,7 +332,7 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
     for (unsigned int i = 0; i < bufLen; ++i) {
         sstr << " 0x" << hex << (int) payload->buf[i];
     }
-    logMsg(LOG_INFO,
+    logger.logMsg(LOG_INFO,
            "custom: id=" + to_string((int) payload->widgetHeader.id)
            + " a=" + to_string(payload->widgetHeader.isActive)
            + " ch=" + to_string((int) payload->widgetHeader.channel)
@@ -342,7 +344,7 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
             handleContortOMaticPayload(payload, payloadSize);
             break;
         default:
-            logMsg(LOG_ERR, "There is no payload handler defined for widget id " + to_string((int) payload->widgetHeader.id));
+            logger.logMsg(LOG_ERR, "There is no payload handler defined for widget id " + to_string((int) payload->widgetHeader.id));
     }
 }
 
@@ -359,7 +361,7 @@ bool readConfig(const string& configFileName)
 
     lockFilePath = config.getLockFilePath("widgetRcvr");
     if (lockFilePath.empty()) {
-        logMsg(LOG_WARNING, "There is no lock file name for widgetRcvr in configuration.");
+        logger.logMsg(LOG_WARNING, "There is no lock file name for widgetRcvr in configuration.");
     }
 
     patconIpAddress = config.getPatconIpAddress();
@@ -401,7 +403,7 @@ bool openUdpPorts()
 bool configureRadio()
 {
     if (!radio.begin()) {
-        logMsg(LOG_ERR, "radio.begin failed.");
+        logger.logMsg(LOG_ERR, "radio.begin failed.");
         return false;
     }
 
@@ -417,7 +419,7 @@ bool configureRadio()
         radio.openReadingPipe(i, readPipeAddresses[i]);
     }
 
-    logMsg(LOG_INFO, "Radio configuration details:");
+    logger.logMsg(LOG_INFO, "Radio configuration details:");
     radio.printDetails();
 
     return true;
@@ -441,11 +443,11 @@ void runLoop()
 
             unsigned int payloadSize = radio.getDynamicPayloadSize();
             if (payloadSize == 0) {
-                logMsg(LOG_ERR, "Got invalid packet (payloadSize = 0).");
+                logger.logMsg(LOG_ERR, "Got invalid packet (payloadSize = 0).");
                 continue;
             }
             if (payloadSize > maxPayloadSize) {
-                logMsg(LOG_ERR, "Got unsupported payload size " + to_string(payloadSize));
+                logger.logMsg(LOG_ERR, "Got unsupported payload size " + to_string(payloadSize));
                 // RF24 is supposed to do a Flush_RX command and return 0 for
                 // the size if an invalid payload length is detected.  It
                 // apparently didn't do that.  Who knows what we're supposed
@@ -481,7 +483,7 @@ void runLoop()
                     for (unsigned int i = 0; i < maxPayloadSize; ++i) {
                         sstr << " 0x" << hex << (int) payload[i];
                     }
-                    logMsg(LOG_ERR,
+                    logger.logMsg(LOG_ERR,
                            "Got payload with size " + to_string(payloadSize)
                            + " via unsupported pipe " + to_string((int) pipeNum)
                            + ".  Contents: " + sstr.str());
@@ -495,7 +497,7 @@ void runLoop()
                     for (unsigned int i = 0; i < maxPayloadSize; ++i) {
                         sstr << " 0x" << hex << (int) payload[i];
                     }
-                    logMsg(LOG_ERR,
+                    logger.logMsg(LOG_ERR,
                            "pipeNum is " + to_string((int) pipeNum)
                            + ", which should never happen!  Payload contents: " + sstr.str());
             }
@@ -508,7 +510,7 @@ void runLoop()
             if (noDataReceivedIntervalS >= noDataReceivedMessageIntervalS
                 && noDataReceivedIntervalS % noDataReceivedMessageIntervalS == 0)
             {
-                logMsg(LOG_INFO, "No widget data received for " + to_string(noDataReceivedIntervalS) + " seconds.");
+                logger.logMsg(LOG_INFO, "No widget data received for " + to_string(noDataReceivedIntervalS) + " seconds.");
                 noDataReceivedMessageTime = now;
                 if (noDataReceivedMessageIntervalS <= 32) {
                     noDataReceivedMessageIntervalS *= 2;
@@ -541,7 +543,7 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
-    logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
+    logger.logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
 
     // If the config file is really a symbolic link,
     // add the link target to the file name we'll log.
@@ -552,11 +554,11 @@ int main(int argc, char** argv)
         buf[count] = '\0';
         configFileNameAndTarget += string(" -> ") + buf;
     }
-    logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
-    logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
-    logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
-    logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = " + to_string(radioPollingLoopSleepIntervalUs));
-    logMsg(LOG_INFO, "widgetPortNumberBase = " + to_string(widgetPortNumberBase));
+    logger.logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
+    logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
+    logger.logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
+    logger.logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = " + to_string(radioPollingLoopSleepIntervalUs));
+    logger.logMsg(LOG_INFO, "widgetPortNumberBase = " + to_string(widgetPortNumberBase));
 
     if (!openUdpPorts()) {
         exit(EXIT_FAILURE);
@@ -567,7 +569,7 @@ int main(int argc, char** argv)
     }
 
     radio.startListening();
-    logMsg(LOG_INFO, "Now listening for widget data.");
+    logger.logMsg(LOG_INFO, "Now listening for widget data.");
 
     runLoop();
     

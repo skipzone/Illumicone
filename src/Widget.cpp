@@ -26,13 +26,15 @@
 #include "ConfigReader.h"
 #include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "QueuedWidgetChannel.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 Widget::Widget(WidgetId id, unsigned int numChannels, bool useQueuedChannels)
@@ -61,10 +63,10 @@ Widget::~Widget()
         // received or an error occurs.  Closing the socket will cause a file
         // descriptor error, thus allowing the thread to figure out it needs to
         // terminate.
-        logMsg(LOG_DEBUG, "closing UDP socket for " + widgetIdToString(id));
+        logger.logMsg(LOG_DEBUG, "closing UDP socket for " + widgetIdToString(id));
         close(sockfd); 					            // close the UDP socket
 
-        logMsg(LOG_DEBUG, "Waiting for UDP rx thread termination for " + widgetIdToString(id));
+        logger.logMsg(LOG_DEBUG, "Waiting for UDP rx thread termination for " + widgetIdToString(id));
         pthread_cancel(udpRxThread); 	            // kill the rx thread
         pthread_join(udpRxThread, NULL); 	        // wait for the rx thread to terminate
     }
@@ -80,7 +82,7 @@ bool Widget::init(ConfigReader& config)
     autoInactiveMs = config.getWidgetAutoInactiveMs(widgetName);
 
     if (autoInactiveMs != 0) {
-        logMsg(LOG_INFO, "autoInactiveMs=" + to_string(autoInactiveMs) + " for " + widgetIdToString(id));
+        logger.logMsg(LOG_INFO, "autoInactiveMs=" + to_string(autoInactiveMs) + " for " + widgetIdToString(id));
     }
 
     for (unsigned int i = 0; i < numChannels; ++i) {
@@ -127,7 +129,7 @@ void Widget::startUdpRxThread()
 
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1) {
-        logMsg(LOG_ERR, errno, "Failed to create socket in Widget::startUdpRxThread for " + widgetIdToString(id));
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket in Widget::startUdpRxThread for " + widgetIdToString(id));
         return;
     }
 
@@ -137,15 +139,15 @@ void Widget::startUdpRxThread()
     servaddr.sin_port = htons(widgetPortNumber);
 
     if (::bind(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) == -1) {
-        logMsg(LOG_ERR, errno, "Failed to bind socket in Widget::startUdpRxThread for " + widgetIdToString(id));
+        logger.logMsg(LOG_ERR, errno, "Failed to bind socket in Widget::startUdpRxThread for " + widgetIdToString(id));
         return;
     }
 
     if (pthread_create(&udpRxThread, NULL, udpRxThreadEntry, this)) {
-        logMsg(LOG_ERR, "pthread_create failed in Widget::startUdpRxThread for " + widgetIdToString(id));
+        logger.logMsg(LOG_ERR, "pthread_create failed in Widget::startUdpRxThread for " + widgetIdToString(id));
     }
     else {
-        logMsg(LOG_INFO, "Listening on port " + to_string(widgetPortNumber)
+        logger.logMsg(LOG_INFO, "Listening on port " + to_string(widgetPortNumber)
         + " (" + to_string(servaddr.sin_port) + ") for " + widgetIdToString(id));
     }
 }
@@ -168,11 +170,11 @@ void Widget::pollForUdpRx()
                                        &len);
 
         if (rxByteCount < 0) {
-            logMsg(LOG_ERR, errno, "Error receiving UDP message for " + widgetIdToString(id) + ".");
+            logger.logMsg(LOG_ERR, errno, "Error receiving UDP message for " + widgetIdToString(id) + ".");
             continue;
         }
 
-        logMsg(LOG_INFO, 
+        logger.logMsg(LOG_INFO, 
             "payload: len=" + to_string(rxByteCount)
             + " id=" + to_string((int) payload.id)
             + " ch=" + to_string((int) payload.channel)
@@ -185,12 +187,12 @@ void Widget::pollForUdpRx()
             channels[payload.channel]->setIsActive(payload.isActive);
         }
         else {
-            logMsg(LOG_ERR, "pollForUdpRx:  invalid channel " + to_string((int) payload.channel)
+            logger.logMsg(LOG_ERR, "pollForUdpRx:  invalid channel " + to_string((int) payload.channel)
                 + " received for widget id " + to_string((int) payload.id));
         }
 	}
 
-    logMsg(LOG_INFO, "UDP message polling for " + widgetIdToString(id) + " stopped.");
+    logger.logMsg(LOG_INFO, "UDP message polling for " + widgetIdToString(id) + " stopped.");
 };
 
 

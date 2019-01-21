@@ -21,11 +21,13 @@
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
 #include "illumiconePixelUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "IndicatorRegion.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 IndicatorRegion::IndicatorRegion()
@@ -65,7 +67,7 @@ bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString
     if (indicatorConfig["backgroundHsv"].is_string()) {
         string hsvStr = indicatorConfig["backgroundHsv"].string_value();
         if (stringToHsvPixel(hsvStr, backgroundColor)) {
-            logMsg(LOG_ERR, "backgroundHsv value \"" + hsvStr + "\" is not valid" + errMsgSuffix);
+            logger.logMsg(LOG_ERR, "backgroundHsv value \"" + hsvStr + "\" is not valid" + errMsgSuffix);
             return false;
         }
     }
@@ -76,7 +78,7 @@ bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString
     if (indicatorConfig["foregroundHsv"].is_string()) {
         string hsvStr = indicatorConfig["foregroundHsv"].string_value();
         if (!stringToHsvPixel(hsvStr, foregroundColor)) {
-            logMsg(LOG_ERR, "foregroundHsv value \"" + hsvStr + "\" is not valid" + errMsgSuffix);
+            logger.logMsg(LOG_ERR, "foregroundHsv value \"" + hsvStr + "\" is not valid" + errMsgSuffix);
             return false;
         }
     }
@@ -102,7 +104,7 @@ void IndicatorRegion::fillRegion(const HsvPixel& color)
     // We're doing the funky do/while stuff to support wraparound from the last
     // string to the first string (i.e., startStringIdx > endStringIdx).
 
-    //logMsg(LOG_DEBUG, "startStringIdx=" + to_string(startStringIdx) + ", endStringIdx=" + to_string(endStringIdx));
+    //logger.logMsg(LOG_DEBUG, "startStringIdx=" + to_string(startStringIdx) + ", endStringIdx=" + to_string(endStringIdx));
     unsigned int i = startStringIdx;
     do {
         if (i >= numStrings) {
@@ -115,7 +117,7 @@ void IndicatorRegion::fillRegion(const HsvPixel& color)
             }
             //string hsvStr;
             //hsvPixelToString(foregroundColor, hsvStr);
-            //logMsg(LOG_DEBUG, "setting (" + to_string(i) + ", " + to_string(j) + ") to " + hsvStr);
+            //logger.logMsg(LOG_DEBUG, "setting (" + to_string(i) + ", " + to_string(j) + ") to " + hsvStr);
             (*coneStrings)[i][j] = color;
         } while (j++ != endPixelIdx);
     } while (i++ != endStringIdx);

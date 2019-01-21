@@ -20,14 +20,16 @@
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
 #include "illumiconePixelUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "ParticlesPattern.h"
 #include "Pattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 ParticlesPattern::ParticlesPattern(const std::string& name)
@@ -42,7 +44,7 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -57,10 +59,10 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
                 emitRateUsePositionMeasmt = true;
             }
             else {
-                logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
+                logger.logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
                 return false;
             }
-            logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
+            logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
                              + (emitRateUsePositionMeasmt ? " position measurement for " : " velocity measurement for ")
                              + channelConfig.inputName);
         }
@@ -73,15 +75,15 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
                 emitColorUsePositionMeasmt = true;
             }
             else {
-                logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
+                logger.logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
                 return false;
             }
-            logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
+            logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
                              + (emitColorUsePositionMeasmt ? " position measurement for " : " velocity measurement for ")
                              + channelConfig.inputName);
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
@@ -97,42 +99,42 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
     if (!ConfigReader::getBoolValue(patternConfig, "emitIntervalUseMeasmtAbsValue", emitIntervalUseMeasmtAbsValue, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " emitIntervalUseMeasmtAbsValue=" + (emitIntervalUseMeasmtAbsValue ? "true" : "false"));
+    logger.logMsg(LOG_INFO, name + " emitIntervalUseMeasmtAbsValue=" + (emitIntervalUseMeasmtAbsValue ? "true" : "false"));
 
     if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtLow", emitIntervalMeasmtLow, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " emitIntervalMeasmtLow=" + to_string(emitIntervalMeasmtLow));
+    logger.logMsg(LOG_INFO, name + " emitIntervalMeasmtLow=" + to_string(emitIntervalMeasmtLow));
 
     if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtHigh", emitIntervalMeasmtHigh, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " emitIntervalMeasmtHigh=" + to_string(emitIntervalMeasmtHigh));
+    logger.logMsg(LOG_INFO, name + " emitIntervalMeasmtHigh=" + to_string(emitIntervalMeasmtHigh));
 
     if (!ConfigReader::getIntValue(patternConfig, "emitIntervalLowMs", emitIntervalLowMs, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " emitIntervalLowMs=" + to_string(emitIntervalLowMs));
+    logger.logMsg(LOG_INFO, name + " emitIntervalLowMs=" + to_string(emitIntervalLowMs));
 
     if (!ConfigReader::getIntValue(patternConfig, "emitIntervalHighMs", emitIntervalHighMs, errMsgSuffix, 1)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " emitIntervalHighMs=" + to_string(emitIntervalHighMs));
+    logger.logMsg(LOG_INFO, name + " emitIntervalHighMs=" + to_string(emitIntervalHighMs));
 
     if (!ConfigReader::getIntValue(patternConfig, "emitBatchSize", emitBatchSize, errMsgSuffix, 1)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " emitBatchSize=" + to_string(emitBatchSize));
+    logger.logMsg(LOG_INFO, name + " emitBatchSize=" + to_string(emitBatchSize));
 
     if (!ConfigReader::getBoolValue(patternConfig, "emitDirectionIsUp", emitDirectionIsUp, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " emitDirectionIsUp=" + to_string(emitDirectionIsUp));
+    logger.logMsg(LOG_INFO, name + " emitDirectionIsUp=" + to_string(emitDirectionIsUp));
 
     if (!ConfigReader::getUnsignedIntValue(patternConfig, "particleMoveIntervalMs", particleMoveIntervalMs, errMsgSuffix, 1)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " particleMoveIntervalMs=" + to_string(particleMoveIntervalMs));
+    logger.logMsg(LOG_INFO, name + " particleMoveIntervalMs=" + to_string(particleMoveIntervalMs));
 
     // --- emit color stuff ---
 
@@ -141,32 +143,32 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
     if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorDefault", hsvStr, emitColorDefault, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " emitColorDefault=" + hsvStr);
+    logger.logMsg(LOG_INFO, name + " emitColorDefault=" + hsvStr);
 
     if (emitColorChannel != nullptr) {
 
         if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtLow", emitColorMeasmtLow, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " emitColorMeasmtLow=" + to_string(emitColorMeasmtLow));
+        logger.logMsg(LOG_INFO, name + " emitColorMeasmtLow=" + to_string(emitColorMeasmtLow));
 
         if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtHigh", emitColorMeasmtHigh, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " emitColorMeasmtHigh=" + to_string(emitColorMeasmtHigh));
+        logger.logMsg(LOG_INFO, name + " emitColorMeasmtHigh=" + to_string(emitColorMeasmtHigh));
 
         emitColorMeasmtRange = emitColorMeasmtHigh - emitColorMeasmtLow;
 
         if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorLow", hsvStr, emitColorLow, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " emitColorLow=" + hsvStr);
+        logger.logMsg(LOG_INFO, name + " emitColorLow=" + hsvStr);
 
         string hsvStr;
         if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorHigh", hsvStr, emitColorHigh, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " emitColorHigh=" + hsvStr);
+        logger.logMsg(LOG_INFO, name + " emitColorHigh=" + hsvStr);
 
         // Setting the high and low colors to the same value
         // means that we should use the entire color wheel.
@@ -174,22 +176,22 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
             emitColorLow.h = 0;
             emitColorHigh.h = 255;
         }
-        logMsg(LOG_INFO, name + " emitColorLow.h=" + to_string(emitColorLow.h));
-        logMsg(LOG_INFO, name + " emitColorHigh.h=" + to_string(emitColorHigh.h));
+        logger.logMsg(LOG_INFO, name + " emitColorLow.h=" + to_string(emitColorLow.h));
+        logger.logMsg(LOG_INFO, name + " emitColorHigh.h=" + to_string(emitColorHigh.h));
 
         emitColorHueRange = emitColorHigh.h - emitColorLow.h;
 
         if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtMultiplier", emitColorMeasmtMultiplier, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " emitColorMeasmtMultiplier=" + to_string(emitColorMeasmtMultiplier));
+        logger.logMsg(LOG_INFO, name + " emitColorMeasmtMultiplier=" + to_string(emitColorMeasmtMultiplier));
 
         if (!ConfigReader::getBoolValue(patternConfig, "emitColorIntegrateMeasmt", emitColorIntegrateMeasmt, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " emitColorIntegrateMeasmt=" + to_string(emitColorIntegrateMeasmt));
+        logger.logMsg(LOG_INFO, name + " emitColorIntegrateMeasmt=" + to_string(emitColorIntegrateMeasmt));
         if (emitColorIntegrateMeasmt) {
-            logMsg(LOG_ERR, "Integration of emit color measurments it not yet supported for " + name + ".");
+            logger.logMsg(LOG_ERR, "Integration of emit color measurments it not yet supported for " + name + ".");
             return false;
         }
     }
@@ -246,7 +248,7 @@ bool ParticlesPattern::update()
 
     // Move the existing particles if it is time to do so.
     if (isActive && (int) (nowMs - nextMoveParticlesMs) >= 0) {
-        //logMsg(LOG_DEBUG, "time to move particles");
+        //logger.logMsg(LOG_DEBUG, "time to move particles");
         if (moveParticles()) {
             isActive = true;
             nextMoveParticlesMs = nowMs + particleMoveIntervalMs;
@@ -263,14 +265,14 @@ bool ParticlesPattern::update()
         && ((emitColorUsePositionMeasmt && emitRateChannel->getHasNewPositionMeasurement())
             || (!emitColorUsePositionMeasmt && emitRateChannel->getHasNewVelocityMeasurement())))
     {
-        //logMsg(LOG_DEBUG, "emitColorChannel has a new measurement");
+        //logger.logMsg(LOG_DEBUG, "emitColorChannel has a new measurement");
         double emitColorMeasmt = emitColorUsePositionMeasmt ? emitColorChannel->getPosition() : emitColorChannel->getVelocity();
         emitColorMeasmt *= emitColorMeasmtMultiplier;
         emitColorMeasmt = std::min(emitColorMeasmt, emitColorMeasmtHigh);
         emitColorMeasmt = std::max(emitColorMeasmt, emitColorMeasmtLow);
 
         double emitColorHue = emitColorHueRange * (emitColorMeasmt - emitColorMeasmtLow) / emitColorMeasmtRange + emitColorLow.h;
-        //logMsg(LOG_DEBUG,
+        //logger.logMsg(LOG_DEBUG,
         //    "emitColorLow.h=" + to_string(emitColorLow.h)
         //    + ", emitColorHigh.h=" + to_string(emitColorHigh.h)
         //    + ", emitColorMeasmt=" + to_string(emitColorMeasmt)
@@ -282,12 +284,12 @@ bool ParticlesPattern::update()
         //hsvPixelToString(hsvEmitColor, hsvEmitColorStr);
         //string rgbEmitColorStr;
         //rgbPixelToString(rgbEmitColor, rgbEmitColorStr);
-        //logMsg(LOG_DEBUG, "hsvEmitColor=" + hsvEmitColorStr + "  rgbEmitColor=" + rgbEmitColorStr);
+        //logger.logMsg(LOG_DEBUG, "hsvEmitColor=" + hsvEmitColorStr + "  rgbEmitColor=" + rgbEmitColorStr);
     }
 
     // Don't emit any particles if the widget has gone inactive.
     if (!emitRateChannel->getIsActive()) {
-        //logMsg(LOG_DEBUG, "emitRateChannel is inactive");
+        //logger.logMsg(LOG_DEBUG, "emitRateChannel is inactive");
         nextEmitParticlesMs = 0;
         return wasActive;
     }
@@ -296,7 +298,7 @@ bool ParticlesPattern::update()
     if ((emitRateUsePositionMeasmt && emitRateChannel->getHasNewPositionMeasurement())
         || (!emitRateUsePositionMeasmt && emitRateChannel->getHasNewVelocityMeasurement()))
     {
-        //logMsg(LOG_DEBUG, "emitRateChannel has a new measurement");
+        //logger.logMsg(LOG_DEBUG, "emitRateChannel has a new measurement");
 
         int emitIntervalMeasmt = emitRateUsePositionMeasmt ? emitRateChannel->getPosition() : emitRateChannel->getVelocity();
         if (emitIntervalUseMeasmtAbsValue) {
@@ -305,7 +307,7 @@ bool ParticlesPattern::update()
 
         // Don't emit anything if the measurement is below the lower limit.
         if (emitIntervalMeasmt < emitIntervalMeasmtLow) {
-            //logMsg(LOG_DEBUG, "emitIntervalMeasmt is below the lower limit");
+            //logger.logMsg(LOG_DEBUG, "emitIntervalMeasmt is below the lower limit");
             nextEmitParticlesMs = 0;
         }
         else {
@@ -321,14 +323,14 @@ bool ParticlesPattern::update()
             if (nextEmitParticlesMs == 0) {
                 nextEmitParticlesMs = nowMs;
             }
-            //logMsg(LOG_DEBUG,
+            //logger.logMsg(LOG_DEBUG,
             //    "emitIntervalMeasmt=" + to_string(emitIntervalMeasmt)
             //    + ", particleEmitIntervalMs=" + to_string(particleEmitIntervalMs)
             //    + ", nextEmitParticlesMs=" + to_string(nextEmitParticlesMs));
         }
     }
 
-    //logMsg(LOG_DEBUG,
+    //logger.logMsg(LOG_DEBUG,
     //    "nowMs=" + to_string(nowMs)
     //    + ", nextEmitParticlesMs=" + to_string(nextEmitParticlesMs)
     //    + ", particleEmitIntervalMs=" + to_string(particleEmitIntervalMs));
@@ -337,7 +339,7 @@ bool ParticlesPattern::update()
     if (nextEmitParticlesMs > 0 && (int) (nowMs - nextEmitParticlesMs) >= 0) {
         nextEmitParticlesMs = nowMs + particleEmitIntervalMs;
 
-        //logMsg(LOG_DEBUG, "time to emit particles");
+        //logger.logMsg(LOG_DEBUG, "time to emit particles");
 
         // Emit particles.
         for (int i = 0; i < emitBatchSize; ++i) {

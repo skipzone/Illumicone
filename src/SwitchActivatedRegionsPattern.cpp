@@ -22,14 +22,16 @@
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
 #include "IndicatorRegion.h"
-#include "log.h"
+#include "Log.h"
 #include "SwitchActivatedRegionsPattern.h"
 #include "Pattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 SwitchActivatedRegionsPattern::SwitchActivatedRegionsPattern(const std::string& name)
@@ -56,7 +58,7 @@ bool SwitchActivatedRegionsPattern::initPattern(ConfigReader& config, std::map<W
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -66,14 +68,14 @@ bool SwitchActivatedRegionsPattern::initPattern(ConfigReader& config, std::map<W
             switchArrayChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+        logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
+            logger.logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }
@@ -95,7 +97,7 @@ bool SwitchActivatedRegionsPattern::update()
     bool animationWantsDisplay = IndicatorRegionsPattern::update();
 
     if (!switchArrayChannel->getIsActive()) {
-        //logMsg(LOG_DEBUG, "switchArrayChannel is inactive");
+        //logger.logMsg(LOG_DEBUG, "switchArrayChannel is inactive");
         if (!activeIndicators.empty()) {
             // If the widget has just gone inactive, turn off all the indicators.
             for (auto&& activeIndicator : activeIndicators) {
@@ -113,7 +115,7 @@ bool SwitchActivatedRegionsPattern::update()
             IndicatorRegion* indicatorRegion = indicatorRegions[iSwitch];
             if (switchIsOn) {
                 if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {
-                    //logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned on");
+                    //logger.logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned on");
                     activeIndicators.insert(indicatorRegion);
                     indicatorRegion->makeAnimating(true);
                 }
@@ -121,7 +123,7 @@ bool SwitchActivatedRegionsPattern::update()
             }
             else {
                 if (activeIndicators.find(indicatorRegion) != activeIndicators.end()) {
-                    //logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned off");
+                    //logger.logMsg(LOG_DEBUG, "switch " + to_string(iSwitch) + " turned off");
                     activeIndicators.erase(indicatorRegion);
                     indicatorRegion->turnOffImmediately();
                 }

@@ -73,7 +73,7 @@ struct PatternState {
     int wantsDisplay;
 };
 
-Log log;
+Log logger;                     // this is the global Log object used everywhere
 
 static string configFileName;
 static ConfigReader config;
@@ -130,13 +130,13 @@ bool registerSignalHandlers()
 
 	act.sa_handler = &handleReinitSignal;
 	if (sigaction(SIGUSR1, &act, NULL) < 0) {
-        logMsg(LOG_ERR, errno, "Unable to register re-init signal handler.");
+        logger.logMsg(LOG_ERR, errno, "Unable to register re-init signal handler.");
 		return false;
 	}
 
 	act.sa_handler = &handleTestPatternSignal;
 	if (sigaction(SIGUSR2, &act, NULL) < 0) {
-        logMsg(LOG_ERR, errno, "Unable to register test pattern signal handler.");
+        logger.logMsg(LOG_ERR, errno, "Unable to register test pattern signal handler.");
 		return false;
 	}
 
@@ -146,7 +146,7 @@ bool registerSignalHandlers()
         || sigaction(SIGPIPE, &act, NULL) < 0
         || sigaction(SIGTERM, &act, NULL) < 0)
     {
-        logMsg(LOG_ERR, errno, "Unable to register exit signal handler.");
+        logger.logMsg(LOG_ERR, errno, "Unable to register exit signal handler.");
 		return false;
 	}
 
@@ -156,11 +156,11 @@ bool registerSignalHandlers()
 
 bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber)
 {
-    logMsg(LOG_INFO, "Connecting to OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
+    logger.logMsg(LOG_INFO, "Connecting to OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
 
     opcServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
     if (opcServerSocketFd == -1) {
-        logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
         return false;
     }
 
@@ -169,11 +169,11 @@ bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber
     opcServerSockaddr.sin_port = htons(portNumber);
 
     if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) == -1) {
-        logMsg(LOG_ERR, errno, "Unable to connect to opc-server.");
+        logger.logMsg(LOG_ERR, errno, "Unable to connect to opc-server.");
         return false;
     }
 
-    logMsg(LOG_INFO, "Connected.");
+    logger.logMsg(LOG_INFO, "Connected.");
 
     return true;
 }
@@ -181,10 +181,10 @@ bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber
 
 bool closeOpcServerTcpConnection()
 {
-    logMsg(LOG_INFO, "Disconnecting from OPC server...");
+    logger.logMsg(LOG_INFO, "Disconnecting from OPC server...");
     ///if (disconnectx(opcServerSocketFd, SAE_ASSOCID_ANY, SAE_CONNID_ANY) != 0) {
     if (close(opcServerSocketFd) != 0) {
-        logMsg(LOG_ERR, errno, "Unable to close connection to opc-server.");
+        logger.logMsg(LOG_ERR, errno, "Unable to close connection to opc-server.");
         return false;
     }
     return true;
@@ -193,7 +193,7 @@ bool closeOpcServerTcpConnection()
 
 bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
 {
-    logMsg(LOG_INFO, "Creating and binding socket for OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
+    logger.logMsg(LOG_INFO, "Creating and binding socket for OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
 
     memset(&opcServerSockaddr, 0, sizeof(struct sockaddr_in));
 
@@ -202,16 +202,16 @@ bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
     opcServerSockaddr.sin_port = htons(0);
 
     if ((opcServerSocketFd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
         return false;
     }
 
     if (::bind(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(struct sockaddr_in)) == -1) {
-        logMsg(LOG_ERR, errno, "bind failed for OPC server.");
+        logger.logMsg(LOG_ERR, errno, "bind failed for OPC server.");
         return false;
     }
 
-    logMsg(LOG_INFO, "Setting address to " + ipAddress + ":" + to_string(portNumber) + ".");
+    logger.logMsg(LOG_INFO, "Setting address to " + ipAddress + ":" + to_string(portNumber) + ".");
 
     inet_pton(AF_INET, ipAddress.c_str(), &opcServerSockaddr.sin_addr.s_addr);
     opcServerSockaddr.sin_port = htons(portNumber);
@@ -223,9 +223,9 @@ bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
 bool closeUdpPortForOpcServer()
 {
     // TODO 2/3/2018 ross:  make sure this implementation is correct
-    logMsg(LOG_INFO, "Closing UDP port for OPC server...");
+    logger.logMsg(LOG_INFO, "Closing UDP port for OPC server...");
     if (close(opcServerSocketFd) != 0) {
-        logMsg(LOG_ERR, errno, "Unable to close UDP port for opc-server.");
+        logger.logMsg(LOG_ERR, errno, "Unable to close UDP port for opc-server.");
         return false;
     }
     return true;
@@ -234,7 +234,7 @@ bool closeUdpPortForOpcServer()
 
 void dumpOpcBuffer(size_t numStringsToPrint)
 {
-    logMsg(LOG_DEBUG,
+    logger.logMsg(LOG_DEBUG,
         "opcBuffer header:  "
         + to_string((int) opcBuffer[0]) + " "
         + to_string((int) opcBuffer[1]) + " "
@@ -252,7 +252,7 @@ void dumpOpcBuffer(size_t numStringsToPrint)
                     << setfill(' ') << setw(3) << (int) opcData[pixelOffset + 1] << ","
                     << setfill(' ') << setw(3) << (int) opcData[pixelOffset + 2];
             }
-            logMsg(LOG_DEBUG, sstr.str());
+            logger.logMsg(LOG_DEBUG, sstr.str());
         }
     }
 }
@@ -275,15 +275,15 @@ bool sendOpcMessage()
     //dumpOpcBuffer(2);
 
     if (useTcpForOpcServer) {
-        //logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
+        //logger.logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
         if (send(opcServerSocketFd, opcBuffer, opcBufferSize, 0) == -1) {
-            logMsg(LOG_ERR, errno, "Failed to send message to OPC server via TCP.");
+            logger.logMsg(LOG_ERR, errno, "Failed to send message to OPC server via TCP.");
             return false;
         }
-        //logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
+        //logger.logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
     }
     else {
-        //logMsg(LOG_DEBUG, "sending message to OPC server via UDP...");
+        //logger.logMsg(LOG_DEBUG, "sending message to OPC server via UDP...");
         // TODO 2/3/2018 ross:  modify to not block if no message space is available to hold the message
         ssize_t bytesSentCount = sendto(opcServerSocketFd,
                                         opcBuffer,
@@ -292,16 +292,16 @@ bool sendOpcMessage()
                                         (struct sockaddr *) &opcServerSockaddr,
                                         sizeof(struct sockaddr_in));
         if (bytesSentCount == -1) {
-            logMsg(LOG_ERR, errno, "Failed to send message to OPC server via UDP.");
+            logger.logMsg(LOG_ERR, errno, "Failed to send message to OPC server via UDP.");
             return false;
         }
         if (bytesSentCount != opcBufferSize) {
-            logMsg(LOG_ERR,
+            logger.logMsg(LOG_ERR,
                    "UPD payload size is " + to_string(opcBufferSize)
                    + ", but " + to_string(bytesSentCount) + " bytes were sent to OPC server.");
             return false;
         }
-        //logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
+        //logger.logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
     }
 
     return true;
@@ -398,7 +398,7 @@ void displayTestPattern()
 
 void printSchedulePeriods(const std::string& scheduleDescription, const vector<SchedulePeriod>& schedulePeriods)
 {
-    logMsg(LOG_INFO, scheduleDescription + ":");
+    logger.logMsg(LOG_INFO, scheduleDescription + ":");
 
     for (auto&& schedulePeriod : schedulePeriods) {
         string msg;
@@ -430,7 +430,7 @@ void printSchedulePeriods(const std::string& scheduleDescription, const vector<S
             msgPriority = LOG_ERR;
         }
 
-        logMsg(msgPriority, msg);
+        logger.logMsg(msgPriority, msg);
     }
 }
 
@@ -443,7 +443,7 @@ bool readConfig()
 
     lockFilePath = config.getLockFilePath("patternController");
     if (lockFilePath.empty()) {
-        logMsg(LOG_WARNING, "There is no lock file name for patternController in configuration.");
+        logger.logMsg(LOG_WARNING, "There is no lock file name for patternController in configuration.");
     }
 
     numberOfStrings = config.getNumberOfStrings();
@@ -474,7 +474,7 @@ bool readConfig()
         patternBlendMethod = PatternBlendMethod::hsvHueBlend;
     }
     else {
-        logMsg(LOG_ERR, "patternBlendMethod \"" + patternBlendMethodStr + "\" not recognized.");
+        logger.logMsg(LOG_ERR, "patternBlendMethod \"" + patternBlendMethodStr + "\" not recognized.");
         return false;
     }
 
@@ -493,7 +493,7 @@ bool initOpcBuffer()
     opcBufferSize = numberOfStrings * numberOfPixelsPerString * 3 + 4;
     opcBuffer = new uint8_t[opcBufferSize];
     if (opcBuffer == nullptr) {
-        logMsg(LOG_ERR, "Unable to allocate an OPC buffer of size " + to_string(opcBufferSize));
+        logger.logMsg(LOG_ERR, "Unable to allocate an OPC buffer of size " + to_string(opcBufferSize));
         return false;
     }
 
@@ -521,39 +521,39 @@ void freeOpcBuffer()
 
 void initWidgets()
 {
-    logMsg(LOG_INFO, "Initializing widgets...");
+    logger.logMsg(LOG_INFO, "Initializing widgets...");
 
     // TODO 6/12/2017 ross:  Move widget config access to ConfigReader.
 
     for (auto& widgetConfig : config.getJsonObject()["widgets"].array_items()) {
         string widgetName = widgetConfig["name"].string_value();
         if (widgetName.empty()) {
-            logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfig.dump());
+            logger.logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfig.dump());
             continue;
         }
         if (!widgetConfig["enabled"].bool_value()) {
-            logMsg(LOG_INFO, widgetName + " is disabled.");
+            logger.logMsg(LOG_INFO, widgetName + " is disabled.");
             continue;
         }
         WidgetId widgetId = stringToWidgetId(widgetName);
         if (widgetId == WidgetId::invalid) {
-            logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfig.dump());
+            logger.logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfig.dump());
             continue;
         }
         if (widgets.find(widgetId) != widgets.end()) {
-            logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfig.dump());
+            logger.logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfig.dump());
             continue;
         }
         Widget* newWidget = widgetFactory(widgetId);
         if (newWidget == nullptr) {
-            logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
+            logger.logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
             continue;
         }
         if (!newWidget->init(config)) {
-            logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
+            logger.logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
             continue;
         }
-        logMsg(LOG_INFO, widgetName + " initialized.");
+        logger.logMsg(LOG_INFO, widgetName + " initialized.");
         widgets[widgetId] = newWidget;
     }
 }
@@ -561,9 +561,9 @@ void initWidgets()
 
 void tearDownWidgets()
 {
-    logMsg(LOG_INFO, "Tearing down widgets...");
+    logger.logMsg(LOG_INFO, "Tearing down widgets...");
     for (auto&& widget : widgets) {
-        logMsg(LOG_DEBUG, "deleting " + widgetIdToString(widget.first));
+        logger.logMsg(LOG_DEBUG, "deleting " + widgetIdToString(widget.first));
         delete widget.second;
     }
     widgets.clear();
@@ -572,36 +572,36 @@ void tearDownWidgets()
 
 void initPatterns()
 {
-    logMsg(LOG_INFO, "Initializing patterns...");
+    logger.logMsg(LOG_INFO, "Initializing patterns...");
 
     for (auto& patternConfig : config.getJsonObject()["patterns"].array_items()) {
         string patternName = patternConfig["name"].string_value();
         if (patternName.empty()) {
-            logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfig.dump());
+            logger.logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfig.dump());
             continue;
         }
         if (!patternConfig["enabled"].bool_value()) {
-            logMsg(LOG_INFO, patternName + " is disabled.");
+            logger.logMsg(LOG_INFO, patternName + " is disabled.");
             continue;
         }
         string patternClassName = patternConfig["patternClassName"].string_value();
         if (patternClassName.empty()) {
-            logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfig.dump());
+            logger.logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfig.dump());
             continue;
         }
         Pattern* newPattern = patternFactory(patternClassName, patternName);
         if (newPattern == nullptr) {
-            logMsg(LOG_ERR,
+            logger.logMsg(LOG_ERR,
                     "Unable to instantiate " + patternClassName + " object for " + patternName
                     + ".  (Is the pattern class name correct?)");
             continue;
         }
         if (!newPattern->init(config, widgets)) {
-            logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
+            logger.logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
             delete newPattern;
             continue;
         }
-        logMsg(LOG_INFO, patternName + " initialized.");
+        logger.logMsg(LOG_INFO, patternName + " initialized.");
 
         PatternState* newPatternState = new PatternState;
         newPatternState->pattern = newPattern;
@@ -612,7 +612,7 @@ void initPatterns()
 
 void tearDownPatterns()
 {
-    logMsg(LOG_INFO, "Tearing down patterns...");
+    logger.logMsg(LOG_INFO, "Tearing down patterns...");
     for (auto&& patternState : patternStates) {
         delete patternState->pattern;
         patternState->pattern = nullptr;
@@ -644,7 +644,7 @@ bool timeIsInPeriod(
             tmStartTimeToday.tm_isdst = tmEndTimeToday.tm_isdst = tmNowTime.tm_isdst;
             time_t startTimeToday = mktime(&tmStartTimeToday);
             time_t endTimeToday = mktime(&tmEndTimeToday);
-            //logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
+            //logger.logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
             //                  + to_string(startTimeToday) + ", endTime=" + to_string(endTimeToday));
             // Periods that span midnight have an end time that is numerically less
             // than the start time (which actually occurs on the previous day).
@@ -663,7 +663,7 @@ bool timeIsInPeriod(
         }
         else {
             // This is a one-time event.
-            //logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
+            //logger.logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
             //                  + to_string(schedulePeriod.startTime) + ", endTime=" + to_string(schedulePeriod.endTime));
             if (now >= schedulePeriod.startTime && now <= schedulePeriod.endTime) {
                 selectedSchedulePeriod = schedulePeriod;
@@ -688,22 +688,22 @@ bool doInitialization()
         configFileNameAndTarget += string(" -> ") + buf;
     }
 
-    logMsg(LOG_INFO, "Starting initialization.");
-    logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
-    logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
-    logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
-    logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
-    logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
+    logger.logMsg(LOG_INFO, "Starting initialization.");
+    logger.logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
+    logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
+    logger.logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
+    logger.logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
+    logger.logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
     printSchedulePeriods("Shutoff periods", shutoffPeriods);
     printSchedulePeriods("Quiescent periods", quiescentPeriods);
 
     if (!allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(hsvFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
-        logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");
+        logger.logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");
         return false;
     }
 
     if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(rgbFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
-        logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");
+        logger.logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");
         return false;
     }
 
@@ -727,7 +727,7 @@ bool doInitialization()
     initWidgets();
     initPatterns();
 
-    logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
+    logger.logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
 
     return true;
 }
@@ -735,7 +735,7 @@ bool doInitialization()
 
 bool doTeardown()
 {
-    logMsg(LOG_INFO, "Starting teardown.");
+    logger.logMsg(LOG_INFO, "Starting teardown.");
 
     tearDownPatterns();
     tearDownWidgets();
@@ -756,7 +756,7 @@ bool doTeardown()
     freeConePixels<HsvConeStrings, HsvPixel>(hsvFinalFrame);
     freeConePixels<RgbConeStrings, RgbPixel>(rgbFinalFrame);
 
-    logMsg(LOG_INFO, "Teardown done.");
+    logger.logMsg(LOG_INFO, "Teardown done.");
 
     return true;
 }
@@ -772,14 +772,14 @@ void doPatterns()
     int minPriority = INT_MAX;
     int maxPriority = INT_MIN;
     for (auto&& patternState : patternStates) {
-        //logMsg(LOG_DEBUG, "calling update for " + patternState->pattern->getName());
+        //logger.logMsg(LOG_DEBUG, "calling update for " + patternState->pattern->getName());
         patternState->wantsDisplay = patternState->pattern->update();
         patternState->priority = patternState->pattern->priority;
         patternState->amountOfOverlay = patternState->pattern->opacity * 255 / 100;
         anyPatternIsActive |= patternState->wantsDisplay;
         minPriority = min(patternState->priority, minPriority);
         maxPriority = max(patternState->priority, maxPriority);
-        //logMsg(LOG_DEBUG, patternState->pattern->getName() + ":  priority=" + to_string(patternState->priority)
+        //logger.logMsg(LOG_DEBUG, patternState->pattern->getName() + ":  priority=" + to_string(patternState->priority)
         //                  + ", opacity=" + to_string(patternState->pattern->opacity)
         //                  + ", amountOfOverlay=" + to_string(patternState->amountOfOverlay));
     }
@@ -788,7 +788,7 @@ void doPatterns()
     clearAllPixels(hsvFinalFrame);
 
     if (anyPatternIsActive) {
-        //logMsg(LOG_DEBUG, "a pattern is active");
+        //logger.logMsg(LOG_DEBUG, "a pattern is active");
 
         bool anyPixelIsOn = false;
 
@@ -798,7 +798,7 @@ void doPatterns()
         for (int priority = maxPriority; priority >= minPriority; --priority) {
             for (auto&& patternState : patternStates) {
                 if (patternState->wantsDisplay && patternState->priority == priority) {
-                    //logMsg(LOG_DEBUG, patternState->pattern->getName() + " wants display.");
+                    //logger.logMsg(LOG_DEBUG, patternState->pattern->getName() + " wants display.");
                     for (unsigned int col = 0; col < numberOfStrings; col++) {
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
 
@@ -897,7 +897,7 @@ void doPatterns()
         }
 
         if (anyPixelIsOn) {
-            //logMsg(LOG_DEBUG, "a pixel is on");
+            //logger.logMsg(LOG_DEBUG, "a pixel is on");
             if (patternBlendMethod == PatternBlendMethod::hsvBlend || patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
                 hsv2rgb(hsvFinalFrame, rgbFinalFrame);
             }
@@ -911,7 +911,7 @@ void doPatterns()
         timeWentIdle = 0;
     }
     else {
-        //logMsg(LOG_DEBUG, "no pattern is active");
+        //logger.logMsg(LOG_DEBUG, "no pattern is active");
         if (!doIdlePattern) {
             // Turn on the safety lights until the idle pattern takes over.
             turnOnSafetyLights();
@@ -943,6 +943,8 @@ int main(int argc, char **argv)
     }
     configFileName = argv[1];
 
+    //logger.startLogging(true, "patternController");
+
     if (!registerSignalHandlers()) {
         return(EXIT_FAILURE);
     }
@@ -956,7 +958,7 @@ int main(int argc, char **argv)
         return(EXIT_FAILURE);
     }
 
-    logMsg(LOG_INFO, "---------- patternController  starting ----------");
+    logger.logMsg(LOG_INFO, "---------- patternController  starting ----------");
 
     if (!doInitialization()) {
         return(EXIT_FAILURE);
@@ -987,14 +989,14 @@ int main(int argc, char **argv)
 
         if (gotReinitSignal) {
             gotReinitSignal = false;
-            logMsg(LOG_INFO, "---------- Reinitializing... ----------");
+            logger.logMsg(LOG_INFO, "---------- Reinitializing... ----------");
             turnOnSafetyLights();
             if (!doTeardown()) {
                 return(EXIT_FAILURE);
             }
             // Sleep for a little bit because reconnecting to
             // the OPC server immediately sometimes fails.
-            logMsg(LOG_INFO, "Sleeping for " + to_string(reinitializationSleepIntervalS) + " seconds.");
+            logger.logMsg(LOG_INFO, "Sleeping for " + to_string(reinitializationSleepIntervalS) + " seconds.");
             sleep(reinitializationSleepIntervalS);
             if (!readConfig() || !doInitialization()) {
                 return(EXIT_FAILURE);
@@ -1008,11 +1010,11 @@ int main(int argc, char **argv)
         if (gotToggleTestPatternSignal) {
             gotToggleTestPatternSignal = false;
             displayingTestPattern = !displayingTestPattern;
-            logMsg(LOG_INFO, string("Turning test pattern ") + (displayingTestPattern ? "on." : "off."));
+            logger.logMsg(LOG_INFO, string("Turning test pattern ") + (displayingTestPattern ? "on." : "off."));
         }
 
         // Give the widgets a chance to update their simulated measurements.
-        //logMsg(LOG_DEBUG, "Updating simulated measurements.");
+        //logger.logMsg(LOG_DEBUG, "Updating simulated measurements.");
         for (auto&& widget : widgets) {
             widget.second->updateSimulatedMeasurements();
         }
@@ -1035,7 +1037,7 @@ int main(int argc, char **argv)
                 inPeriod = true;
 //                if (selectedSchedulePeriod.description != lastPeriodDesc) {
                     lastPeriodDesc = selectedSchedulePeriod.description;
-                    logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" shutoff period.");
+                    logger.logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" shutoff period.");
 //                }
                 turnOffAllPixels();
             }
@@ -1043,7 +1045,7 @@ int main(int argc, char **argv)
                 inPeriod = true;
 //                if (selectedSchedulePeriod.description != lastPeriodDesc) {
                     lastPeriodDesc = selectedSchedulePeriod.description;
-                    logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" quiescent period.");
+                    logger.logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" quiescent period.");
 //                }
                 setAllPixelsToQuiescentColor(selectedSchedulePeriod);
             }
@@ -1057,11 +1059,12 @@ int main(int argc, char **argv)
         }
     }
 
-    logMsg(LOG_INFO, "---------- Exiting... ----------");
+    logger.logMsg(LOG_INFO, "---------- Exiting... ----------");
     turnOnSafetyLights();
     if (!doTeardown()) {
         return(EXIT_FAILURE);
     }
+    //logger.stopLogging();
     return EXIT_SUCCESS;
 }
 

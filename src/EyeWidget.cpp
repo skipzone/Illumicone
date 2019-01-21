@@ -19,10 +19,13 @@
 
 #include "EyeWidget.h"
 #include "illumiconeWidgetTypes.h"
-//#include "log.h"
+#include "Log.h"
 #include "WidgetId.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 EyeWidget::EyeWidget()
@@ -40,26 +43,26 @@ void EyeWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
         if (makeAlwaysActive) {
             channels[chIdx]->setIsActive(true);     // so that it doesn't auto inactivate
             channels[chIdx]->setPosition(inactivePositionValue);
-            //logMsg(LOG_DEBUG, "position value for Eye set to inactive value " + to_string(inactivePositionValue));
+            //logger.logMsg(LOG_DEBUG, "position value for Eye set to inactive value " + to_string(inactivePositionValue));
         }
         else {
             channels[chIdx]->setIsActive(false);
-            //logMsg(LOG_DEBUG, "Eye inactive");
+            //logger.logMsg(LOG_DEBUG, "Eye inactive");
         }
     }
     else if (stepCount <= (numInactiveSteps + numActiveSteps)) {
         channels[chIdx]->setIsActive(true);     // so that it doesn't auto inactivate
         channels[chIdx]->setPosition(activePositionValue);
-        //logMsg(LOG_DEBUG, "position value for Eye set to active value " + to_string(activePositionValue));
+        //logger.logMsg(LOG_DEBUG, "position value for Eye set to active value " + to_string(activePositionValue));
     }
     else if (stepCount <= (numInactiveSteps + numActiveSteps + numSemiActiveSteps)) {
         channels[chIdx]->setIsActive(true);     // so that it doesn't auto inactivate
         channels[chIdx]->setPosition(semiActivePositionValue);
-        //logMsg(LOG_DEBUG, "position value for Eye set to semi-active value " + to_string(semiActivePositionValue));
+        //logger.logMsg(LOG_DEBUG, "position value for Eye set to semi-active value " + to_string(semiActivePositionValue));
     }
     else {
         stepCount = 0;
-        //logMsg(LOG_DEBUG, "Eye going inactive at next step");
+        //logger.logMsg(LOG_DEBUG, "Eye going inactive at next step");
     }
 }
 

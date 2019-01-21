@@ -21,12 +21,15 @@
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
 #include "json11.hpp"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "Widget.h"
 
 
 using namespace std;
+
+
+extern Log logger;
 
 
 Pattern::Pattern(const std::string& name, bool usesHsvModel)
@@ -63,18 +66,18 @@ bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["priority"].is_number()) {
-        logMsg(LOG_ERR, "priority not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "priority not specified in " + name + " pattern configuration.");
         return false;
     }
     priority = patternConfig["priority"].int_value();
-    logMsg(LOG_INFO, name + " priority=" + to_string(priority));
+    logger.logMsg(LOG_INFO, name + " priority=" + to_string(priority));
 
     if (!patternConfig["opacity"].is_number()) {
-        logMsg(LOG_ERR, "opacity not specified in " + name + " pattern configuration.");
+        logger.logMsg(LOG_ERR, "opacity not specified in " + name + " pattern configuration.");
         return false;
     }
     opacity = patternConfig["opacity"].int_value();
-    logMsg(LOG_INFO, name + " opacity=" + to_string(opacity));
+    logger.logMsg(LOG_INFO, name + " opacity=" + to_string(opacity));
 
     return initPattern(config, widgets);
 }
@@ -88,13 +91,13 @@ std::vector<Pattern::ChannelConfiguration> Pattern::getChannelConfigurations(
 
     auto patternConfig = config.getPatternConfigJsonObject(name);
     if (patternConfig["name"].string_value() != name) {
-        logMsg(LOG_ERR, name + " not found in patterns configuration section.");
+        logger.logMsg(LOG_ERR, name + " not found in patterns configuration section.");
         return channelConfigs;
     }
 
     auto inputConfigs = patternConfig["inputs"].array_items();
     if (inputConfigs.empty()) {
-        logMsg(LOG_ERR, name + " inputs configuration is missing or empty:  " + patternConfig.dump());
+        logger.logMsg(LOG_ERR, name + " inputs configuration is missing or empty:  " + patternConfig.dump());
         return channelConfigs;
     }
 
@@ -102,34 +105,34 @@ std::vector<Pattern::ChannelConfiguration> Pattern::getChannelConfigurations(
 
         string inputName = inputConfig["inputName"].string_value();
         if (inputName.empty()) {
-            logMsg(LOG_ERR, name + " input configuration inputName is missing or empty:  " + inputConfig.dump());
+            logger.logMsg(LOG_ERR, name + " input configuration inputName is missing or empty:  " + inputConfig.dump());
             continue;
         }
 
         string widgetName = inputConfig["widgetName"].string_value();
         WidgetId widgetId = stringToWidgetId(widgetName);
         if (widgetId == WidgetId::invalid) {
-            logMsg(LOG_ERR, name + " input configuration for " + inputName
+            logger.logMsg(LOG_ERR, name + " input configuration for " + inputName
                 + " does not specify a valid widget:  " + inputConfig.dump());
             continue;
         }
 
         if (widgets.find(widgetId) == widgets.end()) {
-            logMsg(LOG_ERR, name + " input configuration for " + inputName
+            logger.logMsg(LOG_ERR, name + " input configuration for " + inputName
                 + " does not specify an available widget:  " + inputConfig.dump());
             continue;
         }
         Widget* widget = widgets[widgetId];
 
         if (!inputConfig["channelNumber"].is_number()) {
-            logMsg(LOG_ERR, name + " input configuration for " + inputName
+            logger.logMsg(LOG_ERR, name + " input configuration for " + inputName
                 + " does not specify a channel number:  " + inputConfig.dump());
             continue;
         }
         unsigned int channelNumber = inputConfig["channelNumber"].int_value();
         shared_ptr<WidgetChannel> widgetChannel = widget->getChannel(channelNumber);
         if (widgetChannel == nullptr) {
-            logMsg(LOG_ERR, name + " input configuration for " + inputName + " specifies channel "
+            logger.logMsg(LOG_ERR, name + " input configuration for " + inputName + " specifies channel "
                 + to_string(channelNumber) + ", which doesn't exist:  " + inputConfig.dump());
             continue;
         }

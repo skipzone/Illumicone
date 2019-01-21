@@ -25,10 +25,12 @@
 #include <unistd.h>
 
 #include "illumiconeUtility.h"
-#include "log.h"
-
+#include "Log.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 int acquireProcessLock(const string& lockFilePath)
@@ -41,18 +43,18 @@ int acquireProcessLock(const string& lockFilePath)
         else {
             if (errno == EWOULDBLOCK) {
                 close(fd);
-                //logMsg(LOG_INFO, "Another process has locked " + lockFilePath + ".");
+                //logger.logMsg(LOG_INFO, "Another process has locked " + lockFilePath + ".");
                 return -1;
             }
             else {
                 close(fd);
-                logSysErr(LOG_ERR, errno, "Unable to lock " + lockFilePath + ".");
+                logger.logMsg(LOG_ERR, errno, "Unable to lock " + lockFilePath + ".");
                 return -1;
             }
         }
     }
     else {
-        logSysErr(LOG_ERR, errno, "Unable to create or open " + lockFilePath + ".");
+        logger.logMsg(LOG_ERR, errno, "Unable to create or open " + lockFilePath + ".");
         return -1;
     }
 }

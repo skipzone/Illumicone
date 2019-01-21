@@ -23,14 +23,16 @@
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
 #include "IndicatorRegion.h"
-#include "log.h"
+#include "Log.h"
 #include "MidiActivatedRegionsPattern.h"
 #include "Pattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 MidiActivatedRegionsPattern::MidiActivatedRegionsPattern(const std::string& name)
@@ -57,7 +59,7 @@ bool MidiActivatedRegionsPattern::initPattern(ConfigReader& config, std::map<Wid
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -67,11 +69,11 @@ bool MidiActivatedRegionsPattern::initPattern(ConfigReader& config, std::map<Wid
             midiInputChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+        logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
     }
 
@@ -152,7 +154,7 @@ bool MidiActivatedRegionsPattern::update()
     }
 
     if (!midiInputChannel->getIsActive()) {
-        //logMsg(LOG_DEBUG, "midiInputChannel is inactive");
+        //logger.logMsg(LOG_DEBUG, "midiInputChannel is inactive");
         if (!activeIndicators.empty()) {
             // If the widget has just gone inactive, turn off all the indicators.
             for (auto&& activeIndicator : activeIndicators) {
@@ -173,7 +175,7 @@ bool MidiActivatedRegionsPattern::update()
                && midiInputChannel->getHasNewVelocityMeasurement())
         {
             ++midiMessageCount;
-            //logMsg(LOG_DEBUG, "processing MIDI message #" + to_string(midiMessageCount));
+            //logger.logMsg(LOG_DEBUG, "processing MIDI message #" + to_string(midiMessageCount));
 
             MidiPositionMeasurement pos;
             MidiVelocityMeasurement vel;
@@ -185,11 +187,11 @@ bool MidiActivatedRegionsPattern::update()
                 // TODO 8/13/2017 ross:  replace magic number 36 with noteNumberOffset
                 unsigned int normalizedNoteNumber = vel.noteNumber - 36;
                 if (normalizedNoteNumber < indicatorRegions.size()) {
-                    //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " is in range");
+                    //logger.logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " is in range");
                     IndicatorRegion* indicatorRegion = indicatorRegions[normalizedNoteNumber];
                     if (pos.channelMessageType == MIDI_NOTE_ON && vel.velocity != 0) {
                         if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {
-                            //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned on");
+                            //logger.logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned on");
                             activeIndicators.insert(indicatorRegion);
                         }
                         //indicatorRegion->transitionOn();
@@ -198,14 +200,14 @@ bool MidiActivatedRegionsPattern::update()
                     }
                     else {
                         if (activeIndicators.find(indicatorRegion) != activeIndicators.end()) {
-                            //logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned off");
+                            //logger.logMsg(LOG_DEBUG, "note " + to_string(normalizedNoteNumber) + " turned off");
                             activeIndicators.erase(indicatorRegion);
                         }
                         indicatorRegion->turnOffImmediately();
                     }
                 }
                 else {
-                    logMsg(LOG_WARNING, name + ":  Note " + to_string(vel.noteNumber)
+                    logger.logMsg(LOG_WARNING, name + ":  Note " + to_string(vel.noteNumber)
                                         + " (normalized to " + to_string(normalizedNoteNumber)
                                         + ") is out of range.");
                 }
@@ -215,7 +217,7 @@ bool MidiActivatedRegionsPattern::update()
 
             else {
                 string msg = midiMessageToString(pos, vel);
-                logMsg(LOG_WARNING, name + ":  Unsupported MIDI message received:  " + msg);
+                logger.logMsg(LOG_WARNING, name + ":  Unsupported MIDI message received:  " + msg);
             }
         }
     }

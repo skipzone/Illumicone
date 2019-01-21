@@ -32,6 +32,9 @@
 #include "widgetFactory.h"
 
 
+extern Log logger;
+
+
 Widget* widgetFactory(WidgetId id) {
     switch (id) {
         case WidgetId::eye:
@@ -59,7 +62,7 @@ Widget* widgetFactory(WidgetId id) {
         case WidgetId::baton:
             return new BatonWidget;
         default:
-            logMsg(LOG_ERR, "Unsupported id passed to widgetFactory.");
+            logger.logMsg(LOG_ERR, "Unsupported id passed to widgetFactory.");
             return nullptr;
     }
 }

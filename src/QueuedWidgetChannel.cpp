@@ -18,11 +18,14 @@
 #include <string>
 
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "Widget.h"
 #include "QueuedWidgetChannel.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 QueuedWidgetChannel::QueuedWidgetChannel(unsigned int channelNumber, Widget* widget, unsigned int autoInactiveMs)
@@ -39,7 +42,7 @@ int QueuedWidgetChannel::getPosition()
         position = positionQueue.front();
         positionQueue.pop();
         hasNewPositionMeasurement = !positionQueue.empty();
-        //logMsg(LOG_DEBUG, "positionQueue.size() returns " + to_string(positionQueue.size()) + ", .empty() returns " + to_string(positionQueue.empty()) + ", hasNewPositionMeasurement=" + to_string(hasNewPositionMeasurement));
+        //logger.logMsg(LOG_DEBUG, "positionQueue.size() returns " + to_string(positionQueue.size()) + ", .empty() returns " + to_string(positionQueue.empty()) + ", hasNewPositionMeasurement=" + to_string(hasNewPositionMeasurement));
     }
     measmtQueueMutex.unlock();
     return position;
@@ -54,7 +57,7 @@ int QueuedWidgetChannel::getVelocity()
         velocity = velocityQueue.front();
         velocityQueue.pop();
         hasNewVelocityMeasurement = !velocityQueue.empty();
-        //logMsg(LOG_DEBUG, "velocityQueue.size() returns " + to_string(velocityQueue.size()) + ", .empty() returns " + to_string(velocityQueue.empty()) + ", hasNewVelocityMeasurement=" + to_string(hasNewVelocityMeasurement));
+        //logger.logMsg(LOG_DEBUG, "velocityQueue.size() returns " + to_string(velocityQueue.size()) + ", .empty() returns " + to_string(velocityQueue.empty()) + ", hasNewVelocityMeasurement=" + to_string(hasNewVelocityMeasurement));
     }
     measmtQueueMutex.unlock();
     return velocity;

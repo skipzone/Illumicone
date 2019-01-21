@@ -21,14 +21,15 @@
 #include "FillAndBurstPattern.h"
 #include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
 
+
+extern Log logger;
 
 FillAndBurstPattern::FillAndBurstPattern(const std::string& name)
     : Pattern(name)
@@ -45,26 +46,26 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
     auto patternConfig = config.getPatternConfigJsonObject(name);
 
     if (!patternConfig["burstingPriority"].is_number()) {
-        logMsg(LOG_ERR, "burstingPriority not specified" + errMsgSuffix);
+        logger.logMsg(LOG_ERR, "burstingPriority not specified" + errMsgSuffix);
         return false;
     }
     burstingPriority = patternConfig["burstingPriority "].int_value();
-    logMsg(LOG_INFO, name + " burstingPriority=" + to_string(burstingPriority));
+    logger.logMsg(LOG_INFO, name + " burstingPriority=" + to_string(burstingPriority));
 
     if (!ConfigReader::getIntValue(patternConfig, "lowPressureCutoff", lowPressureCutoff, errMsgSuffix, 1, 1023)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " lowPressureCutoff=" + to_string(lowPressureCutoff));
+    logger.logMsg(LOG_INFO, name + " lowPressureCutoff=" + to_string(lowPressureCutoff));
 
     if (!ConfigReader::getIntValue(patternConfig, "burstThreshold", burstThreshold, errMsgSuffix, lowPressureCutoff, 1023)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " burstThreshold=" + to_string(burstThreshold));
+    logger.logMsg(LOG_INFO, name + " burstThreshold=" + to_string(burstThreshold));
 
     if (!ConfigReader::getIntValue(patternConfig, "flashThreshold", flashThreshold, errMsgSuffix, burstThreshold, 1023)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " flashThreshold=" + to_string(flashThreshold));
+    logger.logMsg(LOG_INFO, name + " flashThreshold=" + to_string(flashThreshold));
 
     string rgbStr;
 
@@ -72,57 +73,57 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
         return false;
     }
     if (!stringToRgbPixel(rgbStr, pressurizationColor)) {
-        logMsg(LOG_ERR, "pressurizationColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
+        logger.logMsg(LOG_ERR, "pressurizationColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
         return false;
     }
-    logMsg(LOG_INFO, name + " pressurizationColor=" + rgbStr);
+    logger.logMsg(LOG_INFO, name + " pressurizationColor=" + rgbStr);
 
     if (ConfigReader::getStringValue(patternConfig, "depressurizationColor", rgbStr)) {
         if (!stringToRgbPixel(rgbStr, depressurizationColor)) {
-            logMsg(LOG_ERR, "depressurizationColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
+            logger.logMsg(LOG_ERR, "depressurizationColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
             return false;
         }
         displayDepressurization = true;
-        logMsg(LOG_INFO, name + " depressurizationColor=" + rgbStr);
+        logger.logMsg(LOG_INFO, name + " depressurizationColor=" + rgbStr);
     }
     else {
         displayDepressurization = false;
-        logMsg(LOG_INFO, name + " depressurization will not be displayed.");
+        logger.logMsg(LOG_INFO, name + " depressurization will not be displayed.");
     }
 
     if (!ConfigReader::getIntValue(patternConfig, "fillStepSize", fillStepSize, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
+    logger.logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
 
     if (!ConfigReader::getIntValue(patternConfig, "fillStepIntervalHighMs", fillStepIntervalHighMs, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " fillStepIntervalHighMs=" + to_string(fillStepIntervalHighMs));
+    logger.logMsg(LOG_INFO, name + " fillStepIntervalHighMs=" + to_string(fillStepIntervalHighMs));
 
     if (!ConfigReader::getIntValue(patternConfig, "fillStepIntervalLowMs", fillStepIntervalLowMs, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " fillStepIntervalLowMs=" + to_string(fillStepIntervalLowMs));
+    logger.logMsg(LOG_INFO, name + " fillStepIntervalLowMs=" + to_string(fillStepIntervalLowMs));
 
     if (!ConfigReader::getIntValue(patternConfig, "flashIntervalMs", flashIntervalMs, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " flashIntervalMs=" + to_string(flashIntervalMs));
+    logger.logMsg(LOG_INFO, name + " flashIntervalMs=" + to_string(flashIntervalMs));
 
     if (!ConfigReader::getIntValue(patternConfig, "burstDurationMs", burstDurationMs, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " burstDurationMs=" + to_string(burstDurationMs));
+    logger.logMsg(LOG_INFO, name + " burstDurationMs=" + to_string(burstDurationMs));
 
     if (!ConfigReader::getIntValue(patternConfig, "flashDurationMs", flashDurationMs, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " flashDurationMs=" + to_string(flashDurationMs));
+    logger.logMsg(LOG_INFO, name + " flashDurationMs=" + to_string(flashDurationMs));
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_WARNING, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_WARNING, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -132,14 +133,14 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
             pressureChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+        logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
+            logger.logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }

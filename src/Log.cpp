@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 
 
 Log::Log()
@@ -118,7 +118,7 @@ void Log::vlogMsg(int priority, const char* format, va_list args)
 
 void Log::startLogging(bool useSystemLog, const char* appName)
 {
-    this.useSystemLog = useSystemLog;
+    this->useSystemLog = useSystemLog;
 
     if (useSystemLog) {
         openlog(appName, LOG_PID | LOG_CONS, LOG_USER);

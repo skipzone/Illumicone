@@ -18,11 +18,14 @@
 #include <string>
 
 #include "illumiconeWidgetTypes.h"
-#include "log.h"
 #include "ContortOMaticWidget.h"
+#include "Log.h"
 #include "WidgetId.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 ContortOMaticWidget::ContortOMaticWidget()
@@ -45,7 +48,7 @@ void ContortOMaticWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
     //if (newPosition > 255) {
     //    newPosition = 0;
     //}
-    //logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    //logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
     channels[chIdx]->setPositionAndVelocity(newPosition, 1);
     channels[chIdx]->setIsActive(true);
 }
