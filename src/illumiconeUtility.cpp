@@ -46,13 +46,13 @@ int acquireProcessLock(const string& lockFilePath)
             }
             else {
                 close(fd);
-                logSysErr(LOG_ERR, "Unable to lock " + lockFilePath + ".", errno);
+                logSysErr(LOG_ERR, errno, "Unable to lock " + lockFilePath + ".");
                 return -1;
             }
         }
     }
     else {
-        logSysErr(LOG_ERR, "Unable to create or open " + lockFilePath + ".", errno);
+        logSysErr(LOG_ERR, errno, "Unable to create or open " + lockFilePath + ".");
         return -1;
     }
 }

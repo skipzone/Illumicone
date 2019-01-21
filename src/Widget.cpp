@@ -127,7 +127,7 @@ void Widget::startUdpRxThread()
 
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1) {
-        logSysErr(LOG_ERR, "Failed to create socket in Widget::startUdpRxThread for " + widgetIdToString(id), errno);
+        logMsg(LOG_ERR, errno, "Failed to create socket in Widget::startUdpRxThread for " + widgetIdToString(id));
         return;
     }
 
@@ -137,7 +137,7 @@ void Widget::startUdpRxThread()
     servaddr.sin_port = htons(widgetPortNumber);
 
     if (::bind(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) == -1) {
-        logSysErr(LOG_ERR, "Failed to bind socket in Widget::startUdpRxThread for " + widgetIdToString(id), errno);
+        logMsg(LOG_ERR, errno, "Failed to bind socket in Widget::startUdpRxThread for " + widgetIdToString(id));
         return;
     }
 
@@ -168,7 +168,7 @@ void Widget::pollForUdpRx()
                                        &len);
 
         if (rxByteCount < 0) {
-            logSysErr(LOG_ERR, "Error receiving UDP message for " + widgetIdToString(id) + ".", errno);
+            logMsg(LOG_ERR, errno, "Error receiving UDP message for " + widgetIdToString(id) + ".");
             continue;
         }
 

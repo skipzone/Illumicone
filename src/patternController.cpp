@@ -45,7 +45,7 @@
 #include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
 #include "lib8tion.h"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "patternFactory.h"
 #include "pixeltypes.h"
@@ -72,6 +72,8 @@ struct PatternState {
     fract8 amountOfOverlay;
     int wantsDisplay;
 };
+
+Log log;
 
 static string configFileName;
 static ConfigReader config;
@@ -128,13 +130,13 @@ bool registerSignalHandlers()
 
 	act.sa_handler = &handleReinitSignal;
 	if (sigaction(SIGUSR1, &act, NULL) < 0) {
-        logSysErr(LOG_ERR, "Unable to register re-init signal handler.", errno);
+        logMsg(LOG_ERR, errno, "Unable to register re-init signal handler.");
 		return false;
 	}
 
 	act.sa_handler = &handleTestPatternSignal;
 	if (sigaction(SIGUSR2, &act, NULL) < 0) {
-        logSysErr(LOG_ERR, "Unable to register test pattern signal handler.", errno);
+        logMsg(LOG_ERR, errno, "Unable to register test pattern signal handler.");
 		return false;
 	}
 
@@ -144,7 +146,7 @@ bool registerSignalHandlers()
         || sigaction(SIGPIPE, &act, NULL) < 0
         || sigaction(SIGTERM, &act, NULL) < 0)
     {
-        logSysErr(LOG_ERR, "Unable to register exit signal handler.", errno);
+        logMsg(LOG_ERR, errno, "Unable to register exit signal handler.");
 		return false;
 	}
 
@@ -158,7 +160,7 @@ bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber
 
     opcServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
     if (opcServerSocketFd == -1) {
-        logSysErr(LOG_ERR, "Failed to create socket for OPC server.", errno);
+        logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
         return false;
     }
 
@@ -167,7 +169,7 @@ bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber
     opcServerSockaddr.sin_port = htons(portNumber);
 
     if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) == -1) {
-        logSysErr(LOG_ERR, "Unable to connect to opc-server.", errno);
+        logMsg(LOG_ERR, errno, "Unable to connect to opc-server.");
         return false;
     }
 
@@ -182,7 +184,7 @@ bool closeOpcServerTcpConnection()
     logMsg(LOG_INFO, "Disconnecting from OPC server...");
     ///if (disconnectx(opcServerSocketFd, SAE_ASSOCID_ANY, SAE_CONNID_ANY) != 0) {
     if (close(opcServerSocketFd) != 0) {
-        logSysErr(LOG_ERR, "Unable to close connection to opc-server.", errno);
+        logMsg(LOG_ERR, errno, "Unable to close connection to opc-server.");
         return false;
     }
     return true;
@@ -200,12 +202,12 @@ bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
     opcServerSockaddr.sin_port = htons(0);
 
     if ((opcServerSocketFd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        logSysErr(LOG_ERR, "Failed to create socket for OPC server.", errno);
+        logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
         return false;
     }
 
     if (::bind(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(struct sockaddr_in)) == -1) {
-        logSysErr(LOG_ERR, "bind failed for OPC server.", errno);
+        logMsg(LOG_ERR, errno, "bind failed for OPC server.");
         return false;
     }
 
@@ -223,7 +225,7 @@ bool closeUdpPortForOpcServer()
     // TODO 2/3/2018 ross:  make sure this implementation is correct
     logMsg(LOG_INFO, "Closing UDP port for OPC server...");
     if (close(opcServerSocketFd) != 0) {
-        logSysErr(LOG_ERR, "Unable to close UDP port for opc-server.", errno);
+        logMsg(LOG_ERR, errno, "Unable to close UDP port for opc-server.");
         return false;
     }
     return true;
@@ -275,7 +277,7 @@ bool sendOpcMessage()
     if (useTcpForOpcServer) {
         //logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
         if (send(opcServerSocketFd, opcBuffer, opcBufferSize, 0) == -1) {
-            logSysErr(LOG_ERR, "Failed to send message to OPC server via TCP.", errno);
+            logMsg(LOG_ERR, errno, "Failed to send message to OPC server via TCP.");
             return false;
         }
         //logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
@@ -290,7 +292,7 @@ bool sendOpcMessage()
                                         (struct sockaddr *) &opcServerSockaddr,
                                         sizeof(struct sockaddr_in));
         if (bytesSentCount == -1) {
-            logSysErr(LOG_ERR, "Failed to send message to OPC server via UDP.", errno);
+            logMsg(LOG_ERR, errno, "Failed to send message to OPC server via UDP.");
             return false;
         }
         if (bytesSentCount != opcBufferSize) {

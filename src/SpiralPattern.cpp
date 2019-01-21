@@ -328,7 +328,7 @@ bool SpiralPattern::update()
             //    logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y));
             //}
             if (errno != 0) {
-                logSysErr(LOG_ERR,
+                logMsg(LOG_ERR, errno,
                           name + ":  powf indicated an error for "
                                + " x=" + to_string(x)
                                + " spiralTightnessFactor=" + to_string(spiralTightnessFactor)
@@ -336,8 +336,7 @@ bool SpiralPattern::update()
                                + " progressiveSpringCompressionResponseFactor=" + to_string(progressiveSpringCompressionResponseFactor)
                                + " compressionFactor=" + to_string(compressionFactor)
                                + " exp=" + to_string(progressiveSpringFactor
-                                                     + progressiveSpringCompressionResponseFactor * compressionFactor)
-                          , errno);
+                                                     + progressiveSpringCompressionResponseFactor * compressionFactor));
             }
             if (y > 1.0) {
                 break;

@@ -23,7 +23,7 @@
 #include "EyeWidget.h"
 #include "FourPlay42Widget.h"
 #include "FourPlay43Widget.h"
-#include "log.h"
+#include "Log.h"
 #include "PumpWidget.h"
 #include "RainstickWidget.h"
 #include "SchroedersPlaythingWidget.h"
