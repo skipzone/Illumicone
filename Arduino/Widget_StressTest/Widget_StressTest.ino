@@ -52,7 +52,7 @@
 #define TX_PIPE_ADDRESS "0wdgt"       // 0 for tx stress
 //#define TX_PIPE_ADDRESS "1wdgt"       // 0 for tx stress
 
-// Set WANT_ACK to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
+// Set to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
@@ -60,6 +60,9 @@
 #define WANT_ACK true
 #define TX_RETRY_DELAY_MULTIPLIER 3
 #define TX_MAX_RETRIES 15
+//#define WANT_ACK false
+//#define TX_RETRY_DELAY_MULTIPLIER 0
+//#define TX_MAX_RETRIES 0
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
@@ -125,14 +128,13 @@ void loop() {
     //payload.widgetHeader.isActive = !payload.widgetHeader.isActive;
     payload.widgetHeader.isActive = true;
 
-    //  Send the time.  This will block until complete.
-    if (!radio.write(&payload, sizeof(payload))) {
+    if (!radio.write(&payload, (uint8_t) sizeof(payload), !WANT_ACK)) {
 #ifdef LED_PIN      
       digitalWrite(LED_PIN, HIGH);
 #endif
       ++payload.numTxFailures;
-      //Serial.print(F("radio.write failed for "));
-      //Serial.println(payload.payloadNum);
+      Serial.print(F("radio.write failed for "));
+      Serial.println(payload.payloadNum);
     }
     else {
 #ifdef LED_PIN      
