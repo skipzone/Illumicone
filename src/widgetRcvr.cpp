@@ -224,6 +224,8 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
 
 void handleStressTestPayload(const StressTestPayload* payload, unsigned int payloadSize)
 {
+    static int lastPayloadNum;
+
     if (payloadSize != sizeof(StressTestPayload)) {
         logger.logMsg(LOG_ERR,
                       "Got StressTestPayload payload with size %d, but size %d was expected.",
@@ -232,22 +234,20 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
     }
 
     logger.logMsg(LOG_INFO,
-                  "stest: id=%d a=%d ch=%d seq=%d fails=%d(%d%%)",
+                  "stest: id=%d a=%d ch=%d seq=%d lastTxUs=%d fails=%d(%d%%)",
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
                   payload->widgetHeader.channel,
                   payload->payloadNum,
+                  payload->lastTxUs,
                   payload->numTxFailures,
                   payload->numTxFailures * 100 / payload->payloadNum);
 
-    UdpPayload udpPayload;
-    udpPayload.id       = payload->widgetHeader.id;
-    udpPayload.channel  = payload->widgetHeader.channel;
-    udpPayload.isActive = payload->widgetHeader.isActive;
-    udpPayload.position = payload->payloadNum;
-    udpPayload.velocity = payload->numTxFailures;
-
-    sendUdp(udpPayload);
+    int payloadNumChange = (int) payload->payloadNum - lastPayloadNum;
+    if (payloadNumChange != 1) {
+        logger.logMsg(LOG_WARNING, "message gap:  %d", payloadNumChange);
+    }
+    lastPayloadNum = payload->payloadNum;
 }
 
 

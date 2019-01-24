@@ -25,7 +25,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 
 #include "illumiconeWidget.h"
@@ -39,9 +39,8 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 11  // FourPlay-4-3
-#define NUM_CHANNELS 4
-#define TX_INTERVAL_MS 100L
+#define WIDGET_ID 0
+#define TX_INTERVAL_MS 10L
 #define STATS_PRINT_INTERVAL_MS 1000L
 //#define LED_PIN 2
 
@@ -50,7 +49,6 @@
 // Nwdgt, where N indicates the payload type (0: stress test; 1: position
 // and velocity; 2: measurement vector; 3,4: undefined; 5: custom)
 #define TX_PIPE_ADDRESS "0wdgt"       // 0 for tx stress
-//#define TX_PIPE_ADDRESS "1wdgt"       // 0 for tx stress
 
 // Set to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
@@ -58,8 +56,8 @@
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
 #define WANT_ACK true
-#define TX_RETRY_DELAY_MULTIPLIER 3
-#define TX_MAX_RETRIES 15
+#define TX_RETRY_DELAY_MULTIPLIER 2
+#define TX_MAX_RETRIES 0
 //#define WANT_ACK false
 //#define TX_RETRY_DELAY_MULTIPLIER 0
 //#define TX_MAX_RETRIES 0
@@ -121,14 +119,16 @@ void loop() {
   if (now - lastTxMs >= TX_INTERVAL_MS) {
 
     ++payload.payloadNum;
-    ++payload.widgetHeader.channel;
-    if (payload.widgetHeader.channel >= NUM_CHANNELS) {
-      payload.widgetHeader.channel = 0;
-    }
-    //payload.widgetHeader.isActive = !payload.widgetHeader.isActive;
+    payload.widgetHeader.channel = 0;
     payload.widgetHeader.isActive = true;
 
-    if (!radio.write(&payload, (uint8_t) sizeof(payload), !WANT_ACK)) {
+    uint32_t txStartUs = micros();
+    bool txSuccessful = radio.write(&payload, (uint8_t) sizeof(payload), !WANT_ACK);
+    uint32_t txEndUs = micros();
+
+    payload.lastTxUs = txEndUs - txStartUs;
+
+    if (!txSuccessful) {
 #ifdef LED_PIN      
       digitalWrite(LED_PIN, HIGH);
 #endif
