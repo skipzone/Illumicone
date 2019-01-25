@@ -105,52 +105,64 @@ static volatile bool gotToggleTestPatternSignal;
 
 
 
-void handleReinitSignal(int signum)
+static bool registerSignalHandler();
+static void signalHandler(int signum);
+
+
+
+static bool registerSignalHandler()
 {
-    gotReinitSignal = true;
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    bool succeeded = true;
+
+    sa.sa_handler = signalHandler;
+    if (sigaction(SIGINT, &sa, NULL) < 0) succeeded = false;    // ^C
+    if (sigaction(SIGTERM, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGQUIT, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGHUP, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGUSR1, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGUSR2, &sa, NULL) < 0) succeeded = false;
+
+    sa.sa_handler = SIG_IGN;
+    if (sigaction(SIGCHLD, &sa, NULL) < 0) succeeded = false;
+
+    if (!succeeded) {
+        logger.logMsg(LOG_ERR, "Registration of a handler for one or more signals failed.");
+    }
+
+    return succeeded;
 }
 
 
-void handleTestPatternSignal(int signum)
+static void signalHandler(int signum)
 {
-    gotToggleTestPatternSignal = true;
-}
+    logger.logMsg(LOG_NOTICE, "Got signal %d.", signum);
+    switch(signum) {
 
+        case SIGINT:
+        case SIGTERM:
+        case SIGQUIT:
+        case SIGHUP:
+            logger.logMsg(LOG_NOTICE, "Setting exit flag.");
+            gotExitSignal = true;
+            break;
 
-void handleExitSignal(int signum)
-{
-    gotExitSignal = true;
-}
+        case SIGUSR1:
+            logger.logMsg(LOG_NOTICE, "Setting reinitialize flag.");
+            gotReinitSignal = true;
+            break;
 
+        case SIGUSR2:
+            logger.logMsg(LOG_NOTICE, "Setting test pattern toggle flag.");
+            gotToggleTestPatternSignal = true;
+            break;
 
-bool registerSignalHandlers()
-{
-	struct sigaction act;
-	memset(&act, 0, sizeof(act));
-
-	act.sa_handler = &handleReinitSignal;
-	if (sigaction(SIGUSR1, &act, NULL) < 0) {
-        logger.logMsg(LOG_ERR, errno, "Unable to register re-init signal handler.");
-		return false;
-	}
-
-	act.sa_handler = &handleTestPatternSignal;
-	if (sigaction(SIGUSR2, &act, NULL) < 0) {
-        logger.logMsg(LOG_ERR, errno, "Unable to register test pattern signal handler.");
-		return false;
-	}
-
-	act.sa_handler = &handleExitSignal;
-	if (   sigaction(SIGHUP, &act, NULL) < 0
-        || sigaction(SIGINT, &act, NULL) < 0
-        || sigaction(SIGPIPE, &act, NULL) < 0
-        || sigaction(SIGTERM, &act, NULL) < 0)
-    {
-        logger.logMsg(LOG_ERR, errno, "Unable to register exit signal handler.");
-		return false;
-	}
-
-    return true;
+        default:
+            logger.logMsg(LOG_WARNING, "Signal %d is not supported.", signum);
+    }
 }
 
 
@@ -945,7 +957,7 @@ int main(int argc, char **argv)
 
     logger.startLogging("patternController", Log::LogTo::file);
 
-    if (!registerSignalHandlers()) {
+    if (!registerSignalHandler()) {
         return(EXIT_FAILURE);
     }
 
