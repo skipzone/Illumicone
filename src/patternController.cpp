@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <arpa/inet.h>
+#include <getopt.h>
 //#include <netinet/in.h>
 #include <signal.h>
 #include <stdio.h>
@@ -75,9 +76,18 @@ struct PatternState {
 
 Log logger;                     // this is the global Log object used everywhere
 
-static string configFileName;
-static ConfigReader config;
+// command line options and their defaults
+static bool runAsDaemon = false;
+static string configFileName = "activeConfig.json";
+static string instanceName = "patternController";
+static bool printVersionAndExit = false;
+
+// configuration (except for widgets and patterns)
+static ConfigReader configReader;
+// TODO:  everything needs to use configObject instead of calling stuff in configReader
+static json11::Json configObject;
 static string lockFilePath;
+static string logDir = ".";
 static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
 static vector<SchedulePeriod> shutoffPeriods;
@@ -85,8 +95,13 @@ static vector<SchedulePeriod> quiescentPeriods;
 static string patternBlendMethodStr;
 static PatternBlendMethod patternBlendMethod;
 static unsigned int patternRunLoopSleepIntervalUs;
-
 static bool useTcpForOpcServer;
+
+// flags set by signals
+static volatile bool gotExitSignal;
+static volatile bool gotReinitSignal;
+static volatile bool gotToggleTestPatternSignal;
+
 static struct sockaddr_in opcServerSockaddr;
 static int opcServerSocketFd;
 static uint8_t* opcBuffer;      // points to the buffer used for sending messages to the OPC server
@@ -99,15 +114,90 @@ static vector<PatternState*> patternStates;
 static HsvConeStrings hsvFinalFrame;
 static RgbConeStrings rgbFinalFrame;
 
-static volatile bool gotExitSignal;
-static volatile bool gotReinitSignal;
-static volatile bool gotToggleTestPatternSignal;
 
-
-
+static void usage();
+static bool getCommandLineOptions(int argc, char* argv[]);
 static bool registerSignalHandler();
 static void signalHandler(int signum);
 
+
+void usage()
+{
+    //               1         2         3         4         5         6         7         8
+    //      12345678901234567890123456789012345678901234567890123456789012345678901234567890
+    printf("\n");
+    printf("Usage: patternController [options]\n");
+    printf("\n");
+    printf("Options:\n");
+    printf("\n");
+    printf("-c name, --config_file=name\n");
+    printf("    Configuration file name.  Can include a path.  Default is \"%s\".\n", configFileName.c_str());
+    printf("\n");
+    printf("-d, --daemon\n");
+    printf("    Run as a daemon.\n");
+    printf("\n");
+    printf("-i name, --instance_name=name\n");
+    printf("    Unique name of this instance.  Default is \"%s\".\n", instanceName.c_str());
+    printf("\n");
+    printf("--version\n");
+    printf("    Print version information and exit.\n");
+    printf("\n");
+}
+
+
+static bool getCommandLineOptions(int argc, char* argv[])
+{
+    enum LongOnlyOption {
+        unhandled = 0,
+        version
+    };
+
+    int longOnlyOption = unhandled;
+    static struct option longopts[] = {
+        { "config_file",   required_argument,      NULL,            'c'     },
+        { "daemon",        no_argument,            NULL,            'd'     },
+        { "instance_name", required_argument,      NULL,            'i'     },
+        { "version",       no_argument,            &longOnlyOption, version },
+        { NULL,            0,                      NULL,            0       }
+    };
+
+    bool badOptionFound = false;
+    int ch;
+    while (!badOptionFound && (ch = getopt_long(argc, argv, "c:di:", longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'c':
+                configFileName = optarg;
+                break;
+            case 'd':
+                runAsDaemon = true;
+                break;
+            case 'i':
+                instanceName = optarg;
+                break;
+            case 0:
+                switch (longOnlyOption) {
+                    case version:
+                        printVersionAndExit = true;
+                        break;
+                    default:
+                        fprintf(stderr, "Unhandled long option encountered.\n");
+                        badOptionFound = true;
+                }                    
+                break;
+            default:
+                usage();
+                badOptionFound = true;
+        }
+    }
+
+    if (!badOptionFound) {
+        argc -= optind;
+        argv += optind;
+        // TODO:  Handle non-option args here.
+    }
+
+    return !badOptionFound;
+}
 
 
 static bool registerSignalHandler()
@@ -164,6 +254,9 @@ static void signalHandler(int signum)
             logger.logMsg(LOG_WARNING, "Signal %d is not supported.", signum);
     }
 }
+
+
+
 
 
 bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber)
@@ -449,27 +542,57 @@ void printSchedulePeriods(const std::string& scheduleDescription, const vector<S
 
 bool readConfig()
 {
-    if (!config.readConfigurationFile(configFileName)) {
+    // Read the configuration file, and merge the instance-specific and common
+    // configurations into a single configuration in configObject.  The
+    // instance-specific configuration has priority (i.e., items in the common
+    // configuration will not override the same items in the instance-specific
+    // configuration).
+    if (!configReader.readConfigurationFile(configFileName)) {
         return false;
     }
-
-    lockFilePath = config.getLockFilePath("patternController");
-    if (lockFilePath.empty()) {
-        logger.logMsg(LOG_WARNING, "There is no lock file name for patternController in configuration.");
-    }
-
-    numberOfStrings = config.getNumberOfStrings();
-    numberOfPixelsPerString = config.getNumberOfPixelsPerString();
-
-    shutoffPeriods.clear();
-    quiescentPeriods.clear();
-    if (config.getSchedulePeriods("shutoffPeriods", shutoffPeriods)
-        || config.getSchedulePeriods("quiescentPeriods", quiescentPeriods))
+    json11::Json instanceConfigObject;
+    if (!ConfigReader::getJsonObject(configReader.getConfigObject(),
+                                     instanceName,
+                                     instanceConfigObject,
+                                     " in " + configFileName + ".")) 
     {
         return false;
     }
+    //logger.logMsg(LOG_DEBUG, "instanceConfigObject = " + instanceConfigObject.dump());
+    json11::Json commonConfigObject;
+    if (ConfigReader::getJsonObject(configReader.getConfigObject(),
+                                    "common",
+                                    commonConfigObject))
+    {
+        configObject = ConfigReader::mergeConfigObjects(instanceConfigObject, commonConfigObject);
+    }
+    else
+    {
+        configObject = instanceConfigObject;
+        logger.logMsg(LOG_WARNING, "%s does not have a common section.", configFileName.c_str());
+    }
+    //logger.logMsg(LOG_DEBUG, "configObject = " + configObject.dump());
 
-    patternBlendMethodStr = config.getPatternBlendMethod();
+    string errMsgSuffix = " in the " + instanceName + " or common section of " + configFileName + ".";
+
+    ConfigReader::getStringValue(configObject, "lockFilePath", lockFilePath);
+    if (lockFilePath.empty()) {
+        logger.logMsg(LOG_WARNING, "There is no lock file path" + errMsgSuffix);
+    }
+
+    if (!ConfigReader::getUnsignedIntValue(configObject, "numberOfStrings", numberOfStrings, errMsgSuffix)) return false;
+    if (!ConfigReader::getUnsignedIntValue(configObject, "numberOfPixelsPerString", numberOfPixelsPerString, errMsgSuffix)) return false;
+
+    shutoffPeriods.clear();
+    quiescentPeriods.clear();
+    if (!ConfigReader::getSchedulePeriods(configObject, "shutoffPeriods", shutoffPeriods)
+        || !ConfigReader::getSchedulePeriods(configObject, "quiescentPeriods", quiescentPeriods))
+    {
+        logger.logMsg(LOG_ERR, "shutoffPeriods or quiescentPeriods is missing or invalid" + errMsgSuffix);
+        return false;
+    }
+
+    if (!ConfigReader::getStringValue(configObject, "patternBlendMethod", patternBlendMethodStr, errMsgSuffix)) return false;
     if (patternBlendMethodStr == "overlay") {
         patternBlendMethod = PatternBlendMethod::overlay;
     }
@@ -486,14 +609,11 @@ bool readConfig()
         patternBlendMethod = PatternBlendMethod::hsvHueBlend;
     }
     else {
-        logger.logMsg(LOG_ERR, "patternBlendMethod \"" + patternBlendMethodStr + "\" not recognized.");
+        logger.logMsg(LOG_ERR, "Unrecognized patternBlendMethod \"" + patternBlendMethodStr + "\"" + errMsgSuffix);
         return false;
     }
 
-    patternRunLoopSleepIntervalUs = config.getPatternRunLoopSleepIntervalUs();
-    if (patternRunLoopSleepIntervalUs == 0) {
-        return false;
-    }
+    if (!ConfigReader::getUnsignedIntValue(configObject, "patternRunLoopSleepIntervalUs", patternRunLoopSleepIntervalUs, errMsgSuffix, 1)) return false;
 
     return true;
 }
@@ -537,7 +657,7 @@ void initWidgets()
 
     // TODO 6/12/2017 ross:  Move widget config access to ConfigReader.
 
-    for (auto& widgetConfig : config.getJsonObject()["widgets"].array_items()) {
+    for (auto& widgetConfig : configObject["widgets"].array_items()) {
         string widgetName = widgetConfig["name"].string_value();
         if (widgetName.empty()) {
             logger.logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfig.dump());
@@ -561,7 +681,7 @@ void initWidgets()
             logger.logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
             continue;
         }
-        if (!newWidget->init(config)) {
+        if (!newWidget->init(configReader)) {
             logger.logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
             continue;
         }
@@ -586,7 +706,7 @@ void initPatterns()
 {
     logger.logMsg(LOG_INFO, "Initializing patterns...");
 
-    for (auto& patternConfig : config.getJsonObject()["patterns"].array_items()) {
+    for (auto& patternConfig : configObject["patterns"].array_items()) {
         string patternName = patternConfig["name"].string_value();
         if (patternName.empty()) {
             logger.logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfig.dump());
@@ -608,7 +728,7 @@ void initPatterns()
                     + ".  (Is the pattern class name correct?)");
             continue;
         }
-        if (!newPattern->init(config, widgets)) {
+        if (!newPattern->init(configReader, widgets)) {
             logger.logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
             delete newPattern;
             continue;
@@ -701,6 +821,7 @@ bool doInitialization()
     }
 
     logger.logMsg(LOG_INFO, "Starting initialization.");
+    logger.logMsg(LOG_INFO, "instanceName = " + instanceName);
     logger.logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
     logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
     logger.logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
@@ -724,14 +845,14 @@ bool doInitialization()
     }
 
     // Open communications with OPC server.
-    useTcpForOpcServer = config.getUseTcpForOpcServer();
+    useTcpForOpcServer = configReader.getUseTcpForOpcServer();
     if (useTcpForOpcServer) {
-        if (!openOpcServerTcpConnection(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
+        if (!openOpcServerTcpConnection(configReader.getOpcServerIpAddress(), configReader.getOpcServerPortNumber())) {
             return false;
         }
     }
     else {
-        if (!openUdpPortForOpcServer(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
+        if (!openUdpPortForOpcServer(configReader.getOpcServerIpAddress(), configReader.getOpcServerPortNumber())) {
             return false;
         }
     }
@@ -948,14 +1069,16 @@ void doPatterns()
 
 int main(int argc, char **argv)
 {
-    // The configuration comes from the JSON file specified on the command line.
-    if (argc != 2) {
-        cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
-        return 2;
+    if (!getCommandLineOptions(argc, argv)) {
+        return(EXIT_FAILURE);
     }
-    configFileName = argv[1];
 
-    logger.startLogging("patternController", Log::LogTo::file);
+    if (printVersionAndExit) {
+        printf("%s last modified on %s, compiled on %s %s\n", __BASE_FILE__, __TIMESTAMP__, __DATE__, __TIME__);
+        exit(EXIT_SUCCESS);
+    }
+
+    logger.startLogging(instanceName, Log::LogTo::file, logDir);
 
     if (!registerSignalHandler()) {
         return(EXIT_FAILURE);
@@ -966,8 +1089,11 @@ int main(int argc, char **argv)
     }
 
     // Make sure this is the only instance running.
-    if (!lockFilePath.empty() && acquireProcessLock(lockFilePath) < 0) {
-        return(EXIT_FAILURE);
+    if (!lockFilePath.empty()) {
+        string lockFilePathName = lockFilePath + "/" + instanceName;
+        if (acquireProcessLock(lockFilePathName) < 0) {
+            return(EXIT_FAILURE);
+        }
     }
 
     logger.logMsg(LOG_INFO, "---------- patternController  starting ----------");

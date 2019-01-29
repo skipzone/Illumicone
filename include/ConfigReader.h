@@ -60,6 +60,11 @@ class ConfigReader
                                      bool allowEmptyString = false,
                                      const HsvPixel& defaultValue = HsvPixel(0, 0, 0));
 
+        static bool getJsonObject(const json11::Json& jsonObj,
+                                  const std::string& name,
+                                  json11::Json& value,
+                                  const std::string& errorMessageSuffix = "");
+
         static bool getIntValue(const json11::Json& jsonObj,
                                 const std::string& name,
                                 int& value,
@@ -75,6 +80,10 @@ class ConfigReader
                                      bool allowEmptyString = false,
                                      const RgbPixel& defaultValue = CRGB::Black);
 
+        static bool getSchedulePeriods(const json11::Json& jsonObj,
+                                       const std::string& scheduleName,
+                                       std::vector<SchedulePeriod>& schedulePeriods);
+
         static bool getStringValue(const json11::Json& jsonObj,
                                    const std::string& name,
                                    std::string& value,
@@ -88,6 +97,9 @@ class ConfigReader
                                         unsigned int minValue = 0,
                                         unsigned int maxValue = UINT_MAX);
 
+        static json11::Json mergeConfigObjects(const json11::Json& primaryJsonObj, const json11::Json& secondaryJsonObj);
+
+
         ConfigReader();
         virtual ~ConfigReader();
 
@@ -97,21 +109,15 @@ class ConfigReader
         bool readConfigurationFile(std::string fileName);
 
         std::string dumpToString();
-        json11::Json getJsonObject();
+        json11::Json getConfigObject();
         json11::Json getWidgetConfigJsonObject(const std::string& widgetName);
         json11::Json getPatternConfigJsonObject(const std::string& patternName);
 
-        std::string getLockFilePath(const std::string& serviceName);
-        int getNumberOfStrings();
-        int getNumberOfPixelsPerString();
         bool getUseTcpForOpcServer();
         std::string getOpcServerIpAddress();
         unsigned int getOpcServerPortNumber();
         std::string getPatconIpAddress();
-        std::string getPatternBlendMethod();
-        unsigned int getPatternRunLoopSleepIntervalUs();
         unsigned int getRadioPollingLoopSleepIntervalUs();
-        bool getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods);
         int getWidgetPortNumberBase();
 
         bool getWidgetGenerateSimulatedMeasurements(const std::string& widgetName);

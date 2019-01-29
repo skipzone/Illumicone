@@ -29,6 +29,45 @@ using namespace std;
 Log logger;                     // this is the global Log object used everywhere
 
 
+void configReaderUnitTests()
+{
+    cout << "----- ConfigReader -----" << endl;
+
+    ConfigReader config;
+    assert(config.readConfigurationFile("../config/unitTests.json"));
+
+    json11::Json primary, secondary;
+    assert(ConfigReader::getJsonObject(config.getConfigObject(), "primary", primary));
+    assert(ConfigReader::getJsonObject(config.getConfigObject(), "secondary", secondary));
+    int i = 0;
+    assert(ConfigReader::getIntValue(primary, "primary-1", i));
+    assert(i == 1);
+    assert(ConfigReader::getIntValue(primary, "primary-2", i));
+    assert(i == 2);
+    assert(ConfigReader::getIntValue(secondary, "primary-1", i));
+    assert(i == 10);
+    assert(ConfigReader::getIntValue(secondary, "secondary-1", i));
+    assert(i == 11);
+    assert(ConfigReader::getIntValue(secondary, "secondary-2", i));
+    assert(i == 12);
+    json11::Json merged = ConfigReader::mergeConfigObjects(primary, secondary);
+    i = 0;
+    assert(ConfigReader::getIntValue(merged, "primary-1", i));
+    assert(i == 1);
+    assert(ConfigReader::getIntValue(merged, "primary-2", i));
+    assert(i == 2);
+    assert(ConfigReader::getIntValue(merged, "secondary-1", i));
+    assert(i == 11);
+    assert(ConfigReader::getIntValue(merged, "secondary-2", i));
+    assert(i == 12);
+    assert(merged.object_items().size() == 4);
+    //cout << merged.dump();
+    cout << "    merge passed." << endl;
+
+    cout << "    All ConfigReader tests passed." << endl;
+}
+
+
 void measurementMapperUnitTests()
 {
     cout << "----- MeasurementMapper -----" << endl;
@@ -144,7 +183,7 @@ void measurementMapperUnitTests()
     assert(config.readConfigurationFile("../config/unitTests.json"));
 
     MeasurementMapper<int, float> mapper3config;
-    assert(mapper3config.readConfig(config.getJsonObject(), "mapper3", "unitTests mapper3config"));
+    assert(mapper3config.readConfig(config.getConfigObject(), "mapper3", "unitTests mapper3config"));
 
     assert(mapper3config.mapMeasurement(-9001));
     cout << "    3)  -9001 -> " << mapper3config.getLastMappedMeasurement() << endl;
@@ -275,6 +314,7 @@ int main(int argc, char **argv)
 
     logger.startLogging("unitTests", Log::LogTo::console);
 
+    configReaderUnitTests();
     measurementMapperUnitTests();
 
     logger.stopLogging();

@@ -158,6 +158,22 @@ bool ConfigReader::getIntValue(const json11::Json& jsonObj,
 }
 
 
+bool ConfigReader::getJsonObject(const json11::Json& jsonObj,
+                                 const std::string& name,
+                                 json11::Json& value,
+                                 const std::string& errorMessageSuffix)
+{
+    if (!jsonObj[name].is_object()) {
+        if (!errorMessageSuffix.empty()) {
+            logger.logMsg(LOG_ERR, name + " is not present or is not a Json object" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name];
+    return true;
+}
+
+
 bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
                                     const std::string& name,
                                     std::string& rgbStr,
@@ -193,204 +209,15 @@ bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
 }
 
 
-bool ConfigReader::getStringValue(const json11::Json& jsonObj,
-                                  const std::string& name,
-                                  string& value,
-                                  const std::string& errorMessageSuffix,
-                                  bool allowEmptyString)
+bool ConfigReader::getSchedulePeriods(const json11::Json& jsonObj,
+                                      const std::string& scheduleName,
+                                      std::vector<SchedulePeriod>& schedulePeriods)
 {
-    if (!jsonObj[name].is_string()) {
-        if (!errorMessageSuffix.empty()) {
-            logger.logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
-        }
-        return false;
-    }
-    value = jsonObj[name].string_value();
-    if (!allowEmptyString && value.empty()) {
-        if (!errorMessageSuffix.empty()) {
-            logger.logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
-        }
-        return false;
-    }
-    return true;
-}
+    // TODO:  modify to use logger rather than cerr and to use errorMessageSuffix.
 
-
-bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
-                                       const std::string& name,
-                                       unsigned int& value,
-                                       const std::string& errorMessageSuffix,
-                                       unsigned int minValue,
-                                       unsigned int maxValue)
-{
-    if (!jsonObj[name].is_number()) {
-        if (!errorMessageSuffix.empty()) {
-            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
-        }
-        return false;
-    }
-    value = jsonObj[name].int_value();
-    if (value < minValue || value > maxValue) {
-        if (!errorMessageSuffix.empty()) {
-            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
-                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
-        }
-        return false;
-    }
-    return true;
-}
-
-
-ConfigReader::ConfigReader()
-{
-}
-
-
-ConfigReader::~ConfigReader()
-{
-}
-
-
-bool ConfigReader::readConfigurationFile(std::string fileName)
-{
-    configFileName = fileName;
-
-    ifstream configFile(configFileName, ios_base::in);
-    if (!configFile.is_open()) {
-        cerr << "Can't open " << configFileName << endl;
-        return false;
-    }
-    stringstream jsonSstr;
-    jsonSstr << configFile.rdbuf();
-    configFile.close();
-
-    string err;
-    configObj = Json::parse(jsonSstr.str(), err, JsonParse::COMMENTS);
-    if (!err.empty()) {
-        cerr << "Parse of " << configFileName << " failed:  " << err << endl;
-        return false;
-    }
-
-    // TODO 6/12/2017 ross:  Build a map associating widget ids with widget config objects and use it to access the objects.
-
-    return true;
-}
-
-
-string ConfigReader::dumpToString()
-{
-    return configObj.dump();
-}
-
-
-Json ConfigReader::getJsonObject()
-{
-    return configObj;
-}
-
-
-Json ConfigReader::getWidgetConfigJsonObject(const std::string& widgetName)
-{
-    for (auto& widgetConfigObj : configObj["widgets"].array_items()) {
-        if (widgetConfigObj["name"].string_value() == widgetName) {
-            return widgetConfigObj;
-        }
-    }
-    return Json("{}");
-}
-
-
-Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
-{
-    for (auto& patternConfigObj : configObj["patterns"].array_items()) {
-        if (patternConfigObj["name"].string_value() == patternName) {
-            return patternConfigObj;
-        }
-    }
-    return Json("{}");
-}
-
-
-std::string ConfigReader::getLockFilePath(const string& serviceName)
-{
-    Json lockFilePathsObj = configObj["lockFilePaths"];
-    if (!lockFilePathsObj.is_object()) {
-        logger.logMsg(LOG_ERR, "lockFilePaths is missing from configuration or is not a JSON object.");
-        return "";
-    }
-    return lockFilePathsObj[serviceName].string_value();
-}
-
-
-int ConfigReader::getNumberOfStrings()
-{
-    int val;
-    return getIntValue(configObj, "numberOfStrings", val, ".", 1, 48) ? val : 0;
-}
-
-
-int ConfigReader::getNumberOfPixelsPerString()
-{
-    int val;
-    return getIntValue(configObj, "numberOfPixelsPerString", val, ".", 1, 2048) ? val : 0;
-}
-
-
-bool ConfigReader::getUseTcpForOpcServer()
-{
-    bool val;
-    return getBoolValue(configObj, "useTcpForOpcServer", val, ".") ? val : false;
-}
-
-
-string ConfigReader::getOpcServerIpAddress()
-{
-    string val;
-    return getStringValue(configObj, "opcServerIpAddress", val, ".") ? val : "";
-}
-
-
-unsigned int ConfigReader::getOpcServerPortNumber()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "opcServerPortNumber", val, ".", 1024, 65535) ? val : 0;
-}
-
-
-string ConfigReader::getPatconIpAddress()
-{
-    string val;
-    return getStringValue(configObj, "patconIpAddress", val, ".") ? val : "";
-}
-
-
-string ConfigReader::getPatternBlendMethod()
-{
-    string val;
-    return getStringValue(configObj, "patternBlendMethod", val, ".") ? val : "";
-}
-
-
-unsigned int ConfigReader::getPatternRunLoopSleepIntervalUs()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "patternRunLoopSleepIntervalUs", val, ".", 1) ? val : 0;
-}
-
-
-unsigned int ConfigReader::getRadioPollingLoopSleepIntervalUs()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "radioPollingLoopSleepIntervalUs", val, ".", 1) ? val : 0;
-}
-
-
-
-bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods)
-{
     bool problemEncountered = false;
 
-    for (auto& periodConfigObj : configObj[scheduleName].array_items()) {
+    for (auto& periodConfigObj : jsonObj[scheduleName].array_items()) {
 
         string desc = periodConfigObj["description"].string_value();
         if (desc.empty()) {
@@ -453,7 +280,168 @@ bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vect
         schedulePeriods.emplace_back(newSchedulePeriod);
     }
 
-    return problemEncountered;
+    return !problemEncountered;
+}
+
+
+bool ConfigReader::getStringValue(const json11::Json& jsonObj,
+                                  const std::string& name,
+                                  string& value,
+                                  const std::string& errorMessageSuffix,
+                                  bool allowEmptyString)
+{
+    if (!jsonObj[name].is_string()) {
+        if (!errorMessageSuffix.empty()) {
+            logger.logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].string_value();
+    if (!allowEmptyString && value.empty()) {
+        if (!errorMessageSuffix.empty()) {
+            logger.logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
+bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
+                                       const std::string& name,
+                                       unsigned int& value,
+                                       const std::string& errorMessageSuffix,
+                                       unsigned int minValue,
+                                       unsigned int maxValue)
+{
+    if (!jsonObj[name].is_number()) {
+        if (!errorMessageSuffix.empty()) {
+            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name].int_value();
+    if (value < minValue || value > maxValue) {
+        if (!errorMessageSuffix.empty()) {
+            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+                            + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
+        }
+        return false;
+    }
+    return true;
+}
+
+
+json11::Json ConfigReader::mergeConfigObjects(const json11::Json& primaryJsonObj, const json11::Json& secondaryJsonObj)
+{
+    Json::object merged = primaryJsonObj.object_items();
+    merged.insert(secondaryJsonObj.object_items().begin(), secondaryJsonObj.object_items().end()); 
+    return Json(merged);
+}
+
+
+ConfigReader::ConfigReader()
+{
+}
+
+
+ConfigReader::~ConfigReader()
+{
+}
+
+
+bool ConfigReader::readConfigurationFile(std::string fileName)
+{
+    configFileName = fileName;
+
+    ifstream configFile(configFileName, ios_base::in);
+    if (!configFile.is_open()) {
+        cerr << "Can't open " << configFileName << endl;
+        return false;
+    }
+    stringstream jsonSstr;
+    jsonSstr << configFile.rdbuf();
+    configFile.close();
+
+    string err;
+    configObj = Json::parse(jsonSstr.str(), err, JsonParse::COMMENTS);
+    if (!err.empty()) {
+        cerr << "Parse of " << configFileName << " failed:  " << err << endl;
+        return false;
+    }
+
+    // TODO 6/12/2017 ross:  Build a map associating widget ids with widget config objects and use it to access the objects.
+
+    return true;
+}
+
+
+string ConfigReader::dumpToString()
+{
+    return configObj.dump();
+}
+
+
+Json ConfigReader::getConfigObject()
+{
+    return configObj;
+}
+
+
+Json ConfigReader::getWidgetConfigJsonObject(const std::string& widgetName)
+{
+    for (auto& widgetConfigObj : configObj["widgets"].array_items()) {
+        if (widgetConfigObj["name"].string_value() == widgetName) {
+            return widgetConfigObj;
+        }
+    }
+    return Json("{}");
+}
+
+
+Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
+{
+    for (auto& patternConfigObj : configObj["patterns"].array_items()) {
+        if (patternConfigObj["name"].string_value() == patternName) {
+            return patternConfigObj;
+        }
+    }
+    return Json("{}");
+}
+
+
+bool ConfigReader::getUseTcpForOpcServer()
+{
+    bool val;
+    return getBoolValue(configObj, "useTcpForOpcServer", val, ".") ? val : false;
+}
+
+
+string ConfigReader::getOpcServerIpAddress()
+{
+    string val;
+    return getStringValue(configObj, "opcServerIpAddress", val, ".") ? val : "";
+}
+
+
+unsigned int ConfigReader::getOpcServerPortNumber()
+{
+    unsigned int val;
+    return getUnsignedIntValue(configObj, "opcServerPortNumber", val, ".", 1024, 65535) ? val : 0;
+}
+
+
+string ConfigReader::getPatconIpAddress()
+{
+    string val;
+    return getStringValue(configObj, "patconIpAddress", val, ".") ? val : "";
+}
+
+
+unsigned int ConfigReader::getRadioPollingLoopSleepIntervalUs()
+{
+    unsigned int val;
+    return getUnsignedIntValue(configObj, "radioPollingLoopSleepIntervalUs", val, ".", 1) ? val : 0;
 }
 
 

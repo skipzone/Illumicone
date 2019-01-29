@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     cout << "patconIpAddress:  " << config.getPatconIpAddress() << endl;
     cout << "widgetPortNumberBase:  " << config.getWidgetPortNumberBase() << endl;
 
-    Json configJsonObj = config.getJsonObject();
+    Json configJsonObj = config.getConfigObject();
 
     for (auto& autoShutoffPeriod : configJsonObj["autoShutoffPeriods"].array_items()) {
         cout << "autoShutoffPeriod:  " << autoShutoffPeriod["description"].string_value() << endl;

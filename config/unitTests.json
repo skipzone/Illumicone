@@ -1,4 +1,14 @@
 {
+    "primary" : {
+        "primary-1" : 1,
+        "primary-2" : 2
+    },
+
+    "secondary" : {
+        "primary-1" : 10,
+        "secondary-1" : 11,
+        "secondary-2" : 12
+    },
 
     "mapper3" : [
         {   "rawMin" : -9001,

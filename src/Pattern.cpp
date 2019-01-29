@@ -53,8 +53,9 @@ Pattern::~Pattern()
 
 bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
+    // TODO:  really should use error checking rather than trusting the caller to pass a good config
+    ConfigReader::getUnsignedIntValue(config.getConfigObject(), "numberOfStrings", numStrings);
+    ConfigReader::getUnsignedIntValue(config.getConfigObject(), "numberOfPixelsPerString", pixelsPerString);
 
     if (usesHsvModel) {
         allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(coneStrings, numStrings, pixelsPerString);
