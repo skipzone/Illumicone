@@ -85,7 +85,6 @@ static bool printVersionAndExit = false;
 
 // configuration (except for widgets and patterns)
 static ConfigReader configReader;
-// TODO:  everything needs to use configObject instead of calling stuff in configReader
 static json11::Json configObject;
 static string lockFilePath;
 static string logDir = ".";
@@ -97,6 +96,8 @@ static string patternBlendMethodStr;
 static PatternBlendMethod patternBlendMethod;
 static unsigned int patternRunLoopSleepIntervalUs;
 static bool useTcpForOpcServer;
+static string opcServerIpAddress;
+static unsigned int opcServerPortNumber;
 
 // flags set by signals
 static volatile bool gotExitSignal;
@@ -265,12 +266,9 @@ static void signalHandler(int signum)
 }
 
 
-
-
-
-bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber)
+bool openOpcServerTcpConnection()
 {
-    logger.logMsg(LOG_INFO, "Connecting to OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
+    logger.logMsg(LOG_INFO, "Connecting to OPC server at " + opcServerIpAddress + ":" + to_string(opcServerPortNumber) + "...");
 
     opcServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
     if (opcServerSocketFd == -1) {
@@ -279,8 +277,8 @@ bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber
     }
 
     opcServerSockaddr.sin_family = AF_INET;
-    opcServerSockaddr.sin_addr.s_addr = inet_addr(ipAddress.c_str());
-    opcServerSockaddr.sin_port = htons(portNumber);
+    opcServerSockaddr.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
+    opcServerSockaddr.sin_port = htons(opcServerPortNumber);
 
     if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) == -1) {
         logger.logMsg(LOG_ERR, errno, "Unable to connect to opc-server.");
@@ -305,9 +303,9 @@ bool closeOpcServerTcpConnection()
 }
 
 
-bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
+bool openUdpPortForOpcServer()
 {
-    logger.logMsg(LOG_INFO, "Creating and binding socket for OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
+    logger.logMsg(LOG_INFO, "Creating and binding socket for OPC server at " + opcServerIpAddress + ":" + to_string(opcServerPortNumber) + "...");
 
     memset(&opcServerSockaddr, 0, sizeof(struct sockaddr_in));
 
@@ -325,10 +323,10 @@ bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
         return false;
     }
 
-    logger.logMsg(LOG_INFO, "Setting address to " + ipAddress + ":" + to_string(portNumber) + ".");
+    logger.logMsg(LOG_INFO, "Setting address to " + opcServerIpAddress + ":" + to_string(opcServerPortNumber) + ".");
 
-    inet_pton(AF_INET, ipAddress.c_str(), &opcServerSockaddr.sin_addr.s_addr);
-    opcServerSockaddr.sin_port = htons(portNumber);
+    inet_pton(AF_INET, opcServerIpAddress.c_str(), &opcServerSockaddr.sin_addr.s_addr);
+    opcServerSockaddr.sin_port = htons(opcServerPortNumber);
 
     return true;
 }
@@ -625,6 +623,10 @@ bool readConfig()
 
     if (!ConfigReader::getUnsignedIntValue(configObject, "patternRunLoopSleepIntervalUs", patternRunLoopSleepIntervalUs, errMsgSuffix, 1)) return false;
 
+    if (!ConfigReader::getBoolValue(configObject, "useTcpForOpcServer", useTcpForOpcServer, errMsgSuffix)) return false;
+    if (!ConfigReader::getStringValue(configObject, "opcServerIpAddress", opcServerIpAddress, errMsgSuffix)) return false;
+    if (!ConfigReader::getUnsignedIntValue(configObject, "opcServerPortNumber", opcServerPortNumber, errMsgSuffix, 1024, 65535)) return false;
+
     return true;
 }
 
@@ -856,14 +858,13 @@ bool doInitialization()
     }
 
     // Open communications with OPC server.
-    useTcpForOpcServer = configReader.getUseTcpForOpcServer();
     if (useTcpForOpcServer) {
-        if (!openOpcServerTcpConnection(configReader.getOpcServerIpAddress(), configReader.getOpcServerPortNumber())) {
+        if (!openOpcServerTcpConnection()) {
             return false;
         }
     }
     else {
-        if (!openUdpPortForOpcServer(configReader.getOpcServerIpAddress(), configReader.getOpcServerPortNumber())) {
+        if (!openUdpPortForOpcServer()) {
             return false;
         }
     }

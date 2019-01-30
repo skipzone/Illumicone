@@ -113,9 +113,6 @@ class ConfigReader
         json11::Json getWidgetConfigJsonObject(const std::string& widgetName);
         json11::Json getPatternConfigJsonObject(const std::string& patternName);
 
-        bool getUseTcpForOpcServer();
-        std::string getOpcServerIpAddress();
-        unsigned int getOpcServerPortNumber();
         std::string getPatconIpAddress();
         unsigned int getRadioPollingLoopSleepIntervalUs();
         int getWidgetPortNumberBase();

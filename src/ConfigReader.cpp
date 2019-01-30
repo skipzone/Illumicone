@@ -410,27 +410,6 @@ Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
 }
 
 
-bool ConfigReader::getUseTcpForOpcServer()
-{
-    bool val;
-    return getBoolValue(configObj, "useTcpForOpcServer", val, ".") ? val : false;
-}
-
-
-string ConfigReader::getOpcServerIpAddress()
-{
-    string val;
-    return getStringValue(configObj, "opcServerIpAddress", val, ".") ? val : "";
-}
-
-
-unsigned int ConfigReader::getOpcServerPortNumber()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "opcServerPortNumber", val, ".", 1024, 65535) ? val : 0;
-}
-
-
 string ConfigReader::getPatconIpAddress()
 {
     string val;
