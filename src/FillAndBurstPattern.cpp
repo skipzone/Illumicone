@@ -37,39 +37,37 @@ FillAndBurstPattern::FillAndBurstPattern(const std::string& name)
 }
 
 
-bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool FillAndBurstPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     // ----- get pattern configuration -----
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    if (!patternConfig["burstingPriority"].is_number()) {
+    if (!patternConfigObject["burstingPriority"].is_number()) {
         logger.logMsg(LOG_ERR, "burstingPriority not specified" + errMsgSuffix);
         return false;
     }
-    burstingPriority = patternConfig["burstingPriority "].int_value();
+    burstingPriority = patternConfigObject["burstingPriority "].int_value();
     logger.logMsg(LOG_INFO, name + " burstingPriority=" + to_string(burstingPriority));
 
-    if (!ConfigReader::getIntValue(patternConfig, "lowPressureCutoff", lowPressureCutoff, errMsgSuffix, 1, 1023)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "lowPressureCutoff", lowPressureCutoff, errMsgSuffix, 1, 1023)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " lowPressureCutoff=" + to_string(lowPressureCutoff));
 
-    if (!ConfigReader::getIntValue(patternConfig, "burstThreshold", burstThreshold, errMsgSuffix, lowPressureCutoff, 1023)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "burstThreshold", burstThreshold, errMsgSuffix, lowPressureCutoff, 1023)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " burstThreshold=" + to_string(burstThreshold));
 
-    if (!ConfigReader::getIntValue(patternConfig, "flashThreshold", flashThreshold, errMsgSuffix, burstThreshold, 1023)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "flashThreshold", flashThreshold, errMsgSuffix, burstThreshold, 1023)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " flashThreshold=" + to_string(flashThreshold));
 
     string rgbStr;
 
-    if (!ConfigReader::getStringValue(patternConfig, "pressurizationColor", rgbStr, errMsgSuffix)) {
+    if (!ConfigReader::getStringValue(patternConfigObject, "pressurizationColor", rgbStr, errMsgSuffix)) {
         return false;
     }
     if (!stringToRgbPixel(rgbStr, pressurizationColor)) {
@@ -78,7 +76,7 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
     }
     logger.logMsg(LOG_INFO, name + " pressurizationColor=" + rgbStr);
 
-    if (ConfigReader::getStringValue(patternConfig, "depressurizationColor", rgbStr)) {
+    if (ConfigReader::getStringValue(patternConfigObject, "depressurizationColor", rgbStr)) {
         if (!stringToRgbPixel(rgbStr, depressurizationColor)) {
             logger.logMsg(LOG_ERR, "depressurizationColor value \"" + rgbStr + "\" is not valid" + errMsgSuffix);
             return false;
@@ -91,37 +89,37 @@ bool FillAndBurstPattern::initPattern(ConfigReader& config, std::map<WidgetId, W
         logger.logMsg(LOG_INFO, name + " depressurization will not be displayed.");
     }
 
-    if (!ConfigReader::getIntValue(patternConfig, "fillStepSize", fillStepSize, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "fillStepSize", fillStepSize, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
 
-    if (!ConfigReader::getIntValue(patternConfig, "fillStepIntervalHighMs", fillStepIntervalHighMs, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "fillStepIntervalHighMs", fillStepIntervalHighMs, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " fillStepIntervalHighMs=" + to_string(fillStepIntervalHighMs));
 
-    if (!ConfigReader::getIntValue(patternConfig, "fillStepIntervalLowMs", fillStepIntervalLowMs, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "fillStepIntervalLowMs", fillStepIntervalLowMs, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " fillStepIntervalLowMs=" + to_string(fillStepIntervalLowMs));
 
-    if (!ConfigReader::getIntValue(patternConfig, "flashIntervalMs", flashIntervalMs, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "flashIntervalMs", flashIntervalMs, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " flashIntervalMs=" + to_string(flashIntervalMs));
 
-    if (!ConfigReader::getIntValue(patternConfig, "burstDurationMs", burstDurationMs, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "burstDurationMs", burstDurationMs, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " burstDurationMs=" + to_string(burstDurationMs));
 
-    if (!ConfigReader::getIntValue(patternConfig, "flashDurationMs", flashDurationMs, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "flashDurationMs", flashDurationMs, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " flashDurationMs=" + to_string(flashDurationMs));
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
         logger.logMsg(LOG_WARNING, "No valid widget channels are configured for " + name + ".");
         return false;

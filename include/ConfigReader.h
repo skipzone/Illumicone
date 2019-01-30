@@ -120,9 +120,6 @@ class ConfigReader
         unsigned int getRadioPollingLoopSleepIntervalUs();
         int getWidgetPortNumberBase();
 
-        bool getWidgetGenerateSimulatedMeasurements(const std::string& widgetName);
-        int getWidgetAutoInactiveMs(const std::string& widgetName);
-
     private:
 
         std::string configFileName;

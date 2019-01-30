@@ -44,7 +44,7 @@ SparklePattern::SparklePattern(const std::string& name)
 };
 
 
-bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool SparklePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     decayStartMs = 0;
     inactiveStartMs = 0; 
@@ -54,59 +54,57 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    if (!ConfigReader::getIntValue(patternConfig, "activationThreshold", activationThreshold, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "activationThreshold", activationThreshold, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
-    if (!ConfigReader::getIntValue(patternConfig, "deactivationThreshold", deactivationThreshold, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "deactivationThreshold", deactivationThreshold, errMsgSuffix)) {
         deactivationThreshold = INT_MAX;
     }
     logger.logMsg(LOG_INFO, name + " deactivationThreshold=" + to_string(deactivationThreshold));
 
-    if (!ConfigReader::getUnsignedIntValue(patternConfig, "numGoodMeasurementsForReactivation", numGoodMeasurementsForReactivation, errMsgSuffix)) {
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "numGoodMeasurementsForReactivation", numGoodMeasurementsForReactivation, errMsgSuffix)) {
         numGoodMeasurementsForReactivation = 0;
     }
     logger.logMsg(LOG_INFO, name + " numGoodMeasurementsForReactivation=" + to_string(numGoodMeasurementsForReactivation));
     // Start out with the good measurement count satisified.
     goodMeasurementCount = numGoodMeasurementsForReactivation;
 
-    if (!ConfigReader::getIntValue(patternConfig, "densityScaledownFactor", densityScaledownFactor, errMsgSuffix, 1)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "densityScaledownFactor", densityScaledownFactor, errMsgSuffix, 1)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " densityScaledownFactor=" + to_string(densityScaledownFactor));
 
-    if (!ConfigReader::getFloatValue(patternConfig, "decayConstant", decayConstant)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "decayConstant", decayConstant)) {
         doAutoDecay = false;
         logger.logMsg(LOG_INFO, name + " auto decay is not enabled");
     }
     else {
         doAutoDecay = true;
-        if (!ConfigReader::getUnsignedIntValue(patternConfig, "decayResetMs", decayResetMs, errMsgSuffix, 1)) {
+        if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "decayResetMs", decayResetMs, errMsgSuffix, 1)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " decayConstant=" + to_string(decayConstant) + " decayResetMs=" + to_string(decayResetMs));
     }
 
-    if (!ConfigReader::getUnsignedIntValue(patternConfig, "sparkleChangeIntervalMs", sparkleChangeIntervalMs, errMsgSuffix, 1)) {
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "sparkleChangeIntervalMs", sparkleChangeIntervalMs, errMsgSuffix, 1)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " sparkleChangeIntervalMs=" + to_string(sparkleChangeIntervalMs));
 
-    if (!ConfigReader::getBoolValue(patternConfig, "useRandomColors", useRandomColors, errMsgSuffix)) {
+    if (!ConfigReader::getBoolValue(patternConfigObject, "useRandomColors", useRandomColors, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " useRandomColors=" + to_string(useRandomColors));
 
     if (!useRandomColors) {
         string rgbStr;
-        if (!ConfigReader::getRgbPixelValue(patternConfig, "forwardSparkleColor", rgbStr, forwardSparkleColor, errMsgSuffix)) {
+        if (!ConfigReader::getRgbPixelValue(patternConfigObject, "forwardSparkleColor", rgbStr, forwardSparkleColor, errMsgSuffix)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " forwardSparkleColor=" + rgbStr);
-        if (!ConfigReader::getRgbPixelValue(patternConfig, "reverseSparkleColor", rgbStr, reverseSparkleColor, errMsgSuffix)) {
+        if (!ConfigReader::getRgbPixelValue(patternConfigObject, "reverseSparkleColor", rgbStr, reverseSparkleColor, errMsgSuffix)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " reverseSparkleColor=" + rgbStr);
@@ -115,7 +113,7 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 
     // ----- get input channel -----
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
         logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;

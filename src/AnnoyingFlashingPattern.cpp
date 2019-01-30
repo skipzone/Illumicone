@@ -46,52 +46,50 @@ AnnoyingFlashingPattern::~AnnoyingFlashingPattern()
 };
 
 
-bool AnnoyingFlashingPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool AnnoyingFlashingPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     nextFlashChangeMs = 0;
 
     // ----- get pattern configuration -----
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    if (!patternConfig["activationThreshold"].is_number()) {
+    if (!patternConfigObject["activationThreshold"].is_number()) {
         logger.logMsg(LOG_ERR, "activationThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
-    activationThreshold = patternConfig["activationThreshold"].int_value();
+    activationThreshold = patternConfigObject["activationThreshold"].int_value();
     logger.logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
-    if (!patternConfig["reactivationThreshold"].is_number()) {
+    if (!patternConfigObject["reactivationThreshold"].is_number()) {
         logger.logMsg(LOG_ERR, "reactivationThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
-    reactivationThreshold = patternConfig["reactivationThreshold"].int_value();
+    reactivationThreshold = patternConfigObject["reactivationThreshold"].int_value();
     logger.logMsg(LOG_INFO, name + " reactivationThreshold=" + to_string(reactivationThreshold));
 
-    if (!patternConfig["autoDisableTimeoutMs"].is_number()) {
+    if (!patternConfigObject["autoDisableTimeoutMs"].is_number()) {
         logger.logMsg(LOG_ERR, "autoDisableTimeoutMs not specified in " + name + " pattern configuration.");
         return false;
     }
-    autoDisableTimeoutMs = patternConfig["autoDisableTimeoutMs"].int_value();
+    autoDisableTimeoutMs = patternConfigObject["autoDisableTimeoutMs"].int_value();
     logger.logMsg(LOG_INFO, name + " autoDisableTimeoutMs=" + to_string(autoDisableTimeoutMs));
 
-    if (!patternConfig["allStringsSameColor"].is_bool()) {
+    if (!patternConfigObject["allStringsSameColor"].is_bool()) {
         logger.logMsg(LOG_ERR, "allStringsSameColor not specified in " + name + " pattern configuration.");
         return false;
     }
-    allStringsSameColor = patternConfig["allStringsSameColor"].bool_value();
+    allStringsSameColor = patternConfigObject["allStringsSameColor"].bool_value();
     logger.logMsg(LOG_INFO, name + " allStringsSameColor=" + to_string(allStringsSameColor));
 
-    if (!patternConfig["flashChangeIntervalMs"].is_number()) {
+    if (!patternConfigObject["flashChangeIntervalMs"].is_number()) {
         logger.logMsg(LOG_ERR, "flashChangeIntervalMs not specified in " + name + " pattern configuration.");
         return false;
     }
-    flashChangeIntervalMs = patternConfig["flashChangeIntervalMs"].int_value();
+    flashChangeIntervalMs = patternConfigObject["flashChangeIntervalMs"].int_value();
     logger.logMsg(LOG_INFO, name + " flashChangeIntervalMs=" + to_string(flashChangeIntervalMs));
 
     // ----- get input channels -----
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
         logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;

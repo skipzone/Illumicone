@@ -24,10 +24,10 @@
 #include <sys/socket.h>	// for UDP
 #include <netinet/in.h>	// for UDP
 
+#include "json11.hpp"
 #include "WidgetId.h"
 
 
-class ConfigReader;
 class WidgetChannel;
 
 
@@ -44,7 +44,7 @@ class Widget
 
         WidgetId getId();
 
-        virtual bool init(ConfigReader& config);
+        virtual bool init(const json11::Json& widgetConfigObject, const json11::Json& topLevelConfigObject);
 
         virtual std::shared_ptr<WidgetChannel> getChannel(unsigned int channelIdx);
         virtual std::vector<std::shared_ptr<WidgetChannel>> getChannels();
@@ -72,11 +72,12 @@ class Widget
 
         void pollForUdpRx();
 
-        pthread_t udpRxThread;
-        int sockfd;
         struct sockaddr_in servaddr;
+        int sockfd;
         bool stopUdpRxPolling;
-
+        pthread_t udpRxThread;
         bool useQueuedChannels;
+        unsigned int widgetPortNumber;
+        unsigned int widgetPortNumberBase;
 };
 

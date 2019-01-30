@@ -40,11 +40,11 @@ SpiralPattern::SpiralPattern(const std::string& name)
 }
 
 
-bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool SpiralPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     // ----- get input channels -----
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
         logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
@@ -79,26 +79,24 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
     // -- spiral --
 
-    if (!ConfigReader::getBoolValue(patternConfig, "flipSpring", flipSpring, errMsgSuffix)) {
+    if (!ConfigReader::getBoolValue(patternConfigObject, "flipSpring", flipSpring, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " flipSpring=" + to_string(flipSpring));
 
-    if (!ConfigReader::getFloatValue(patternConfig, "spiralTightnessFactor", spiralTightnessFactor, errMsgSuffix)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "spiralTightnessFactor", spiralTightnessFactor, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " spiralTightnessFactor=" + to_string(spiralTightnessFactor));
 
-    if (!ConfigReader::getFloatValue(patternConfig, "progressiveSpringFactor", progressiveSpringFactor, errMsgSuffix)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "progressiveSpringFactor", progressiveSpringFactor, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " progressiveSpringFactor=" + to_string(progressiveSpringFactor));
 
-    if (!ConfigReader::getFloatValue(patternConfig, "progressiveSpringCompressionResponseFactor", progressiveSpringCompressionResponseFactor, errMsgSuffix)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "progressiveSpringCompressionResponseFactor", progressiveSpringCompressionResponseFactor, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " progressiveSpringCompressionResponseFactor=" + to_string(progressiveSpringCompressionResponseFactor));
@@ -107,11 +105,11 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     if (compressionChannel != nullptr) {
 
-        if (!compressionMeasmtMapper.readConfig(patternConfig, "compressionMeasurementMapper", errMsgSuffix)) {
+        if (!compressionMeasmtMapper.readConfig(patternConfigObject, "compressionMeasurementMapper", errMsgSuffix)) {
             return false;
         }
 
-        if (!ConfigReader::getIntValue(patternConfig, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
+        if (!ConfigReader::getIntValue(patternConfigObject, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " compressionResetTimeoutSeconds=" + to_string(compressionResetTimeoutSeconds));
@@ -124,7 +122,7 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
     // -- rotation --
 
     if (rotationChannel != nullptr) {
-        if (!rotationMeasmtMapper.readConfig(patternConfig, "rotationMeasurementMapper", errMsgSuffix)) {
+        if (!rotationMeasmtMapper.readConfig(patternConfigObject, "rotationMeasurementMapper", errMsgSuffix)) {
             return false;
         }
     }
@@ -133,7 +131,7 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
     // -- color --
 
     if (colorChannel != nullptr) {
-        if (!colorMeasmtMapper.readConfig(patternConfig, "colorMeasurementMapper", errMsgSuffix)) {
+        if (!colorMeasmtMapper.readConfig(patternConfigObject, "colorMeasurementMapper", errMsgSuffix)) {
             return false;
         }
     }

@@ -40,32 +40,32 @@ IndicatorRegion::IndicatorRegion()
 }
 
 
-bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfig)
+bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfigObject)
 {
-    string errMsgSuffix = " in indicator region configuration:  " + indicatorConfig.dump();
+    string errMsgSuffix = " in indicator region configuration:  " + indicatorConfigObject.dump();
 
-    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "index", index, errMsgSuffix)) {
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfigObject, "index", index, errMsgSuffix)) {
         return false;
     }
 
-    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "upperLeftStringIdx", upperLeftStringIdx, errMsgSuffix)) {
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfigObject, "upperLeftStringIdx", upperLeftStringIdx, errMsgSuffix)) {
         return false;
     }
 
-    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "upperLeftPixelIdx", upperLeftPixelIdx, errMsgSuffix)) {
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfigObject, "upperLeftPixelIdx", upperLeftPixelIdx, errMsgSuffix)) {
         return false;
     }
 
-    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "widthInStrings", widthInStrings, errMsgSuffix)) {
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfigObject, "widthInStrings", widthInStrings, errMsgSuffix)) {
         return false;
     }
 
-    if (!ConfigReader::getUnsignedIntValue(indicatorConfig, "heightInPixels", heightInPixels, errMsgSuffix)) {
+    if (!ConfigReader::getUnsignedIntValue(indicatorConfigObject, "heightInPixels", heightInPixels, errMsgSuffix)) {
         return false;
     }
 
-    if (indicatorConfig["backgroundHsv"].is_string()) {
-        string hsvStr = indicatorConfig["backgroundHsv"].string_value();
+    if (indicatorConfigObject["backgroundHsv"].is_string()) {
+        string hsvStr = indicatorConfigObject["backgroundHsv"].string_value();
         if (stringToHsvPixel(hsvStr, backgroundColor)) {
             logger.logMsg(LOG_ERR, "backgroundHsv value \"" + hsvStr + "\" is not valid" + errMsgSuffix);
             return false;
@@ -75,8 +75,8 @@ bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString
         stringToHsvPixel("transparent", backgroundColor);
     }
 
-    if (indicatorConfig["foregroundHsv"].is_string()) {
-        string hsvStr = indicatorConfig["foregroundHsv"].string_value();
+    if (indicatorConfigObject["foregroundHsv"].is_string()) {
+        string hsvStr = indicatorConfigObject["foregroundHsv"].string_value();
         if (!stringToHsvPixel(hsvStr, foregroundColor)) {
             logger.logMsg(LOG_ERR, "foregroundHsv value \"" + hsvStr + "\" is not valid" + errMsgSuffix);
             return false;

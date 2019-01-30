@@ -46,28 +46,26 @@ IndicatorRegionsPattern::~IndicatorRegionsPattern()
 }
 
 
-bool IndicatorRegionsPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool IndicatorRegionsPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     // ----- get pattern configuration -----
-
-    auto patternConfig = config.getPatternConfigJsonObject(name);
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
     // indicatorClassName is optional at the pattern level.  If it is not specified,
     // for the pattern, it msut be specified in each indicator's configuration.
-    string indicatorClassName = patternConfig["indicatorClassName"].string_value();
+    string indicatorClassName = patternConfigObject["indicatorClassName"].string_value();
 
     unsigned int numberOfIndicators;
-    if (!ConfigReader::getUnsignedIntValue(patternConfig, "numberOfIndicators", numberOfIndicators, errMsgSuffix, 0)) {
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "numberOfIndicators", numberOfIndicators, errMsgSuffix, 0)) {
         return false;
     }
 
-    if (!patternConfig["indicators"].is_array()) {
+    if (!patternConfigObject["indicators"].is_array()) {
         logger.logMsg(LOG_ERR, "indicators is not present or is not an array" + errMsgSuffix);
         return false;
     }
-    auto indicatorConfigs = patternConfig["indicators"].array_items();
+    auto indicatorConfigs = patternConfigObject["indicators"].array_items();
     if (indicatorConfigs.size() != numberOfIndicators) {
         logger.logMsg(LOG_ERR, "numberOfIndicators is " + to_string(numberOfIndicators)
                         + ", but there are " + to_string(indicatorConfigs.size())

@@ -58,7 +58,7 @@
 
     "patternController" : {
 
-        "lockFilePath" : "/tmp",
+        //"lockFilePath" : "/tmp",
 
         "numberOfStrings" : 48,
         "numberOfPixelsPerString" : 100,

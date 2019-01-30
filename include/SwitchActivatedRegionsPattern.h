@@ -25,7 +25,6 @@
 #include "WidgetId.h"
 
 
-class ConfigReader;
 class IndicatorRegion;
 class Widget;
 
@@ -45,7 +44,7 @@ class SwitchActivatedRegionsPattern : public IndicatorRegionsPattern {
 
     protected:
 
-        virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+        virtual bool initPattern(std::map<WidgetId, Widget*>& widgets);
 
         std::shared_ptr<WidgetChannel> switchArrayChannel;
 

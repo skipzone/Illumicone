@@ -38,11 +38,11 @@ ParticlesPattern::ParticlesPattern(const std::string& name)
 }
 
 
-bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool ParticlesPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     // ----- get input channels -----
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
         logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
@@ -94,44 +94,42 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    if (!ConfigReader::getBoolValue(patternConfig, "emitIntervalUseMeasmtAbsValue", emitIntervalUseMeasmtAbsValue, errMsgSuffix)) {
+    if (!ConfigReader::getBoolValue(patternConfigObject, "emitIntervalUseMeasmtAbsValue", emitIntervalUseMeasmtAbsValue, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " emitIntervalUseMeasmtAbsValue=" + (emitIntervalUseMeasmtAbsValue ? "true" : "false"));
 
-    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtLow", emitIntervalMeasmtLow, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "emitIntervalMeasmtLow", emitIntervalMeasmtLow, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " emitIntervalMeasmtLow=" + to_string(emitIntervalMeasmtLow));
 
-    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalMeasmtHigh", emitIntervalMeasmtHigh, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "emitIntervalMeasmtHigh", emitIntervalMeasmtHigh, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " emitIntervalMeasmtHigh=" + to_string(emitIntervalMeasmtHigh));
 
-    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalLowMs", emitIntervalLowMs, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "emitIntervalLowMs", emitIntervalLowMs, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " emitIntervalLowMs=" + to_string(emitIntervalLowMs));
 
-    if (!ConfigReader::getIntValue(patternConfig, "emitIntervalHighMs", emitIntervalHighMs, errMsgSuffix, 1)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "emitIntervalHighMs", emitIntervalHighMs, errMsgSuffix, 1)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " emitIntervalHighMs=" + to_string(emitIntervalHighMs));
 
-    if (!ConfigReader::getIntValue(patternConfig, "emitBatchSize", emitBatchSize, errMsgSuffix, 1)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "emitBatchSize", emitBatchSize, errMsgSuffix, 1)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " emitBatchSize=" + to_string(emitBatchSize));
 
-    if (!ConfigReader::getBoolValue(patternConfig, "emitDirectionIsUp", emitDirectionIsUp, errMsgSuffix)) {
+    if (!ConfigReader::getBoolValue(patternConfigObject, "emitDirectionIsUp", emitDirectionIsUp, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " emitDirectionIsUp=" + to_string(emitDirectionIsUp));
 
-    if (!ConfigReader::getUnsignedIntValue(patternConfig, "particleMoveIntervalMs", particleMoveIntervalMs, errMsgSuffix, 1)) {
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "particleMoveIntervalMs", particleMoveIntervalMs, errMsgSuffix, 1)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " particleMoveIntervalMs=" + to_string(particleMoveIntervalMs));
@@ -140,32 +138,32 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
 
     string hsvStr;
 
-    if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorDefault", hsvStr, emitColorDefault, errMsgSuffix)) {
+    if (!ConfigReader::getHsvPixelValue(patternConfigObject, "emitColorDefault", hsvStr, emitColorDefault, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " emitColorDefault=" + hsvStr);
 
     if (emitColorChannel != nullptr) {
 
-        if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtLow", emitColorMeasmtLow, errMsgSuffix)) {
+        if (!ConfigReader::getDoubleValue(patternConfigObject, "emitColorMeasmtLow", emitColorMeasmtLow, errMsgSuffix)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " emitColorMeasmtLow=" + to_string(emitColorMeasmtLow));
 
-        if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtHigh", emitColorMeasmtHigh, errMsgSuffix)) {
+        if (!ConfigReader::getDoubleValue(patternConfigObject, "emitColorMeasmtHigh", emitColorMeasmtHigh, errMsgSuffix)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " emitColorMeasmtHigh=" + to_string(emitColorMeasmtHigh));
 
         emitColorMeasmtRange = emitColorMeasmtHigh - emitColorMeasmtLow;
 
-        if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorLow", hsvStr, emitColorLow, errMsgSuffix)) {
+        if (!ConfigReader::getHsvPixelValue(patternConfigObject, "emitColorLow", hsvStr, emitColorLow, errMsgSuffix)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " emitColorLow=" + hsvStr);
 
         string hsvStr;
-        if (!ConfigReader::getHsvPixelValue(patternConfig, "emitColorHigh", hsvStr, emitColorHigh, errMsgSuffix)) {
+        if (!ConfigReader::getHsvPixelValue(patternConfigObject, "emitColorHigh", hsvStr, emitColorHigh, errMsgSuffix)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " emitColorHigh=" + hsvStr);
@@ -181,12 +179,12 @@ bool ParticlesPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widg
 
         emitColorHueRange = emitColorHigh.h - emitColorLow.h;
 
-        if (!ConfigReader::getDoubleValue(patternConfig, "emitColorMeasmtMultiplier", emitColorMeasmtMultiplier, errMsgSuffix)) {
+        if (!ConfigReader::getDoubleValue(patternConfigObject, "emitColorMeasmtMultiplier", emitColorMeasmtMultiplier, errMsgSuffix)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " emitColorMeasmtMultiplier=" + to_string(emitColorMeasmtMultiplier));
 
-        if (!ConfigReader::getBoolValue(patternConfig, "emitColorIntegrateMeasmt", emitColorIntegrateMeasmt, errMsgSuffix)) {
+        if (!ConfigReader::getBoolValue(patternConfigObject, "emitColorIntegrateMeasmt", emitColorIntegrateMeasmt, errMsgSuffix)) {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " emitColorIntegrateMeasmt=" + to_string(emitColorIntegrateMeasmt));

@@ -80,6 +80,7 @@ Log logger;                     // this is the global Log object used everywhere
 static bool runAsDaemon = false;
 static string configFileName = "activeConfig.json";
 static string instanceName = "patternController";
+static bool logToConsole = false;
 static bool printVersionAndExit = false;
 
 // configuration (except for widgets and patterns)
@@ -139,6 +140,9 @@ void usage()
     printf("-i name, --instance_name=name\n");
     printf("    Unique name of this instance.  Default is \"%s\".\n", instanceName.c_str());
     printf("\n");
+    printf("--log_to_console\n");
+    printf("    Send all log messages to the console.\n");
+    printf("\n");
     printf("--version\n");
     printf("    Print version information and exit.\n");
     printf("\n");
@@ -149,16 +153,18 @@ static bool getCommandLineOptions(int argc, char* argv[])
 {
     enum LongOnlyOption {
         unhandled = 0,
+        log_to_console,
         version
     };
 
     int longOnlyOption = unhandled;
     static struct option longopts[] = {
-        { "config_file",   required_argument,      NULL,            'c'     },
-        { "daemon",        no_argument,            NULL,            'd'     },
-        { "instance_name", required_argument,      NULL,            'i'     },
-        { "version",       no_argument,            &longOnlyOption, version },
-        { NULL,            0,                      NULL,            0       }
+        { "config_file",    required_argument,      NULL,            'c'            },
+        { "daemon",         no_argument,            NULL,            'd'            },
+        { "instance_name",  required_argument,      NULL,            'i'            },
+        { "log_to_console", no_argument,            &longOnlyOption, log_to_console },
+        { "version",        no_argument,            &longOnlyOption, version        },
+        { NULL,             0,                      NULL,            0              }
     };
 
     bool badOptionFound = false;
@@ -176,6 +182,9 @@ static bool getCommandLineOptions(int argc, char* argv[])
                 break;
             case 0:
                 switch (longOnlyOption) {
+                    case log_to_console:
+                        logToConsole = true;
+                        break;
                     case version:
                         printVersionAndExit = true;
                         break;
@@ -575,6 +584,7 @@ bool readConfig()
 
     string errMsgSuffix = " in the " + instanceName + " or common section of " + configFileName + ".";
 
+    lockFilePath.clear();
     ConfigReader::getStringValue(configObject, "lockFilePath", lockFilePath);
     if (lockFilePath.empty()) {
         logger.logMsg(LOG_WARNING, "There is no lock file path" + errMsgSuffix);
@@ -655,25 +665,23 @@ void initWidgets()
 {
     logger.logMsg(LOG_INFO, "Initializing widgets...");
 
-    // TODO 6/12/2017 ross:  Move widget config access to ConfigReader.
-
-    for (auto& widgetConfig : configObject["widgets"].array_items()) {
-        string widgetName = widgetConfig["name"].string_value();
+    for (auto& widgetConfigObject : configObject["widgets"].array_items()) {
+        string widgetName = widgetConfigObject["name"].string_value();
         if (widgetName.empty()) {
-            logger.logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfig.dump());
+            logger.logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfigObject.dump());
             continue;
         }
-        if (!widgetConfig["enabled"].bool_value()) {
+        if (!widgetConfigObject["enabled"].bool_value()) {
             logger.logMsg(LOG_INFO, widgetName + " is disabled.");
             continue;
         }
         WidgetId widgetId = stringToWidgetId(widgetName);
         if (widgetId == WidgetId::invalid) {
-            logger.logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfig.dump());
+            logger.logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfigObject.dump());
             continue;
         }
         if (widgets.find(widgetId) != widgets.end()) {
-            logger.logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfig.dump());
+            logger.logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfigObject.dump());
             continue;
         }
         Widget* newWidget = widgetFactory(widgetId);
@@ -681,7 +689,7 @@ void initWidgets()
             logger.logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
             continue;
         }
-        if (!newWidget->init(configReader)) {
+        if (!newWidget->init(widgetConfigObject, configObject)) {
             logger.logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
             continue;
         }
@@ -706,19 +714,22 @@ void initPatterns()
 {
     logger.logMsg(LOG_INFO, "Initializing patterns...");
 
-    for (auto& patternConfig : configObject["patterns"].array_items()) {
-        string patternName = patternConfig["name"].string_value();
+    //logger.logMsg(LOG_DEBUG, "configObject[\"patterns\"] has %ld elements", configObject["patterns"].array_items().size());
+    //logger.logMsg(LOG_DEBUG, "configObject[\"patterns\"]:  " + configObject["patterns"].dump());
+    for (auto& patternConfigObject : configObject["patterns"].array_items()) {
+        //logger.logMsg(LOG_DEBUG, "patternConfigObject:  " + patternConfigObject.dump());
+        string patternName = patternConfigObject["name"].string_value();
         if (patternName.empty()) {
-            logger.logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfig.dump());
+            logger.logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfigObject.dump());
             continue;
         }
-        if (!patternConfig["enabled"].bool_value()) {
+        if (!patternConfigObject["enabled"].bool_value()) {
             logger.logMsg(LOG_INFO, patternName + " is disabled.");
             continue;
         }
-        string patternClassName = patternConfig["patternClassName"].string_value();
+        string patternClassName = patternConfigObject["patternClassName"].string_value();
         if (patternClassName.empty()) {
-            logger.logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfig.dump());
+            logger.logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfigObject.dump());
             continue;
         }
         Pattern* newPattern = patternFactory(patternClassName, patternName);
@@ -728,7 +739,7 @@ void initPatterns()
                     + ".  (Is the pattern class name correct?)");
             continue;
         }
-        if (!newPattern->init(configReader, widgets)) {
+        if (!newPattern->init(patternConfigObject, configObject, widgets)) {
             logger.logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
             delete newPattern;
             continue;
@@ -1078,7 +1089,12 @@ int main(int argc, char **argv)
         exit(EXIT_SUCCESS);
     }
 
-    logger.startLogging(instanceName, Log::LogTo::file, logDir);
+    if (logToConsole) {
+        logger.startLogging(instanceName, Log::LogTo::console);
+    }
+    else {
+        logger.startLogging(instanceName, Log::LogTo::file, logDir);
+    }
 
     if (!registerSignalHandler()) {
         return(EXIT_FAILURE);

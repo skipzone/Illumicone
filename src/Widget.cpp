@@ -73,16 +73,28 @@ Widget::~Widget()
 }
 
 
-bool Widget::init(ConfigReader& config)
+bool Widget::init(const json11::Json& widgetConfigObject, const json11::Json& topLevelConfigObject)
 {
-    string widgetName = widgetIdToString(id);
+    string logMsgSuffix = " for widget " + widgetIdToString(id);
 
-    generateSimulatedMeasurements = config.getWidgetGenerateSimulatedMeasurements(widgetName);
+    if (!ConfigReader::getUnsignedIntValue(topLevelConfigObject, "widgetPortNumberBase", widgetPortNumberBase,
+                                           logMsgSuffix, 1024, 65535))
+    {
+        return false;
+    }
 
-    autoInactiveMs = config.getWidgetAutoInactiveMs(widgetName);
-
+    generateSimulatedMeasurements = false;
+    ConfigReader::getBoolValue(widgetConfigObject, "generateSimulatedMeasurements", generateSimulatedMeasurements);
+    if (generateSimulatedMeasurements) {
+        logger.logMsg(LOG_INFO, "simulated measurements will be generated" + logMsgSuffix);
+    }
+    
+    // If autoInactiveMs isn't present, the value returned will
+    // be zero, which disables the auto-inactive feature.
+    autoInactiveMs = 0;
+    ConfigReader::getUnsignedIntValue(widgetConfigObject, "autoInactiveMs", autoInactiveMs);
     if (autoInactiveMs != 0) {
-        logger.logMsg(LOG_INFO, "autoInactiveMs=" + to_string(autoInactiveMs) + " for " + widgetIdToString(id));
+        logger.logMsg(LOG_INFO, "autoInactiveMs=" + to_string(autoInactiveMs) + logMsgSuffix);
     }
 
     for (unsigned int i = 0; i < numChannels; ++i) {
@@ -122,10 +134,7 @@ std::vector<std::shared_ptr<WidgetChannel>> Widget::getChannels()
 
 void Widget::startUdpRxThread()
 {
-    // TODO 6/12/2017 ross:  Get this value from config when calls to widget init are moved to PatternController.
-    constexpr static unsigned int widgetPortNumberBase = 4200;
-
-    unsigned int widgetPortNumber = widgetPortNumberBase + widgetIdToInt(id);
+    widgetPortNumber = widgetPortNumberBase + widgetIdToInt(id);
 
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1) {

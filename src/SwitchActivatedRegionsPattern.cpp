@@ -40,23 +40,21 @@ SwitchActivatedRegionsPattern::SwitchActivatedRegionsPattern(const std::string& 
 }
 
 
-bool SwitchActivatedRegionsPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool SwitchActivatedRegionsPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
-    if (!IndicatorRegionsPattern::initPattern(config, widgets)) {
+    if (!IndicatorRegionsPattern::initPattern(widgets)) {
         return false;
     }
 
 
     // ----- get pattern configuration -----
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
 
     // ----- get input channels -----
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
         logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;

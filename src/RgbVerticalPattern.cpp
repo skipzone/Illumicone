@@ -38,32 +38,30 @@ RgbVerticalPattern::RgbVerticalPattern(const std::string& name)
 }
 
 
-bool RgbVerticalPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    if (!patternConfig["widthScaleFactor"].is_number()) {
+    if (!patternConfigObject["widthScaleFactor"].is_number()) {
         logger.logMsg(LOG_ERR, "widthScaleFactor not specified in " + name + " pattern configuration.");
         return false;
     }
-    widthScaleFactor = patternConfig["widthScaleFactor"].int_value();
+    widthScaleFactor = patternConfigObject["widthScaleFactor"].int_value();
     logger.logMsg(LOG_INFO, name + " widthScaleFactor=" + to_string(widthScaleFactor));
 
-    if (!patternConfig["maxCyclicalWidth"].is_number()) {
+    if (!patternConfigObject["maxCyclicalWidth"].is_number()) {
         logger.logMsg(LOG_ERR, "maxCyclicalWidth not specified in " + name + " pattern configuration.");
         return false;
     }
-    maxCyclicalWidth = patternConfig["maxCyclicalWidth"].int_value();
+    maxCyclicalWidth = patternConfigObject["maxCyclicalWidth"].int_value();
     logger.logMsg(LOG_INFO, name + " maxCyclicalWidth=" + to_string(maxCyclicalWidth));
 
-    if (!patternConfig["widthResetTimeoutSeconds"].is_number()) {
+    if (!patternConfigObject["widthResetTimeoutSeconds"].is_number()) {
         logger.logMsg(LOG_ERR, "widthResetTimeoutSeconds not specified in " + name + " pattern configuration.");
         return false;
     }
-    widthResetTimeoutSeconds = patternConfig["widthResetTimeoutSeconds"].int_value();
+    widthResetTimeoutSeconds = patternConfigObject["widthResetTimeoutSeconds"].int_value();
     logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
         logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;

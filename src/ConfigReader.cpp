@@ -452,18 +452,3 @@ int ConfigReader::getWidgetPortNumberBase()
 }
 
 
-bool ConfigReader::getWidgetGenerateSimulatedMeasurements(const std::string& widgetName)
-{
-    Json widgetConfig = getWidgetConfigJsonObject(widgetName);
-    return widgetConfig["generateSimulatedMeasurements"].bool_value();
-}
-
-
-int ConfigReader::getWidgetAutoInactiveMs(const std::string& widgetName)
-{
-    Json widgetConfig = getWidgetConfigJsonObject(widgetName);
-    // If autoInactiveMs isn't present, the value returned will
-    // be zero, which disables the auto-inactive feature.
-    return widgetConfig["autoInactiveMs"].int_value();
-}
-

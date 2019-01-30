@@ -37,63 +37,61 @@ RainbowExplosionPattern::RainbowExplosionPattern(const std::string& name)
 }
 
 
-bool RainbowExplosionPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool RainbowExplosionPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     state = PatternState::fizzle;
     accumulator = 0;
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    if (!patternConfig["activationThreshold"].is_number()) {
+    if (!patternConfigObject["activationThreshold"].is_number()) {
         logger.logMsg(LOG_ERR, "activationThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
-    activationThreshold = patternConfig["activationThreshold"].int_value();
+    activationThreshold = patternConfigObject["activationThreshold"].int_value();
     logger.logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
-    if (!patternConfig["explosionThreshold"].is_number()) {
+    if (!patternConfigObject["explosionThreshold"].is_number()) {
         logger.logMsg(LOG_ERR, "explosionThreshold not specified in " + name + " pattern configuration.");
         return false;
     }
-    explosionThreshold = patternConfig["explosionThreshold"].int_value();
+    explosionThreshold = patternConfigObject["explosionThreshold"].int_value();
     logger.logMsg(LOG_INFO, name + " explosionThreshold=" + to_string(explosionThreshold));
 
-    if (!patternConfig["accumulatorResetUpperLimit"].is_number()) {
+    if (!patternConfigObject["accumulatorResetUpperLimit"].is_number()) {
         logger.logMsg(LOG_ERR, "accumulatorResetUpperLimit not specified in " + name + " pattern configuration.");
         return false;
     }
-    accumulatorResetUpperLimit = patternConfig["accumulatorResetUpperLimit"].int_value();
+    accumulatorResetUpperLimit = patternConfigObject["accumulatorResetUpperLimit"].int_value();
     logger.logMsg(LOG_INFO, name + " accumulatorResetUpperLimit=" + to_string(accumulatorResetUpperLimit));
 
-    if (!patternConfig["minFizzleFill"].is_number()) {
+    if (!patternConfigObject["minFizzleFill"].is_number()) {
         logger.logMsg(LOG_ERR, "minFizzleFill not specified in " + name + " pattern configuration.");
         return false;
     }
-    minFizzleFill = patternConfig["minFizzleFill"].int_value();
+    minFizzleFill = patternConfigObject["minFizzleFill"].int_value();
     logger.logMsg(LOG_INFO, name + " minFizzleFill=" + to_string(minFizzleFill));
 
-    if (!patternConfig["maxFizzleFill"].is_number()) {
+    if (!patternConfigObject["maxFizzleFill"].is_number()) {
         logger.logMsg(LOG_ERR, "maxFizzleFill not specified in " + name + " pattern configuration.");
         return false;
     }
-    maxFizzleFill = patternConfig["maxFizzleFill"].int_value();
+    maxFizzleFill = patternConfigObject["maxFizzleFill"].int_value();
     logger.logMsg(LOG_INFO, name + " maxFizzleFill=" + to_string(maxFizzleFill));
 
-    if (!patternConfig["fillStepSize"].is_number()) {
+    if (!patternConfigObject["fillStepSize"].is_number()) {
         logger.logMsg(LOG_ERR, "fillStepSize not specified in " + name + " pattern configuration.");
         return false;
     }
-    fillStepSize = patternConfig["fillStepSize"].int_value();
+    fillStepSize = patternConfigObject["fillStepSize"].int_value();
     logger.logMsg(LOG_INFO, name + " fillStepSize=" + to_string(fillStepSize));
 
-    if (!patternConfig["fillStepIntervalMs"].is_number()) {
+    if (!patternConfigObject["fillStepIntervalMs"].is_number()) {
         logger.logMsg(LOG_ERR, "fillStepIntervalMs not specified in " + name + " pattern configuration.");
         return false;
     }
-    fillStepIntervalMs = patternConfig["fillStepIntervalMs"].int_value();
+    fillStepIntervalMs = patternConfigObject["fillStepIntervalMs"].int_value();
     logger.logMsg(LOG_INFO, name + " fillStepIntervalMs=" + to_string(fillStepIntervalMs));
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
         logger.logMsg(LOG_WARNING, "No valid widget channels are configured for " + name + ".");
         return false;
