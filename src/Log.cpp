@@ -128,17 +128,16 @@ void Log::vlogMsg(int priority, const char* format, va_list args)
         vsyslog(priority, format, args);
     }
     else {
-        char buf[stringBufSize];
-        vsnprintf(buf, sizeof(buf), format, args);
+        vsnprintf(sbuf, sizeof(sbuf), format, args);
 
         if (priority > LOG_WARNING) {
-            *lout << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  " << buf << std::endl;
+            *lout << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  " << sbuf << std::endl;
         }
         else if (priority == LOG_WARNING) {
-            *lerr << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  ///// Warning:  " << buf << " /////" << std::endl;
+            *lerr << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  ///// Warning:  " << sbuf << " /////" << std::endl;
         }
         else {
-            *lerr << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  *** " << buf << std::endl;
+            *lerr << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  *** " << sbuf << std::endl;
         }
     }
 }

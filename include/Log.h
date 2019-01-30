@@ -63,8 +63,9 @@ class Log
             compactYmdHm            // yyyymmdd_hhmm
         };
 
-        constexpr static unsigned int stringBufSize = 1024;
+        constexpr static unsigned int stringBufSize = 65536;
 
+        char sbuf[stringBufSize];
         std::ofstream flog;
         std::ostream* lout;
         std::ostream* lerr;
