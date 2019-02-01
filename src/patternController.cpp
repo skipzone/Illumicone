@@ -36,6 +36,7 @@
 #include <string.h>
 #include <sys/file.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
@@ -80,14 +81,14 @@ Log logger;                     // this is the global Log object used everywhere
 static bool runAsDaemon = false;
 static string configFileName = "activeConfig.json";
 static string instanceName = "patternController";
-static bool logToConsole = false;
-static bool printVersionAndExit = false;
+static Log::LogTo logTo = Log::LogTo::file;
 
 // configuration (except for widgets and patterns)
 static ConfigReader configReader;
 static json11::Json configObject;
 static string lockFilePath;
-static string logDir = ".";
+static string logFilePath = ".";
+static std::string pidFilePathName;
 static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
 static vector<SchedulePeriod> shutoffPeriods;
@@ -118,9 +119,10 @@ static RgbConeStrings rgbFinalFrame;
 
 
 static void usage();
-static bool getCommandLineOptions(int argc, char* argv[]);
+static void getCommandLineOptions(int argc, char* argv[]);
 static bool registerSignalHandler();
 static void signalHandler(int signum);
+static void daemonize();
 
 
 void usage()
@@ -132,17 +134,36 @@ void usage()
     printf("\n");
     printf("Options:\n");
     printf("\n");
-    printf("-c name, --config_file=name\n");
-    printf("    Configuration file name.  Can include a path.  Default is \"%s\".\n", configFileName.c_str());
+    printf("-c pathname, --config_file=pathname\n");
+    printf("    Read the JSON configuration document from the file specified by pathname.\n");
+    printf("    Default is \"%s\".\n", configFileName.c_str());
     printf("\n");
     printf("-d, --daemon\n");
     printf("    Run as a daemon.\n");
     printf("\n");
+    printf("-h, --help\n");
+    printf("    Print this help information.\n");
+    printf("\n");
     printf("-i name, --instance_name=name\n");
-    printf("    Unique name of this instance.  Default is \"%s\".\n", instanceName.c_str());
+    printf("    Use name as the unique name of this instance.  The name is used in log file\n");
+    printf("    names and as the message source identifier when logging to the system log.\n");
+    printf("    It also specifies the JSON configuration document section (object) to be\n");
+    printf("    used.  Default is \"%s\".\n", instanceName.c_str());
+    printf("\n");
+    printf("-l path, --log_path=path\n");
+    printf("    Place log files in the directory specified by path.  Default is \"%s\".\n", logFilePath.c_str());
     printf("\n");
     printf("--log_to_console\n");
     printf("    Send all log messages to the console.\n");
+    printf("\n");
+    printf("--log_to_syslog\n");
+    printf("    Send all log messages to the system log.  On Linux, the messages should go\n");
+    printf("    to /var/log/messages.  On macOS, use this command to see the messages:\n");
+    printf("    log stream --info --debug --predicate 'sender == \"<instance_name>\"' --style syslog\n");
+    printf("\n");
+    printf("--pidfile=pathname\n");
+    printf("    When running as a daemon, write the process's PID to the file specified by\n");
+    printf("    pathname.\n");
     printf("\n");
     printf("--version\n");
     printf("    Print version information and exit.\n");
@@ -150,11 +171,13 @@ void usage()
 }
 
 
-static bool getCommandLineOptions(int argc, char* argv[])
+static void getCommandLineOptions(int argc, char* argv[])
 {
     enum LongOnlyOption {
         unhandled = 0,
         log_to_console,
+        log_to_syslog,
+        pid_file,
         version
     };
 
@@ -162,15 +185,18 @@ static bool getCommandLineOptions(int argc, char* argv[])
     static struct option longopts[] = {
         { "config_file",    required_argument,      NULL,            'c'            },
         { "daemon",         no_argument,            NULL,            'd'            },
+        { "help",           no_argument,            NULL,            'h'            },
         { "instance_name",  required_argument,      NULL,            'i'            },
+        { "log_path",       required_argument,      NULL,            'l'            },
         { "log_to_console", no_argument,            &longOnlyOption, log_to_console },
+        { "log_to_syslog",  no_argument,            &longOnlyOption, log_to_syslog  },
+        { "pidfile",        required_argument,      &longOnlyOption, pid_file       },
         { "version",        no_argument,            &longOnlyOption, version        },
         { NULL,             0,                      NULL,            0              }
     };
 
-    bool badOptionFound = false;
     int ch;
-    while (!badOptionFound && (ch = getopt_long(argc, argv, "c:di:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "c:dhi:l:", longopts, NULL)) != -1) {
         switch (ch) {
             case 'c':
                 configFileName = optarg;
@@ -178,35 +204,45 @@ static bool getCommandLineOptions(int argc, char* argv[])
             case 'd':
                 runAsDaemon = true;
                 break;
+            case 'h':
+                usage();
+                exit(EXIT_SUCCESS);
             case 'i':
                 instanceName = optarg;
+                break;
+            case 'l':
+                logFilePath = optarg;
                 break;
             case 0:
                 switch (longOnlyOption) {
                     case log_to_console:
-                        logToConsole = true;
+                        logTo = Log::LogTo::console;
+                        break;
+                    case log_to_syslog:
+                        logTo = Log::LogTo::systemLog;
+                        break;
+                    case pid_file:
+                        pidFilePathName = optarg;
                         break;
                     case version:
-                        printVersionAndExit = true;
+                        printf("%s last modified on %s, compiled on %s %s\n", __BASE_FILE__, __TIMESTAMP__, __DATE__, __TIME__);
+                        exit(EXIT_SUCCESS);
                         break;
                     default:
                         fprintf(stderr, "Unhandled long option encountered.\n");
-                        badOptionFound = true;
+                        exit(EXIT_FAILURE);
                 }                    
                 break;
             default:
-                usage();
-                badOptionFound = true;
+                // Invalid or unrecognized option message has already been printed.
+                fprintf(stderr, "Use -h or --help for help.\n");
+                exit(EXIT_FAILURE);
         }
     }
 
-    if (!badOptionFound) {
-        argc -= optind;
-        argv += optind;
-        // TODO:  Handle non-option args here.
-    }
-
-    return !badOptionFound;
+    argc -= optind;
+    argv += optind;
+    // TODO:  Handle non-option args here.
 }
 
 
@@ -262,6 +298,79 @@ static void signalHandler(int signum)
 
         default:
             logger.logMsg(LOG_WARNING, "Signal %d is not supported.", signum);
+    }
+}
+
+
+void daemonize()
+{
+    pid_t pid;
+    int fd;
+
+    // Become an orphaned child of the init process.
+    pid = fork();
+    if (pid < 0) {
+        logger.logMsg(LOG_CRIT, errno, "First fork failed.");
+        exit(EXIT_FAILURE);
+    }
+    if (pid > 0) {
+        // Parent process exits.
+        exit(EXIT_SUCCESS);
+    }
+
+    // Detach from controlling terminal by putting this
+    // process in a new process group and session.
+    if (setsid() < 0) {
+        logger.logMsg(LOG_CRIT, errno, "New session creation failed.");
+        exit(EXIT_FAILURE);
+    }
+
+    // Ensure that the daemon cannot re-acquire a terminal.
+    pid = fork();
+    if (pid < 0) {
+        logger.logMsg(LOG_CRIT, errno, "Second fork failed.");
+        exit(EXIT_FAILURE);
+    }
+    if (pid > 0) {
+        // Parent process exits.
+        exit(EXIT_SUCCESS);
+    }
+
+    // Close all open files.
+    for (fd = getdtablesize() - 1; fd >= 0; --fd) {
+        close(fd);
+    }
+
+    // Something might try to use stdin, stdout, or stderr.
+    // So, re-open them, but point them at /dev/null.
+    fd = open("/dev/null", O_RDWR);     // first open descriptor is stdin
+    if (fd < 0) {
+        logger.logMsg(LOG_CRIT, errno, "Unable to open stdin");
+        exit(EXIT_FAILURE);
+    }
+    dup(fd);    // second open descriptor is stdout
+    dup(fd);    // third open descriptor is stderr
+
+    // File permissions will need to be specified in the corresponding open() call.
+    umask(0);
+
+    // Make the root directory the current working directory because it is always there.
+    chdir("/");
+
+    // Write our PID to the PID file.
+    if (!pidFilePathName.empty()) {
+        std::ofstream ofs;
+        ofs.open(pidFilePathName.c_str(), std::ios_base::out | std::ios_base::trunc);
+        if (ofs.good()) {
+            pid_t myPid = getpid();
+            ofs << myPid << std::endl;
+            ofs.close();
+            logger.logMsg(LOG_INFO, "Wrote PID %d to %s", myPid, pidFilePathName.c_str());
+        }
+        else {
+            logger.logMsg(LOG_CRIT, errno, "Unable to create PID file %s", pidFilePathName.c_str());
+            exit(EXIT_FAILURE);
+        }
     }
 }
 
@@ -837,6 +946,7 @@ bool doInitialization()
     logger.logMsg(LOG_INFO, "instanceName = " + instanceName);
     logger.logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
     logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
+    logger.logMsg(LOG_INFO, "logFilePath = " + logFilePath);
     logger.logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
     logger.logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
     logger.logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
@@ -1081,20 +1191,27 @@ void doPatterns()
 
 int main(int argc, char **argv)
 {
-    if (!getCommandLineOptions(argc, argv)) {
-        return(EXIT_FAILURE);
+    getCommandLineOptions(argc, argv);
+
+    // We can start logging to the system log before daemonizing.
+    if (logTo == Log::LogTo::systemLog) {
+        logger.startLogging(instanceName, Log::LogTo::systemLog);
     }
 
-    if (printVersionAndExit) {
-        printf("%s last modified on %s, compiled on %s %s\n", __BASE_FILE__, __TIMESTAMP__, __DATE__, __TIME__);
-        exit(EXIT_SUCCESS);
+    if (runAsDaemon) {
+        logger.logMsg(LOG_INFO, "Daemonizing...");
+        daemonize();
+        logger.logMsg(LOG_NOTICE, "Now running as a daemon.");
     }
 
-    if (logToConsole) {
+    // Because daemonizing closes all files, we have to wait until after we're
+    // running as a daemon before we can log to a file.  (Logging to the console
+    // when running as a daemon ends up logging to the bit bucket.)
+    if (logTo == Log::LogTo::console) {
         logger.startLogging(instanceName, Log::LogTo::console);
     }
-    else {
-        logger.startLogging(instanceName, Log::LogTo::file, logDir);
+    else if (logTo == Log::LogTo::file) {
+        logger.startLogging(instanceName, Log::LogTo::file, logFilePath);
     }
 
     if (!registerSignalHandler()) {
@@ -1105,10 +1222,12 @@ int main(int argc, char **argv)
         return(EXIT_FAILURE);
     }
 
-    // Make sure this is the only instance running.
+    // Make sure this is the only instance running if a
+    // place to put the lock file has been specified.
     if (!lockFilePath.empty()) {
-        string lockFilePathName = lockFilePath + "/" + instanceName;
-        if (acquireProcessLock(lockFilePathName) < 0) {
+        string lockFilePathName = lockFilePath + "/" + instanceName + ".lock";
+        bool logIfLocked = logTo == Log::LogTo::console || runAsDaemon;
+        if (acquireProcessLock(lockFilePathName, logIfLocked) < 0) {
             return(EXIT_FAILURE);
         }
     }

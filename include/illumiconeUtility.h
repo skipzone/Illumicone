@@ -19,7 +19,7 @@
 #include <string>
 
 
-int acquireProcessLock(const std::string& lockFilePath);
+int acquireProcessLock(const std::string& lockFilePath, bool logIfLocked);
 uint64_t getNowMs64();
 uint32_t getNowMs();
 uint32_t get_millisecond_timer();

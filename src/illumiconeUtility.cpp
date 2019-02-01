@@ -33,17 +33,22 @@ using namespace std;
 extern Log logger;
 
 
-int acquireProcessLock(const string& lockFilePath)
+int acquireProcessLock(const string& lockFilePath, bool logIfLocked)
 {
     int fd = open(lockFilePath.c_str(), O_CREAT, S_IRUSR | S_IWUSR);
     if (fd >= 0) {
         if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
+            if (logIfLocked) {
+                logger.logMsg(LOG_INFO, "Acquired lock on " + lockFilePath + ".");
+            }
             return fd;
         }
         else {
             if (errno == EWOULDBLOCK) {
                 close(fd);
-                //logger.logMsg(LOG_INFO, "Another process has locked " + lockFilePath + ".");
+                if (logIfLocked) {
+                    logger.logMsg(LOG_INFO, "Another process has locked " + lockFilePath + ".");
+                }
                 return -1;
             }
             else {
