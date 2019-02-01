@@ -15,8 +15,6 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// TODO 7/31/2017 ross:  Use logger.logMsg in place of cerr.
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -213,27 +211,25 @@ bool ConfigReader::getSchedulePeriods(const json11::Json& jsonObj,
                                       const std::string& scheduleName,
                                       std::vector<SchedulePeriod>& schedulePeriods)
 {
-    // TODO:  modify to use logger rather than cerr and to use errorMessageSuffix.
-
     bool problemEncountered = false;
 
     for (auto& periodConfigObj : jsonObj[scheduleName].array_items()) {
 
         string desc = periodConfigObj["description"].string_value();
         if (desc.empty()) {
-            cerr << "Scheduled period has no description:  " << periodConfigObj.dump() << endl;
+            logger.logMsg(LOG_ERR, "Scheduled period has no description:  " + periodConfigObj.dump());
             problemEncountered = true;
             continue;
         }
         string startTimeStr = periodConfigObj["startDateTime"].string_value();
         if (startTimeStr.empty()) {
-            cerr << "Scheduled period has no startDateTime:  " << periodConfigObj.dump() << endl;
+            logger.logMsg(LOG_ERR, "Scheduled period has no startDateTime:  " + periodConfigObj.dump());
             problemEncountered = true;
             continue;
         }
         string endTimeStr = periodConfigObj["endDateTime"].string_value();
         if (endTimeStr.empty()) {
-            cerr << "Scheduled period has no endDateTime:  " << periodConfigObj.dump() << endl;
+            logger.logMsg(LOG_ERR, "Scheduled period has no endDateTime:  " + periodConfigObj.dump());
             problemEncountered = true;
             continue;
         }
@@ -257,9 +253,10 @@ bool ConfigReader::getSchedulePeriods(const json11::Json& jsonObj,
         localtime_r(&now, &tmTime);
         strptimeRetVal = strptime(startTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
         if (strptimeRetVal == nullptr) {
-            cerr << "Unable to parse startDateTime \"" << startTimeStr << "\" for \"" << desc
-                << "\" scheduled period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
-                << " or hh:mm:ss for daily events." << endl;
+            logger.logMsg(LOG_ERR,
+                          "Unable to parse startDateTime \"%s\" for \"%s\" scheduled period.  Format must"
+                          " be yyyy-mm-dd hh:mm:ss for one-time events or hh:mm:ss for daily events.",
+                          startTimeStr.c_str(), desc.c_str());
             problemEncountered = true;
             continue;
         }
@@ -268,9 +265,10 @@ bool ConfigReader::getSchedulePeriods(const json11::Json& jsonObj,
         localtime_r(&now, &tmTime);
         strptimeRetVal = strptime(endTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
         if (strptimeRetVal == nullptr) {
-            cerr << "Unable to parse endDateTime \"" << endTimeStr << "\" for \"" << desc
-                << "\" scheduled period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
-                << " or hh:mm:ss for daily events." << endl;
+            logger.logMsg(LOG_ERR,
+                          "Unable to parse endDateTime \"%s\" for \"%s\" scheduled period.  Format must"
+                          " be yyyy-mm-dd hh:mm:ss for one-time events or hh:mm:ss for daily events.",
+                          endTimeStr.c_str(), desc.c_str());
             problemEncountered = true;
             continue;
         }
@@ -356,7 +354,7 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
 
     ifstream configFile(configFileName, ios_base::in);
     if (!configFile.is_open()) {
-        cerr << "Can't open " << configFileName << endl;
+        logger.logMsg(LOG_ERR, "Can't open configuration file %s.", configFileName.c_str());
         return false;
     }
     stringstream jsonSstr;
@@ -366,7 +364,7 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
     string err;
     configObj = Json::parse(jsonSstr.str(), err, JsonParse::COMMENTS);
     if (!err.empty()) {
-        cerr << "Parse of " << configFileName << " failed:  " << err << endl;
+        logger.logMsg(LOG_ERR, "Parse of configuration file %s failed:  %s", configFileName.c_str(), err.c_str());
         return false;
     }
 
