@@ -65,7 +65,7 @@ constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 static bool runAsDaemon = false;
 static string configFileName = "activeConfig.json";
 static string instanceName = "widgetRcvr";
-static Log::LogTo logTo = Log::LogTo::file;
+static Log::LogTo logTo = Log::LogTo::redirect;     // we use redirect because radio.printDetails writes to stdout
 
 
 // ---------- configuration ----------
@@ -959,7 +959,7 @@ int main(int argc, char** argv)
 
     // We can start logging to the system log before daemonizing.
     if (logTo == Log::LogTo::systemLog) {
-        logger.startLogging(instanceName, Log::LogTo::systemLog);
+        logger.startLogging(instanceName, logTo);
     }
 
     if (runAsDaemon) {
@@ -972,10 +972,10 @@ int main(int argc, char** argv)
     // running as a daemon before we can log to a file.  (Logging to the console
     // when running as a daemon ends up logging to the bit bucket.)
     if (logTo == Log::LogTo::console) {
-        logger.startLogging(instanceName, Log::LogTo::console);
+        logger.startLogging(instanceName, logTo);
     }
-    else if (logTo == Log::LogTo::file) {
-        logger.startLogging(instanceName, Log::LogTo::file, logFilePath);
+    else if (logTo == Log::LogTo::redirect) {
+        logger.startLogging(instanceName, logTo, logFilePath);
     }
 
     if (!registerSignalHandler()) {
