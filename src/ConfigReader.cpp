@@ -368,8 +368,6 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
         return false;
     }
 
-    // TODO 6/12/2017 ross:  Build a map associating widget ids with widget config objects and use it to access the objects.
-
     return true;
 }
 
@@ -406,26 +404,4 @@ Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
     }
     return Json("{}");
 }
-
-
-string ConfigReader::getPatconIpAddress()
-{
-    string val;
-    return getStringValue(configObj, "patconIpAddress", val, ".") ? val : "";
-}
-
-
-unsigned int ConfigReader::getRadioPollingLoopSleepIntervalUs()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "radioPollingLoopSleepIntervalUs", val, ".", 1) ? val : 0;
-}
-
-
-int ConfigReader::getWidgetPortNumberBase()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "widgetPortNumberBase", val, ".", 1024, 65535) ? val : 0;
-}
-
 

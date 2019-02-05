@@ -113,10 +113,6 @@ class ConfigReader
         json11::Json getWidgetConfigJsonObject(const std::string& widgetName);
         json11::Json getPatternConfigJsonObject(const std::string& patternName);
 
-        std::string getPatconIpAddress();
-        unsigned int getRadioPollingLoopSleepIntervalUs();
-        int getWidgetPortNumberBase();
-
     private:
 
         std::string configFileName;

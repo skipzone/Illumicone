@@ -1232,7 +1232,7 @@ int main(int argc, char **argv)
         }
     }
 
-    logger.logMsg(LOG_INFO, "---------- patternController  starting ----------");
+    logger.logMsg(LOG_INFO, "---------- patternController starting ----------");
 
     if (!doInitialization()) {
         return(EXIT_FAILURE);

@@ -23,11 +23,17 @@
 #include <thread>
 
 #include <arpa/inet.h>
+#include <getopt.h>
 #include <netinet/in.h>
 #include <RF24/RF24.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -40,7 +46,29 @@
 using namespace std;
 
 
-Log logger;
+#define RF24_SPI_DEV
+
+
+// ---------- constants ----------
+
+constexpr unsigned int reinitializationSleepIntervalS = 1;
+
+// We're using dynamic payload size, but we still need to know what the largest can be.
+constexpr uint8_t maxPayloadSize = 32;
+
+constexpr uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
+constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
+
+
+// ---------- command line options and their defaults ----------
+
+static bool runAsDaemon = false;
+static string configFileName = "activeConfig.json";
+static string instanceName = "widgetRcvr";
+static Log::LogTo logTo = Log::LogTo::file;
+
+
+// ---------- configuration ----------
 
 static ConfigReader config;
 static string lockFilePath;
@@ -48,16 +76,44 @@ static string patconIpAddress;
 static unsigned int radioPollingLoopSleepIntervalUs;
 static unsigned int widgetPortNumberBase;
 
+// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
+// ISM: 2400-2500;  ham: 2390-2450
+// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
+//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+static uint8_t rfChannel = 84;   // TODO: put in config
+
+// Probably no need to ever set auto acknowledgement to false because the sender
+// can control whether or not acks are sent by using the NO_ACK bit.  Set
+// autoAck false to prevent a misconfigured widget from creating unnecessary
+// radio traffic (and to prevent any widgets expectig acks from working).
+// TODO:  Set autoAck true after all widgets have been reprogrammed with
+//        firmware that can send the NO_ACK big.  (As of 18 Dec. 2018, none
+//        of them work right in that regard.)
+static bool autoAck = true;      // TODO:  put in config
+
+// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
+static rf24_pa_dbm_e rfPowerLevel = RF24_PA_MAX; // TODO:  put in config
+
+// RF24_250KBPS or RF24_1MBPS
+static rf24_datarate_e dataRate = RF24_1MBPS;    // TODO:  put in config
+
+static uint8_t txRetryDelayMultiplier = 15;  // 250 us additional delay multiplier (0-15)    // TODO:  put in config
+static uint8_t txMaxRetries = 15;            // max retries (0-15)   // TODO:  put in config
+
+// RF24_CRC_DISABLED, RF24_CRC_8, or RF24_CRC_16
+static rf24_crclength_e crcLength = RF24_CRC_16; // TODO:  put in config
+
+
+// ---------- globals ----------
+
+Log logger;
+
+// flags set by signals
+static volatile bool gotExitSignal;
+static volatile bool gotReinitSignal;
+
 static struct sockaddr_in widgetSockAddr[16];
 static int widgetSock[16];
-
-
-
-/***********************
- * Radio Configuration *
- ***********************/
-
-#define RF24_SPI_DEV
 
 #ifdef RF24_SPI_DEV
 // RF24 radio(<ce_pin>, <a>*10+<b>) for spi device at /dev/spidev<a>.<b>
@@ -72,38 +128,262 @@ RF24 radio(25, 0);
 RF24 radio(RPI_BPLUS_GPIO_J8_22, RPI_BPLUS_GPIO_J8_24, BCM2835_SPI_SPEED_8MHZ);
 #endif
 
-// We're using dynamic payload size, but we still need to know what the largest can be.
-constexpr uint8_t maxPayloadSize = 32;
 
-constexpr uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
-constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
+static void usage();
+static void getCommandLineOptions(int argc, char* argv[]);
+static bool registerSignalHandler();
+static void signalHandler(int signum);
+static void daemonize();
 
-// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
-// ISM: 2400-2500;  ham: 2390-2450
-// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
-//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-constexpr uint8_t rfChannel = 84;
 
-// Probably no need to ever set auto acknowledgement to false because the sender
-// can control whether or not acks are sent by using the NO_ACK bit.  Set
-// autoAck false to prevent a misconfigured widget from creating unnecessary
-// radio traffic (and to prevent any widgets expectig acks from working).
-// TODO:  Set autoAck true after all widgets have been reprogrammed with
-//        firmware that can send the NO_ACK big.  (As of 18 Dec. 2018, none
-//        of them work right in that regard.)
-constexpr bool autoAck = true;
+void usage()
+{
+    //               1         2         3         4         5         6         7         8
+    //      12345678901234567890123456789012345678901234567890123456789012345678901234567890
+    printf("\n");
+    printf("Usage: widgegRcvr [options]\n");
+    printf("\n");
+    printf("Options:\n");
+    printf("\n");
+    printf("-c pathname, --config_file=pathname\n");
+    printf("    Read the JSON configuration document from the file specified by pathname.\n");
+    printf("    Default is \"%s\".\n", configFileName.c_str());
+    printf("\n");
+    printf("-d, --daemon\n");
+    printf("    Run as a daemon.\n");
+    printf("\n");
+    printf("-h, --help\n");
+    printf("    Print this help information.\n");
+    printf("\n");
+    printf("-i name, --instance_name=name\n");
+    printf("    Use name as the unique name of this instance.  The name is used in log file\n");
+    printf("    names and as the message source identifier when logging to the system log.\n");
+    printf("    It also specifies the JSON configuration document section (object) to be\n");
+    printf("    used.  Default is \"%s\".\n", instanceName.c_str());
+    printf("\n");
+    printf("-l path, --log_path=path\n");
+    printf("    Place log files in the directory specified by path.  Default is \"%s\".\n", logFilePath.c_str());
+    printf("\n");
+    printf("--log_to_console\n");
+    printf("    Send all log messages to the console.\n");
+    printf("\n");
+    printf("--log_to_syslog\n");
+    printf("    Send all log messages to the system log.  On Linux, the messages should go\n");
+    printf("    to /var/log/messages.  On macOS, use this command to see the messages:\n");
+    printf("    log stream --info --debug --predicate 'sender == \"<instance_name>\"' --style syslog\n");
+    printf("\n");
+    printf("--pidfile=pathname\n");
+    printf("    When running as a daemon, write the process's PID to the file specified by\n");
+    printf("    pathname.\n");
+    printf("\n");
+    printf("--version\n");
+    printf("    Print version information and exit.\n");
+    printf("\n");
+}
 
-// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-constexpr rf24_pa_dbm_e rfPowerLevel = RF24_PA_MAX;
 
-// RF24_250KBPS or RF24_1MBPS
-constexpr rf24_datarate_e dataRate = RF24_1MBPS;
+static void getCommandLineOptions(int argc, char* argv[])
+{
+    enum LongOnlyOption {
+        unhandled = 0,
+        log_to_console,
+        log_to_syslog,
+        pid_file,
+        version
+    };
 
-constexpr uint8_t txRetryDelayMultiplier = 15;  // 250 us additional delay multiplier (0-15)
-constexpr uint8_t txMaxRetries = 15;            // max retries (0-15)
+    int longOnlyOption = unhandled;
+    static struct option longopts[] = {
+        { "config_file",    required_argument,      NULL,            'c'            },
+        { "daemon",         no_argument,            NULL,            'd'            },
+        { "help",           no_argument,            NULL,            'h'            },
+        { "instance_name",  required_argument,      NULL,            'i'            },
+        { "log_path",       required_argument,      NULL,            'l'            },
+        { "log_to_console", no_argument,            &longOnlyOption, log_to_console },
+        { "log_to_syslog",  no_argument,            &longOnlyOption, log_to_syslog  },
+        { "pidfile",        required_argument,      &longOnlyOption, pid_file       },
+        { "version",        no_argument,            &longOnlyOption, version        },
+        { NULL,             0,                      NULL,            0              }
+    };
 
-// RF24_CRC_DISABLED, RF24_CRC_8, or RF24_CRC_16
-constexpr rf24_crclength_e crcLength = RF24_CRC_16;
+    int ch;
+    while ((ch = getopt_long(argc, argv, "c:dhi:l:", longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'c':
+                configFileName = optarg;
+                break;
+            case 'd':
+                runAsDaemon = true;
+                break;
+            case 'h':
+                usage();
+                exit(EXIT_SUCCESS);
+            case 'i':
+                instanceName = optarg;
+                break;
+            case 'l':
+                logFilePath = optarg;
+                break;
+            case 0:
+                switch (longOnlyOption) {
+                    case log_to_console:
+                        logTo = Log::LogTo::console;
+                        break;
+                    case log_to_syslog:
+                        logTo = Log::LogTo::systemLog;
+                        break;
+                    case pid_file:
+                        pidFilePathName = optarg;
+                        break;
+                    case version:
+                        printf("%s last modified on %s, compiled on %s %s\n", __BASE_FILE__, __TIMESTAMP__, __DATE__, __TIME__);
+                        exit(EXIT_SUCCESS);
+                        break;
+                    default:
+                        fprintf(stderr, "Unhandled long option encountered.\n");
+                        exit(EXIT_FAILURE);
+                }                    
+                break;
+            default:
+                // Invalid or unrecognized option message has already been printed.
+                fprintf(stderr, "Use -h or --help for help.\n");
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    argc -= optind;
+    argv += optind;
+    // TODO:  Handle non-option args here.
+}
+
+
+static bool registerSignalHandler()
+{
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    bool succeeded = true;
+
+    sa.sa_handler = signalHandler;
+    if (sigaction(SIGINT, &sa, NULL) < 0) succeeded = false;    // ^C
+    if (sigaction(SIGTERM, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGQUIT, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGHUP, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGUSR1, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGUSR2, &sa, NULL) < 0) succeeded = false;
+
+    sa.sa_handler = SIG_IGN;
+    if (sigaction(SIGCHLD, &sa, NULL) < 0) succeeded = false;
+
+    if (!succeeded) {
+        logger.logMsg(LOG_ERR, "Registration of a handler for one or more signals failed.");
+    }
+
+    return succeeded;
+}
+
+
+static void signalHandler(int signum)
+{
+    logger.logMsg(LOG_NOTICE, "Got signal %d.", signum);
+    switch(signum) {
+
+        case SIGINT:
+        case SIGTERM:
+        case SIGQUIT:
+        case SIGHUP:
+            logger.logMsg(LOG_NOTICE, "Setting exit flag.");
+            gotExitSignal = true;
+            break;
+
+        case SIGUSR1:
+            logger.logMsg(LOG_NOTICE, "Setting reinitialize flag.");
+            gotReinitSignal = true;
+            break;
+
+        case SIGUSR2:
+            logger.logMsg(LOG_NOTICE, "SIGUSR2 ignored.");
+            break;
+
+        default:
+            logger.logMsg(LOG_WARNING, "Signal %d is not supported.", signum);
+    }
+}
+
+
+void daemonize()
+{
+    pid_t pid;
+    int fd;
+
+    // Become an orphaned child of the init process.
+    pid = fork();
+    if (pid < 0) {
+        logger.logMsg(LOG_CRIT, errno, "First fork failed.");
+        exit(EXIT_FAILURE);
+    }
+    if (pid > 0) {
+        // Parent process exits.
+        exit(EXIT_SUCCESS);
+    }
+
+    // Detach from controlling terminal by putting this
+    // process in a new process group and session.
+    if (setsid() < 0) {
+        logger.logMsg(LOG_CRIT, errno, "New session creation failed.");
+        exit(EXIT_FAILURE);
+    }
+
+    // Ensure that the daemon cannot re-acquire a terminal.
+    pid = fork();
+    if (pid < 0) {
+        logger.logMsg(LOG_CRIT, errno, "Second fork failed.");
+        exit(EXIT_FAILURE);
+    }
+    if (pid > 0) {
+        // Parent process exits.
+        exit(EXIT_SUCCESS);
+    }
+
+    // Close all open files.
+    for (fd = getdtablesize() - 1; fd >= 0; --fd) {
+        close(fd);
+    }
+
+    // Something might try to use stdin, stdout, or stderr.
+    // So, re-open them, but point them at /dev/null.
+    fd = open("/dev/null", O_RDWR);     // first open descriptor is stdin
+    if (fd < 0) {
+        logger.logMsg(LOG_CRIT, errno, "Unable to open stdin");
+        exit(EXIT_FAILURE);
+    }
+    dup(fd);    // second open descriptor is stdout
+    dup(fd);    // third open descriptor is stderr
+
+    // File permissions will need to be specified in the corresponding open() call.
+    umask(0);
+
+    // Make the root directory the current working directory because it is always there.
+    chdir("/");
+
+    // Write our PID to the PID file.
+    if (!pidFilePathName.empty()) {
+        std::ofstream ofs;
+        ofs.open(pidFilePathName.c_str(), std::ios_base::out | std::ios_base::trunc);
+        if (ofs.good()) {
+            pid_t myPid = getpid();
+            ofs << myPid << std::endl;
+            ofs.close();
+            logger.logMsg(LOG_INFO, "Wrote PID %d to %s", myPid, pidFilePathName.c_str());
+        }
+        else {
+            logger.logMsg(LOG_CRIT, errno, "Unable to create PID file %s", pidFilePathName.c_str());
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
 
 
 /*********************
@@ -142,6 +422,20 @@ bool openUdpPort(WidgetId widgetId)
 }
 
 
+bool closeUdpPort(WidgetId widgetId)
+{
+    unsigned int widgetIdNumber = widgetIdToInt(widgetId);
+
+    logger.logMsg(LOG_INFO, "Closing UDP port for %s...", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+    // TODO 2/3/2018 ross:  make sure this implementation is correct
+    if (close(widgetSock[widgetIdNumber]) != 0) {
+        logger.logMsg(LOG_ERR, errno, "Unable to close UDP port for %s.", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+        return false;
+    }
+    return true;
+}
+
+
 bool sendUdp(const UdpPayload& payload)
 {
     ssize_t bytesSentCount = sendto(widgetSock[payload.id],
@@ -159,6 +453,7 @@ bool sendUdp(const UdpPayload& payload)
 
     return true;
 }
+
 
 
 /********************
@@ -347,32 +642,55 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
 }
 
 
+
 /*********************************************
  * Initialization, Run Loop, and Entry Point *
  *********************************************/
 
 bool readConfig(const string& configFileName)
 {
-    if (!config.readConfigurationFile(configFileName)) {
+    // Read the configuration file, and merge the instance-specific and common
+    // configurations into a single configuration in configObject.  The
+    // instance-specific configuration has priority (i.e., items in the common
+    // configuration will not override the same items in the instance-specific
+    // configuration).
+    if (!configReader.readConfigurationFile(configFileName)) {
         return false;
     }
+    json11::Json instanceConfigObject;
+    if (!ConfigReader::getJsonObject(configReader.getConfigObject(),
+                                     instanceName,
+                                     instanceConfigObject,
+                                     " in " + configFileName + ".")) 
+    {
+        return false;
+    }
+    //logger.logMsg(LOG_DEBUG, "instanceConfigObject = " + instanceConfigObject.dump());
+    json11::Json commonConfigObject;
+    if (ConfigReader::getJsonObject(configReader.getConfigObject(),
+                                    "common",
+                                    commonConfigObject))
+    {
+        configObject = ConfigReader::mergeConfigObjects(instanceConfigObject, commonConfigObject);
+    }
+    else
+    {
+        configObject = instanceConfigObject;
+        logger.logMsg(LOG_WARNING, "%s does not have a common section.", configFileName.c_str());
+    }
+    //logger.logMsg(LOG_DEBUG, "configObject = " + configObject.dump());
 
-    lockFilePath = config.getLockFilePath("widgetRcvr");
+    string errMsgSuffix = " in the " + instanceName + " or common section of " + configFileName + ".";
+
+    lockFilePath.clear();
+    ConfigReader::getStringValue(configObject, "lockFilePath", lockFilePath);
     if (lockFilePath.empty()) {
-        logger.logMsg(LOG_WARNING, "There is no lock file name for widgetRcvr in configuration.");
+        logger.logMsg(LOG_WARNING, "There is no lock file path" + errMsgSuffix);
     }
 
-    patconIpAddress = config.getPatconIpAddress();
-    if (patconIpAddress.empty()) {
-        return false;
-    }
-
-    radioPollingLoopSleepIntervalUs = config.getRadioPollingLoopSleepIntervalUs();
-
-    widgetPortNumberBase = config.getWidgetPortNumberBase();
-    if (widgetPortNumberBase == 0) {
-        return false;
-    }
+    if (!ConfigReader::getStringValue(configObject, "patconIpAddress", patconIpAddress, errMsgSuffix)) return false;
+    if (!ConfigReader::getUnsignedIntValue(configObject, "radioPollingLoopSleepIntervalUs", radioPollingLoopSleepIntervalUs, errMsgSuffix, 1)) return false;
+    if (!ConfigReader::getUnsignedIntValue(configObject, "widgetPortNumberBase", widgetPortNumberBase, errMsgSuffix, 1024, 65535)) return false;
 
     return true;
 }
@@ -393,6 +711,26 @@ bool openUdpPorts()
         && openUdpPort(WidgetId::fourPlay42)
         && openUdpPort(WidgetId::fourPlay43)
         && openUdpPort(WidgetId::baton);
+
+    return retval;
+}
+
+
+bool closeUdpPorts()
+{
+    bool retval = 
+           closeUdpPort(WidgetId::eye)
+        && closeUdpPort(WidgetId::spinnah)
+        && closeUdpPort(WidgetId::bells)
+        && closeUdpPort(WidgetId::rainstick)
+        && closeUdpPort(WidgetId::schroedersPlaything)
+        && closeUdpPort(WidgetId::triObelisk)
+        && closeUdpPort(WidgetId::boogieBoard)
+        && closeUdpPort(WidgetId::pump)
+        && closeUdpPort(WidgetId::contortOMatic)
+        && closeUdpPort(WidgetId::fourPlay42)
+        && closeUdpPort(WidgetId::fourPlay43)
+        && closeUdpPort(WidgetId::baton);
 
     return retval;
 }
@@ -420,21 +758,105 @@ bool configureRadio()
     logger.logMsg(LOG_INFO, "Radio configuration details:");
     radio.printDetails();
 
+    radio.startListening();
+    logger.logMsg(LOG_INFO, "Now listening for widget data.");
+
     return true;
 }
 
 
-void runLoop()
+bool shutDownRadio()
+{
+    for (uint8_t i = 0; i < numReadPipes; ++i) {
+        radio.closeReadingPipe(i);
+    }
+
+    // TODO:  Maybe someday power it off here (and also power it on in configureRadio).
+}
+
+
+bool doInitialization()
+{
+    // If the config file is really a symbolic link,
+    // add the link target to the file name we'll log.
+    string configFileNameAndTarget = configFileName;
+    char buf[512];
+    int count = readlink(configFileName.c_str(), buf, sizeof(buf));
+    if (count >= 0) {
+        buf[count] = '\0';
+        configFileNameAndTarget += string(" -> ") + buf;
+    }
+
+    logger.logMsg(LOG_INFO, "Starting initialization.");
+    logger.logMsg(LOG_INFO, "instanceName = " + instanceName);
+    logger.logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
+    logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
+    logger.logMsg(LOG_INFO, "logFilePath = " + logFilePath);
+    logger.logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
+    logger.logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = " + to_string(radioPollingLoopSleepIntervalUs));
+    logger.logMsg(LOG_INFO, "widgetPortNumberBase = " + to_string(widgetPortNumberBase));
+
+    if (!openUdpPorts()) {
+        return false;
+    }
+
+    if (!configureRadio()) {
+        return false;
+    }
+
+    logger.logMsg(LOG_INFO, "Initialization done.");
+
+    return true;
+}
+
+
+bool doTeardown()
+{
+    logger.logMsg(LOG_INFO, "Starting teardown.");
+
+    if (!closeUdpPorts()) {
+        return false;
+    }
+
+    if (!shutDownRadio()) {
+        return false;
+    }
+
+    logger.logMsg(LOG_INFO, "Teardown done.");
+
+    return true;
+}
+
+
+bool runLoop()
 {
     time_t lastDataReceivedTime;
     time(&lastDataReceivedTime);
     time_t noDataReceivedMessageIntervalS = 2;
     time_t noDataReceivedMessageTime = 0;
 
-    while (1) {
+    while (!gotExitSignal) {
+
+        if (gotReinitSignal) {
+            gotReinitSignal = false;
+            logger.logMsg(LOG_INFO, "---------- Reinitializing... ----------");
+            if (!doTeardown()) {
+                return false;
+            }
+            // Sleep for a little bit because reconnecting to
+            // the OPC server immediately sometimes fails.
+            logger.logMsg(LOG_INFO, "Sleeping for " + to_string(reinitializationSleepIntervalS) + " seconds.");
+            sleep(reinitializationSleepIntervalS);
+            if (!readConfig() || !doInitialization()) {
+                return false;
+            }
+            time(&lastDataReceivedTime);
+            noDataReceivedMessageIntervalS = 2;
+            noDataReceivedMessageTime = 0;
+        }
 
         uint8_t pipeNum;
-        while(radio.available(&pipeNum)) {
+        while (radio.available(&pipeNum)) {
 
             time(&lastDataReceivedTime);
             noDataReceivedMessageIntervalS = 2;
@@ -521,62 +943,72 @@ void runLoop()
         // up cpu usage) by polling for data too often.
         usleep(radioPollingLoopSleepIntervalUs);
     }
+
+    return true;
 }
 
 
 int main(int argc, char** argv)
 {
-    // Read configuration from the JSON file specified on the command line.
-    if (argc != 2) {
-        cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
-        return 2;
+    getCommandLineOptions(argc, argv);
+
+    // We can start logging to the system log before daemonizing.
+    if (logTo == Log::LogTo::systemLog) {
+        logger.startLogging(instanceName, Log::LogTo::systemLog);
     }
-    string configFileName(argv[1]);
-    if (!readConfig(configFileName)) {
+
+    if (runAsDaemon) {
+        logger.logMsg(LOG_INFO, "Daemonizing...");
+        daemonize();
+        logger.logMsg(LOG_NOTICE, "Now running as a daemon.");
+    }
+
+    // Because daemonizing closes all files, we have to wait until after we're
+    // running as a daemon before we can log to a file.  (Logging to the console
+    // when running as a daemon ends up logging to the bit bucket.)
+    if (logTo == Log::LogTo::console) {
+        logger.startLogging(instanceName, Log::LogTo::console);
+    }
+    else if (logTo == Log::LogTo::file) {
+        logger.startLogging(instanceName, Log::LogTo::file, logFilePath);
+    }
+
+    if (!registerSignalHandler()) {
         return(EXIT_FAILURE);
     }
 
-    // Make sure this is the only instance running.
-    if (!lockFilePath.empty() && acquireProcessLock(lockFilePath) < 0) {
-        exit(EXIT_FAILURE);
+    if (!readConfig()) {
+        return(EXIT_FAILURE);
     }
 
-    if (!logger.startLogging("widgetRcvr", Log::LogTo::redirect)) {
-        exit(EXIT_FAILURE);
+    // Make sure this is the only instance running if a
+    // place to put the lock file has been specified.
+    if (!lockFilePath.empty()) {
+        string lockFilePathName = lockFilePath + "/" + instanceName + ".lock";
+        bool logIfLocked = logTo == Log::LogTo::console || runAsDaemon;
+        if (acquireProcessLock(lockFilePathName, logIfLocked) < 0) {
+            return(EXIT_FAILURE);
+        }
     }
 
     logger.logMsg(LOG_INFO, "---------- widgetRcvr starting ----------");
 
-    // If the config file is really a symbolic link,
-    // add the link target to the file name we'll log.
-    string configFileNameAndTarget = configFileName;
-    char buf[512];
-    int count = readlink(configFileName.c_str(), buf, sizeof(buf));
-    if (count >= 0) {
-        buf[count] = '\0';
-        configFileNameAndTarget += string(" -> ") + buf;
-    }
-    logger.logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
-    logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
-    logger.logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
-    logger.logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = " + to_string(radioPollingLoopSleepIntervalUs));
-    logger.logMsg(LOG_INFO, "widgetPortNumberBase = " + to_string(widgetPortNumberBase));
-
-    if (!openUdpPorts()) {
-        exit(EXIT_FAILURE);
+    if (!doInitialization()) {
+        return(EXIT_FAILURE);
     }
 
-    if (!configureRadio()) {
-        exit(EXIT_FAILURE);
+    if (!runLoop()) {
+        return(EXIT_FAILURE);
     }
 
-    radio.startListening();
-    logger.logMsg(LOG_INFO, "Now listening for widget data.");
+    logger.logMsg(LOG_INFO, "---------- Exiting... ----------");
 
-    runLoop();
-    
+    if (!doTeardown()) {
+        return(EXIT_FAILURE);
+    }
+
     logger.stopLogging();
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
