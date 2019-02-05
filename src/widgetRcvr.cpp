@@ -70,8 +70,11 @@ static Log::LogTo logTo = Log::LogTo::file;
 
 // ---------- configuration ----------
 
-static ConfigReader config;
+static ConfigReader configReader;
+static json11::Json configObject;
 static string lockFilePath;
+static string logFilePath = ".";
+static std::string pidFilePathName;
 static string patconIpAddress;
 static unsigned int radioPollingLoopSleepIntervalUs;
 static unsigned int widgetPortNumberBase;
@@ -647,7 +650,7 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
  * Initialization, Run Loop, and Entry Point *
  *********************************************/
 
-bool readConfig(const string& configFileName)
+bool readConfig()
 {
     // Read the configuration file, and merge the instance-specific and common
     // configurations into a single configuration in configObject.  The
@@ -772,6 +775,8 @@ bool shutDownRadio()
     }
 
     // TODO:  Maybe someday power it off here (and also power it on in configureRadio).
+
+    return true;
 }
 
 
