@@ -83,28 +83,26 @@ static unsigned int widgetPortNumberBase;
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-static uint8_t rfChannel = 84;   // TODO: put in config
+static uint8_t rfChannel;
 
 // Probably no need to ever set auto acknowledgement to false because the sender
-// can control whether or not acks are sent by using the NO_ACK bit.  Set
-// autoAck false to prevent a misconfigured widget from creating unnecessary
-// radio traffic (and to prevent any widgets expectig acks from working).
-// TODO:  Set autoAck true after all widgets have been reprogrammed with
-//        firmware that can send the NO_ACK big.  (As of 18 Dec. 2018, none
-//        of them work right in that regard.)
-static bool autoAck = true;      // TODO:  put in config
+// can control whether or not acks are sent by using the NO_ACK bit.
+static bool autoAck;
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-static rf24_pa_dbm_e rfPowerLevel = RF24_PA_MAX; // TODO:  put in config
+static rf24_pa_dbm_e rfPowerLevel;
+static string rfPowerLevelStr;
 
 // RF24_250KBPS or RF24_1MBPS
-static rf24_datarate_e dataRate = RF24_1MBPS;    // TODO:  put in config
+static rf24_datarate_e dataRate;
+static string dataRateStr;
 
-static uint8_t txRetryDelayMultiplier = 15;  // 250 us additional delay multiplier (0-15)    // TODO:  put in config
-static uint8_t txMaxRetries = 15;            // max retries (0-15)   // TODO:  put in config
+static uint8_t txRetryDelayMultiplier = 15;  // 250 us additional delay multiplier (0-15)
+static uint8_t txMaxRetries = 15;            // max retries (0-15)
 
-// RF24_CRC_DISABLED, RF24_CRC_8, or RF24_CRC_16
-static rf24_crclength_e crcLength = RF24_CRC_16; // TODO:  put in config
+// RF24_CRC_DISABLED, RF24_CRC_8, or RF24_CRC_16 (the only sane choice)
+static rf24_crclength_e crcLength;
+static string crcLengthStr;
 
 
 // ---------- globals ----------
@@ -683,6 +681,7 @@ bool readConfig()
     }
     //logger.logMsg(LOG_DEBUG, "configObject = " + configObject.dump());
 
+    bool successful = true;
     string errMsgSuffix = " in the " + instanceName + " or common section of " + configFileName + ".";
 
     lockFilePath.clear();
@@ -691,11 +690,106 @@ bool readConfig()
         logger.logMsg(LOG_WARNING, "There is no lock file path" + errMsgSuffix);
     }
 
-    if (!ConfigReader::getStringValue(configObject, "patconIpAddress", patconIpAddress, errMsgSuffix)) return false;
-    if (!ConfigReader::getUnsignedIntValue(configObject, "radioPollingLoopSleepIntervalUs", radioPollingLoopSleepIntervalUs, errMsgSuffix, 1)) return false;
-    if (!ConfigReader::getUnsignedIntValue(configObject, "widgetPortNumberBase", widgetPortNumberBase, errMsgSuffix, 1024, 65535)) return false;
+    if (!ConfigReader::getStringValue(configObject, "patconIpAddress", patconIpAddress, errMsgSuffix)) {
+        successful = false;
+    }
 
-    return true;
+    if (!ConfigReader::getUnsignedIntValue(configObject,
+                                           "radioPollingLoopSleepIntervalUs", radioPollingLoopSleepIntervalUs,
+                                           errMsgSuffix, 1))
+    {
+        successful = false;
+    }
+
+    if (!ConfigReader::getUnsignedIntValue(configObject, "widgetPortNumberBase", widgetPortNumberBase, errMsgSuffix, 1024, 65535)) {
+        successful = false;
+    }
+
+    int i;
+    if (!ConfigReader::getIntValue(configObject, "rfChannel", i, errMsgSuffix, 1, 125)) {
+        successful = false;
+    }
+    else {
+        rfChannel = i;
+    }
+
+    if (!ConfigReader::getBoolValue(configObject, "autoAck", autoAck, errMsgSuffix)) {
+        successful = false;
+    }
+
+    if (!ConfigReader::getStringValue(configObject, "rfPowerLevel", rfPowerLevelStr, errMsgSuffix)) {
+        successful = false;
+    }
+    else if (rfPowerLevelStr == "RF24_PA_MIN") {
+        rfPowerLevel = RF24_PA_MIN;
+    }
+    else if (rfPowerLevelStr == "RF24_PA_LOW") {
+        rfPowerLevel = RF24_PA_LOW;
+    }
+    else if (rfPowerLevelStr == "RF24_PA_HIGH") {
+        rfPowerLevel = RF24_PA_HIGH;
+    }
+    else if (rfPowerLevelStr == "RF24_PA_MAX") {
+        rfPowerLevel = RF24_PA_MAX;
+    }
+    else {
+        logger.logMsg(LOG_ERR,
+                      "Invalid rfPowerLevel value \"%s\".  Valid values are"
+                      " RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, and RF24_PA_MAX.",
+                      rfPowerLevelStr.c_str());
+        successful = false;
+    }
+
+    if (!ConfigReader::getStringValue(configObject, "dataRate", dataRateStr, errMsgSuffix)) {
+        successful = false;
+    }
+    else if (dataRateStr == "RF24_250KBPS") {
+        dataRate = RF24_250KBPS;
+    }
+    else if (dataRateStr == "RF24_1MBPS") {
+        dataRate = RF24_1MBPS;
+    }
+    else {
+        logger.logMsg(LOG_ERR,
+                      "Invalid dataRate value \"%s\".  Valid values are RF24_250KBPS and RF24_1MBPS.",
+                      dataRateStr.c_str());
+        successful = false;
+    }
+
+    if (!ConfigReader::getIntValue(configObject, "txRetryDelayMultiplier", i, errMsgSuffix, 0, 15)) {
+        successful = false;
+    }
+    else {
+        txRetryDelayMultiplier = i;
+    }
+
+    if (!ConfigReader::getIntValue(configObject, "txMaxRetries", i, errMsgSuffix, 1, 15)) {
+        successful = false;
+    }
+    else {
+        txMaxRetries = i;
+    }
+
+    if (!ConfigReader::getStringValue(configObject, "crcLength", crcLengthStr, errMsgSuffix)) {
+        successful = false;
+    }
+    else if (crcLengthStr == "RF24_CRC_DISABLED") {
+        crcLength = RF24_CRC_DISABLED;
+    }
+    else if (crcLengthStr == "RF24_CRC_8") {
+        crcLength = RF24_CRC_8;
+    }
+    else if (crcLengthStr == "RF24_CRC_16") {
+        crcLength = RF24_CRC_16;
+    }
+    else {
+        logger.logMsg(LOG_ERR,
+                      "Invalid dataRate value \"%s\".  Valid values are RF24_CRC_DISABLED, RF24_CRC_8, and RF24_CRC_16.",
+                      crcLengthStr.c_str());
+        successful = false;
+    }
+
+    return successful;
 }
 
 
@@ -782,6 +876,11 @@ bool shutDownRadio()
 
 bool doInitialization()
 {
+    // We print the configuration here rather than in readConfig because readConfig
+    // can be called before we know if we're the only instance and can run.  When
+    // using the one-minute restart approach via crontab, printing anything in 
+    // readConfig would result in writing a lot of unnecessary crap to the log.
+
     // If the config file is really a symbolic link,
     // add the link target to the file name we'll log.
     string configFileNameAndTarget = configFileName;
@@ -798,8 +897,15 @@ bool doInitialization()
     logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
     logger.logMsg(LOG_INFO, "logFilePath = " + logFilePath);
     logger.logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
-    logger.logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = " + to_string(radioPollingLoopSleepIntervalUs));
-    logger.logMsg(LOG_INFO, "widgetPortNumberBase = " + to_string(widgetPortNumberBase));
+    logger.logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = %u", radioPollingLoopSleepIntervalUs);
+    logger.logMsg(LOG_INFO, "widgetPortNumberBase = %u", widgetPortNumberBase);
+    logger.logMsg(LOG_INFO, "rfChannel = %d", rfChannel);
+    logger.logMsg(LOG_INFO, "autoAck = %s", autoAck ? "true" : "false");
+    logger.logMsg(LOG_INFO, "rfPowerLevel = " + rfPowerLevelStr);
+    logger.logMsg(LOG_INFO, "dataRate = " + dataRateStr);
+    logger.logMsg(LOG_INFO, "txRetryDelayMultiplier = %d", txRetryDelayMultiplier);
+    logger.logMsg(LOG_INFO, "txMaxRetries = %d", txMaxRetries);
+    logger.logMsg(LOG_INFO, "crcLength = " + crcLengthStr);
 
     if (!openUdpPorts()) {
         return false;

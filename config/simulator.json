@@ -51,7 +51,34 @@
 
     "widgetRcvr" : {
         "lockFilePath" : "/tmp",
-        "radioPollingLoopSleepIntervalUs" : 1000
+
+        // Avoid hammering on the SPI interface by sleeping between polls for received data.
+        "radioPollingLoopSleepIntervalUs" : 1000,
+
+        // nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
+        // ISM: 2400-2500;  ham: 2390-2450
+        // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
+        //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+        "rfChannel" : 84,
+
+        // Probably no need to ever set auto acknowledgement to false because the sender
+        // can control whether or not acks are sent by using the NO_ACK bit.
+        "autoAck" : true,
+
+        // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
+        "rfPowerLevel" : "RF24_PA_MAX",
+
+        // RF24_250KBPS or RF24_1MBPS
+        "dataRate" : "RF24_1MBPS",
+
+        // 250 us additional delay multiplier (0-15)
+        "txRetryDelayMultiplier" : 15,
+
+        // max retries (0-15)
+        "txMaxRetries" : 15,
+
+        // RF24_CRC_DISABLED, RF24_CRC_8, or RF24_CRC_16 (the only sensible value)
+        "crcLength" : "RF24_CRC_16"
     },
 
 
