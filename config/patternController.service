@@ -1,0 +1,41 @@
+# Copy this file to /etc/systemd/system then execute these commands:
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable patternController.service
+#   sudo systemctl start patternController.service
+#
+# Use these commands for troubleshooting:
+#
+#   sudo systemctl status patternController.service
+#   sudo journalctl -xe
+#   sudo tail /var/log/user
+
+[Unit]
+# "man 5 systemd.unit" for help
+Description=Illumicone pattern generator
+After=network.target
+#Before=widgetRcvr.service
+StartLimitIntervalSec=0
+
+[Service]
+# "man 5 systemd.service" for help
+# run as a daemon
+Type=forking
+ExecStart=/home/illumicone/bin/patternController --config_file=/home/illumicone/activeConfig.json --log_path=/home/illumicone/logs --daemon --pidfile=/home/illumicone/patternController.pid
+PIDFile=/home/illumicone/patternController.pid
+#
+# run as a normal process
+#Type=simple
+#ExecStart=/home/illumicone/bin/patternController --config_file=/home/illumicone/activeConfig.json --log_path=/home/illumicone/logs
+#
+User=illumicone
+WorkingDirectory=/home/illumicone
+TimeoutSec=2
+Restart=always
+RestartSec=5
+ExecReload=/bin/kill -USR1 $MAINPID
+
+[Install]
+# "man 5 systemd.unit" for help
+WantedBy=multi-user.target
+
