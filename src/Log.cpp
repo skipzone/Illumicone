@@ -75,7 +75,6 @@ bool Log::setAutoLogRotation(unsigned int intervalMinutes, int offsetHour, int o
     }
     if (intervalMinutes < 60) {
         logMsg(LOG_WARNING, "intervalMinutes is %d, which seems like a very short interval.", intervalMinutes);
-        return false;
     }
 
     logRotationIntervalSeconds = intervalMinutes * 60;
@@ -83,6 +82,10 @@ bool Log::setAutoLogRotation(unsigned int intervalMinutes, int offsetHour, int o
     // TODO:  explain how we're using the offset to come up with the next rotation time
     time_t now = getNowSeconds();
     struct tm result;
+char buf[20];
+struct tm tmNow = *localtime_r(&now, &result);
+std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNow);
+logMsg(LOG_DEBUG, "now=%s", buf);
     struct tm tmOffset = *localtime_r(&now, &result);
     tmOffset.tm_sec = 0;
     tmOffset.tm_min = offsetMinute;
@@ -91,6 +94,15 @@ bool Log::setAutoLogRotation(unsigned int intervalMinutes, int offsetHour, int o
     while (nextLogRotationTime <= now) {
         nextLogRotationTime += logRotationIntervalSeconds;
     }
+    //=-=-=-=-=-=-=
+    logMsg(LOG_DEBUG, "now=%ld nextLogRotationTime=%ld", now, nextLogRotationTime);
+    tmNow = *localtime_r(&now, &result);
+    struct tm tmNext = *localtime_r(&nextLogRotationTime, &result);
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNow);
+    logMsg(LOG_DEBUG, "now=%s", buf);
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNext);
+    logMsg(LOG_DEBUG, "next=%s", buf);
+    //=-=-=-=-=-=-=
 
     autoLogRotationEnabled = true; 
 

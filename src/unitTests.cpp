@@ -21,6 +21,7 @@
 #include <iostream>
 
 #include "ConfigReader.h"
+#include "Log.h"
 #include "MeasurementMapper.h"
 
 using namespace std;
