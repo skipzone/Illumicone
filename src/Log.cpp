@@ -90,19 +90,19 @@ logMsg(LOG_DEBUG, "now=%s", buf);
     tmOffset.tm_sec = 0;
     tmOffset.tm_min = offsetMinute;
     tmOffset.tm_hour = offsetHour;
-    time_t nextLogRotationTime = mktime(&tmOffset);
+    nextLogRotationTime = mktime(&tmOffset);
     while (nextLogRotationTime <= now) {
         nextLogRotationTime += logRotationIntervalSeconds;
     }
-    //=-=-=-=-=-=-=
-    logMsg(LOG_DEBUG, "now=%ld nextLogRotationTime=%ld", now, nextLogRotationTime);
-    tmNow = *localtime_r(&now, &result);
-    struct tm tmNext = *localtime_r(&nextLogRotationTime, &result);
-    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNow);
-    logMsg(LOG_DEBUG, "now=%s", buf);
-    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNext);
-    logMsg(LOG_DEBUG, "next=%s", buf);
-    //=-=-=-=-=-=-=
+//=-=-=-=-=-=-=
+logMsg(LOG_DEBUG, "now=%ld nextLogRotationTime=%ld", now, nextLogRotationTime);
+tmNow = *localtime_r(&now, &result);
+struct tm tmNext = *localtime_r(&nextLogRotationTime, &result);
+std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNow);
+logMsg(LOG_DEBUG, "now=%s", buf);
+std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNext);
+logMsg(LOG_DEBUG, "next=%s", buf);
+//=-=-=-=-=-=-=
 
     autoLogRotationEnabled = true; 
 
@@ -182,6 +182,12 @@ const std::string Log::getTimestamp(TimestampType timestampType)
 
     // This is a convenient place to check if we need to rotate the logs
     // because we've already gone through the trouble of getting the time.
+printf("now=%ld nextLogRotationTime=%ld\n", now, nextLogRotationTime);
+struct tm tmNext = *localtime_r(&nextLogRotationTime, &result);
+std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNow);
+printf("now=%s\n", buf);
+std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNext);
+printf("next=%s\n", buf);
     if (autoLogRotationEnabled && now >= nextLogRotationTime) {
         rotateLogs = true;
         // We might need to advance the next rotation time by multiple intervals

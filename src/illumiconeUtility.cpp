@@ -72,6 +72,7 @@ uint32_t get_millisecond_timer()
 }
 
 
+// TODO:  this will not work.  uint32_t is too small, dummy.
 uint32_t getNowMs()
 {
     return (uint32_t) getNowMs64();
@@ -89,7 +90,7 @@ uint64_t getNowMs64()
 
 uint32_t getNowSeconds()
 {
-    return (uint32_t) getNowMs64() / 1000;
+    return getNowMs64() / 1000ULL;
 }
 
 

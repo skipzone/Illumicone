@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
     logger.setAutoLogRotation(1, 0, 0);
 
-    for (int i = 0; i < 200; ++i) {
+    for (int i = 0; i < 6; ++i) {
         logger.logMsg(LOG_INFO, "i=%d", i);
         sleep(1);
     }
