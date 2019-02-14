@@ -53,6 +53,7 @@ class Log
         void logMsg(int priority, int errNum, const char* format, ...) __attribute__ ((format (printf, 4, 5)));
         void vlogMsg(int priority, const char* format, va_list args);
 
+        bool setAutoLogRotation(unsigned int intervalMinutes, int offsetHour, int offsetMinute);
         bool startLogging(const std::string& logName, LogTo logTo = LogTo::console, const std::string& logFilePath = ".");
         void stopLogging();
 
@@ -65,19 +66,35 @@ class Log
 
         constexpr static unsigned int stringBufSize = 65536;
 
-        char sbuf[stringBufSize];
+        LogTo logTo;
+
         std::ofstream flog;
         std::ostream* lout;
         std::ostream* lerr;
+
         std::string expandedLogFilePath;
         std::string logFilePathName;
         std::string logName;
-        LogTo logTo;
+
         int redirectionFd;
         int saveStdoutFd;
         int saveStderrFd;
 
+        bool autoLogRotationEnabled;
+        time_t logRotationIntervalSeconds;
+        time_t nextLogRotationTime;
+        bool rotateLogs;
+
+        char sbuf[stringBufSize];
+
+        void doRotateLogs();
         const std::string getTimestamp(TimestampType timestampType);
         bool resolveLogFilePathName(const std::string& logFilePath = "");
+
+        bool openLogFile();
+        void closeLogFile();
+        bool openRedirectionLogFile();
+        void closeRedirectionLogFile();
+
 };
 

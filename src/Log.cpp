@@ -33,10 +33,13 @@
 
 
 Log::Log()
-    : lout(&std::cout)
+    : logTo(LogTo::nowhere)
+    , lout(&std::cout)
     , lerr(&std::cerr)
+    , expandedLogFilePath("")
     , logName("noname")
-    , logTo(LogTo::nowhere)
+    , autoLogRotationEnabled(false)
+    , rotateLogs(false)
 {
 }
 
@@ -47,12 +50,103 @@ Log::~Log()
 }
 
 
+bool Log::setAutoLogRotation(unsigned int intervalMinutes, int offsetHour, int offsetMinute)
+{
+    autoLogRotationEnabled = false; 
+
+    if (logTo != LogTo::file && logTo != LogTo::fileWithTimestamp
+        && logTo != LogTo::redirect && logTo != LogTo::redirectWithTimestamp)
+    {
+        logMsg(LOG_ERR, "Log rotation is supported only when logging to a file.");
+        return false;
+    }
+
+    if (offsetHour < 0 || offsetHour > 23) {
+        logMsg(LOG_ERR, "Invalid offsetHour %d.  Valid values are 0 - 23.", offsetHour);
+        return false;
+    }
+    if (offsetMinute < 0 || offsetMinute > 59) {
+        logMsg(LOG_ERR, "Invalid offsetMinute %d.  Valid values are 0 - 59.", offsetMinute);
+        return false;
+    }
+    if (intervalMinutes < 1) {
+        logMsg(LOG_ERR, "Invalid intervalMinutes %d.  Valid values are greater than zero.", intervalMinutes);
+        return false;
+    }
+    if (intervalMinutes < 60) {
+        logMsg(LOG_WARNING, "intervalMinutes is %d, which seems like a very short interval.", intervalMinutes);
+        return false;
+    }
+
+    logRotationIntervalSeconds = intervalMinutes * 60;
+
+    // TODO:  explain how we're using the offset to come up with the next rotation time
+    time_t now = getNowSeconds();
+    struct tm result;
+    struct tm tmOffset = *localtime_r(&now, &result);
+    tmOffset.tm_sec = 0;
+    tmOffset.tm_min = offsetMinute;
+    tmOffset.tm_hour = offsetHour;
+    time_t nextLogRotationTime = mktime(&tmOffset);
+    while (nextLogRotationTime <= now) {
+        nextLogRotationTime += logRotationIntervalSeconds;
+    }
+
+    autoLogRotationEnabled = true; 
+
+    return true;
+}
+
+
+void Log::doRotateLogs()
+{
+    if (logTo == LogTo::file || logTo == LogTo::fileWithTimestamp) {
+        closeLogFile();
+    }
+    else {
+        closeRedirectionLogFile();
+    }
+
+    // If the log file was created without a timestamp in its name, add a
+    // timestamp indicating the end of the period covered by the file (now).
+    if (logTo == LogTo::file || logTo == LogTo::redirect) {
+        std::string rotatedLogFilePathName =
+            expandedLogFilePath + logName + "_" + getTimestamp(TimestampType::compactYmdHm) + ".log";
+        if (rename(logFilePathName.c_str(), rotatedLogFilePathName.c_str()) != 0) {
+            int errNum = errno;
+            std::cerr << std::string(__FUNCTION__)
+                << ":  Unable to rename rotated log file " << logFilePathName << " to " << rotatedLogFilePathName << "; "
+                << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
+            // We'll try to keep going with the old name, essentially not rotating the log file.
+        }
+    }
+    // Otherwise, the active log file is supposed to have a timestamp
+    // in its name, so update the timestamp to the current time.
+    else {
+        resolveLogFilePathName();
+    }
+
+    if (logTo == LogTo::file || logTo == LogTo::fileWithTimestamp) {
+        if (!openLogFile()) {
+            // Not much else we can do other than make no more logging attempts.
+            logTo = LogTo::nowhere;
+        }
+    }
+    else {
+        if (!openRedirectionLogFile()) {
+            // Not much else we can do other than make no more logging attempts.
+            logTo = LogTo::nowhere;
+        }
+    }
+}
+
+
 const std::string Log::getTimestamp(TimestampType timestampType)
 {
     uint64_t nowMs = getNowMs64();
     time_t now = nowMs / 1000;
     struct tm result;
-    struct tm tmStruct = *localtime_r(&now, &result);
+    struct tm tmNow = *localtime_r(&now, &result);
 
     char buf[20];
     uint32_t ms;
@@ -62,16 +156,28 @@ const std::string Log::getTimestamp(TimestampType timestampType)
     switch (timestampType) {
 
         case TimestampType::delimitedYmdHmsn:
-            std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmStruct);
+            std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tmNow);
             ms = nowMs % 1000;
             sstr << buf << "." << std::setfill('0') << std::setw(3) << ms;
             timestamp = sstr.str();
             break;
 
         case TimestampType::compactYmdHm:
-            std::strftime(buf, sizeof(buf), "%Y%m%d_%H%M", &tmStruct);
+            std::strftime(buf, sizeof(buf), "%Y%m%d_%H%M", &tmNow);
             timestamp = buf;
             break;
+    }
+
+    // This is a convenient place to check if we need to rotate the logs
+    // because we've already gone through the trouble of getting the time.
+    if (autoLogRotationEnabled && now >= nextLogRotationTime) {
+        rotateLogs = true;
+        // We might need to advance the next rotation time by multiple intervals
+        // because there could be a gap between log entries that is longer than
+        // one interval.
+        while (nextLogRotationTime <= now) {
+            nextLogRotationTime += logRotationIntervalSeconds;
+        }
     }
 
     return timestamp;
@@ -126,19 +232,27 @@ void Log::vlogMsg(int priority, const char* format, va_list args)
 
     if (logTo == LogTo::systemLog) {
         vsyslog(priority, format, args);
+        return;
+    }
+
+    // getTimestamp also checks if it is time to rotate the logs.  Messy but efficient.
+    std::string timestamp = getTimestamp(TimestampType::delimitedYmdHmsn);
+
+    if (rotateLogs) {
+        rotateLogs = false;
+        doRotateLogs();
+    }
+
+    vsnprintf(sbuf, sizeof(sbuf), format, args);
+
+    if (priority > LOG_WARNING) {
+        *lout << timestamp << ":  " << sbuf << std::endl;
+    }
+    else if (priority == LOG_WARNING) {
+        *lerr << timestamp << ":  ///// Warning:  " << sbuf << " /////" << std::endl;
     }
     else {
-        vsnprintf(sbuf, sizeof(sbuf), format, args);
-
-        if (priority > LOG_WARNING) {
-            *lout << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  " << sbuf << std::endl;
-        }
-        else if (priority == LOG_WARNING) {
-            *lerr << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  ///// Warning:  " << sbuf << " /////" << std::endl;
-        }
-        else {
-            *lerr << getTimestamp(TimestampType::delimitedYmdHmsn) << ":  *** " << sbuf << std::endl;
-        }
+        *lerr << timestamp << ":  *** " << sbuf << std::endl;
     }
 }
 
@@ -173,6 +287,84 @@ bool Log::resolveLogFilePathName(const std::string& logFilePath)
 }
 
 
+bool Log::openLogFile()
+{
+    bool successful = false;
+
+    flog.open(logFilePathName.c_str(), std::ios_base::out | std::ios_base::app);
+    if (flog.is_open()) {
+        lout = lerr = &flog;
+        successful = true;
+    }
+    else {
+        int errNum = errno;
+        std::cerr << std::string(__FUNCTION__)
+            << ":  Unable to open output file " << logFilePathName << "; "
+            << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
+    }
+
+    return successful;
+}
+
+
+void Log::closeLogFile()
+{
+    if (flog.is_open()) {
+        flog.close();
+    }
+}
+
+
+bool Log::openRedirectionLogFile()
+{
+    bool successful = false;
+
+    redirectionFd = open(logFilePathName.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (redirectionFd != -1) {
+        saveStdoutFd = dup(fileno(stdout));
+        saveStderrFd = dup(fileno(stderr));
+        if (saveStdoutFd != -1
+            && saveStderrFd != -1
+            && dup2(redirectionFd, fileno(stdout)) != -1
+            && dup2(redirectionFd, fileno(stderr)) != -1)
+        {
+            lout = &std::cout;
+            lerr = &std::cerr;
+            successful = true;
+        }
+        else {
+            int errNum = errno;
+            // We should have more granular error detection so that we can close the
+            // right descriptors, but the world is probably fucked anyway so who cares.
+            close(redirectionFd);
+            std::cerr << std::string(__FUNCTION__)
+                << ":  Unable to save or duplicate file descriptors; "
+                << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
+        }
+    }
+    else {
+        int errNum = errno;
+        std::cerr << std::string(__FUNCTION__)
+            << ":  Unable to open redirection output file " << logFilePathName << "; "
+            << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
+    }
+
+    return successful;
+}
+
+
+void Log::closeRedirectionLogFile()
+{
+    fflush(stdout);
+    fflush(stderr);
+    close(redirectionFd);
+    dup2(saveStdoutFd, fileno(stdout));
+    close(saveStdoutFd);
+    dup2(saveStderrFd, fileno(stderr));
+    close(saveStderrFd);
+}
+
+
 bool Log::startLogging(const std::string& logName, LogTo logTo, const std::string& logFilePath)
 {
     stopLogging();
@@ -181,7 +373,6 @@ bool Log::startLogging(const std::string& logName, LogTo logTo, const std::strin
     this->logTo = logTo;
 
     bool successful = false;
-    int errNum;
     switch (this->logTo) {
 
         case LogTo::nowhere:
@@ -199,52 +390,14 @@ bool Log::startLogging(const std::string& logName, LogTo logTo, const std::strin
         case LogTo::file:
         case LogTo::fileWithTimestamp:
             if (resolveLogFilePathName(logFilePath)) {
-                flog.open(logFilePathName.c_str(), std::ios_base::out | std::ios_base::app);
-                if (flog.is_open()) {
-                    lout = lerr = &flog;
-                    successful = true;
-                }
-                else {
-                    errNum = errno;
-                    std::cerr << std::string(__FUNCTION__)
-                        << ":  Unable to open output file " << logFilePathName << "; "
-                        << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
-                }
+                successful = openLogFile();
             }
             break;
 
         case LogTo::redirect:
         case LogTo::redirectWithTimestamp:
             if (resolveLogFilePathName(logFilePath)) {
-                redirectionFd = open(logFilePathName.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0644);
-                if (redirectionFd != -1) {
-                    saveStdoutFd = dup(fileno(stdout));
-                    saveStderrFd = dup(fileno(stderr));
-                    if (saveStdoutFd != -1
-                        && saveStderrFd != -1
-                        && dup2(redirectionFd, fileno(stdout)) != -1
-                        && dup2(redirectionFd, fileno(stderr)) != -1)
-                    {
-                        lout = &std::cout;
-                        lerr = &std::cerr;
-                        successful = true;
-                    }
-                    else {
-                        errNum = errno;
-                        // We should have more granular error detection so that we can close the
-                        // right descriptors, but the world is probably fucked anyway so who cares.
-                        close(redirectionFd);
-                        std::cerr << std::string(__FUNCTION__)
-                            << ":  Unable to save or duplicate file descriptors; "
-                            << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
-                    }
-                }
-                else {
-                    errNum = errno;
-                    std::cerr << std::string(__FUNCTION__)
-                        << ":  Unable to open redirection output file " << logFilePathName << "; "
-                        << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
-                }
+                successful = openRedirectionLogFile();
             }
             break;
     }
@@ -271,20 +424,12 @@ void Log::stopLogging()
 
         case LogTo::file:
         case LogTo::fileWithTimestamp:
-            if (flog.is_open()) {
-                flog.close();
-            }
+            closeLogFile();
             break;
 
         case LogTo::redirect:
         case LogTo::redirectWithTimestamp:
-            fflush(stdout);
-            fflush(stderr);
-            close(redirectionFd);
-            dup2(saveStdoutFd, fileno(stdout));
-            close(saveStdoutFd);
-            dup2(saveStderrFd, fileno(stderr));
-            close(saveStderrFd);
+            closeRedirectionLogFile();
             break;
     }
 
