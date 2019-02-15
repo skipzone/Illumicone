@@ -35,10 +35,13 @@ int main(int argc, char **argv)
     cout << "Illumicone logging test." << endl;
 
     logger.startLogging("logTest", Log::LogTo::file);
+//    logger.startLogging("logTest", Log::LogTo::fileWithTimestamp);
+//    logger.startLogging("logTest", Log::LogTo::redirect);
+//    logger.startLogging("logTest", Log::LogTo::redirectWithTimestamp);
 
     logger.setAutoLogRotation(1, 0, 0);
 
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 150; ++i) {
         logger.logMsg(LOG_INFO, "i=%d", i);
         sleep(1);
     }
