@@ -52,9 +52,9 @@
         "opcServerPortNumber" : 7890,
         "widgetPortNumberBase" : 4200,
 
-        "logRotationIntervalMinutes" : 1,
+        "logRotationIntervalMinutes" : 5,
         "logRotationOffsetHour" : 0,
-        "logRotationOffsetMinute" : 0
+        "logRotationOffsetMinute" : 3
     },
 
 

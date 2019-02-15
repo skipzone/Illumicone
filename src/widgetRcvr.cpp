@@ -78,6 +78,9 @@ static std::string pidFilePathName;
 static string patconIpAddress;
 static unsigned int radioPollingLoopSleepIntervalUs;
 static unsigned int widgetPortNumberBase;
+static unsigned int logRotationIntervalMinutes;
+static int logRotationOffsetHour;
+static int logRotationOffsetMinute;
 
 // nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
 // ISM: 2400-2500;  ham: 2390-2450
@@ -789,6 +792,18 @@ bool readConfig()
         successful = false;
     }
 
+    if (!ConfigReader::getUnsignedIntValue(configObject, "logRotationIntervalMinutes", logRotationIntervalMinutes, errMsgSuffix, 1)) {
+        return false;
+    }
+
+    if (!ConfigReader::getIntValue(configObject, "logRotationOffsetHour", logRotationOffsetHour, errMsgSuffix, 0, 23)) {
+        return false;
+    }
+
+    if (!ConfigReader::getIntValue(configObject, "logRotationOffsetMinute", logRotationOffsetMinute, errMsgSuffix, 0, 59)) {
+        return false;
+    }
+
     return successful;
 }
 
@@ -896,6 +911,9 @@ bool doInitialization()
     logger.logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
     logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
     logger.logMsg(LOG_INFO, "logFilePath = " + logFilePath);
+    logger.logMsg(LOG_INFO, "logRotationIntervalMinutes = %d", logRotationIntervalMinutes);
+    logger.logMsg(LOG_INFO, "logRotationOffsetHour = %d", logRotationOffsetHour);
+    logger.logMsg(LOG_INFO, "logRotationOffsetMinute = %d", logRotationOffsetMinute);
     logger.logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
     logger.logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = %u", radioPollingLoopSleepIntervalUs);
     logger.logMsg(LOG_INFO, "widgetPortNumberBase = %u", widgetPortNumberBase);
@@ -906,6 +924,8 @@ bool doInitialization()
     logger.logMsg(LOG_INFO, "txRetryDelayMultiplier = %d", txRetryDelayMultiplier);
     logger.logMsg(LOG_INFO, "txMaxRetries = %d", txMaxRetries);
     logger.logMsg(LOG_INFO, "crcLength = " + crcLengthStr);
+
+    logger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
 
     if (!openUdpPorts()) {
         return false;
