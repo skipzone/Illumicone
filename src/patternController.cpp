@@ -99,6 +99,9 @@ static unsigned int patternRunLoopSleepIntervalUs;
 static bool useTcpForOpcServer;
 static string opcServerIpAddress;
 static unsigned int opcServerPortNumber;
+static unsigned int logRotationIntervalMinutes;
+static int logRotationOffsetHour;
+static int logRotationOffsetMinute;
 
 // flags set by signals
 static volatile bool gotExitSignal;
@@ -736,6 +739,10 @@ bool readConfig()
     if (!ConfigReader::getStringValue(configObject, "opcServerIpAddress", opcServerIpAddress, errMsgSuffix)) return false;
     if (!ConfigReader::getUnsignedIntValue(configObject, "opcServerPortNumber", opcServerPortNumber, errMsgSuffix, 1024, 65535)) return false;
 
+    if (!ConfigReader::getUnsignedIntValue(configObject, "logRotationIntervalMinutes", logRotationIntervalMinutes, errMsgSuffix, 1)) return false;
+    if (!ConfigReader::getIntValue(configObject, "logRotationOffsetHour", logRotationOffsetHour, errMsgSuffix, 0, 23)) return false;
+    if (!ConfigReader::getIntValue(configObject, "logRotationOffsetMinute", logRotationOffsetMinute, errMsgSuffix, 0, 59)) return false;
+
     return true;
 }
 
@@ -947,11 +954,16 @@ bool doInitialization()
     logger.logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
     logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
     logger.logMsg(LOG_INFO, "logFilePath = " + logFilePath);
+    logger.logMsg(LOG_INFO, "logRotationIntervalMinutes = %d", logRotationIntervalMinutes);
+    logger.logMsg(LOG_INFO, "logRotationOffsetHour = %d", logRotationOffsetHour);
+    logger.logMsg(LOG_INFO, "logRotationOffsetMinute = %d", logRotationOffsetMinute);
     logger.logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
     logger.logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
     logger.logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
     printSchedulePeriods("Shutoff periods", shutoffPeriods);
     printSchedulePeriods("Quiescent periods", quiescentPeriods);
+
+    logger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
 
     if (!allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(hsvFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
         logger.logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");

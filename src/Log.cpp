@@ -62,19 +62,19 @@ bool Log::setAutoLogRotation(unsigned int intervalMinutes, int offsetHour, int o
     }
 
     if (offsetHour < 0 || offsetHour > 23) {
-        logMsg(LOG_ERR, "Invalid offsetHour %d.  Valid values are 0 - 23.", offsetHour);
+        logMsg(LOG_ERR, "Invalid log rotation offsetHour %d.  Valid values are 0 - 23.", offsetHour);
         return false;
     }
     if (offsetMinute < 0 || offsetMinute > 59) {
-        logMsg(LOG_ERR, "Invalid offsetMinute %d.  Valid values are 0 - 59.", offsetMinute);
+        logMsg(LOG_ERR, "Invalid log rotation offsetMinute %d.  Valid values are 0 - 59.", offsetMinute);
         return false;
     }
     if (intervalMinutes < 1) {
-        logMsg(LOG_ERR, "Invalid intervalMinutes %d.  Valid values are greater than zero.", intervalMinutes);
+        logMsg(LOG_ERR, "Invalid log rotation intervalMinutes %d.  Valid values are greater than zero.", intervalMinutes);
         return false;
     }
     if (intervalMinutes < 60) {
-        logMsg(LOG_WARNING, "intervalMinutes is %d, which seems like a very short interval.", intervalMinutes);
+        logMsg(LOG_WARNING, "Log rotation intervalMinutes is %d, which seems like a very short interval.", intervalMinutes);
     }
 
     logRotationIntervalSeconds = intervalMinutes * 60;
