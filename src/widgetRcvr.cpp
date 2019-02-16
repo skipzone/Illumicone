@@ -965,6 +965,8 @@ bool runLoop()
     time(&lastDataReceivedTime);
     time_t noDataReceivedMessageIntervalS = 2;
     time_t noDataReceivedMessageTime = 0;
+    int zeroLengthPacketCount = 0;
+    bool lastPacketWasZeroLength = false;
 
     while (!gotExitSignal) {
 
@@ -994,8 +996,24 @@ bool runLoop()
 
             unsigned int payloadSize = radio.getDynamicPayloadSize();
             if (payloadSize == 0) {
-                logger.logMsg(LOG_ERR, "Got invalid packet (payloadSize = 0).");
+                // The zero-length packet burst problem makes the log file massive.
+                // To prevent that until we can find and fix the cause, we'll log
+                // one message when the first zero-length packet is received and
+                // another with the zero-length packet count when a non-zero-length
+                // packet is finally received.
+                if (!lastPacketWasZeroLength) {
+                    lastPacketWasZeroLength = true;
+                    zeroLengthPacketCount = 1;
+                    logger.logMsg(LOG_ERR, "Got invalid packet (payloadSize = 0).");
+                }
+                else {
+                    ++zeroLengthPacketCount;
+                }
                 continue;
+            }
+            if (lastPacketWasZeroLength) {
+                lastPacketWasZeroLength = false;
+                logger.logMsg(LOG_ERR, "%d zero-length packets were received.", zeroLengthPacketCount);
             }
             if (payloadSize > maxPayloadSize) {
                 logger.logMsg(LOG_ERR, "Got unsupported payload size " + to_string(payloadSize));
