@@ -39,7 +39,7 @@ class RainbowExplosionPattern : public Pattern
 
     protected:
 
-        bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+        bool initPattern(std::map<WidgetId, Widget*>& widgets);
 
     private:
 

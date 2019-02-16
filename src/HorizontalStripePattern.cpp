@@ -19,13 +19,15 @@
 #include "HorizontalStripePattern.h"
 #include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 HorizontalStripePattern::HorizontalStripePattern(const std::string& name)
@@ -34,34 +36,32 @@ HorizontalStripePattern::HorizontalStripePattern(const std::string& name)
 }
 
 
-bool HorizontalStripePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool HorizontalStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    if (!patternConfig["widthScaleFactor"].is_number()) {
-        logMsg(LOG_ERR, "widthScaleFactor not specified in " + name + " pattern configuration.");
+    if (!patternConfigObject["widthScaleFactor"].is_number()) {
+        logger.logMsg(LOG_ERR, "widthScaleFactor not specified in " + name + " pattern configuration.");
         return false;
     }
-    widthScaleFactor = patternConfig["widthScaleFactor"].int_value();
-    logMsg(LOG_INFO, name + " widthScaleFactor=" + to_string(widthScaleFactor));
+    widthScaleFactor = patternConfigObject["widthScaleFactor"].int_value();
+    logger.logMsg(LOG_INFO, name + " widthScaleFactor=" + to_string(widthScaleFactor));
 
-    if (!patternConfig["maxCyclicalWidth"].is_number()) {
-        logMsg(LOG_ERR, "maxCyclicalWidth not specified in " + name + " pattern configuration.");
+    if (!patternConfigObject["maxCyclicalWidth"].is_number()) {
+        logger.logMsg(LOG_ERR, "maxCyclicalWidth not specified in " + name + " pattern configuration.");
         return false;
     }
-    maxCyclicalWidth = patternConfig["maxCyclicalWidth"].int_value();
-    logMsg(LOG_INFO, name + " maxCyclicalWidth=" + to_string(maxCyclicalWidth));
+    maxCyclicalWidth = patternConfigObject["maxCyclicalWidth"].int_value();
+    logger.logMsg(LOG_INFO, name + " maxCyclicalWidth=" + to_string(maxCyclicalWidth));
 
-    if (!patternConfig["widthResetTimeoutSeconds"].is_number()) {
-        logMsg(LOG_ERR, "widthResetTimeoutSeconds not specified in " + name + " pattern configuration.");
+    if (!patternConfigObject["widthResetTimeoutSeconds"].is_number()) {
+        logger.logMsg(LOG_ERR, "widthResetTimeoutSeconds not specified in " + name + " pattern configuration.");
         return false;
     }
-    widthResetTimeoutSeconds = patternConfig["widthResetTimeoutSeconds"].int_value();
-    logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
+    widthResetTimeoutSeconds = patternConfigObject["widthResetTimeoutSeconds"].int_value();
+    logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -80,14 +80,14 @@ bool HorizontalStripePattern::initPattern(ConfigReader& config, std::map<WidgetI
             widthChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+        logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
+            logger.logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }
@@ -161,7 +161,7 @@ bool HorizontalStripePattern::update()
                 if (widthPos < 1) {
                     widthPos = 1;
                 }
-                //logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
+                //logger.logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
                 //                  + ", widthPosOffset=" + to_string(widthPosOffset)
                 //                  + ", widthPos=" + to_string(widthPos));
             }
@@ -178,7 +178,7 @@ bool HorizontalStripePattern::update()
             nextResetWidthMs = nowMs + widthResetTimeoutSeconds * 1000;
         }
         else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
-            //logMsg(LOG_DEBUG, name + ":  Resetting width.");
+            //logger.logMsg(LOG_DEBUG, name + ":  Resetting width.");
             resetWidth = true;
             widthPos = 1;
         }
@@ -195,8 +195,8 @@ bool HorizontalStripePattern::update()
             upperExtraWidth = widthPos / 2;
             lowerExtraWidth = widthPos - 1 - upperExtraWidth;
         }
-        //logMsg(LOG_DEBUG, "upperExtraWidth=" + to_string(upperExtraWidth));
-        //logMsg(LOG_DEBUG, "lowerExtraWidth=" + to_string(lowerExtraWidth));
+        //logger.logMsg(LOG_DEBUG, "upperExtraWidth=" + to_string(upperExtraWidth));
+        //logger.logMsg(LOG_DEBUG, "lowerExtraWidth=" + to_string(lowerExtraWidth));
 
         int rWidthLowIndex = rPos - upperExtraWidth;
         int rWidthHighIndex = rPos + lowerExtraWidth;
@@ -233,7 +233,7 @@ bool HorizontalStripePattern::update()
 
 /*
     if (!isActive) {
-        logMsg(LOG_DEBUG, name + " inactive");
+        logger.logMsg(LOG_DEBUG, name + " inactive");
     }
 */
 

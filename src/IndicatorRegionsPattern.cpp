@@ -22,12 +22,14 @@
 #include "IndicatorRegion.h"
 #include "indicatorRegionFactory.h"
 #include "IndicatorRegionsPattern.h"
-#include "log.h"
+#include "Log.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 IndicatorRegionsPattern::IndicatorRegionsPattern(const std::string& name, bool usesHsvModel)
@@ -44,30 +46,28 @@ IndicatorRegionsPattern::~IndicatorRegionsPattern()
 }
 
 
-bool IndicatorRegionsPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool IndicatorRegionsPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     // ----- get pattern configuration -----
-
-    auto patternConfig = config.getPatternConfigJsonObject(name);
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
     // indicatorClassName is optional at the pattern level.  If it is not specified,
     // for the pattern, it msut be specified in each indicator's configuration.
-    string indicatorClassName = patternConfig["indicatorClassName"].string_value();
+    string indicatorClassName = patternConfigObject["indicatorClassName"].string_value();
 
     unsigned int numberOfIndicators;
-    if (!ConfigReader::getUnsignedIntValue(patternConfig, "numberOfIndicators", numberOfIndicators, errMsgSuffix, 0)) {
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "numberOfIndicators", numberOfIndicators, errMsgSuffix, 0)) {
         return false;
     }
 
-    if (!patternConfig["indicators"].is_array()) {
-        logMsg(LOG_ERR, "indicators is not present or is not an array" + errMsgSuffix);
+    if (!patternConfigObject["indicators"].is_array()) {
+        logger.logMsg(LOG_ERR, "indicators is not present or is not an array" + errMsgSuffix);
         return false;
     }
-    auto indicatorConfigs = patternConfig["indicators"].array_items();
+    auto indicatorConfigs = patternConfigObject["indicators"].array_items();
     if (indicatorConfigs.size() != numberOfIndicators) {
-        logMsg(LOG_ERR, "numberOfIndicators is " + to_string(numberOfIndicators)
+        logger.logMsg(LOG_ERR, "numberOfIndicators is " + to_string(numberOfIndicators)
                         + ", but there are " + to_string(indicatorConfigs.size())
                         + " indicators configured" + errMsgSuffix);
         return false;
@@ -85,7 +85,7 @@ bool IndicatorRegionsPattern::initPattern(ConfigReader& config, std::map<WidgetI
             thisIndicatorClassName = indicatorClassName;
         }
         if (thisIndicatorClassName.empty()) {
-            logMsg(LOG_ERR, "indicatorClassName was not specified at pattern level"
+            logger.logMsg(LOG_ERR, "indicatorClassName was not specified at pattern level"
                             " and is not present or is empty in an indicator configuration"
                             + errMsgSuffix);
             return false;
@@ -93,23 +93,23 @@ bool IndicatorRegionsPattern::initPattern(ConfigReader& config, std::map<WidgetI
 
         IndicatorRegion* newIndicatorRegion = indicatorRegionFactory(thisIndicatorClassName);
         if (newIndicatorRegion == nullptr) {
-            logMsg(LOG_ERR, "Unable to instantiate IndicatorRegion object" + errMsgSuffix);
+            logger.logMsg(LOG_ERR, "Unable to instantiate IndicatorRegion object" + errMsgSuffix);
             return false;
         }
         if (!newIndicatorRegion->init(numStrings, pixelsPerString, indicatorConfig)) {
-            logMsg(LOG_ERR, "Initialization of IndicatorRegion object failed" + errMsgSuffix);
+            logger.logMsg(LOG_ERR, "Initialization of IndicatorRegion object failed" + errMsgSuffix);
             return false;
         }
 
         unsigned int indicatorRegionIndex = newIndicatorRegion->getIndex();
         if (indicatorRegionIndex >= numberOfIndicators) {
-            logMsg(LOG_ERR, "Indicator index " + to_string(indicatorRegionIndex)
+            logger.logMsg(LOG_ERR, "Indicator index " + to_string(indicatorRegionIndex)
                             + " is out of bounds" + errMsgSuffix);
             return false;
         }
 
         if (indicatorRegions[indicatorRegionIndex] != nullptr) {
-            logMsg(LOG_ERR, "There are multiple configurations for the indicator with index "
+            logger.logMsg(LOG_ERR, "There are multiple configurations for the indicator with index "
                             + to_string(indicatorRegionIndex) + errMsgSuffix);
             return false;
         }
@@ -119,7 +119,7 @@ bool IndicatorRegionsPattern::initPattern(ConfigReader& config, std::map<WidgetI
         indicatorRegions[indicatorRegionIndex] = newIndicatorRegion;
     }
 
-    logMsg(LOG_INFO, name + " instantiated " + to_string(numberOfIndicators) + " indicator regions.");
+    logger.logMsg(LOG_INFO, name + " instantiated " + to_string(numberOfIndicators) + " indicator regions.");
 
     return true;
 }

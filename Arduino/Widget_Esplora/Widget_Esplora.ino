@@ -42,8 +42,8 @@
 
 //#define WIDGET_RADIO_TESTER
 //#define FOURPLAY_4_2
-//#define FOURPLAY_4_3
-#define PUMP
+#define FOURPLAY_4_3
+//#define PUMP
 
 #if defined(WIDGET_RADIO_TESTER)
   #define WIDGET_ID 11  // FourPlay-4-3
@@ -178,7 +178,7 @@ void doWidgetTester(uint32_t now)
     payload.widgetHeader.isActive = true;
 
     //  Send the time.  This will block until complete.
-    if (!radio.write(&payload, sizeof(payload))) {
+    if (!radio.write(&payload, sizeof(payload), !WANT_ACK)) {
 #ifdef LED_PIN      
       digitalWrite(LED_PIN, HIGH);
 #endif
@@ -314,7 +314,7 @@ void doFourPlay4x(uint32_t now)
         payload.position = position[wheelIdx];
         payload.velocity = rpm;
     
-        radio.write(&payload, sizeof(payload));
+        radio.write(&payload, sizeof(payload), !WANT_ACK);
       }
 
       numVelocitySamples = 0;
@@ -338,7 +338,7 @@ void doPump(uint32_t now)
     payload.position = 1023 - Esplora.readSlider();   // seems that the API author holds the board upside down
     payload.velocity = 1;
     
-    radio.write(&payload, sizeof(payload));
+    radio.write(&payload, sizeof(payload), !WANT_ACK);
   }
 }
 #endif

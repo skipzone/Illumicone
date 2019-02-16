@@ -25,36 +25,57 @@
 #include <unistd.h>
 
 #include "illumiconeUtility.h"
-#include "log.h"
-
+#include "Log.h"
 
 using namespace std;
 
 
-int acquireProcessLock(const string& lockFilePath)
+extern Log logger;
+
+
+int acquireProcessLock(const string& lockFilePath, bool logIfLocked)
 {
     int fd = open(lockFilePath.c_str(), O_CREAT, S_IRUSR | S_IWUSR);
     if (fd >= 0) {
         if (flock(fd, LOCK_EX | LOCK_NB) == 0) {
+            if (logIfLocked) {
+                logger.logMsg(LOG_INFO, "Acquired lock on " + lockFilePath + ".");
+            }
             return fd;
         }
         else {
             if (errno == EWOULDBLOCK) {
                 close(fd);
-                //logMsg(LOG_INFO, "Another process has locked " + lockFilePath + ".");
+                if (logIfLocked) {
+                    logger.logMsg(LOG_INFO, "Another process has locked " + lockFilePath + ".");
+                }
                 return -1;
             }
             else {
                 close(fd);
-                logSysErr(LOG_ERR, "Unable to lock " + lockFilePath + ".", errno);
+                logger.logMsg(LOG_ERR, errno, "Unable to lock " + lockFilePath + ".");
                 return -1;
             }
         }
     }
     else {
-        logSysErr(LOG_ERR, "Unable to create or open " + lockFilePath + ".", errno);
+        logger.logMsg(LOG_ERR, errno, "Unable to create or open " + lockFilePath + ".");
         return -1;
     }
+}
+
+
+// This function is used by the beat generators in FastLED's lib8tion.
+uint32_t get_millisecond_timer()
+{
+    return (uint32_t) getNowMs64();
+}
+
+
+// TODO:  this will not work.  uint32_t is too small, dummy.
+uint32_t getNowMs()
+{
+    return (uint32_t) getNowMs64();
 }
 
 
@@ -67,16 +88,9 @@ uint64_t getNowMs64()
 }
 
 
-uint32_t getNowMs()
+uint32_t getNowSeconds()
 {
-    return (uint32_t) getNowMs64();
-}
-
-
-// This function is used by the beat generators in FastLED's lib8tion.
-uint32_t get_millisecond_timer()
-{
-    return (uint32_t) getNowMs64();
+    return getNowMs64() / 1000ULL;
 }
 
 

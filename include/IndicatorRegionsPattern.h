@@ -22,7 +22,6 @@
 #include "Pattern.h"
 
 
-class ConfigReader;
 class IndicatorRegion;
 class Widget;
 
@@ -42,7 +41,7 @@ class IndicatorRegionsPattern : public Pattern {
 
     protected:
 
-        virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+        virtual bool initPattern(std::map<WidgetId, Widget*>& widgets);
 
         std::vector<IndicatorRegion*> indicatorRegions;
 

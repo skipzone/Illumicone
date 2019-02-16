@@ -24,10 +24,13 @@
 
 #include "ConfigReader.h"
 #include "illumiconeTypes.h"
+#include "Log.h"
 #include "pixeltypes.h"
 
 using namespace std;
 
+
+Log logger;                     // this is the global Log object used everywhere
 
 int main(int argc, char **argv)
 {
@@ -41,6 +44,8 @@ int main(int argc, char **argv)
     testColor.r = atoi(argv[3]);
     testColor.g = atoi(argv[4]);
     testColor.b = atoi(argv[5]);
+
+    logger.startLogging("stringTester", Log::LogTo::console);
 
     ConfigReader config;
     if (!config.readConfigurationFile(jsonFileName)) {
@@ -95,4 +100,6 @@ int main(int argc, char **argv)
         send(sock, opcBuffer, sizeof(opcBuffer), 0);
         usleep(20000);
     }
+
+    logger.stopLogging();
 }

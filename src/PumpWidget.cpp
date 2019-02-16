@@ -18,11 +18,14 @@
 #include <string>
 
 #include "illumiconeWidgetTypes.h"
-#include "log.h"
+#include "Log.h"
 #include "PumpWidget.h"
 #include "WidgetId.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 PumpWidget::PumpWidget()
@@ -49,7 +52,7 @@ void PumpWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
         }
     }
     //if (newPosition % 10 == 0) {
-    //    logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    //    logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
     //}
     channels[chIdx]->setPositionAndVelocity(newPosition, 0);
     channels[chIdx]->setIsActive(true);

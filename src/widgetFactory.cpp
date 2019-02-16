@@ -23,13 +23,16 @@
 #include "EyeWidget.h"
 #include "FourPlay42Widget.h"
 #include "FourPlay43Widget.h"
-#include "log.h"
+#include "Log.h"
 #include "PumpWidget.h"
 #include "RainstickWidget.h"
 #include "SchroedersPlaythingWidget.h"
 #include "SpinnahWidget.h"
 #include "TriObeliskWidget.h"
 #include "widgetFactory.h"
+
+
+extern Log logger;
 
 
 Widget* widgetFactory(WidgetId id) {
@@ -59,7 +62,7 @@ Widget* widgetFactory(WidgetId id) {
         case WidgetId::baton:
             return new BatonWidget;
         default:
-            logMsg(LOG_ERR, "Unsupported id passed to widgetFactory.");
+            logger.logMsg(LOG_ERR, "Unsupported id passed to widgetFactory.");
             return nullptr;
     }
 }

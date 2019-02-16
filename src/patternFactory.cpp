@@ -19,7 +19,7 @@
 #include "AnnoyingFlashingPattern.h"
 #include "FillAndBurstPattern.h"
 #include "HorizontalStripePattern.h"
-#include "log.h"
+#include "Log.h"
 #include "MidiActivatedRegionsPattern.h"
 #include "ParticlesPattern.h"
 #include "patternFactory.h"
@@ -29,6 +29,9 @@
 #include "SpinnerPattern.h"
 #include "SpiralPattern.h"
 #include "SwitchActivatedRegionsPattern.h"
+
+
+extern Log logger;
 
 
 Pattern* patternFactory(const std::string& patternClassName, const std::string& patternName)
@@ -67,7 +70,7 @@ Pattern* patternFactory(const std::string& patternClassName, const std::string& 
         return new SwitchActivatedRegionsPattern(patternName);
     }
 
-    logMsg(LOG_ERR, "Unsupported pattern class name \"" + patternClassName + "\" for pattern " + patternName);
+    logger.logMsg(LOG_ERR, "Unsupported pattern class name \"" + patternClassName + "\" for pattern " + patternName);
     return nullptr;
 }
 

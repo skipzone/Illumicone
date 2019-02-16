@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <arpa/inet.h>
+#include <getopt.h>
 //#include <netinet/in.h>
 #include <signal.h>
 #include <stdio.h>
@@ -35,6 +36,7 @@
 #include <string.h>
 #include <sys/file.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
@@ -45,7 +47,7 @@
 #include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
 #include "lib8tion.h"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "patternFactory.h"
 #include "pixeltypes.h"
@@ -73,9 +75,20 @@ struct PatternState {
     int wantsDisplay;
 };
 
-static string configFileName;
-static ConfigReader config;
+Log logger;                     // this is the global Log object used everywhere
+
+// command line options and their defaults
+static bool runAsDaemon = false;
+static string configFileName = "activeConfig.json";
+static string instanceName = "patternController";
+static Log::LogTo logTo = Log::LogTo::file;
+
+// configuration (except for widgets and patterns)
+static ConfigReader configReader;
+static json11::Json configObject;
 static string lockFilePath;
+static string logFilePath = ".";
+static std::string pidFilePathName;
 static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
 static vector<SchedulePeriod> shutoffPeriods;
@@ -83,8 +96,18 @@ static vector<SchedulePeriod> quiescentPeriods;
 static string patternBlendMethodStr;
 static PatternBlendMethod patternBlendMethod;
 static unsigned int patternRunLoopSleepIntervalUs;
-
 static bool useTcpForOpcServer;
+static string opcServerIpAddress;
+static unsigned int opcServerPortNumber;
+static unsigned int logRotationIntervalMinutes;
+static int logRotationOffsetHour;
+static int logRotationOffsetMinute;
+
+// flags set by signals
+static volatile bool gotExitSignal;
+static volatile bool gotReinitSignal;
+static volatile bool gotToggleTestPatternSignal;
+
 static struct sockaddr_in opcServerSockaddr;
 static int opcServerSocketFd;
 static uint8_t* opcBuffer;      // points to the buffer used for sending messages to the OPC server
@@ -97,81 +120,284 @@ static vector<PatternState*> patternStates;
 static HsvConeStrings hsvFinalFrame;
 static RgbConeStrings rgbFinalFrame;
 
-static volatile bool gotExitSignal;
-static volatile bool gotReinitSignal;
-static volatile bool gotToggleTestPatternSignal;
+
+static void usage();
+static void getCommandLineOptions(int argc, char* argv[]);
+static bool registerSignalHandler();
+static void signalHandler(int signum);
+static void daemonize();
 
 
-
-void handleReinitSignal(int signum)
+void usage()
 {
-    gotReinitSignal = true;
+    //               1         2         3         4         5         6         7         8
+    //      12345678901234567890123456789012345678901234567890123456789012345678901234567890
+    printf("\n");
+    printf("Usage: patternController [options]\n");
+    printf("\n");
+    printf("Options:\n");
+    printf("\n");
+    printf("-c pathname, --config_file=pathname\n");
+    printf("    Read the JSON configuration document from the file specified by pathname.\n");
+    printf("    Default is \"%s\".\n", configFileName.c_str());
+    printf("\n");
+    printf("-d, --daemon\n");
+    printf("    Run as a daemon.\n");
+    printf("\n");
+    printf("-h, --help\n");
+    printf("    Print this help information.\n");
+    printf("\n");
+    printf("-i name, --instance_name=name\n");
+    printf("    Use name as the unique name of this instance.  The name is used in log file\n");
+    printf("    names and as the message source identifier when logging to the system log.\n");
+    printf("    It also specifies the JSON configuration document section (object) to be\n");
+    printf("    used.  Default is \"%s\".\n", instanceName.c_str());
+    printf("\n");
+    printf("-l path, --log_path=path\n");
+    printf("    Place log files in the directory specified by path.  Default is \"%s\".\n", logFilePath.c_str());
+    printf("\n");
+    printf("--log_to_console\n");
+    printf("    Send all log messages to the console.\n");
+    printf("\n");
+    printf("--log_to_syslog\n");
+    printf("    Send all log messages to the system log.  On Linux, the messages should go\n");
+    printf("    to /var/log/messages.  On macOS, use this command to see the messages:\n");
+    printf("    log stream --info --debug --predicate 'sender == \"<instance_name>\"' --style syslog\n");
+    printf("\n");
+    printf("--pidfile=pathname\n");
+    printf("    When running as a daemon, write the process's PID to the file specified by\n");
+    printf("    pathname.\n");
+    printf("\n");
+    printf("--version\n");
+    printf("    Print version information and exit.\n");
+    printf("\n");
 }
 
 
-void handleTestPatternSignal(int signum)
+static void getCommandLineOptions(int argc, char* argv[])
 {
-    gotToggleTestPatternSignal = true;
+    enum LongOnlyOption {
+        unhandled = 0,
+        log_to_console,
+        log_to_syslog,
+        pid_file,
+        version
+    };
+
+    int longOnlyOption = unhandled;
+    static struct option longopts[] = {
+        { "config_file",    required_argument,      NULL,            'c'            },
+        { "daemon",         no_argument,            NULL,            'd'            },
+        { "help",           no_argument,            NULL,            'h'            },
+        { "instance_name",  required_argument,      NULL,            'i'            },
+        { "log_path",       required_argument,      NULL,            'l'            },
+        { "log_to_console", no_argument,            &longOnlyOption, log_to_console },
+        { "log_to_syslog",  no_argument,            &longOnlyOption, log_to_syslog  },
+        { "pidfile",        required_argument,      &longOnlyOption, pid_file       },
+        { "version",        no_argument,            &longOnlyOption, version        },
+        { NULL,             0,                      NULL,            0              }
+    };
+
+    int ch;
+    while ((ch = getopt_long(argc, argv, "c:dhi:l:", longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'c':
+                configFileName = optarg;
+                break;
+            case 'd':
+                runAsDaemon = true;
+                break;
+            case 'h':
+                usage();
+                exit(EXIT_SUCCESS);
+            case 'i':
+                instanceName = optarg;
+                break;
+            case 'l':
+                logFilePath = optarg;
+                break;
+            case 0:
+                switch (longOnlyOption) {
+                    case log_to_console:
+                        logTo = Log::LogTo::console;
+                        break;
+                    case log_to_syslog:
+                        logTo = Log::LogTo::systemLog;
+                        break;
+                    case pid_file:
+                        pidFilePathName = optarg;
+                        break;
+                    case version:
+                        printf("%s last modified on %s, compiled on %s %s\n", __BASE_FILE__, __TIMESTAMP__, __DATE__, __TIME__);
+                        exit(EXIT_SUCCESS);
+                        break;
+                    default:
+                        fprintf(stderr, "Unhandled long option encountered.\n");
+                        exit(EXIT_FAILURE);
+                }                    
+                break;
+            default:
+                // Invalid or unrecognized option message has already been printed.
+                fprintf(stderr, "Use -h or --help for help.\n");
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    argc -= optind;
+    argv += optind;
+    // TODO:  Handle non-option args here.
 }
 
 
-void handleExitSignal(int signum)
+static bool registerSignalHandler()
 {
-    gotExitSignal = true;
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    bool succeeded = true;
+
+    sa.sa_handler = signalHandler;
+    if (sigaction(SIGINT, &sa, NULL) < 0) succeeded = false;    // ^C
+    if (sigaction(SIGTERM, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGQUIT, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGHUP, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGUSR1, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGUSR2, &sa, NULL) < 0) succeeded = false;
+
+    sa.sa_handler = SIG_IGN;
+    if (sigaction(SIGCHLD, &sa, NULL) < 0) succeeded = false;
+
+    if (!succeeded) {
+        logger.logMsg(LOG_ERR, "Registration of a handler for one or more signals failed.");
+    }
+
+    return succeeded;
 }
 
 
-bool registerSignalHandlers()
+static void signalHandler(int signum)
 {
-	struct sigaction act;
-	memset(&act, 0, sizeof(act));
+    logger.logMsg(LOG_NOTICE, "Got signal %d.", signum);
+    switch(signum) {
 
-	act.sa_handler = &handleReinitSignal;
-	if (sigaction(SIGUSR1, &act, NULL) < 0) {
-        logSysErr(LOG_ERR, "Unable to register re-init signal handler.", errno);
-		return false;
-	}
+        case SIGINT:
+        case SIGTERM:
+        case SIGQUIT:
+        case SIGHUP:
+            logger.logMsg(LOG_NOTICE, "Setting exit flag.");
+            gotExitSignal = true;
+            break;
 
-	act.sa_handler = &handleTestPatternSignal;
-	if (sigaction(SIGUSR2, &act, NULL) < 0) {
-        logSysErr(LOG_ERR, "Unable to register test pattern signal handler.", errno);
-		return false;
-	}
+        case SIGUSR1:
+            logger.logMsg(LOG_NOTICE, "Setting reinitialize flag.");
+            gotReinitSignal = true;
+            break;
 
-	act.sa_handler = &handleExitSignal;
-	if (   sigaction(SIGHUP, &act, NULL) < 0
-        || sigaction(SIGINT, &act, NULL) < 0
-        || sigaction(SIGPIPE, &act, NULL) < 0
-        || sigaction(SIGTERM, &act, NULL) < 0)
-    {
-        logSysErr(LOG_ERR, "Unable to register exit signal handler.", errno);
-		return false;
-	}
+        case SIGUSR2:
+            logger.logMsg(LOG_NOTICE, "Setting test pattern toggle flag.");
+            gotToggleTestPatternSignal = true;
+            break;
 
-    return true;
+        default:
+            logger.logMsg(LOG_WARNING, "Signal %d is not supported.", signum);
+    }
 }
 
 
-bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber)
+void daemonize()
 {
-    logMsg(LOG_INFO, "Connecting to OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
+    pid_t pid;
+    int fd;
+
+    // Become an orphaned child of the init process.
+    pid = fork();
+    if (pid < 0) {
+        logger.logMsg(LOG_CRIT, errno, "First fork failed.");
+        exit(EXIT_FAILURE);
+    }
+    if (pid > 0) {
+        // Parent process exits.
+        exit(EXIT_SUCCESS);
+    }
+
+    // Detach from controlling terminal by putting this
+    // process in a new process group and session.
+    if (setsid() < 0) {
+        logger.logMsg(LOG_CRIT, errno, "New session creation failed.");
+        exit(EXIT_FAILURE);
+    }
+
+    // Ensure that the daemon cannot re-acquire a terminal.
+    pid = fork();
+    if (pid < 0) {
+        logger.logMsg(LOG_CRIT, errno, "Second fork failed.");
+        exit(EXIT_FAILURE);
+    }
+    if (pid > 0) {
+        // Parent process exits.
+        exit(EXIT_SUCCESS);
+    }
+
+    // Close all open files.
+    for (fd = getdtablesize() - 1; fd >= 0; --fd) {
+        close(fd);
+    }
+
+    // Something might try to use stdin, stdout, or stderr.
+    // So, re-open them, but point them at /dev/null.
+    fd = open("/dev/null", O_RDWR);     // first open descriptor is stdin
+    if (fd < 0) {
+        logger.logMsg(LOG_CRIT, errno, "Unable to open stdin");
+        exit(EXIT_FAILURE);
+    }
+    dup(fd);    // second open descriptor is stdout
+    dup(fd);    // third open descriptor is stderr
+
+    // File permissions will need to be specified in the corresponding open() call.
+    umask(0);
+
+    // Make the root directory the current working directory because it is always there.
+    chdir("/");
+
+    // Write our PID to the PID file.
+    if (!pidFilePathName.empty()) {
+        std::ofstream ofs;
+        ofs.open(pidFilePathName.c_str(), std::ios_base::out | std::ios_base::trunc);
+        if (ofs.good()) {
+            pid_t myPid = getpid();
+            ofs << myPid << std::endl;
+            ofs.close();
+            logger.logMsg(LOG_INFO, "Wrote PID %d to %s", myPid, pidFilePathName.c_str());
+        }
+        else {
+            logger.logMsg(LOG_CRIT, errno, "Unable to create PID file %s", pidFilePathName.c_str());
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
+
+bool openOpcServerTcpConnection()
+{
+    logger.logMsg(LOG_INFO, "Connecting to OPC server at " + opcServerIpAddress + ":" + to_string(opcServerPortNumber) + "...");
 
     opcServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
     if (opcServerSocketFd == -1) {
-        logSysErr(LOG_ERR, "Failed to create socket for OPC server.", errno);
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
         return false;
     }
 
     opcServerSockaddr.sin_family = AF_INET;
-    opcServerSockaddr.sin_addr.s_addr = inet_addr(ipAddress.c_str());
-    opcServerSockaddr.sin_port = htons(portNumber);
+    opcServerSockaddr.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
+    opcServerSockaddr.sin_port = htons(opcServerPortNumber);
 
     if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) == -1) {
-        logSysErr(LOG_ERR, "Unable to connect to opc-server.", errno);
+        logger.logMsg(LOG_ERR, errno, "Unable to connect to opc-server.");
         return false;
     }
 
-    logMsg(LOG_INFO, "Connected.");
+    logger.logMsg(LOG_INFO, "Connected.");
 
     return true;
 }
@@ -179,19 +405,19 @@ bool openOpcServerTcpConnection(const string& ipAddress, unsigned int portNumber
 
 bool closeOpcServerTcpConnection()
 {
-    logMsg(LOG_INFO, "Disconnecting from OPC server...");
+    logger.logMsg(LOG_INFO, "Disconnecting from OPC server...");
     ///if (disconnectx(opcServerSocketFd, SAE_ASSOCID_ANY, SAE_CONNID_ANY) != 0) {
     if (close(opcServerSocketFd) != 0) {
-        logSysErr(LOG_ERR, "Unable to close connection to opc-server.", errno);
+        logger.logMsg(LOG_ERR, errno, "Unable to close connection to opc-server.");
         return false;
     }
     return true;
 }
 
 
-bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
+bool openUdpPortForOpcServer()
 {
-    logMsg(LOG_INFO, "Creating and binding socket for OPC server at " + ipAddress + ":" + to_string(portNumber) + "...");
+    logger.logMsg(LOG_INFO, "Creating and binding socket for OPC server at " + opcServerIpAddress + ":" + to_string(opcServerPortNumber) + "...");
 
     memset(&opcServerSockaddr, 0, sizeof(struct sockaddr_in));
 
@@ -200,19 +426,19 @@ bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
     opcServerSockaddr.sin_port = htons(0);
 
     if ((opcServerSocketFd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        logSysErr(LOG_ERR, "Failed to create socket for OPC server.", errno);
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
         return false;
     }
 
     if (::bind(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(struct sockaddr_in)) == -1) {
-        logSysErr(LOG_ERR, "bind failed for OPC server.", errno);
+        logger.logMsg(LOG_ERR, errno, "bind failed for OPC server.");
         return false;
     }
 
-    logMsg(LOG_INFO, "Setting address to " + ipAddress + ":" + to_string(portNumber) + ".");
+    logger.logMsg(LOG_INFO, "Setting address to " + opcServerIpAddress + ":" + to_string(opcServerPortNumber) + ".");
 
-    inet_pton(AF_INET, ipAddress.c_str(), &opcServerSockaddr.sin_addr.s_addr);
-    opcServerSockaddr.sin_port = htons(portNumber);
+    inet_pton(AF_INET, opcServerIpAddress.c_str(), &opcServerSockaddr.sin_addr.s_addr);
+    opcServerSockaddr.sin_port = htons(opcServerPortNumber);
 
     return true;
 }
@@ -221,9 +447,9 @@ bool openUdpPortForOpcServer(const string& ipAddress, unsigned int portNumber)
 bool closeUdpPortForOpcServer()
 {
     // TODO 2/3/2018 ross:  make sure this implementation is correct
-    logMsg(LOG_INFO, "Closing UDP port for OPC server...");
+    logger.logMsg(LOG_INFO, "Closing UDP port for OPC server...");
     if (close(opcServerSocketFd) != 0) {
-        logSysErr(LOG_ERR, "Unable to close UDP port for opc-server.", errno);
+        logger.logMsg(LOG_ERR, errno, "Unable to close UDP port for opc-server.");
         return false;
     }
     return true;
@@ -232,7 +458,7 @@ bool closeUdpPortForOpcServer()
 
 void dumpOpcBuffer(size_t numStringsToPrint)
 {
-    logMsg(LOG_DEBUG,
+    logger.logMsg(LOG_DEBUG,
         "opcBuffer header:  "
         + to_string((int) opcBuffer[0]) + " "
         + to_string((int) opcBuffer[1]) + " "
@@ -250,7 +476,7 @@ void dumpOpcBuffer(size_t numStringsToPrint)
                     << setfill(' ') << setw(3) << (int) opcData[pixelOffset + 1] << ","
                     << setfill(' ') << setw(3) << (int) opcData[pixelOffset + 2];
             }
-            logMsg(LOG_DEBUG, sstr.str());
+            logger.logMsg(LOG_DEBUG, sstr.str());
         }
     }
 }
@@ -273,15 +499,15 @@ bool sendOpcMessage()
     //dumpOpcBuffer(2);
 
     if (useTcpForOpcServer) {
-        //logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
+        //logger.logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
         if (send(opcServerSocketFd, opcBuffer, opcBufferSize, 0) == -1) {
-            logSysErr(LOG_ERR, "Failed to send message to OPC server via TCP.", errno);
+            logger.logMsg(LOG_ERR, errno, "Failed to send message to OPC server via TCP.");
             return false;
         }
-        //logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
+        //logger.logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
     }
     else {
-        //logMsg(LOG_DEBUG, "sending message to OPC server via UDP...");
+        //logger.logMsg(LOG_DEBUG, "sending message to OPC server via UDP...");
         // TODO 2/3/2018 ross:  modify to not block if no message space is available to hold the message
         ssize_t bytesSentCount = sendto(opcServerSocketFd,
                                         opcBuffer,
@@ -290,16 +516,16 @@ bool sendOpcMessage()
                                         (struct sockaddr *) &opcServerSockaddr,
                                         sizeof(struct sockaddr_in));
         if (bytesSentCount == -1) {
-            logSysErr(LOG_ERR, "Failed to send message to OPC server via UDP.", errno);
+            logger.logMsg(LOG_ERR, errno, "Failed to send message to OPC server via UDP.");
             return false;
         }
         if (bytesSentCount != opcBufferSize) {
-            logMsg(LOG_ERR,
+            logger.logMsg(LOG_ERR,
                    "UPD payload size is " + to_string(opcBufferSize)
                    + ", but " + to_string(bytesSentCount) + " bytes were sent to OPC server.");
             return false;
         }
-        //logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
+        //logger.logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
     }
 
     return true;
@@ -396,7 +622,7 @@ void displayTestPattern()
 
 void printSchedulePeriods(const std::string& scheduleDescription, const vector<SchedulePeriod>& schedulePeriods)
 {
-    logMsg(LOG_INFO, scheduleDescription + ":");
+    logger.logMsg(LOG_INFO, scheduleDescription + ":");
 
     for (auto&& schedulePeriod : schedulePeriods) {
         string msg;
@@ -428,34 +654,65 @@ void printSchedulePeriods(const std::string& scheduleDescription, const vector<S
             msgPriority = LOG_ERR;
         }
 
-        logMsg(msgPriority, msg);
+        logger.logMsg(msgPriority, msg);
     }
 }
 
 
 bool readConfig()
 {
-    if (!config.readConfigurationFile(configFileName)) {
+    // Read the configuration file, and merge the instance-specific and common
+    // configurations into a single configuration in configObject.  The
+    // instance-specific configuration has priority (i.e., items in the common
+    // configuration will not override the same items in the instance-specific
+    // configuration).
+    if (!configReader.readConfigurationFile(configFileName)) {
         return false;
     }
-
-    lockFilePath = config.getLockFilePath("patternController");
-    if (lockFilePath.empty()) {
-        logMsg(LOG_WARNING, "There is no lock file name for patternController in configuration.");
-    }
-
-    numberOfStrings = config.getNumberOfStrings();
-    numberOfPixelsPerString = config.getNumberOfPixelsPerString();
-
-    shutoffPeriods.clear();
-    quiescentPeriods.clear();
-    if (config.getSchedulePeriods("shutoffPeriods", shutoffPeriods)
-        || config.getSchedulePeriods("quiescentPeriods", quiescentPeriods))
+    json11::Json instanceConfigObject;
+    if (!ConfigReader::getJsonObject(configReader.getConfigObject(),
+                                     instanceName,
+                                     instanceConfigObject,
+                                     " in " + configFileName + ".")) 
     {
         return false;
     }
+    //logger.logMsg(LOG_DEBUG, "instanceConfigObject = " + instanceConfigObject.dump());
+    json11::Json commonConfigObject;
+    if (ConfigReader::getJsonObject(configReader.getConfigObject(),
+                                    "common",
+                                    commonConfigObject))
+    {
+        configObject = ConfigReader::mergeConfigObjects(instanceConfigObject, commonConfigObject);
+    }
+    else
+    {
+        configObject = instanceConfigObject;
+        logger.logMsg(LOG_WARNING, "%s does not have a common section.", configFileName.c_str());
+    }
+    //logger.logMsg(LOG_DEBUG, "configObject = " + configObject.dump());
 
-    patternBlendMethodStr = config.getPatternBlendMethod();
+    string errMsgSuffix = " in the " + instanceName + " or common section of " + configFileName + ".";
+
+    lockFilePath.clear();
+    ConfigReader::getStringValue(configObject, "lockFilePath", lockFilePath);
+    if (lockFilePath.empty()) {
+        logger.logMsg(LOG_WARNING, "There is no lock file path" + errMsgSuffix);
+    }
+
+    if (!ConfigReader::getUnsignedIntValue(configObject, "numberOfStrings", numberOfStrings, errMsgSuffix)) return false;
+    if (!ConfigReader::getUnsignedIntValue(configObject, "numberOfPixelsPerString", numberOfPixelsPerString, errMsgSuffix)) return false;
+
+    shutoffPeriods.clear();
+    quiescentPeriods.clear();
+    if (!ConfigReader::getSchedulePeriods(configObject, "shutoffPeriods", shutoffPeriods)
+        || !ConfigReader::getSchedulePeriods(configObject, "quiescentPeriods", quiescentPeriods))
+    {
+        logger.logMsg(LOG_ERR, "shutoffPeriods or quiescentPeriods is missing or invalid" + errMsgSuffix);
+        return false;
+    }
+
+    if (!ConfigReader::getStringValue(configObject, "patternBlendMethod", patternBlendMethodStr, errMsgSuffix)) return false;
     if (patternBlendMethodStr == "overlay") {
         patternBlendMethod = PatternBlendMethod::overlay;
     }
@@ -472,14 +729,19 @@ bool readConfig()
         patternBlendMethod = PatternBlendMethod::hsvHueBlend;
     }
     else {
-        logMsg(LOG_ERR, "patternBlendMethod \"" + patternBlendMethodStr + "\" not recognized.");
+        logger.logMsg(LOG_ERR, "Unrecognized patternBlendMethod \"" + patternBlendMethodStr + "\"" + errMsgSuffix);
         return false;
     }
 
-    patternRunLoopSleepIntervalUs = config.getPatternRunLoopSleepIntervalUs();
-    if (patternRunLoopSleepIntervalUs == 0) {
-        return false;
-    }
+    if (!ConfigReader::getUnsignedIntValue(configObject, "patternRunLoopSleepIntervalUs", patternRunLoopSleepIntervalUs, errMsgSuffix, 1)) return false;
+
+    if (!ConfigReader::getBoolValue(configObject, "useTcpForOpcServer", useTcpForOpcServer, errMsgSuffix)) return false;
+    if (!ConfigReader::getStringValue(configObject, "opcServerIpAddress", opcServerIpAddress, errMsgSuffix)) return false;
+    if (!ConfigReader::getUnsignedIntValue(configObject, "opcServerPortNumber", opcServerPortNumber, errMsgSuffix, 1024, 65535)) return false;
+
+    if (!ConfigReader::getUnsignedIntValue(configObject, "logRotationIntervalMinutes", logRotationIntervalMinutes, errMsgSuffix, 1)) return false;
+    if (!ConfigReader::getIntValue(configObject, "logRotationOffsetHour", logRotationOffsetHour, errMsgSuffix, 0, 23)) return false;
+    if (!ConfigReader::getIntValue(configObject, "logRotationOffsetMinute", logRotationOffsetMinute, errMsgSuffix, 0, 59)) return false;
 
     return true;
 }
@@ -491,7 +753,7 @@ bool initOpcBuffer()
     opcBufferSize = numberOfStrings * numberOfPixelsPerString * 3 + 4;
     opcBuffer = new uint8_t[opcBufferSize];
     if (opcBuffer == nullptr) {
-        logMsg(LOG_ERR, "Unable to allocate an OPC buffer of size " + to_string(opcBufferSize));
+        logger.logMsg(LOG_ERR, "Unable to allocate an OPC buffer of size " + to_string(opcBufferSize));
         return false;
     }
 
@@ -519,39 +781,37 @@ void freeOpcBuffer()
 
 void initWidgets()
 {
-    logMsg(LOG_INFO, "Initializing widgets...");
+    logger.logMsg(LOG_INFO, "Initializing widgets...");
 
-    // TODO 6/12/2017 ross:  Move widget config access to ConfigReader.
-
-    for (auto& widgetConfig : config.getJsonObject()["widgets"].array_items()) {
-        string widgetName = widgetConfig["name"].string_value();
+    for (auto& widgetConfigObject : configObject["widgets"].array_items()) {
+        string widgetName = widgetConfigObject["name"].string_value();
         if (widgetName.empty()) {
-            logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfig.dump());
+            logger.logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfigObject.dump());
             continue;
         }
-        if (!widgetConfig["enabled"].bool_value()) {
-            logMsg(LOG_INFO, widgetName + " is disabled.");
+        if (!widgetConfigObject["enabled"].bool_value()) {
+            logger.logMsg(LOG_INFO, widgetName + " is disabled.");
             continue;
         }
         WidgetId widgetId = stringToWidgetId(widgetName);
         if (widgetId == WidgetId::invalid) {
-            logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfig.dump());
+            logger.logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfigObject.dump());
             continue;
         }
         if (widgets.find(widgetId) != widgets.end()) {
-            logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfig.dump());
+            logger.logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfigObject.dump());
             continue;
         }
         Widget* newWidget = widgetFactory(widgetId);
         if (newWidget == nullptr) {
-            logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
+            logger.logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
             continue;
         }
-        if (!newWidget->init(config)) {
-            logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
+        if (!newWidget->init(widgetConfigObject, configObject)) {
+            logger.logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
             continue;
         }
-        logMsg(LOG_INFO, widgetName + " initialized.");
+        logger.logMsg(LOG_INFO, widgetName + " initialized.");
         widgets[widgetId] = newWidget;
     }
 }
@@ -559,9 +819,9 @@ void initWidgets()
 
 void tearDownWidgets()
 {
-    logMsg(LOG_INFO, "Tearing down widgets...");
+    logger.logMsg(LOG_INFO, "Tearing down widgets...");
     for (auto&& widget : widgets) {
-        logMsg(LOG_DEBUG, "deleting " + widgetIdToString(widget.first));
+        logger.logMsg(LOG_DEBUG, "deleting " + widgetIdToString(widget.first));
         delete widget.second;
     }
     widgets.clear();
@@ -570,36 +830,39 @@ void tearDownWidgets()
 
 void initPatterns()
 {
-    logMsg(LOG_INFO, "Initializing patterns...");
+    logger.logMsg(LOG_INFO, "Initializing patterns...");
 
-    for (auto& patternConfig : config.getJsonObject()["patterns"].array_items()) {
-        string patternName = patternConfig["name"].string_value();
+    //logger.logMsg(LOG_DEBUG, "configObject[\"patterns\"] has %ld elements", configObject["patterns"].array_items().size());
+    //logger.logMsg(LOG_DEBUG, "configObject[\"patterns\"]:  " + configObject["patterns"].dump());
+    for (auto& patternConfigObject : configObject["patterns"].array_items()) {
+        //logger.logMsg(LOG_DEBUG, "patternConfigObject:  " + patternConfigObject.dump());
+        string patternName = patternConfigObject["name"].string_value();
         if (patternName.empty()) {
-            logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfig.dump());
+            logger.logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfigObject.dump());
             continue;
         }
-        if (!patternConfig["enabled"].bool_value()) {
-            logMsg(LOG_INFO, patternName + " is disabled.");
+        if (!patternConfigObject["enabled"].bool_value()) {
+            logger.logMsg(LOG_INFO, patternName + " is disabled.");
             continue;
         }
-        string patternClassName = patternConfig["patternClassName"].string_value();
+        string patternClassName = patternConfigObject["patternClassName"].string_value();
         if (patternClassName.empty()) {
-            logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfig.dump());
+            logger.logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfigObject.dump());
             continue;
         }
         Pattern* newPattern = patternFactory(patternClassName, patternName);
         if (newPattern == nullptr) {
-            logMsg(LOG_ERR,
+            logger.logMsg(LOG_ERR,
                     "Unable to instantiate " + patternClassName + " object for " + patternName
                     + ".  (Is the pattern class name correct?)");
             continue;
         }
-        if (!newPattern->init(config, widgets)) {
-            logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
+        if (!newPattern->init(patternConfigObject, configObject, widgets)) {
+            logger.logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
             delete newPattern;
             continue;
         }
-        logMsg(LOG_INFO, patternName + " initialized.");
+        logger.logMsg(LOG_INFO, patternName + " initialized.");
 
         PatternState* newPatternState = new PatternState;
         newPatternState->pattern = newPattern;
@@ -610,7 +873,7 @@ void initPatterns()
 
 void tearDownPatterns()
 {
-    logMsg(LOG_INFO, "Tearing down patterns...");
+    logger.logMsg(LOG_INFO, "Tearing down patterns...");
     for (auto&& patternState : patternStates) {
         delete patternState->pattern;
         patternState->pattern = nullptr;
@@ -642,7 +905,7 @@ bool timeIsInPeriod(
             tmStartTimeToday.tm_isdst = tmEndTimeToday.tm_isdst = tmNowTime.tm_isdst;
             time_t startTimeToday = mktime(&tmStartTimeToday);
             time_t endTimeToday = mktime(&tmEndTimeToday);
-            //logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
+            //logger.logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
             //                  + to_string(startTimeToday) + ", endTime=" + to_string(endTimeToday));
             // Periods that span midnight have an end time that is numerically less
             // than the start time (which actually occurs on the previous day).
@@ -661,7 +924,7 @@ bool timeIsInPeriod(
         }
         else {
             // This is a one-time event.
-            //logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
+            //logger.logMsg(LOG_DEBUG, "desc=" + schedulePeriod.description + ", now=" + to_string(now) + ", startTime="
             //                  + to_string(schedulePeriod.startTime) + ", endTime=" + to_string(schedulePeriod.endTime));
             if (now >= schedulePeriod.startTime && now <= schedulePeriod.endTime) {
                 selectedSchedulePeriod = schedulePeriod;
@@ -686,22 +949,29 @@ bool doInitialization()
         configFileNameAndTarget += string(" -> ") + buf;
     }
 
-    logMsg(LOG_INFO, "Starting initialization.");
-    logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
-    logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
-    logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
-    logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
-    logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
+    logger.logMsg(LOG_INFO, "Starting initialization.");
+    logger.logMsg(LOG_INFO, "instanceName = " + instanceName);
+    logger.logMsg(LOG_INFO, "configFileName = " + configFileNameAndTarget);
+    logger.logMsg(LOG_INFO, "lockFilePath = " + lockFilePath);
+    logger.logMsg(LOG_INFO, "logFilePath = " + logFilePath);
+    logger.logMsg(LOG_INFO, "logRotationIntervalMinutes = %d", logRotationIntervalMinutes);
+    logger.logMsg(LOG_INFO, "logRotationOffsetHour = %d", logRotationOffsetHour);
+    logger.logMsg(LOG_INFO, "logRotationOffsetMinute = %d", logRotationOffsetMinute);
+    logger.logMsg(LOG_INFO, "numberOfStrings = " + to_string(numberOfStrings));
+    logger.logMsg(LOG_INFO, "numberOfPixelsPerString = " + to_string(numberOfPixelsPerString));
+    logger.logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
     printSchedulePeriods("Shutoff periods", shutoffPeriods);
     printSchedulePeriods("Quiescent periods", quiescentPeriods);
 
+    logger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
+
     if (!allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(hsvFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
-        logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");
+        logger.logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");
         return false;
     }
 
     if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(rgbFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
-        logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");
+        logger.logMsg(LOG_ERR, "Unable to allocate pixels for rgbFinalFrame.");
         return false;
     }
 
@@ -710,14 +980,13 @@ bool doInitialization()
     }
 
     // Open communications with OPC server.
-    useTcpForOpcServer = config.getUseTcpForOpcServer();
     if (useTcpForOpcServer) {
-        if (!openOpcServerTcpConnection(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
+        if (!openOpcServerTcpConnection()) {
             return false;
         }
     }
     else {
-        if (!openUdpPortForOpcServer(config.getOpcServerIpAddress(), config.getOpcServerPortNumber())) {
+        if (!openUdpPortForOpcServer()) {
             return false;
         }
     }
@@ -725,7 +994,7 @@ bool doInitialization()
     initWidgets();
     initPatterns();
 
-    logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
+    logger.logMsg(LOG_INFO, "Initialization done.  Start doing shit!");
 
     return true;
 }
@@ -733,7 +1002,7 @@ bool doInitialization()
 
 bool doTeardown()
 {
-    logMsg(LOG_INFO, "Starting teardown.");
+    logger.logMsg(LOG_INFO, "Starting teardown.");
 
     tearDownPatterns();
     tearDownWidgets();
@@ -754,7 +1023,7 @@ bool doTeardown()
     freeConePixels<HsvConeStrings, HsvPixel>(hsvFinalFrame);
     freeConePixels<RgbConeStrings, RgbPixel>(rgbFinalFrame);
 
-    logMsg(LOG_INFO, "Teardown done.");
+    logger.logMsg(LOG_INFO, "Teardown done.");
 
     return true;
 }
@@ -770,14 +1039,14 @@ void doPatterns()
     int minPriority = INT_MAX;
     int maxPriority = INT_MIN;
     for (auto&& patternState : patternStates) {
-        //logMsg(LOG_DEBUG, "calling update for " + patternState->pattern->getName());
+        //logger.logMsg(LOG_DEBUG, "calling update for " + patternState->pattern->getName());
         patternState->wantsDisplay = patternState->pattern->update();
         patternState->priority = patternState->pattern->priority;
         patternState->amountOfOverlay = patternState->pattern->opacity * 255 / 100;
         anyPatternIsActive |= patternState->wantsDisplay;
         minPriority = min(patternState->priority, minPriority);
         maxPriority = max(patternState->priority, maxPriority);
-        //logMsg(LOG_DEBUG, patternState->pattern->getName() + ":  priority=" + to_string(patternState->priority)
+        //logger.logMsg(LOG_DEBUG, patternState->pattern->getName() + ":  priority=" + to_string(patternState->priority)
         //                  + ", opacity=" + to_string(patternState->pattern->opacity)
         //                  + ", amountOfOverlay=" + to_string(patternState->amountOfOverlay));
     }
@@ -786,7 +1055,7 @@ void doPatterns()
     clearAllPixels(hsvFinalFrame);
 
     if (anyPatternIsActive) {
-        //logMsg(LOG_DEBUG, "a pattern is active");
+        //logger.logMsg(LOG_DEBUG, "a pattern is active");
 
         bool anyPixelIsOn = false;
 
@@ -796,7 +1065,7 @@ void doPatterns()
         for (int priority = maxPriority; priority >= minPriority; --priority) {
             for (auto&& patternState : patternStates) {
                 if (patternState->wantsDisplay && patternState->priority == priority) {
-                    //logMsg(LOG_DEBUG, patternState->pattern->getName() + " wants display.");
+                    //logger.logMsg(LOG_DEBUG, patternState->pattern->getName() + " wants display.");
                     for (unsigned int col = 0; col < numberOfStrings; col++) {
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
 
@@ -895,7 +1164,7 @@ void doPatterns()
         }
 
         if (anyPixelIsOn) {
-            //logMsg(LOG_DEBUG, "a pixel is on");
+            //logger.logMsg(LOG_DEBUG, "a pixel is on");
             if (patternBlendMethod == PatternBlendMethod::hsvBlend || patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
                 hsv2rgb(hsvFinalFrame, rgbFinalFrame);
             }
@@ -909,7 +1178,7 @@ void doPatterns()
         timeWentIdle = 0;
     }
     else {
-        //logMsg(LOG_DEBUG, "no pattern is active");
+        //logger.logMsg(LOG_DEBUG, "no pattern is active");
         if (!doIdlePattern) {
             // Turn on the safety lights until the idle pattern takes over.
             turnOnSafetyLights();
@@ -934,14 +1203,30 @@ void doPatterns()
 
 int main(int argc, char **argv)
 {
-    // The configuration comes from the JSON file specified on the command line.
-    if (argc != 2) {
-        cout << "Usage:  " << argv[0] << " <configFileName>" << endl;
-        return 2;
-    }
-    configFileName = argv[1];
+    getCommandLineOptions(argc, argv);
 
-    if (!registerSignalHandlers()) {
+    // We can start logging to the system log before daemonizing.
+    if (logTo == Log::LogTo::systemLog) {
+        logger.startLogging(instanceName, Log::LogTo::systemLog);
+    }
+
+    if (runAsDaemon) {
+        logger.logMsg(LOG_INFO, "Daemonizing...");
+        daemonize();
+        logger.logMsg(LOG_NOTICE, "Now running as a daemon.");
+    }
+
+    // Because daemonizing closes all files, we have to wait until after we're
+    // running as a daemon before we can log to a file.  (Logging to the console
+    // when running as a daemon ends up logging to the bit bucket.)
+    if (logTo == Log::LogTo::console) {
+        logger.startLogging(instanceName, Log::LogTo::console);
+    }
+    else if (logTo == Log::LogTo::file) {
+        logger.startLogging(instanceName, Log::LogTo::file, logFilePath);
+    }
+
+    if (!registerSignalHandler()) {
         return(EXIT_FAILURE);
     }
 
@@ -949,12 +1234,17 @@ int main(int argc, char **argv)
         return(EXIT_FAILURE);
     }
 
-    // Make sure this is the only instance running.
-    if (!lockFilePath.empty() && acquireProcessLock(lockFilePath) < 0) {
-        return(EXIT_FAILURE);
+    // Make sure this is the only instance running if a
+    // place to put the lock file has been specified.
+    if (!lockFilePath.empty()) {
+        string lockFilePathName = lockFilePath + "/" + instanceName + ".lock";
+        bool logIfLocked = logTo == Log::LogTo::console || runAsDaemon;
+        if (acquireProcessLock(lockFilePathName, logIfLocked) < 0) {
+            return(EXIT_FAILURE);
+        }
     }
 
-    logMsg(LOG_INFO, "---------- patternController  starting ----------");
+    logger.logMsg(LOG_INFO, "---------- patternController starting ----------");
 
     if (!doInitialization()) {
         return(EXIT_FAILURE);
@@ -985,14 +1275,14 @@ int main(int argc, char **argv)
 
         if (gotReinitSignal) {
             gotReinitSignal = false;
-            logMsg(LOG_INFO, "---------- Reinitializing... ----------");
+            logger.logMsg(LOG_INFO, "---------- Reinitializing... ----------");
             turnOnSafetyLights();
             if (!doTeardown()) {
                 return(EXIT_FAILURE);
             }
             // Sleep for a little bit because reconnecting to
             // the OPC server immediately sometimes fails.
-            logMsg(LOG_INFO, "Sleeping for " + to_string(reinitializationSleepIntervalS) + " seconds.");
+            logger.logMsg(LOG_INFO, "Sleeping for " + to_string(reinitializationSleepIntervalS) + " seconds.");
             sleep(reinitializationSleepIntervalS);
             if (!readConfig() || !doInitialization()) {
                 return(EXIT_FAILURE);
@@ -1006,11 +1296,11 @@ int main(int argc, char **argv)
         if (gotToggleTestPatternSignal) {
             gotToggleTestPatternSignal = false;
             displayingTestPattern = !displayingTestPattern;
-            logMsg(LOG_INFO, string("Turning test pattern ") + (displayingTestPattern ? "on." : "off."));
+            logger.logMsg(LOG_INFO, string("Turning test pattern ") + (displayingTestPattern ? "on." : "off."));
         }
 
         // Give the widgets a chance to update their simulated measurements.
-        //logMsg(LOG_DEBUG, "Updating simulated measurements.");
+        //logger.logMsg(LOG_DEBUG, "Updating simulated measurements.");
         for (auto&& widget : widgets) {
             widget.second->updateSimulatedMeasurements();
         }
@@ -1033,7 +1323,7 @@ int main(int argc, char **argv)
                 inPeriod = true;
 //                if (selectedSchedulePeriod.description != lastPeriodDesc) {
                     lastPeriodDesc = selectedSchedulePeriod.description;
-                    logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" shutoff period.");
+                    logger.logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" shutoff period.");
 //                }
                 turnOffAllPixels();
             }
@@ -1041,7 +1331,7 @@ int main(int argc, char **argv)
                 inPeriod = true;
 //                if (selectedSchedulePeriod.description != lastPeriodDesc) {
                     lastPeriodDesc = selectedSchedulePeriod.description;
-                    logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" quiescent period.");
+                    logger.logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" quiescent period.");
 //                }
                 setAllPixelsToQuiescentColor(selectedSchedulePeriod);
             }
@@ -1055,11 +1345,12 @@ int main(int argc, char **argv)
         }
     }
 
-    logMsg(LOG_INFO, "---------- Exiting... ----------");
+    logger.logMsg(LOG_INFO, "---------- Exiting... ----------");
     turnOnSafetyLights();
     if (!doTeardown()) {
         return(EXIT_FAILURE);
     }
+    logger.stopLogging();
     return EXIT_SUCCESS;
 }
 

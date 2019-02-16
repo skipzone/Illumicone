@@ -26,14 +26,16 @@
 #include "illumiconeUtility.h"
 #include "illumiconePixelUtility.h"
 #include "lib8tion.h"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "SparklePattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 SparklePattern::SparklePattern(const std::string& name)
@@ -42,7 +44,7 @@ SparklePattern::SparklePattern(const std::string& name)
 };
 
 
-bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool SparklePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     decayStartMs = 0;
     inactiveStartMs = 0; 
@@ -52,70 +54,68 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
-    if (!ConfigReader::getIntValue(patternConfig, "activationThreshold", activationThreshold, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "activationThreshold", activationThreshold, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
+    logger.logMsg(LOG_INFO, name + " activationThreshold=" + to_string(activationThreshold));
 
-    if (!ConfigReader::getIntValue(patternConfig, "deactivationThreshold", deactivationThreshold, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "deactivationThreshold", deactivationThreshold, errMsgSuffix)) {
         deactivationThreshold = INT_MAX;
     }
-    logMsg(LOG_INFO, name + " deactivationThreshold=" + to_string(deactivationThreshold));
+    logger.logMsg(LOG_INFO, name + " deactivationThreshold=" + to_string(deactivationThreshold));
 
-    if (!ConfigReader::getUnsignedIntValue(patternConfig, "numGoodMeasurementsForReactivation", numGoodMeasurementsForReactivation, errMsgSuffix)) {
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "numGoodMeasurementsForReactivation", numGoodMeasurementsForReactivation, errMsgSuffix)) {
         numGoodMeasurementsForReactivation = 0;
     }
-    logMsg(LOG_INFO, name + " numGoodMeasurementsForReactivation=" + to_string(numGoodMeasurementsForReactivation));
+    logger.logMsg(LOG_INFO, name + " numGoodMeasurementsForReactivation=" + to_string(numGoodMeasurementsForReactivation));
     // Start out with the good measurement count satisified.
     goodMeasurementCount = numGoodMeasurementsForReactivation;
 
-    if (!ConfigReader::getIntValue(patternConfig, "densityScaledownFactor", densityScaledownFactor, errMsgSuffix, 1)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "densityScaledownFactor", densityScaledownFactor, errMsgSuffix, 1)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " densityScaledownFactor=" + to_string(densityScaledownFactor));
+    logger.logMsg(LOG_INFO, name + " densityScaledownFactor=" + to_string(densityScaledownFactor));
 
-    if (!ConfigReader::getFloatValue(patternConfig, "decayConstant", decayConstant)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "decayConstant", decayConstant)) {
         doAutoDecay = false;
-        logMsg(LOG_INFO, name + " auto decay is not enabled");
+        logger.logMsg(LOG_INFO, name + " auto decay is not enabled");
     }
     else {
         doAutoDecay = true;
-        if (!ConfigReader::getUnsignedIntValue(patternConfig, "decayResetMs", decayResetMs, errMsgSuffix, 1)) {
+        if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "decayResetMs", decayResetMs, errMsgSuffix, 1)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " decayConstant=" + to_string(decayConstant) + " decayResetMs=" + to_string(decayResetMs));
+        logger.logMsg(LOG_INFO, name + " decayConstant=" + to_string(decayConstant) + " decayResetMs=" + to_string(decayResetMs));
     }
 
-    if (!ConfigReader::getUnsignedIntValue(patternConfig, "sparkleChangeIntervalMs", sparkleChangeIntervalMs, errMsgSuffix, 1)) {
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "sparkleChangeIntervalMs", sparkleChangeIntervalMs, errMsgSuffix, 1)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " sparkleChangeIntervalMs=" + to_string(sparkleChangeIntervalMs));
+    logger.logMsg(LOG_INFO, name + " sparkleChangeIntervalMs=" + to_string(sparkleChangeIntervalMs));
 
-    if (!ConfigReader::getBoolValue(patternConfig, "useRandomColors", useRandomColors, errMsgSuffix)) {
+    if (!ConfigReader::getBoolValue(patternConfigObject, "useRandomColors", useRandomColors, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " useRandomColors=" + to_string(useRandomColors));
+    logger.logMsg(LOG_INFO, name + " useRandomColors=" + to_string(useRandomColors));
 
     if (!useRandomColors) {
         string rgbStr;
-        if (!ConfigReader::getRgbPixelValue(patternConfig, "forwardSparkleColor", rgbStr, forwardSparkleColor, errMsgSuffix)) {
+        if (!ConfigReader::getRgbPixelValue(patternConfigObject, "forwardSparkleColor", rgbStr, forwardSparkleColor, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " forwardSparkleColor=" + rgbStr);
-        if (!ConfigReader::getRgbPixelValue(patternConfig, "reverseSparkleColor", rgbStr, reverseSparkleColor, errMsgSuffix)) {
+        logger.logMsg(LOG_INFO, name + " forwardSparkleColor=" + rgbStr);
+        if (!ConfigReader::getRgbPixelValue(patternConfigObject, "reverseSparkleColor", rgbStr, reverseSparkleColor, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " reverseSparkleColor=" + rgbStr);
+        logger.logMsg(LOG_INFO, name + " reverseSparkleColor=" + rgbStr);
     }
 
 
     // ----- get input channel -----
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -129,17 +129,17 @@ bool SparklePattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
                 usePositionMeasurement = true;
             }
             else {
-                logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
+                logger.logMsg(LOG_ERR, channelConfig.inputName + " must specify position or velocity for " + name + ".");
                 return false;
             }
             densityChannel = channelConfig.widgetChannel;
-            logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
+            logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName()
                              + (usePositionMeasurement ? " position measurement for " : " velocity measurement for ")
                              + channelConfig.inputName);
 
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
@@ -195,14 +195,14 @@ bool SparklePattern::update()
 
         // If the latest measurement is below the activation threshold, turn off this pattern.
         if (curMeasmt <= activationThreshold) {
-            //logMsg(LOG_DEBUG, to_string(curMeasmt) + " is below sparkle activation threshold " + to_string(activationThreshold));
+            //logger.logMsg(LOG_DEBUG, to_string(curMeasmt) + " is below sparkle activation threshold " + to_string(activationThreshold));
             setIsActive(false, nowMs);
             return false;
         }
 
         // If the latest measurement is above the deactivation threshold, turn off this pattern.
         if (curMeasmt > deactivationThreshold) {
-            //logMsg(LOG_DEBUG, to_string(curMeasmt) + " is above sparkle deactivation threshold "
+            //logger.logMsg(LOG_DEBUG, to_string(curMeasmt) + " is above sparkle deactivation threshold "
             //                  + to_string(deactivationThreshold));
             goodMeasurementCount = 0;
             setIsActive(false, nowMs);
@@ -214,7 +214,7 @@ bool SparklePattern::update()
         // spun counterclockwise.  The crap data cause the cone to frantically flash.  Although
         // pleasing to participants, the flashing dominates the cone and obscures everything else.)
         if (++goodMeasurementCount < numGoodMeasurementsForReactivation) {
-            //logMsg(LOG_DEBUG, to_string(goodMeasurementCount) + " of " + to_string(numGoodMeasurementsForReactivation)
+            //logger.logMsg(LOG_DEBUG, to_string(goodMeasurementCount) + " of " + to_string(numGoodMeasurementsForReactivation)
             //                  + " good measurements received for reactivation.");
             setIsActive(false, nowMs);
             return false;
@@ -235,7 +235,7 @@ bool SparklePattern::update()
         numPixelsPerStringToSparkle = sparkleFactor * (float) pixelsPerString;
         motionIsReverse = curMeasmtIsNegative;
 
-        //logMsg(LOG_DEBUG, "curMeasmt=" + to_string(curMeasmt)
+        //logger.logMsg(LOG_DEBUG, "curMeasmt=" + to_string(curMeasmt)
         //                  + ", decayFactor=" + to_string(decayFactor)
         //                  + ", sparkleFactor=" + to_string(sparkleFactor)
         //                  + ", numPixelsPerStringToSparkle=" + to_string(numPixelsPerStringToSparkle)

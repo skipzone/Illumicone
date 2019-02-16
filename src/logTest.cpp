@@ -16,21 +16,38 @@
 */
 
 
-#include "indicatorRegionFactory.h"
+#include <assert.h>
+#include <iomanip>
+#include <iostream>
+
+#include <unistd.h>
+
 #include "Log.h"
-#include "SimpleBlockIndicator.h"
+
+using namespace std;
 
 
-extern Log logger;
+Log logger;                     // this is the global Log object used everywhere
 
 
-IndicatorRegion* indicatorRegionFactory(const std::string& indicatorClassName)
+int main(int argc, char **argv)
 {
-    if (indicatorClassName == "SimpleBlockIndicator") {
-        return new SimpleBlockIndicator();
+    cout << "Illumicone logging test." << endl;
+
+    logger.startLogging("logTest", Log::LogTo::file);
+//    logger.startLogging("logTest", Log::LogTo::fileWithTimestamp);
+//    logger.startLogging("logTest", Log::LogTo::redirect);
+//    logger.startLogging("logTest", Log::LogTo::redirectWithTimestamp);
+
+    logger.setAutoLogRotation(1, 0, 0);
+
+    for (int i = 0; i < 150; ++i) {
+        logger.logMsg(LOG_INFO, "i=%d", i);
+        sleep(1);
     }
 
-    logger.logMsg(LOG_ERR, "Unsupported indicator class name \"" + indicatorClassName + ".");
-    return nullptr;
+    logger.stopLogging();
+
+    cout << "Done." << endl;
 }
 

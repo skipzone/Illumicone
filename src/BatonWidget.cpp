@@ -20,10 +20,13 @@
 #include "ConfigReader.h"
 #include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "BatonWidget.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 BatonWidget::BatonWidget()
@@ -61,7 +64,7 @@ void BatonWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
     }
 
     //if (newPosition % 100 == 0) {
-    //    logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    //    logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
     //}
 
     channels[chIdx]->setPositionAndVelocity(newPosition, 0);

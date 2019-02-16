@@ -22,14 +22,16 @@
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "SpiralPattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 SpiralPattern::SpiralPattern(const std::string& name)
@@ -38,13 +40,13 @@ SpiralPattern::SpiralPattern(const std::string& name)
 }
 
 
-bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool SpiralPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     // ----- get input channels -----
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -60,14 +62,14 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
             colorChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+        logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
+            logger.logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }
@@ -77,42 +79,40 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
     // -- spiral --
 
-    if (!ConfigReader::getBoolValue(patternConfig, "flipSpring", flipSpring, errMsgSuffix)) {
+    if (!ConfigReader::getBoolValue(patternConfigObject, "flipSpring", flipSpring, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " flipSpring=" + to_string(flipSpring));
+    logger.logMsg(LOG_INFO, name + " flipSpring=" + to_string(flipSpring));
 
-    if (!ConfigReader::getFloatValue(patternConfig, "spiralTightnessFactor", spiralTightnessFactor, errMsgSuffix)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "spiralTightnessFactor", spiralTightnessFactor, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " spiralTightnessFactor=" + to_string(spiralTightnessFactor));
+    logger.logMsg(LOG_INFO, name + " spiralTightnessFactor=" + to_string(spiralTightnessFactor));
 
-    if (!ConfigReader::getFloatValue(patternConfig, "progressiveSpringFactor", progressiveSpringFactor, errMsgSuffix)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "progressiveSpringFactor", progressiveSpringFactor, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " progressiveSpringFactor=" + to_string(progressiveSpringFactor));
+    logger.logMsg(LOG_INFO, name + " progressiveSpringFactor=" + to_string(progressiveSpringFactor));
 
-    if (!ConfigReader::getFloatValue(patternConfig, "progressiveSpringCompressionResponseFactor", progressiveSpringCompressionResponseFactor, errMsgSuffix)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "progressiveSpringCompressionResponseFactor", progressiveSpringCompressionResponseFactor, errMsgSuffix)) {
         return false;
     }
-    logMsg(LOG_INFO, name + " progressiveSpringCompressionResponseFactor=" + to_string(progressiveSpringCompressionResponseFactor));
+    logger.logMsg(LOG_INFO, name + " progressiveSpringCompressionResponseFactor=" + to_string(progressiveSpringCompressionResponseFactor));
 
     // -- compression --
 
     if (compressionChannel != nullptr) {
 
-        if (!compressionMeasmtMapper.readConfig(patternConfig, "compressionMeasurementMapper", errMsgSuffix)) {
+        if (!compressionMeasmtMapper.readConfig(patternConfigObject, "compressionMeasurementMapper", errMsgSuffix)) {
             return false;
         }
 
-        if (!ConfigReader::getIntValue(patternConfig, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
+        if (!ConfigReader::getIntValue(patternConfigObject, "compressionResetTimeoutSeconds", compressionResetTimeoutSeconds, errMsgSuffix)) {
             return false;
         }
-        logMsg(LOG_INFO, name + " compressionResetTimeoutSeconds=" + to_string(compressionResetTimeoutSeconds));
+        logger.logMsg(LOG_INFO, name + " compressionResetTimeoutSeconds=" + to_string(compressionResetTimeoutSeconds));
 
         compressionTriangleAmplitude = maxCyclicalCompression - minCyclicalCompression;
         compressionTrianglePeriod = compressionTriangleAmplitude * 2;
@@ -122,7 +122,7 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
     // -- rotation --
 
     if (rotationChannel != nullptr) {
-        if (!rotationMeasmtMapper.readConfig(patternConfig, "rotationMeasurementMapper", errMsgSuffix)) {
+        if (!rotationMeasmtMapper.readConfig(patternConfigObject, "rotationMeasurementMapper", errMsgSuffix)) {
             return false;
         }
     }
@@ -131,7 +131,7 @@ bool SpiralPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*
     // -- color --
 
     if (colorChannel != nullptr) {
-        if (!colorMeasmtMapper.readConfig(patternConfig, "colorMeasurementMapper", errMsgSuffix)) {
+        if (!colorMeasmtMapper.readConfig(patternConfigObject, "colorMeasurementMapper", errMsgSuffix)) {
             return false;
         }
     }
@@ -188,7 +188,7 @@ bool SpiralPattern::update()
                     }
                 }
 
-                    //logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
+                    //logger.logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
                     //                  + ", compressionPosOffset=" + to_string(compressionPosOffset)
                     //                  + ", compressionFactor=" + to_string(compressionFactor));
 
@@ -203,7 +203,7 @@ bool SpiralPattern::update()
                     // is offset from zero (DC offset) by minCyclicalCompression.  We left-shift the
                     // wave so that compressionPos starts out at minCyclicalCompression.
                     int singleCycleX = abs(compressionPos + compressionTriangleAmplitude) % compressionTrianglePeriod;
-                    //logMsg(LOG_DEBUG, name + ":  compressionTriangleAmplitude=" + to_string(compressionTriangleAmplitude)
+                    //logger.logMsg(LOG_DEBUG, name + ":  compressionTriangleAmplitude=" + to_string(compressionTriangleAmplitude)
                     //                  + ", compressionTrianglePeriod=" + to_string(compressionTrianglePeriod)
                     //                  + ", singleCycleX=" + to_string(singleCycleX));
                     compressionPos = abs(singleCycleX - compressionTriangleAmplitude) + minCyclicalCompression;
@@ -212,7 +212,7 @@ bool SpiralPattern::update()
 //                if (compressionPos < 1) {
 //                    compressionPos = 1;
 //                }
-                logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
+                logger.logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
                                   + ", compressionPosOffset=" + to_string(compressionPosOffset)
                                   + ", compressionPos=" + to_string(compressionPos));
                 */
@@ -230,7 +230,7 @@ bool SpiralPattern::update()
                 if (rotationMeasmtMapper.mapMeasurement(rawRotationPos, rotationStepIntervalMs)) {
                     gotUpdateFromWidget = true;
                     rotateCounterclockwise = (rawRotationPos >= 0);
-                    //logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
+                    //logger.logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
                     //                  + ", rotateCounterclockwise=" + to_string(rotateCounterclockwise)
                     //                  + ", rotationStepIntervalMs=" + to_string(rotationStepIntervalMs)
                     //                  + ", rotationOffset=" + to_string(rotationOffset));
@@ -252,7 +252,7 @@ bool SpiralPattern::update()
                 if (colorMeasmtMapper.mapMeasurement(rawColorPos, colorSteps)) {
                     gotUpdateFromWidget = true;
                     currentHue += colorSteps;
-                    //logMsg(LOG_DEBUG, name + ":  rawColorPos=" + to_string(rawColorPos)
+                    //logger.logMsg(LOG_DEBUG, name + ":  rawColorPos=" + to_string(rawColorPos)
                     //                  + ", colorSteps=" + to_string(colorSteps)
                     //                  + ", currentHue=" + to_string(currentHue));
                 }
@@ -271,7 +271,7 @@ bool SpiralPattern::update()
             nextResetCompressionMs = nowMs + compressionResetTimeoutSeconds * 1000;
         }
         else if (!resetCompression && (int) (nowMs - nextResetCompressionMs) >= 0) {
-            //logMsg(LOG_DEBUG, name + ":  Resetting compression.");
+            //logger.logMsg(LOG_DEBUG, name + ":  Resetting compression.");
             resetCompression = true;
             compressionPos = 1;
         }
@@ -325,10 +325,10 @@ bool SpiralPattern::update()
             float y = ::powf(x / spiralTightnessFactor,
                                 progressiveSpringFactor + progressiveSpringCompressionResponseFactor * compressionFactor);
             //if (compressionFactor < 1.0) {
-            //    logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y));
+            //    logger.logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y));
             //}
             if (errno != 0) {
-                logSysErr(LOG_ERR,
+                logger.logMsg(LOG_ERR, errno,
                           name + ":  powf indicated an error for "
                                + " x=" + to_string(x)
                                + " spiralTightnessFactor=" + to_string(spiralTightnessFactor)
@@ -336,8 +336,7 @@ bool SpiralPattern::update()
                                + " progressiveSpringCompressionResponseFactor=" + to_string(progressiveSpringCompressionResponseFactor)
                                + " compressionFactor=" + to_string(compressionFactor)
                                + " exp=" + to_string(progressiveSpringFactor
-                                                     + progressiveSpringCompressionResponseFactor * compressionFactor)
-                          , errno);
+                                                     + progressiveSpringCompressionResponseFactor * compressionFactor));
             }
             if (y > 1.0) {
                 break;
@@ -352,8 +351,8 @@ bool SpiralPattern::update()
                 pixelIdx = (uint32_t) (y * (float) heightInPixels + (float) startingPixelOffset);
             }
             //if (compressionFactor < 1.0) {
-            //    //logMsg(LOG_DEBUG, name + ":  stringIdx=" + to_string(stringIdx) + " pixelIdx=" + to_string(pixelIdx));
-            //    logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx) + " startingPixelOffset=" + to_string(startingPixelOffset) + " heightInPixels=" + to_string(heightInPixels));
+            //    //logger.logMsg(LOG_DEBUG, name + ":  stringIdx=" + to_string(stringIdx) + " pixelIdx=" + to_string(pixelIdx));
+            //    logger.logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx) + " startingPixelOffset=" + to_string(startingPixelOffset) + " heightInPixels=" + to_string(heightInPixels));
             //}
             // When the spiral is stretched, make sure we're
             // setting a pixel within the physical bounds.
