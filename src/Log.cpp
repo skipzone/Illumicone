@@ -97,7 +97,7 @@ bool Log::setAutoLogRotation(unsigned int intervalMinutes, int offsetHour, int o
 }
 
 
-void Log::doRotateLogs()
+std::string Log::doRotateLogs()
 {
     if (logTo == LogTo::file || logTo == LogTo::fileWithTimestamp) {
         closeLogFile();
@@ -108,8 +108,9 @@ void Log::doRotateLogs()
 
     // If the log file was created without a timestamp in its name, add a
     // timestamp indicating the end of the period covered by the file (now).
+    std::string rotatedLogFilePathName;
     if (logTo == LogTo::file || logTo == LogTo::redirect) {
-        std::string rotatedLogFilePathName =
+        rotatedLogFilePathName =
             expandedLogFilePath + logName + "_" + getTimestamp(TimestampType::compactYmdHm) + ".log";
         if (rename(logFilePathName.c_str(), rotatedLogFilePathName.c_str()) != 0) {
             int errNum = errno;
@@ -117,11 +118,13 @@ void Log::doRotateLogs()
                 << ":  Unable to rename rotated log file " << logFilePathName << " to " << rotatedLogFilePathName << "; "
                 << std::string(strerror(errNum)) + " (" + std::to_string(errNum) + ")." << std::endl;
             // We'll try to keep going with the old name, essentially not rotating the log file.
+            rotatedLogFilePathName = "*** file rename error ***";
         }
     }
     // Otherwise, the active log file is supposed to have a timestamp
     // in its name, so update the timestamp to the current time.
     else {
+        rotatedLogFilePathName = logFilePathName;
         resolveLogFilePathName();
     }
 
@@ -137,10 +140,12 @@ void Log::doRotateLogs()
             logTo = LogTo::nowhere;
         }
     }
+
+    return rotatedLogFilePathName;
 }
 
 
-const std::string Log::getTimestamp(TimestampType timestampType)
+std::string Log::getTimestamp(TimestampType timestampType)
 {
     uint64_t nowMs = getNowMs64();
     time_t now = nowMs / 1000;
@@ -239,7 +244,9 @@ void Log::vlogMsg(int priority, const char* format, va_list args)
 
     if (rotateLogs) {
         rotateLogs = false;
-        doRotateLogs();
+        *lout << timestamp << ":  Rotating log file." << std::endl;
+        std::string rotatedLogFilePathName = doRotateLogs();
+        *lout << timestamp << ":  Rotated log file.  Previous log file is " << rotatedLogFilePathName << std::endl;
     }
 
     vsnprintf(sbuf, sizeof(sbuf), format, args);

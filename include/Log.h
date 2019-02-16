@@ -87,8 +87,8 @@ class Log
 
         char sbuf[stringBufSize];
 
-        void doRotateLogs();
-        const std::string getTimestamp(TimestampType timestampType);
+        std::string doRotateLogs();
+        std::string getTimestamp(TimestampType timestampType);
         bool resolveLogFilePathName(const std::string& logFilePath = "");
 
         bool openLogFile();
