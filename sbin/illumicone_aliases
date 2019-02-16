@@ -1,0 +1,30 @@
+alias logs='cd ~/logs'
+alias src='cd ~/devl/Illumicone/src'
+
+alias strdrv='ssh 192.168.69.100'
+alias widpatcon='ssh 192.168.69.103'
+alias widpatcon2='ssh 192.168.69.104'
+
+alias testpattern='killall -USR2 patternController'
+
+alias reinitpc='killall -USR1 patternController'
+alias disablepc='sudo systemctl disable patternController.service'
+alias enablepc='sudo systemctl enable patternController.service'
+alias startpc='sudo systemctl start patternController.service'
+alias stoppc='sudo systemctl stop patternController.service'
+alias reloadpc='sudo systemctl reload patternController.service'
+
+alias reinitwr='killall widgetRcvr'
+alias disablewr='sudo systemctl disable widgetRcvr.service'
+alias enablewr='sudo systemctl enable widgetRcvr.service'
+alias startwr='sudo systemctl start widgetRcvr.service'
+alias stopwr='sudo systemctl stop widgetRcvr.service'
+alias reloadwr='sudo systemctl reload widgetRcvr.service'
+
+alias tailpc='tail -40 ~/logs/patternController.log'
+alias tailfpc='tail -f ~/logs/patternController.log'
+alias vimpc='vim ~/logs/patternController.log'
+
+alias tailwr='tail -40 ~/logs/widgetRcvr.log'
+alias tailfwr='tail -f ~/logs/widgetRcvr.log'
+alias vimwr='vim ~/logs/widgetRcvr.log'
