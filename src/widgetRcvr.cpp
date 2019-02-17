@@ -111,6 +111,7 @@ static string crcLengthStr;
 // ---------- globals ----------
 
 Log logger;
+Log dataLogger;
 
 // flags set by signals
 static volatile bool gotExitSignal;
@@ -532,7 +533,7 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
         return;
     }
 
-    logger.logMsg(LOG_INFO,
+    dataLogger.logMsg(LOG_INFO,
                   "stest: id=%d a=%d ch=%d seq=%d lastTxUs=%d fails=%d(%d%%)",
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
@@ -544,7 +545,7 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
 
     int payloadNumChange = (int) payload->payloadNum - lastPayloadNum;
     if (payloadNumChange != 1) {
-        logger.logMsg(LOG_WARNING, "message gap:  %d", payloadNumChange);
+        logger.logMsg(LOG_WARNING, "stest message gap:  %d", payloadNumChange);
     }
     lastPayloadNum = payload->payloadNum;
 }
@@ -559,7 +560,7 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
         return;
     }
 
-    logger.logMsg(LOG_INFO,
+    dataLogger.logMsg(LOG_INFO,
                   "pv: id=%d a=%d ch=%d p=%d v=%d",
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
@@ -592,7 +593,7 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
     for (unsigned int i = 0; i < numMeasurements; ++i) {
         sstr << " " << setfill(' ') << setw(6) << payload->measurements[i];
     }
-    logger.logMsg(LOG_INFO,
+    dataLogger.logMsg(LOG_INFO,
                   "mvec: id=%d a=%d ch=%d n=%d %s",
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
@@ -628,7 +629,7 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
     for (unsigned int i = 0; i < bufLen; ++i) {
         sstr << " 0x" << hex << (int) payload->buf[i];
     }
-    logger.logMsg(LOG_INFO,
+    dataLogger.logMsg(LOG_INFO,
                   "custom: id=%d a=%d ch=%d bufLen=%d %s",
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
@@ -927,6 +928,9 @@ bool doInitialization()
 
     logger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
 
+    dataLogger.startLogging(instanceName + "_data", Log::LogTo::file, logFilePath);
+    dataLogger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
+
     if (!openUdpPorts()) {
         return false;
     }
@@ -952,6 +956,8 @@ bool doTeardown()
     if (!shutDownRadio()) {
         return false;
     }
+
+    dataLogger.stopLogging();
 
     logger.logMsg(LOG_INFO, "Teardown done.");
 
