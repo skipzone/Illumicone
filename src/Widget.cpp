@@ -35,6 +35,7 @@ using namespace std;
 
 
 extern Log logger;
+extern Log dataLogger;
 
 
 Widget::Widget(WidgetId id, unsigned int numChannels, bool useQueuedChannels)
@@ -183,7 +184,7 @@ void Widget::pollForUdpRx()
             continue;
         }
 
-        logger.logMsg(LOG_INFO, 
+        dataLogger.logMsg(LOG_INFO, 
             "payload: len=" + to_string(rxByteCount)
             + " id=" + to_string((int) payload.id)
             + " ch=" + to_string((int) payload.channel)

@@ -76,6 +76,7 @@ struct PatternState {
 };
 
 Log logger;                     // this is the global Log object used everywhere
+Log dataLogger;                 // this logs received messages to the _data log
 
 // command line options and their defaults
 static bool runAsDaemon = false;
@@ -965,6 +966,9 @@ bool doInitialization()
 
     logger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
 
+    dataLogger.startLogging(instanceName + "_data", Log::LogTo::file, logFilePath);
+    dataLogger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
+
     if (!allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(hsvFinalFrame, numberOfStrings, numberOfPixelsPerString)) {
         logger.logMsg(LOG_ERR, "Unable to allocate pixels for hsvFinalFrame.");
         return false;
@@ -1022,6 +1026,8 @@ bool doTeardown()
 
     freeConePixels<HsvConeStrings, HsvPixel>(hsvFinalFrame);
     freeConePixels<RgbConeStrings, RgbPixel>(rgbFinalFrame);
+
+    dataLogger.stopLogging();
 
     logger.logMsg(LOG_INFO, "Teardown done.");
 

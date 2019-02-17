@@ -110,8 +110,8 @@ static string crcLengthStr;
 
 // ---------- globals ----------
 
-Log logger;
-Log dataLogger;
+Log logger;                     // this is the global Log object used everywhere
+Log dataLogger;                 // this logs received messages to the _data log
 
 // flags set by signals
 static volatile bool gotExitSignal;
