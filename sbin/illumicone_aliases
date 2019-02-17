@@ -25,6 +25,14 @@ alias tailpc='tail -40 ~/logs/patternController.log'
 alias tailfpc='tail -f ~/logs/patternController.log'
 alias vimpc='vim ~/logs/patternController.log'
 
+alias tailpcd='tail -40 ~/logs/patternController_data.log'
+alias tailfpcd='tail -f ~/logs/patternController_data.log'
+alias vimpcd='vim ~/logs/patternController_data.log'
+
 alias tailwr='tail -40 ~/logs/widgetRcvr.log'
 alias tailfwr='tail -f ~/logs/widgetRcvr.log'
 alias vimwr='vim ~/logs/widgetRcvr.log'
+
+alias tailwrd='tail -40 ~/logs/widgetRcvr_data.log'
+alias tailfwrd='tail -f ~/logs/widgetRcvr_data.log'
+alias vimwrd='vim ~/logs/widgetRcvr_data.log'
