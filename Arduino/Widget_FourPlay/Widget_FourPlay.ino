@@ -60,9 +60,9 @@ enum class WidgetMode {
 
 //#define SPINNAH
 //#define FOURPLAY
-#define FOURPLAY_4_2
+//#define FOURPLAY_4_2
 //#define FOURPLAY_4_3
-//#define TRIOBELISK
+#define TRIOBELISK
 
 #if defined(SPINNAH)
   #define WIDGET_ID 2
@@ -89,7 +89,7 @@ enum class WidgetMode {
 #elif defined(TRIOBELISK)
   #define NUM_ENCODERS 3
   #define ACTIVE_TX_INTERVAL_MS 10L
-  #define INACTIVE_TX_INTERVAL_MS 1000L
+  #define INACTIVE_TX_INTERVAL_MS 2000L
   #define INACTIVITY_TIMEOUT_FOR_SLEEP_MS 10000L
   //#define TX_FAILURE_LED_PIN 2
   //#define TX_FAILURE_LED_ON HIGH
