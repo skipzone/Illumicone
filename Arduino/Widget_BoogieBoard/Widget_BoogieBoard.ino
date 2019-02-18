@@ -473,7 +473,7 @@ void sendMeasurements()
   }
 #endif
 
-  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * NUM_MPU_VALUES_TO_SEND)) {
+  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * NUM_MPU_VALUES_TO_SEND, !WANT_ACK)) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write failed."));
 #endif
