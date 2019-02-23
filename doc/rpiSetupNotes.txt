@@ -1,4 +1,5 @@
 9/13/2017 -- Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
+(updated 2/23/2019)
 
 
 0.  Write the image to a micro-SD card.
@@ -58,9 +59,11 @@
     Follow the bouncing ball.
 
 
-7.  Create .bash_aliases
+7.  Create .bash_aliases and .illumicone_aliases
 
-    on development system:  scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-widpatcon.local:.bash_aliases
+    on development system:
+        scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-widpatcon.local:.bash_aliases
+        scp ~/devl/Illumicone/sbin/illumicone_aliases illumicone@ic-widpatcon.local:.illumicone_aliases
 
 
 8.  Set the time zone.
@@ -78,7 +81,7 @@
 
 9.  Install required and useful packages.
 
-    sudo apt-get install vim psmisc git git-flow
+    sudo apt-get install vim psmisc git git-flow lsof dnsutils
 
     (psmisc gives us the killall utility.)
 
@@ -243,7 +246,8 @@
     This might help with hidden networks:
         scan_ssid=1
 
-    Add this when configuring multiple networks:
+    Add this when configuring multiple networks (higher priority value means
+    more preferred):
         priority=1
         id_str="networkOne"
         ...
@@ -257,11 +261,15 @@
 18.  Assign static IP address 192.168.69.103 for ic-widpatcon on wired network.
 
     Add this to /etc/dhcpcd.conf (note the extra "c" in the file name):
+        # Assign a lower metric to wlan0 to encourage using it for Internet requests.
+        interface wlan0
+        metric 200
         # Use a static IP address on the Illumicone network.
         interface eth0
         static ip_address=192.168.69.103/24
         static routers=192.168.69.1
-        static domain_name_servers=192.168.69.1 8.8.8.8
+        static domain_name_servers=208.67.222.222 192.168.69.1
+        metric 300
 
 
 19.  Set up illumicone's crontab.
@@ -271,14 +279,33 @@
 
 ================================================================================
 
-raspbian-shrink is a nice script for shrinking an RPi (or BBB) image file.  It
-runs fine under Ubuntu 14.04.  You can get it here:
+Useful Commands and Stuff
+-------------------------
+
+* Networking
+
+    View kernel routing table:  route -n
+
+    Change config without reboot:
+        sudo systemctl daemon-reload
+        sudo systemctl restart dhcpcd
+
+* Wi-Fi
+
+    status:  sudo wpa_cli status
+    view detected networks:  sudo wpa_cli scan_results
+    re-read configuration:  sudo wpa_cli reconfigure
+
+
+* Shrink image file
+
+    raspbian-shrink is a nice script for shrinking an RPi (or BBB) image file.
+    It runs fine under Ubuntu 14.04.  You can get it here:
 
     https://github.com/aoakley/cotswoldjam.git
 
-
-Or, use the skipzone fork to get a fix for the extra space between "83" and
-"Linux" in fdisk output on Ubuntu 14.04.3.
+    Or, use the skipzone fork to get a fix for the extra space between "83" and
+    "Linux" in fdisk output on Ubuntu 14.04.3.
 
 ================================================================================
 
@@ -323,7 +350,7 @@ name) by adding this:
         static routers=192.168.69.1
         static domain_name_servers=192.168.69.1 8.8.8.8
 
-(At least we're not having to deal with fucking connman.)
+(At least we're not having to deal with that fucking connman.)
 
 
 Install git-flow, clone the Illumicone project, init git flow, pull current feature
