@@ -131,7 +131,7 @@ void loop() {
     payload.position = avgPressure;
     payload.velocity = numSamples;
 
-    radio.write(&payload, sizeof(payload));
+    radio.write(&payload, sizeof(payload), !WANT_ACK);
     
     numSamples = 0;
     pressureMeasmtSum = 0;
