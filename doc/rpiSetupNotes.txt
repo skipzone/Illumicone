@@ -226,12 +226,16 @@
 
     To see what networks are visible:
         sudo iwlist wlan0 scan
+        sudo wpa_cli scan_results
 
     Add this to /etc/wpa_supplicant/wpa_supplicant.conf:
         network={
                 ssid="thessid"
                 psk="thepassword"
         }
+    Or, decrypt ~devl/Illumicone/config/wpa_supplicant.conf.gpg into
+    wpa_supplicant.conf, copy the file to /etc/wpa_supplicant, and set its
+    permissions to 600.
 
     Use ifconfig to see if the connection was successful.
 
