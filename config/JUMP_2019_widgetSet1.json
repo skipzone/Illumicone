@@ -95,7 +95,8 @@
 
     "widgetRcvr2" : {
 
-        "patconIpAddress" : "192.168.69.103",
+        //"patconIpAddress" : "192.168.69.103",
+        "patconIpAddress" : "192.168.198.72",
 
         //"lockFilePath" : "/tmp",
 
