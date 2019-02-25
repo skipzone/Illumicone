@@ -93,13 +93,13 @@ def sendPv(widgetData):
 def sendMvec(widgetData):
     waitUntilTimestamp(widgetData['timestamp'])
     print('Sending mvec data:  {0}'.format(widgetData))
-    for measmt in widgetData['measurements']:
+    for i, measmt in enumerate(widgetData['measurements']):
         message = pack('=BBBhh',
             widgetData['widgetId'],
-            widgetData['channel'],
+            i,                      # channel
             widgetData['isActive'],
-            measmt,
-            0)
+            measmt,                 # position
+            0)                      # velocity is always zero
         clientSock.sendto(message, (patconIpAddress, widgetPortNumberBase + widgetData['widgetId']))
 
 def sendCustom(widgetData):
