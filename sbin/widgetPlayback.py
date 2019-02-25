@@ -54,6 +54,7 @@ struct UdpPayload {
 # TODO:  get these from config
 patconIpAddress = '127.0.0.1'   #'192.168.69.103'
 widgetPortNumberBase = 4200
+timeCompressionThresholdSeconds = 5
 
 lineCount = 0
 lastTimestamp = None
@@ -63,13 +64,14 @@ clientSock = None
 def waitUntilTimestamp(timestamp):
 
     global lastTimestamp
+    global timeCompressionThresholdSeconds
 
     try:
         thisTimestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
         if lastTimestamp:
             interval = thisTimestamp - lastTimestamp
             intervalS = interval.days * 3600 * 24 + interval.seconds + interval.microseconds / 1000000.0
-            if (intervalS > 0):
+            if (intervalS > 0 and intervalS < timeCompressionThresholdSeconds):
                 sleep(intervalS)
 
         lastTimestamp = thisTimestamp
@@ -80,7 +82,7 @@ def waitUntilTimestamp(timestamp):
 
 def sendPv(widgetData):
     waitUntilTimestamp(widgetData['timestamp'])
-    print('Sending pv data:  {0}'.format(widgetData))
+    #print('Sending pv data:  {0}'.format(widgetData))
     message = pack('=BBBhh',
         widgetData['widgetId'],
         widgetData['channel'],
@@ -92,7 +94,7 @@ def sendPv(widgetData):
 
 def sendMvec(widgetData):
     waitUntilTimestamp(widgetData['timestamp'])
-    print('Sending mvec data:  {0}'.format(widgetData))
+    #print('Sending mvec data:  {0}'.format(widgetData))
     for i, measmt in enumerate(widgetData['measurements']):
         message = pack('=BBBhh',
             widgetData['widgetId'],
@@ -104,7 +106,7 @@ def sendMvec(widgetData):
 
 def sendCustom(widgetData):
     waitUntilTimestamp(widgetData['timestamp'])
-    print('Sending custom data:  {0}'.format(widgetData))
+    #print('Sending custom data:  {0}'.format(widgetData))
 
 
 def processLogFile(logFileName):
@@ -129,8 +131,8 @@ def processLogFile(logFileName):
     try:
         with open(logFileName, 'r') as f:
             for line in f:
-                if lineCount % 100 == 0:
-                    print('Processed {0} lines.'.format(lineCount))
+                if lineCount % 1000 == 0:
+                    print('Processed {0} lines.  Last timestamp was {1}.'.format(lineCount, lastTimestamp))
                 lineCount += 1
                 line = line.rstrip()
 
