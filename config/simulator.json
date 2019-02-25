@@ -40,15 +40,15 @@
         //"useTcpForOpcServer" : true,
 
         // ----- local simulator -----
-        //"patconIpAddress" : "127.0.0.1",
-        //"opcServerIpAddress": "127.0.0.1",
-        //"useTcpForOpcServer" : true,
+        "patconIpAddress" : "127.0.0.1",
+        "opcServerIpAddress": "127.0.0.1",
+        "useTcpForOpcServer" : true,
 
         // ----- local pattern generator with display on perry/floyd -----
-        "patconIpAddress" : "127.0.0.1",
+        //"patconIpAddress" : "127.0.0.1",
         //"opcServerIpAddress": "192.168.76.15",
-        "opcServerIpAddress": "192.168.0.83",
-        "useTcpForOpcServer" : true,
+        //"opcServerIpAddress": "192.168.0.83",
+        //"useTcpForOpcServer" : true,
 
         "opcServerPortNumber" : 7890,
         "widgetPortNumberBase" : 4200,
@@ -133,7 +133,7 @@
             },
             {   "name" : "fourPlay42",
                 "enabled" : true,
-                "generateSimulatedMeasurements" : true,
+                "generateSimulatedMeasurements" : false,
                 "autoInactiveMs" : 5000
             },
             {   "name" : "fourPlay43",
@@ -200,23 +200,23 @@
                 // The raw compression measurement maps to compression
                 // factor, which is usually in the range [0.8, 4] or so.
                 "compressionMeasurementMapper" : [
-                    {   "rawMin" : -9001,
-                        "rawMax" : -3000,
+                    {   "rawMin" : -901,
+                        "rawMax" : -300,
                         "mappedStart" : 0.1,
                         "mappedEnd" : 0.1
                     },
-                    {   "rawMin" : -3000,
+                    {   "rawMin" : -300,
                         "rawMax" : 0,
                         "mappedStart" : 0.1,
                         "mappedEnd" : 1.0
                     },
                     {   "rawMin" : 0,
-                        "rawMax" : 3000,
+                        "rawMax" : 300,
                         "mappedStart" : 1.0,
                         "mappedEnd" : 4.0
                     },
-                    {   "rawMin" : 3000,
-                        "rawMax" : 9001,
+                    {   "rawMin" : 300,
+                        "rawMax" : 901,
                         "mappedStart" : 4.0,
                         "mappedEnd" : 4.0
                     }
@@ -226,23 +226,23 @@
                 // rotation steps.  Each rotation step starts the spiral at the next
                 // or previous string.
                 "rotationMeasurementMapper" : [
-                    {   "rawMin" : -9001,
-                        "rawMax" : -1500,
+                    {   "rawMin" : -901,
+                        "rawMax" : -150,
                         "mappedStart" : 20,
                         "mappedEnd" : 20
                     },
-                    {   "rawMin" : -1500,
+                    {   "rawMin" : -150,
                         "rawMax" : 0,
                         "mappedStart" : 20,
                         "mappedEnd" : 200
                     },
                     {   "rawMin" : 0,
-                        "rawMax" : 1500,
+                        "rawMax" : 150,
                         "mappedStart" : 200,
                         "mappedEnd" : 20 
                     },
-                    {   "rawMin" : 1500,
-                        "rawMax" : 9001,
+                    {   "rawMin" : 150,
+                        "rawMax" : 901,
                         "mappedStart" : 20,
                         "mappedEnd" : 20
                     }
