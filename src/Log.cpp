@@ -268,9 +268,35 @@ bool Log::resolveLogFilePathName(const std::string& logFilePath)
     if (!logFilePath.empty()) {
         // Expand the tilde and any environment variables the path might contain.
         wordexp_t p;
-        if (wordexp(logFilePath.c_str(), &p, WRDE_NOCMD | WRDE_UNDEF) != 0 || p.we_wordc != 1) {
+        int errCode = wordexp(logFilePath.c_str(), &p, WRDE_NOCMD | WRDE_UNDEF);
+        if (errCode != 0 || p.we_wordc != 1) {
+            std::string errDesc;
+            switch (errCode) {
+                case 0:
+                    errDesc = "path expanded into multiple possibilities";
+                    break;
+                case WRDE_BADCHAR:
+                    errDesc = "invalid character in path";
+                    break;
+                case WRDE_BADVAL:
+                    errDesc = "undefined shell variable referenced";
+                    break;
+                case WRDE_CMDSUB:
+                    errDesc = "command substitution disallowed";
+                    break;
+                case WRDE_NOSPACE:
+                    errDesc = "not enough memory to store result";
+                    break;
+                case WRDE_SYNTAX:
+                    errDesc = "shell syntax error in path";
+                    break;
+                default:
+                    errDesc = "";
+            }
             std::cerr << std::string(__FUNCTION__)
-                << ":  Invalid log file path \"" << logFilePath << "\"." << std::endl;
+                << ":  Invalid log file path \"" << logFilePath << "\"; "
+                << errDesc << " (" << std::to_string(errCode)
+                << ").  we_wordc=" << p.we_wordc << "." << std::endl;
             return false;
         }
         expandedLogFilePath = p.we_wordv[0];
