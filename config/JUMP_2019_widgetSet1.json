@@ -138,10 +138,10 @@
         "numberOfPixelsPerString" : 100,
 
         "shutoffPeriods" : [
-            //{   "description" : "JUMP late night shutoff",
-            //    "startDateTime" : "22:00:00",
-            //    "endDateTime" : "06:00:00"
-            //},
+            {   "description" : "JUMP late night shutoff",
+                "startDateTime" : "22:00:00",
+                "endDateTime" : "06:30:00"
+            }
             //{   "description" : "JUMP daytime shutoff",
             //    "startDateTime" : "07:30:00",
             //    "endDateTime" : "18:00:00"
@@ -153,6 +153,16 @@
         ],
 
         "quiescentPeriods" : [
+          {   "description" : "closing time chill",
+              "startDateTime" : "21:55:00",
+              "endDateTime" : "22:00:00",
+              "quiescentColor" : "navy"
+          },
+          {   "description" : "daytime dry-out",
+              "startDateTime" : "08:00:00",
+              "endDateTime" : "17:00:00",
+              "quiescentColor" : "192,192,192"
+          }
         ],
 
         "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
@@ -171,7 +181,7 @@
             },
             {   "name" : "fourPlay42",
                 "enabled" : true,
-                "generateSimulatedMeasurements" : true,
+                "generateSimulatedMeasurements" : false,
                 "autoInactiveMs" : 5000
             },
             {   "name" : "fourPlay43",
@@ -212,12 +222,12 @@
                 "inputs" : [
                     {   "inputName" : "compression",
                         "widgetName" : "boogieBoard",
-                        "channelNumber" : 1,                            // pitch, degrees * 100, (-9000, 9000)
+                        "channelNumber" : 1,                            // pitch, degrees * 10, (-900, 900)
                         "measurement" : "position"
                     },
                     {   "inputName" : "rotation",
                         "widgetName" : "boogieBoard",
-                        "channelNumber" : 2,                            // roll, degrees * 100, (-9000, 9000)
+                        "channelNumber" : 2,                            // roll, degrees * 10, (-900, 900)
                         "measurement" : "position"
                     },
                     {   "inputName" : "color",
@@ -233,23 +243,23 @@
                 // The raw compression measurement maps to compression
                 // factor, which is usually in the range [0.8, 4] or so.
                 "compressionMeasurementMapper" : [
-                    {   "rawMin" : -9001,
-                        "rawMax" : -3000,
+                    {   "rawMin" : -901,
+                        "rawMax" : -300,
                         "mappedStart" : 0.1,
                         "mappedEnd" : 0.1
                     },
-                    {   "rawMin" : -3000,
+                    {   "rawMin" : -300,
                         "rawMax" : 0,
                         "mappedStart" : 0.1,
                         "mappedEnd" : 1.0
                     },
                     {   "rawMin" : 0,
-                        "rawMax" : 3000,
+                        "rawMax" : 300,
                         "mappedStart" : 1.0,
                         "mappedEnd" : 4.0
                     },
-                    {   "rawMin" : 3000,
-                        "rawMax" : 9001,
+                    {   "rawMin" : 300,
+                        "rawMax" : 901,
                         "mappedStart" : 4.0,
                         "mappedEnd" : 4.0
                     }
@@ -259,25 +269,25 @@
                 // rotation steps.  Each rotation step starts the spiral at the next
                 // or previous string.
                 "rotationMeasurementMapper" : [
-                    {   "rawMin" : -9001,
-                        "rawMax" : -1500,
-                        "mappedStart" : 20,
-                        "mappedEnd" : 20
+                    {   "rawMin" : -901,
+                        "rawMax" : -70,
+                        "mappedStart" : 10,
+                        "mappedEnd" : 10
                     },
-                    {   "rawMin" : -1500,
-                        "rawMax" : 0,
-                        "mappedStart" : 20,
-                        "mappedEnd" : 200
+                    {   "rawMin" : -70,
+                        "rawMax" : 30,
+                        "mappedStart" : 10,
+                        "mappedEnd" : 2000
                     },
-                    {   "rawMin" : 0,
-                        "rawMax" : 1500,
-                        "mappedStart" : 200,
-                        "mappedEnd" : 20 
+                    {   "rawMin" : 30,
+                        "rawMax" : 130,
+                        "mappedStart" : 2000,
+                        "mappedEnd" : 10 
                     },
-                    {   "rawMin" : 1500,
-                        "rawMax" : 9001,
-                        "mappedStart" : 20,
-                        "mappedEnd" : 20
+                    {   "rawMin" : 130,
+                        "rawMax" : 901,
+                        "mappedStart" : 10,
+                        "mappedEnd" : 10
                     }
                 ],
                 // The raw color measurement maps to the number of steps to rotate
