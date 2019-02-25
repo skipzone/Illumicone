@@ -28,13 +28,36 @@
 from datetime import datetime, timedelta
 import os
 import re
+import socket
+from struct import *
 import sys
 from time import sleep
 
 
-lineCount = 0
+"""
+static struct sockaddr_in widgetSockAddr[16];
+static int widgetSock[16];
+    unsigned int widgetIdNumber = widgetIdToInt(widgetId);
+    unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
 
+// UDP to the pattern controller
+#pragma pack(1)
+struct UdpPayload {
+    uint8_t id;
+    uint8_t channel;
+    uint8_t isActive;
+    int16_t position;
+    int16_t velocity;
+};
+"""
+
+# TODO:  get these from config
+patconIpAddress = '127.0.0.1'   #'192.168.69.103'
+widgetPortNumberBase = 4200
+
+lineCount = 0
 lastTimestamp = None
+clientSock = None
 
 
 def waitUntilTimestamp(timestamp):
@@ -58,12 +81,26 @@ def waitUntilTimestamp(timestamp):
 def sendPv(widgetData):
     waitUntilTimestamp(widgetData['timestamp'])
     print('Sending pv data:  {0}'.format(widgetData))
+    message = pack('=BBBhh',
+        widgetData['widgetId'],
+        widgetData['channel'],
+        widgetData['isActive'],
+        widgetData['position'],
+        widgetData['velocity'])
+    clientSock.sendto(message, (patconIpAddress, widgetPortNumberBase + widgetData['widgetId']))
 
 
 def sendMvec(widgetData):
     waitUntilTimestamp(widgetData['timestamp'])
     print('Sending mvec data:  {0}'.format(widgetData))
-
+    for measmt in widgetData['measurements']:
+        message = pack('=BBBhh',
+            widgetData['widgetId'],
+            widgetData['channel'],
+            widgetData['isActive'],
+            measmt,
+            0)
+        clientSock.sendto(message, (patconIpAddress, widgetPortNumberBase + widgetData['widgetId']))
 
 def sendCustom(widgetData):
     waitUntilTimestamp(widgetData['timestamp'])
@@ -101,25 +138,24 @@ def processLogFile(logFileName):
                 if m is not None:
                     widgetData = {
                         'timestamp' : m.group(1),
-                        'widgetId' : m.group(2),
-                        'isActive' : m.group(3),
-                        'channel' : m.group(4),
-                        'position' : m.group(5),
-                        'velocity' : m.group(6) }
+                        'widgetId' : int(m.group(2)),
+                        'isActive' : int(m.group(3)),
+                        'channel' : int(m.group(4)),
+                        'position' : int(m.group(5)),
+                        'velocity' : int(m.group(6)) }
                     sendPv(widgetData)
                     next
 
                 m = re.search(mvecPayloadPattern, line)
                 if m is not None:
                     numMeasurements = int(m.group(5))
-                    measurements = [int(i) for i in m.group(6).split()]
+                    measurements = [int(measmt) for measmt in m.group(6).split()]
                     if (len(measurements) == numMeasurements):
                         widgetData = {
                             'timestamp' : m.group(1),
-                            'widgetId' : m.group(2),
-                            'isActive' : m.group(3),
-                            'channel' : m.group(4),
-                            'numMeasurements' : int(m.group(5)),
+                            'widgetId' : int(m.group(2)),
+                            'isActive' : int(m.group(3)),
+                            'channel' : int(m.group(4)),
                             'measurements' : measurements }
                         sendMvec(widgetData)
                     else:
@@ -129,13 +165,13 @@ def processLogFile(logFileName):
                 m = re.search(customPayloadPattern, line)
                 if m is not None:
                     payloadLength = int(m.group(5))
-                    hexBytes = [i for i in m.group(6).split()]
+                    hexBytes = [h for h in m.group(6).split()]
                     if (len(hexBytes) / 4 == payloadLength):
                         widgetData = {
                             'timestamp' : m.group(1),
-                            'widgetId' : m.group(2),
-                            'isActive' : m.group(3),
-                            'channel' : m.group(4),
+                            'widgetId' : int(m.group(2)),
+                            'isActive' : int(m.group(3)),
+                            'channel' : int(m.group(4)),
                             'payloadLength' : int(m.group(5)),
                             'hexBytes' : hexBytes }
                         sendCustom(widgetData)
@@ -158,6 +194,8 @@ def usage():
 
 def main(argv):
 
+    global clientSock
+
     if len(argv) <> 2:
         usage()
         return 2
@@ -166,6 +204,8 @@ def main(argv):
     if not os.path.exists(inputFileName):
         sys.stderr.write('File {0} does not exist.\n'.format(inputFileName))
         return 1
+
+    clientSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     processLogFile(inputFileName)
 
