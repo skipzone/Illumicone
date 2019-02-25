@@ -30,9 +30,9 @@ extern Log logger;
 
 
 BoogieBoardWidget::BoogieBoardWidget()
-    : Widget(WidgetId::boogieBoard, 6)
+    : Widget(WidgetId::boogieBoard, 13)
 {
-    // yaw, pitch, roll, which vary from -9000 to 9000
+    // yaw, pitch, roll, which vary from -900 to 900
     simulationUpdateIntervalMs[0] = 50;
     simulationUpdateIntervalMs[1] = 50;
     simulationUpdateIntervalMs[2] = 50;

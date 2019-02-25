@@ -230,10 +230,10 @@ bool SpiralPattern::update()
                 if (rotationMeasmtMapper.mapMeasurement(rawRotationPos, rotationStepIntervalMs)) {
                     gotUpdateFromWidget = true;
                     rotateCounterclockwise = (rawRotationPos >= 0);
-                    //logger.logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
-                    //                  + ", rotateCounterclockwise=" + to_string(rotateCounterclockwise)
-                    //                  + ", rotationStepIntervalMs=" + to_string(rotationStepIntervalMs)
-                    //                  + ", rotationOffset=" + to_string(rotationOffset));
+                    logger.logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
+                                      + ", rotateCounterclockwise=" + to_string(rotateCounterclockwise)
+                                      + ", rotationStepIntervalMs=" + to_string(rotationStepIntervalMs)
+                                      + ", rotationOffset=" + to_string(rotationOffset));
                 }
             }
         }
