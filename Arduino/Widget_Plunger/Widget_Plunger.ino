@@ -42,9 +42,13 @@
 
 #define WIDGET_ID 8
 #define NUM_CHANNELS 1
-#define TX_INTERVAL_MS 250L
+#define ACTIVE_TX_INTERVAL_MS 250L
+#define INACTIVE_TX_INTERVAL_MS 60000L      // should be a multiple of ACTIVE_TX_INTERVAL_MS
 #define PRESSURE_SAMPLE_INTERVAL_MS 10L
 #define PRESSURE_SENSOR_SIGNAL_PIN A3
+
+constexpr uint16_t activePressureThreshold = 120;
+constexpr uint8_t numInactiveSendTries = 5; // when going inactive, transmit that fact this many times at the active rate
 
 // ---------- radio configuration ----------
 
@@ -86,6 +90,9 @@ RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 1
 
 PositionVelocityPayload payload;
 
+static bool isActive;
+static uint8_t wasActiveCountdown;
+
 
 /******************
  * Implementation *
@@ -103,7 +110,6 @@ void setup()
                  RF_CHANNEL);
   
   payload.widgetHeader.id = WIDGET_ID;
-  payload.widgetHeader.isActive = true;
   payload.widgetHeader.channel = 0;
 }
 
@@ -123,18 +129,30 @@ void loop() {
     pressureMeasmtSum += analogRead(PRESSURE_SENSOR_SIGNAL_PIN);
   }
 
-  if (now - lastTxMs >= TX_INTERVAL_MS) {
-    lastTxMs = now;
+  if (numSamples > 0 && now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {
+    int16_t avgPressure = pressureMeasmtSum / numSamples;
+    isActive = avgPressure > activePressureThreshold;
+    if (isActive || wasActiveCountdown > 0 || now - lastTxMs >= INACTIVE_TX_INTERVAL_MS) {
+      lastTxMs = now;
 
-    int16_t avgPressure = numSamples > 0 ? pressureMeasmtSum / numSamples : 0;
+      payload.position = avgPressure;
+      payload.velocity = numSamples;
+      payload.widgetHeader.isActive = isActive;
+      radio.write(&payload, sizeof(payload), !WANT_ACK);
 
-    payload.position = avgPressure;
-    payload.velocity = numSamples;
+      numSamples = 0;
+      pressureMeasmtSum = 0;
 
-    radio.write(&payload, sizeof(payload), !WANT_ACK);
-    
-    numSamples = 0;
-    pressureMeasmtSum = 0;
+      if (isActive) {
+        wasActiveCountdown = numInactiveSendTries;
+      }
+      else {
+        if (wasActiveCountdown > 0) {
+          --wasActiveCountdown;
+        }
+      }
+    }
   }
+
 }
 
