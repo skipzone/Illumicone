@@ -52,7 +52,7 @@ struct UdpPayload {
 """
 
 # TODO:  get these from config
-patconIpAddress = '127.0.0.1'   #'192.168.69.103'
+patconIpAddress = '192.168.198.72'  #'127.0.0.1'   #'192.168.69.103'
 widgetPortNumberBase = 4200
 timeCompressionThresholdSeconds = 5
 
@@ -131,7 +131,7 @@ def processLogFile(logFileName):
     try:
         with open(logFileName, 'r') as f:
             for line in f:
-                if lineCount % 1000 == 0:
+                if lineCount % 100 == 0:
                     print('Processed {0} lines.  Last timestamp was {1}.'.format(lineCount, lastTimestamp))
                 lineCount += 1
                 line = line.rstrip()
