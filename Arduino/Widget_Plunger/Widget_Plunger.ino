@@ -118,15 +118,23 @@ void loop() {
 
   static int32_t lastTxMs;
   static int32_t lastSampleMs;
-  static uint8_t numSamples;
+  static uint16_t numSamples;
   static int32_t pressureMeasmtSum;
 
   uint32_t now = millis();
 
   if (now - lastSampleMs >= PRESSURE_SAMPLE_INTERVAL_MS) {
     lastSampleMs = now;
-    ++numSamples;
-    pressureMeasmtSum += analogRead(PRESSURE_SENSOR_SIGNAL_PIN);
+    // If we're inactive, don't average because we want to react as fast as
+    // possible to pumping.  Hopefully, noise won't poke above the threshold.
+    if (!isActive) {
+      numSamples = 1;
+      pressureMeasmtSum = analogRead(PRESSURE_SENSOR_SIGNAL_PIN);
+    }
+    else {
+      ++numSamples;
+      pressureMeasmtSum += analogRead(PRESSURE_SENSOR_SIGNAL_PIN);
+    }
   }
 
   if (numSamples > 0 && now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {
@@ -141,7 +149,7 @@ void loop() {
       radio.write(&payload, sizeof(payload), !WANT_ACK);
 
       numSamples = 0;
-      pressureMeasmtSum = 0;
+      pressureMeasmtSum = 0L;
 
       if (isActive) {
         wasActiveCountdown = numInactiveSendTries;
