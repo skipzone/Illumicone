@@ -4,6 +4,7 @@ We assign these ports:
 
     50103 ic-widpatcon
     50104 ic-widpatcon2
+    50105 ic-widpatcon3
     50113 ic2-widpatcon
     50114 ic2-widpatcon2
 
