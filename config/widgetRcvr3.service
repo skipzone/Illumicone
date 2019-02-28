@@ -1,12 +1,12 @@
 # Copy this file to /etc/systemd/system then execute these commands:
 #
 #   sudo systemctl daemon-reload
-#   sudo systemctl enable widgetRcvr2.service
-#   sudo systemctl start widgetRcvr2.service
+#   sudo systemctl enable widgetRcvr3.service
+#   sudo systemctl start widgetRcvr3.service
 #
 # Use these commands for troubleshooting:
 #
-#   sudo systemctl status widgetRcvr2.service
+#   sudo systemctl status widgetRcvr3.service
 #   sudo journalctl -xe
 #   sudo tail /var/log/user
 
@@ -21,12 +21,12 @@ StartLimitIntervalSec=0
 # "man 5 systemd.service" for help
 # run as a daemon
 Type=forking
-ExecStart=/home/illumicone/bin/widgetRcvr --config_file=/home/illumicone/activeConfig.json --log_path=/home/illumicone/logs --daemon --pidfile=/home/illumicone/widgetRcvr2.pid --instance_name=widgetRcvr2
-PIDFile=/home/illumicone/widgetRcvr2.pid
+ExecStart=/home/illumicone/bin/widgetRcvr --config_file=/home/illumicone/activeConfig.json --log_path=/home/illumicone/logs --daemon --pidfile=/home/illumicone/widgetRcvr3.pid --instance_name=widgetRcvr3
+PIDFile=/home/illumicone/widgetRcvr3.pid
 #
 # run as a normal process
 #Type=simple
-#ExecStart=/home/illumicone/bin/widgetRcvr --config_file=/home/illumicone/activeConfig.json --log_path=/home/illumicone/logs --instance_name=widgetRcvr2
+#ExecStart=/home/illumicone/bin/widgetRcvr --config_file=/home/illumicone/activeConfig.json --log_path=/home/illumicone/logs --instance_name=widgetRcvr3
 #
 User=illumicone
 WorkingDirectory=/home/illumicone
