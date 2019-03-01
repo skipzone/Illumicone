@@ -230,10 +230,10 @@ bool SpiralPattern::update()
                 if (rotationMeasmtMapper.mapMeasurement(rawRotationPos, rotationStepIntervalMs)) {
                     gotUpdateFromWidget = true;
                     rotateCounterclockwise = (rawRotationPos >= 0);
-                    logger.logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
-                                      + ", rotateCounterclockwise=" + to_string(rotateCounterclockwise)
-                                      + ", rotationStepIntervalMs=" + to_string(rotationStepIntervalMs)
-                                      + ", rotationOffset=" + to_string(rotationOffset));
+                    //logger.logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
+                    //                  + ", rotateCounterclockwise=" + to_string(rotateCounterclockwise)
+                    //                  + ", rotationStepIntervalMs=" + to_string(rotationStepIntervalMs)
+                    //                  + ", rotationOffset=" + to_string(rotationOffset));
                 }
             }
         }
@@ -357,8 +357,14 @@ bool SpiralPattern::update()
             // When the spiral is stretched, make sure we're
             // setting a pixel within the physical bounds.
             if (pixelIdx < pixelsPerString) {
-                // TODO:  set the color
                 pixelArray[stringIdx][pixelIdx] = rgbCurrentColor;
+            }
+            // Quick hack to make the spring line wider by turning on adjacent pixels.
+            if (pixelIdx > 0) {
+                pixelArray[stringIdx][pixelIdx - 1] = rgbCurrentColor;
+            }
+            if (pixelIdx + 1 < pixelsPerString) {
+                pixelArray[stringIdx][pixelIdx + 1] = rgbCurrentColor;
             }
 
             x += xStep;
