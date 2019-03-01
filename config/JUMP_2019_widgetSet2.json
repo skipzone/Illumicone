@@ -310,39 +310,39 @@
                 "rotationMeasurementMapper" : [
                     {   "rawMin" : -901,
                         "rawMax" : -70,
-                        "mappedStart" : 10,
-                        "mappedEnd" : 10
+                        "mappedStart" : 5,
+                        "mappedEnd" : 5
                     },
                     {   "rawMin" : -70,
                         "rawMax" : 30,
-                        "mappedStart" : 10,
-                        "mappedEnd" : 2000
+                        "mappedStart" : 5,
+                        "mappedEnd" : 100
                     },
                     {   "rawMin" : 30,
                         "rawMax" : 130,
-                        "mappedStart" : 2000,
-                        "mappedEnd" : 10 
+                        "mappedStart" : 100,
+                        "mappedEnd" : 5 
                     },
                     {   "rawMin" : 130,
                         "rawMax" : 901,
-                        "mappedStart" : 10,
-                        "mappedEnd" : 10
+                        "mappedStart" : 5,
+                        "mappedEnd" : 5
                     }
                 ],
                 // The raw color measurement maps to the number of steps to rotate
                 // around the color wheel.  The color wheel has 255 steps.
                 "colorMeasurementMapper" : [
                     {   "rawMin" : -999,
-                        "rawMax" : -40,
+                        "rawMax" : -20,
                         "mappedStart" : -40,
                         "mappedEnd" : -40
                     },
-                    {   "rawMin" : -40,
-                        "rawMax" : 40,
+                    {   "rawMin" : -20,
+                        "rawMax" : 20,
                         "mappedStart" : -40,
                         "mappedEnd" : 40
                     },
-                    {   "rawMin" : 40,
+                    {   "rawMin" : 20,
                         "rawMax" : 999,
                         "mappedStart" : 40,
                         "mappedEnd" : 40
