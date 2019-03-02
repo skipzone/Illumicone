@@ -283,21 +283,21 @@
                 // factor, which is usually in the range [0.8, 4] or so.
                 "compressionMeasurementMapper" : [
                     {   "rawMin" : -901,
-                        "rawMax" : -300,
+                        "rawMax" : -50,
                         "mappedStart" : 0.1,
                         "mappedEnd" : 0.1
                     },
-                    {   "rawMin" : -300,
+                    {   "rawMin" : -50,
                         "rawMax" : 0,
                         "mappedStart" : 0.1,
                         "mappedEnd" : 1.0
                     },
                     {   "rawMin" : 0,
-                        "rawMax" : 300,
+                        "rawMax" : 50,
                         "mappedStart" : 1.0,
                         "mappedEnd" : 4.0
                     },
-                    {   "rawMin" : 300,
+                    {   "rawMin" : 50,
                         "rawMax" : 901,
                         "mappedStart" : 4.0,
                         "mappedEnd" : 4.0
@@ -309,11 +309,11 @@
                 // or previous string.
                 "rotationMeasurementMapper" : [
                     {   "rawMin" : -901,
-                        "rawMax" : -70,
+                        "rawMax" : -30,
                         "mappedStart" : 5,
                         "mappedEnd" : 5
                     },
-                    {   "rawMin" : -70,
+                    {   "rawMin" : -30,
                         "rawMax" : 30,
                         "mappedStart" : 5,
                         "mappedEnd" : 100
