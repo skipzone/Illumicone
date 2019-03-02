@@ -181,17 +181,13 @@ bool SpiralPattern::update()
                 int rawCompressionPos = compressionChannel->getPosition();
                 if (compressionMeasmtMapper.mapMeasurement(rawCompressionPos, compressionFactor)) {
                     gotUpdateFromWidget = true;
-
                     if (resetCompression) {
                         resetCompression = false;
                         compressionPosOffset = rawCompressionPos;
                     }
+                    //logger.logMsg(LOG_DEBUG, "%s:  rawCompressionPos=%d compressionPosOffset=%d compressionFactor=%f",
+                    //              name.c_str(), rawCompressionPos, compressionPosOffset, compressionFactor);
                 }
-
-                    //logger.logMsg(LOG_DEBUG, name + ":  rawCompressionPos=" + to_string(rawCompressionPos)
-                    //                  + ", compressionPosOffset=" + to_string(compressionPosOffset)
-                    //                  + ", compressionFactor=" + to_string(compressionFactor));
-
 
                 // TODO:  Put back in cyclical measurement support.
                 /*
@@ -354,17 +350,20 @@ bool SpiralPattern::update()
             //    //logger.logMsg(LOG_DEBUG, name + ":  stringIdx=" + to_string(stringIdx) + " pixelIdx=" + to_string(pixelIdx));
             //    logger.logMsg(LOG_DEBUG, name + ":  x=" + to_string(x) + " y=" + to_string(y) + " pixelIdx=" + to_string(pixelIdx) + " startingPixelOffset=" + to_string(startingPixelOffset) + " heightInPixels=" + to_string(heightInPixels));
             //}
-            // When the spiral is stretched, make sure we're
-            // setting a pixel within the physical bounds.
-            if (pixelIdx < pixelsPerString) {
-                pixelArray[stringIdx][pixelIdx] = rgbCurrentColor;
-            }
-            // Quick hack to make the spring line wider by turning on adjacent pixels.
-            if (pixelIdx > 0) {
-                pixelArray[stringIdx][pixelIdx - 1] = rgbCurrentColor;
-            }
-            if (pixelIdx + 1 < pixelsPerString) {
-                pixelArray[stringIdx][pixelIdx + 1] = rgbCurrentColor;
+
+            if (stringIdx < numStrings) {
+                // When the spiral is stretched, make sure we're
+                // setting a pixel within the physical bounds.
+                if (pixelIdx < pixelsPerString) {
+                    pixelArray[stringIdx][pixelIdx] = rgbCurrentColor;
+                }
+                // Quick hack to make the spring line wider by turning on adjacent pixels.
+                if (pixelIdx > 0 && pixelIdx <= pixelsPerString) {
+                    pixelArray[stringIdx][pixelIdx - 1] = rgbCurrentColor;
+                }
+                if (pixelIdx + 1 < pixelsPerString) {
+                    pixelArray[stringIdx][pixelIdx + 1] = rgbCurrentColor;
+                }
             }
 
             x += xStep;
