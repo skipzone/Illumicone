@@ -278,8 +278,8 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 
 #define ACTIVATE_WITH_MOVEMENT
 
-static constexpr int16_t movementDetectionThreshold = 5;    // tenths of a degree of change in yaw, pitch, or roll
-static constexpr uint32_t inactiveTransitionDelayMs = 5000; // delay between inactivity detection and going inactive
+static constexpr int16_t movementDetectionThreshold = 1;              // tenths of a degree of change in yaw, pitch, or roll
+static constexpr uint32_t inactiveTransitionDelayMs = 10000;          // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;         // unit is 2 mg
 static constexpr uint8_t mpu6050MotionDetectionCounterDecrement = 1;
@@ -287,8 +287,8 @@ static constexpr uint8_t mpu6050MotionDetectionDuration = 1;          // unit is
 static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
 
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
-#define ACTIVE_TX_INTERVAL_MS 50L
-#define INACTIVE_TX_INTERVAL_MS 2000L
+#define ACTIVE_TX_INTERVAL_MS 53L
+#define INACTIVE_TX_INTERVAL_MS 5000L
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
 // every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
@@ -297,7 +297,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 
 // The MPU-6050 is placed in cycle mode, and the processor is put to sleep
 // when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
-#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 60000L
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 600000L
 
 // We use the time elapsed since getting good data from the MPU-6050 to determine
 // if we need to reinitialize the little bastard because he's quit working right.
@@ -318,7 +318,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
 
 // moving average length for averaging IMU measurements
-#define MA_LENGTH 20
+#define MA_LENGTH 5
 
 // ---------- radio configuration ----------
 
