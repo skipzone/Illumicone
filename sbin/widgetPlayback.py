@@ -34,24 +34,7 @@ import sys
 from time import sleep
 
 
-"""
-static struct sockaddr_in widgetSockAddr[16];
-static int widgetSock[16];
-    unsigned int widgetIdNumber = widgetIdToInt(widgetId);
-    unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
-
-// UDP to the pattern controller
-#pragma pack(1)
-struct UdpPayload {
-    uint8_t id;
-    uint8_t channel;
-    uint8_t isActive;
-    int16_t position;
-    int16_t velocity;
-};
-"""
-
-# TODO:  get these from config
+# TODO:  get these from command line
 patconIpAddress = '127.0.0.1'   #'192.168.198.72'  #'127.0.0.1'   #'192.168.69.103'
 widgetPortNumberBase = 4200
 timeCompressionThresholdSeconds = 5
@@ -73,6 +56,8 @@ def waitUntilTimestamp(timestamp):
             intervalS = interval.days * 3600 * 24 + interval.seconds + interval.microseconds / 1000000.0
             if (intervalS > 0 and intervalS < timeCompressionThresholdSeconds):
                 sleep(intervalS)
+            else:
+                print('Advancing to {0}.'.format(timestamp))
 
         lastTimestamp = thisTimestamp
 
