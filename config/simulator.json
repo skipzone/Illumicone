@@ -754,7 +754,7 @@
             {   "name" : "rain",
                 "enabled" : true,
                 "priority" : 2,
-                "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+                "opacity" : 95,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
                 "patternClassName" : "ParticlesPattern",
                 "inputs" : [
                     {   "inputName" : "emitRate",

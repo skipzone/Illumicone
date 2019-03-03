@@ -223,16 +223,20 @@ bool FillAndBurstPattern::update()
 
         case PatternState::pressurizing:
 
+            isActive = pressureChannel->getIsActive();
+
             if (!gotNewMeasmt) {
                 return isActive;
             }
   
+            // Being below the low pressure cutoff is the same as being inactive.
             if (curMeasmt <= lowPressureCutoff) {
                 isActive = false;
-                return false;
             }
 
-            isActive = true;
+            if (!isActive) {
+                return false;
+            }
 
             clearAllPixels();
 
