@@ -54,10 +54,11 @@ def waitUntilTimestamp(timestamp):
         if lastTimestamp:
             interval = thisTimestamp - lastTimestamp
             intervalS = interval.days * 3600 * 24 + interval.seconds + interval.microseconds / 1000000.0
-            if (intervalS > 0 and intervalS < timeCompressionThresholdSeconds):
-                sleep(intervalS)
-            else:
-                print('Advancing to {0}.'.format(timestamp))
+            if intervalS > 0:
+                if intervalS < timeCompressionThresholdSeconds:
+                    sleep(intervalS)
+                else:
+                    print('Advancing to {0}.'.format(timestamp))
 
         lastTimestamp = thisTimestamp
 
