@@ -52,7 +52,7 @@ struct UdpPayload {
 """
 
 # TODO:  get these from config
-patconIpAddress = '192.168.198.72'  #'127.0.0.1'   #'192.168.69.103'
+patconIpAddress = '127.0.0.1'   #'192.168.198.72'  #'127.0.0.1'   #'192.168.69.103'
 widgetPortNumberBase = 4200
 timeCompressionThresholdSeconds = 5
 
