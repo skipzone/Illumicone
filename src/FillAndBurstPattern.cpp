@@ -178,10 +178,13 @@ bool FillAndBurstPattern::update()
     unsigned int nowMs = getNowMs();
 
     bool gotNewMeasmt = false;
-    int curMeasmt;
+    int curMeasmt = 0;
     if (pressureChannel->getHasNewPositionMeasurement()) {
         curMeasmt = pressureChannel->getPosition();
         gotNewMeasmt = true;
+
+        // Being below the low pressure cutoff is the same as being inactive.
+        isActive = pressureChannel->getIsActive() && curMeasmt > lowPressureCutoff;
     }
 
     // Are we in one of the bursting states? 
@@ -223,21 +226,10 @@ bool FillAndBurstPattern::update()
 
         case PatternState::pressurizing:
 
-            isActive = pressureChannel->getIsActive();
-
-            if (!gotNewMeasmt) {
+            if (!gotNewMeasmt || !isActive) {
                 return isActive;
             }
   
-            // Being below the low pressure cutoff is the same as being inactive.
-            if (curMeasmt <= lowPressureCutoff) {
-                isActive = false;
-            }
-
-            if (!isActive) {
-                return false;
-            }
-
             clearAllPixels();
 
             // Start bursting if we're past the maximum pressure.
