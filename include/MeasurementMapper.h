@@ -20,7 +20,10 @@
 #include <vector>
 
 #include "ConfigReader.h"
-#include "log.h"
+#include "Log.h"
+
+
+extern Log logger;
 
 
 template <class T_raw, class T_mapped>
@@ -209,7 +212,7 @@ bool MeasurementMapper<T_raw, T_mapped>::readConfig(const json11::Json& configOb
 {
     if (!configObj[name].is_array()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not an array" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not an array" + errorMessageSuffix);
         }
         return false;
     }
@@ -223,14 +226,14 @@ bool MeasurementMapper<T_raw, T_mapped>::readConfig(const json11::Json& configOb
 
         if (!rangeConfigObj.is_object()) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, "An element of " + name + " is not an object" + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, "An element of " + name + " is not an object" + errorMessageSuffix);
             }
             return false;
         }
 
         if (!rangeConfigObj["rawMin"].is_number()) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, "In an element of " + name + ", rawMin is not a number" + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, "In an element of " + name + ", rawMin is not a number" + errorMessageSuffix);
             }
             return false;
         }
@@ -238,7 +241,7 @@ bool MeasurementMapper<T_raw, T_mapped>::readConfig(const json11::Json& configOb
 
         if (!rangeConfigObj["rawMax"].is_number()) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, "In an element of " + name + ", rawMax is not a number" + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, "In an element of " + name + ", rawMax is not a number" + errorMessageSuffix);
             }
             return false;
         }
@@ -246,7 +249,7 @@ bool MeasurementMapper<T_raw, T_mapped>::readConfig(const json11::Json& configOb
 
         if (!rangeConfigObj["mappedStart"].is_number()) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, "In an element of " + name + ", mappedStart is not a number" + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, "In an element of " + name + ", mappedStart is not a number" + errorMessageSuffix);
             }
             return false;
         }
@@ -254,7 +257,7 @@ bool MeasurementMapper<T_raw, T_mapped>::readConfig(const json11::Json& configOb
 
         if (!rangeConfigObj["mappedEnd"].is_number()) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, "an element of In " + name + ", mappedEnd is not a number" + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, "an element of In " + name + ", mappedEnd is not a number" + errorMessageSuffix);
             }
             return false;
         }
@@ -262,7 +265,7 @@ bool MeasurementMapper<T_raw, T_mapped>::readConfig(const json11::Json& configOb
 
         if (!addRange(rawMin, rawMax, mappedStart, mappedEnd)) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, "An element of " + name + " does not specify a valid mapping range." + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, "An element of " + name + " does not specify a valid mapping range." + errorMessageSuffix);
             }
             return false;
         }

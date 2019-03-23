@@ -53,6 +53,7 @@ struct StressTestPayload {
   WidgetHeader widgetHeader;
   uint32_t     payloadNum;
   uint32_t     numTxFailures;
+  uint32_t     lastTxUs;
 };
 
 // pipe 1

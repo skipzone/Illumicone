@@ -20,16 +20,19 @@
 #include "ConfigReader.h"
 #include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "BoogieBoardWidget.h"
 
 using namespace std;
 
 
+extern Log logger;
+
+
 BoogieBoardWidget::BoogieBoardWidget()
-    : Widget(WidgetId::boogieBoard, 6)
+    : Widget(WidgetId::boogieBoard, 13)
 {
-    // yaw, pitch, roll, which vary from -9000 to 9000
+    // yaw, pitch, roll, which vary from -900 to 900
     simulationUpdateIntervalMs[0] = 50;
     simulationUpdateIntervalMs[1] = 50;
     simulationUpdateIntervalMs[2] = 50;
@@ -88,7 +91,7 @@ void BoogieBoardWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
     }
 
     //if (newPosition % logInterval == 0) {
-    //    logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
+    //    logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
     //}
 
     channels[chIdx]->setPositionAndVelocity(newPosition, 0);

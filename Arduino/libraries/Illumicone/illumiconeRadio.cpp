@@ -45,7 +45,7 @@ void configureRadio(
   radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
   radio.setDataRate(dataRate);
   radio.setChannel(channel);
-  radio.setAutoAck(wantAcks);
+  radio.enableDynamicAck();         // allow sending payloads with or without ack request
   radio.enableDynamicPayloads();
   radio.setCRCLength(crcLength);
 

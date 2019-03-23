@@ -20,11 +20,13 @@
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "SimpleBlockIndicator.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 SimpleBlockIndicator::SimpleBlockIndicator()
@@ -57,7 +59,7 @@ void SimpleBlockIndicator::makeAnimating(bool enable)
 {
     if (enable) {
         if (flashIntervalMs == 0) {
-            logMsg(LOG_ERR, "makeAnimating(true) called, but flashIntervalMs not specified in configuration for index "
+            logger.logMsg(LOG_ERR, "makeAnimating(true) called, but flashIntervalMs not specified in configuration for index "
                             + to_string(index) + ".");
             return;
         }
@@ -106,7 +108,7 @@ bool SimpleBlockIndicator::runAnimation()
                 fadeStepMs = fadeIntervalMs / fadeValueTransition;
                 fadeStepValue = (float) fadeValueTransition / (float) (fadeIntervalMs / fadeStepMs);
             }
-            //logMsg(LOG_DEBUG, "fadeStepMs=" + to_string(fadeStepMs) + " fadeStepValue=" + to_string(fadeStepValue));
+            //logger.logMsg(LOG_DEBUG, "fadeStepMs=" + to_string(fadeStepMs) + " fadeStepValue=" + to_string(fadeStepValue));
             if (state == AnimationState::transitionOnStart) {
                 fadeValue = 0;
                 state = AnimationState::transitionOn;
@@ -159,7 +161,7 @@ bool SimpleBlockIndicator::runAnimation()
 
         case AnimationState::flashOn:
             if ((int) (nowMs - nextFlashChangeMs) >= 0) {
-                //logMsg(LOG_DEBUG, "turning flash on");
+                //logger.logMsg(LOG_DEBUG, "turning flash on");
                 fillRegion(foregroundColor);
                 nextFlashChangeMs += flashIntervalMs / 2;
                 state = AnimationState::flashOnWait;
@@ -174,7 +176,7 @@ bool SimpleBlockIndicator::runAnimation()
 
         case AnimationState::flashOff:
             if ((int) (nowMs - nextFlashChangeMs) >= 0) {
-                //logMsg(LOG_DEBUG, "turning flash off");
+                //logger.logMsg(LOG_DEBUG, "turning flash off");
                 HsvPixel color = foregroundColor;
                 color.v = 0;
                 fillRegion(color);
@@ -206,7 +208,7 @@ void SimpleBlockIndicator::transitionOff()
 void SimpleBlockIndicator::transitionOn()
 {
     if (fadeIntervalMs == 0) {
-        logMsg(LOG_ERR, "makeAnimating(true) called, but fadeIntervalMs not specified in configuration for index "
+        logger.logMsg(LOG_ERR, "makeAnimating(true) called, but fadeIntervalMs not specified in configuration for index "
                         + to_string(index) + ".");
         return;
     }

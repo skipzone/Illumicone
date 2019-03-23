@@ -19,7 +19,7 @@
 
 #include "hsv2rgb.h"
 #include "illumiconePixelUtility.h"
-#include "log.h"
+#include "Log.h"
 
 using namespace std;
 

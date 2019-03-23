@@ -4,5 +4,5 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 # m h  dom mon dow   command
- * * * * * ./profile; devl/Illumicone/sbin/startWidgetRcvrAndPatternController
+# * * * * * ./profile; devl/Illumicone/sbin/startWidgetRcvrAndPatternController
  * * * * * ./profile; devl/Illumicone/sbin/readDS18B20Temperature >> temperature.log

@@ -20,13 +20,15 @@
 #include "colorutils.h"
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
-#include "json11.hpp"
-#include "log.h"
+#include "Log.h"
 #include "Pattern.h"
 #include "Widget.h"
 
 
 using namespace std;
+
+
+extern Log logger;
 
 
 Pattern::Pattern(const std::string& name, bool usesHsvModel)
@@ -48,10 +50,21 @@ Pattern::~Pattern()
 }
 
 
-bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool Pattern::init(const json11::Json& patternConfigObject,
+                   const json11::Json& topLevelConfigObject,
+                   std::map<WidgetId, Widget*>& widgets)
 {
-    numStrings = config.getNumberOfStrings();
-    pixelsPerString = config.getNumberOfPixelsPerString();
+    this->patternConfigObject = patternConfigObject;
+
+    string logMsgSuffix = " for pattern " + name;
+
+    if (!ConfigReader::getUnsignedIntValue(topLevelConfigObject, "numberOfStrings", numStrings,
+                                           logMsgSuffix, 8, 128)   // nothing magical about 8 and 128, just reasonable
+        || !ConfigReader::getUnsignedIntValue(topLevelConfigObject, "numberOfPixelsPerString", pixelsPerString,
+                                           logMsgSuffix, 8, 512))   // nothing magical about 8 and 512, just reasonable
+    {
+        return false;
+    }
 
     if (usesHsvModel) {
         allocateConePixels<HsvConeStrings, HsvPixelString, HsvPixel>(coneStrings, numStrings, pixelsPerString);
@@ -60,41 +73,25 @@ bool Pattern::init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
         allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(pixelArray, numStrings, pixelsPerString);
     }
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
+    if (!ConfigReader::getIntValue(patternConfigObject, "priority", priority, logMsgSuffix)) return false;
+    logger.logMsg(LOG_INFO, name + " priority=" + to_string(priority));
 
-    if (!patternConfig["priority"].is_number()) {
-        logMsg(LOG_ERR, "priority not specified in " + name + " pattern configuration.");
-        return false;
-    }
-    priority = patternConfig["priority"].int_value();
-    logMsg(LOG_INFO, name + " priority=" + to_string(priority));
+    if (!ConfigReader::getIntValue(patternConfigObject, "opacity", opacity, logMsgSuffix)) return false;
+    logger.logMsg(LOG_INFO, name + " opacity=" + to_string(opacity));
 
-    if (!patternConfig["opacity"].is_number()) {
-        logMsg(LOG_ERR, "opacity not specified in " + name + " pattern configuration.");
-        return false;
-    }
-    opacity = patternConfig["opacity"].int_value();
-    logMsg(LOG_INFO, name + " opacity=" + to_string(opacity));
-
-    return initPattern(config, widgets);
+    return initPattern(widgets);
 }
 
 
-std::vector<Pattern::ChannelConfiguration> Pattern::getChannelConfigurations(
-    ConfigReader& config,
-    std::map<WidgetId, Widget*>& widgets)
+std::vector<Pattern::ChannelConfiguration> Pattern::getChannelConfigurations(std::map<WidgetId, Widget*>& widgets)
 {
     std::vector<ChannelConfiguration> channelConfigs;
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-    if (patternConfig["name"].string_value() != name) {
-        logMsg(LOG_ERR, name + " not found in patterns configuration section.");
-        return channelConfigs;
-    }
+    // TODO:  modify to use ConfigReader::get...
 
-    auto inputConfigs = patternConfig["inputs"].array_items();
+    auto inputConfigs = patternConfigObject["inputs"].array_items();
     if (inputConfigs.empty()) {
-        logMsg(LOG_ERR, name + " inputs configuration is missing or empty:  " + patternConfig.dump());
+        logger.logMsg(LOG_ERR, name + " inputs configuration is missing or empty:  " + patternConfigObject.dump());
         return channelConfigs;
     }
 
@@ -102,34 +99,34 @@ std::vector<Pattern::ChannelConfiguration> Pattern::getChannelConfigurations(
 
         string inputName = inputConfig["inputName"].string_value();
         if (inputName.empty()) {
-            logMsg(LOG_ERR, name + " input configuration inputName is missing or empty:  " + inputConfig.dump());
+            logger.logMsg(LOG_ERR, name + " input configuration inputName is missing or empty:  " + inputConfig.dump());
             continue;
         }
 
         string widgetName = inputConfig["widgetName"].string_value();
         WidgetId widgetId = stringToWidgetId(widgetName);
         if (widgetId == WidgetId::invalid) {
-            logMsg(LOG_ERR, name + " input configuration for " + inputName
+            logger.logMsg(LOG_ERR, name + " input configuration for " + inputName
                 + " does not specify a valid widget:  " + inputConfig.dump());
             continue;
         }
 
         if (widgets.find(widgetId) == widgets.end()) {
-            logMsg(LOG_ERR, name + " input configuration for " + inputName
+            logger.logMsg(LOG_ERR, name + " input configuration for " + inputName
                 + " does not specify an available widget:  " + inputConfig.dump());
             continue;
         }
         Widget* widget = widgets[widgetId];
 
         if (!inputConfig["channelNumber"].is_number()) {
-            logMsg(LOG_ERR, name + " input configuration for " + inputName
+            logger.logMsg(LOG_ERR, name + " input configuration for " + inputName
                 + " does not specify a channel number:  " + inputConfig.dump());
             continue;
         }
         unsigned int channelNumber = inputConfig["channelNumber"].int_value();
         shared_ptr<WidgetChannel> widgetChannel = widget->getChannel(channelNumber);
         if (widgetChannel == nullptr) {
-            logMsg(LOG_ERR, name + " input configuration for " + inputName + " specifies channel "
+            logger.logMsg(LOG_ERR, name + " input configuration for " + inputName + " specifies channel "
                 + to_string(channelNumber) + ", which doesn't exist:  " + inputConfig.dump());
             continue;
         }

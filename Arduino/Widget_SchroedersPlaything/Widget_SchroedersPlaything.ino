@@ -127,7 +127,7 @@ void loop() {
       payload.position = midiMessage[0];
       payload.velocity = ((uint16_t) midiMessage[1] << 8) | midiMessage[2];
 
-      radio.write(&payload, sizeof(payload));
+      radio.write(&payload, sizeof(payload), !WANT_ACK);
     }
   }
 

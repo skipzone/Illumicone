@@ -15,18 +15,19 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// TODO 7/31/2017 ross:  Use logMsg in place of cerr.
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
-#include "log.h"
+#include "Log.h"
 
 using namespace std;
 using namespace json11;
+
+
+extern Log logger;
 
 
 bool ConfigReader::getBoolValue(const json11::Json& jsonObj,
@@ -36,7 +37,7 @@ bool ConfigReader::getBoolValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_bool()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a boolean value" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a boolean value" + errorMessageSuffix);
         }
         return false;
     }
@@ -54,14 +55,14 @@ bool ConfigReader::getDoubleValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].number_value();
     if (value < minValue || value > maxValue) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
         }
         return false;
@@ -79,14 +80,14 @@ bool ConfigReader::getFloatValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].number_value();
     if (value < minValue || value > maxValue) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
         }
         return false;
@@ -105,7 +106,7 @@ bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_string()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
         }
         return false;
     }
@@ -113,7 +114,7 @@ bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
     if (rgbStr.empty()) {
         if (!allowEmptyString) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
             }
             return false;
         }
@@ -122,7 +123,7 @@ bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
     }
     if (!stringToHsvPixel(rgbStr, value)) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not a valid HSV color" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not a valid HSV color" + errorMessageSuffix);
         }
         return false;
     }
@@ -139,18 +140,34 @@ bool ConfigReader::getIntValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].int_value();
     if (value < minValue || value > maxValue) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
         }
         return false;
     }
+    return true;
+}
+
+
+bool ConfigReader::getJsonObject(const json11::Json& jsonObj,
+                                 const std::string& name,
+                                 json11::Json& value,
+                                 const std::string& errorMessageSuffix)
+{
+    if (!jsonObj[name].is_object()) {
+        if (!errorMessageSuffix.empty()) {
+            logger.logMsg(LOG_ERR, name + " is not present or is not a Json object" + errorMessageSuffix);
+        }
+        return false;
+    }
+    value = jsonObj[name];
     return true;
 }
 
@@ -165,7 +182,7 @@ bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_string()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
         }
         return false;
     }
@@ -173,7 +190,7 @@ bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
     if (rgbStr.empty()) {
         if (!allowEmptyString) {
             if (!errorMessageSuffix.empty()) {
-                logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+                logger.logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
             }
             return false;
         }
@@ -182,11 +199,86 @@ bool ConfigReader::getRgbPixelValue(const json11::Json& jsonObj,
     }
     if (!stringToRgbPixel(rgbStr, value)) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not a valid RGB color" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not a valid RGB color" + errorMessageSuffix);
         }
         return false;
     }
     return true;
+}
+
+
+bool ConfigReader::getSchedulePeriods(const json11::Json& jsonObj,
+                                      const std::string& scheduleName,
+                                      std::vector<SchedulePeriod>& schedulePeriods)
+{
+    bool problemEncountered = false;
+
+    for (auto& periodConfigObj : jsonObj[scheduleName].array_items()) {
+
+        string desc = periodConfigObj["description"].string_value();
+        if (desc.empty()) {
+            logger.logMsg(LOG_ERR, "Scheduled period has no description:  " + periodConfigObj.dump());
+            problemEncountered = true;
+            continue;
+        }
+        string startTimeStr = periodConfigObj["startDateTime"].string_value();
+        if (startTimeStr.empty()) {
+            logger.logMsg(LOG_ERR, "Scheduled period has no startDateTime:  " + periodConfigObj.dump());
+            problemEncountered = true;
+            continue;
+        }
+        string endTimeStr = periodConfigObj["endDateTime"].string_value();
+        if (endTimeStr.empty()) {
+            logger.logMsg(LOG_ERR, "Scheduled period has no endDateTime:  " + periodConfigObj.dump());
+            problemEncountered = true;
+            continue;
+        }
+
+        bool isDaily;
+        string dateTimeFormat;
+        if (startTimeStr.length() == 8) {
+            isDaily = true;
+            dateTimeFormat = "%H:%M:%S";
+        }
+        else {
+            isDaily = false;
+            dateTimeFormat = "%Y-%m-%d %H:%M:%S";
+        }
+
+        struct tm tmTime;
+        char* strptimeRetVal;
+        time_t now;
+        time(&now);
+
+        localtime_r(&now, &tmTime);
+        strptimeRetVal = strptime(startTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
+        if (strptimeRetVal == nullptr) {
+            logger.logMsg(LOG_ERR,
+                          "Unable to parse startDateTime \"%s\" for \"%s\" scheduled period.  Format must"
+                          " be yyyy-mm-dd hh:mm:ss for one-time events or hh:mm:ss for daily events.",
+                          startTimeStr.c_str(), desc.c_str());
+            problemEncountered = true;
+            continue;
+        }
+        time_t startTime = mktime(&tmTime);
+
+        localtime_r(&now, &tmTime);
+        strptimeRetVal = strptime(endTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
+        if (strptimeRetVal == nullptr) {
+            logger.logMsg(LOG_ERR,
+                          "Unable to parse endDateTime \"%s\" for \"%s\" scheduled period.  Format must"
+                          " be yyyy-mm-dd hh:mm:ss for one-time events or hh:mm:ss for daily events.",
+                          endTimeStr.c_str(), desc.c_str());
+            problemEncountered = true;
+            continue;
+        }
+        time_t endTime = mktime(&tmTime);
+
+        SchedulePeriod newSchedulePeriod = {isDaily, desc, startTime, endTime, periodConfigObj};
+        schedulePeriods.emplace_back(newSchedulePeriod);
+    }
+
+    return !problemEncountered;
 }
 
 
@@ -198,14 +290,14 @@ bool ConfigReader::getStringValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_string()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a string" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].string_value();
     if (!allowEmptyString && value.empty()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
         }
         return false;
     }
@@ -222,19 +314,27 @@ bool ConfigReader::getUnsignedIntValue(const json11::Json& jsonObj,
 {
     if (!jsonObj[name].is_number()) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
+            logger.logMsg(LOG_ERR, name + " is not present or is not a number" + errorMessageSuffix);
         }
         return false;
     }
     value = jsonObj[name].int_value();
     if (value < minValue || value > maxValue) {
         if (!errorMessageSuffix.empty()) {
-            logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
+            logger.logMsg(LOG_ERR, name + " is outside of range [" + to_string(minValue)
                             + ", " + to_string(maxValue) + "]" + errorMessageSuffix);
         }
         return false;
     }
     return true;
+}
+
+
+json11::Json ConfigReader::mergeConfigObjects(const json11::Json& primaryJsonObj, const json11::Json& secondaryJsonObj)
+{
+    Json::object merged = primaryJsonObj.object_items();
+    merged.insert(secondaryJsonObj.object_items().begin(), secondaryJsonObj.object_items().end()); 
+    return Json(merged);
 }
 
 
@@ -254,7 +354,7 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
 
     ifstream configFile(configFileName, ios_base::in);
     if (!configFile.is_open()) {
-        cerr << "Can't open " << configFileName << endl;
+        logger.logMsg(LOG_ERR, "Can't open configuration file %s.", configFileName.c_str());
         return false;
     }
     stringstream jsonSstr;
@@ -264,11 +364,9 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
     string err;
     configObj = Json::parse(jsonSstr.str(), err, JsonParse::COMMENTS);
     if (!err.empty()) {
-        cerr << "Parse of " << configFileName << " failed:  " << err << endl;
+        logger.logMsg(LOG_ERR, "Parse of configuration file %s failed:  %s", configFileName.c_str(), err.c_str());
         return false;
     }
-
-    // TODO 6/12/2017 ross:  Build a map associating widget ids with widget config objects and use it to access the objects.
 
     return true;
 }
@@ -280,7 +378,7 @@ string ConfigReader::dumpToString()
 }
 
 
-Json ConfigReader::getJsonObject()
+Json ConfigReader::getConfigObject()
 {
     return configObj;
 }
@@ -305,174 +403,5 @@ Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
         }
     }
     return Json("{}");
-}
-
-
-std::string ConfigReader::getLockFilePath(const string& serviceName)
-{
-    Json lockFilePathsObj = configObj["lockFilePaths"];
-    if (!lockFilePathsObj.is_object()) {
-        logMsg(LOG_ERR, "lockFilePaths is missing from configuration or is not a JSON object.");
-        return "";
-    }
-    return lockFilePathsObj[serviceName].string_value();
-}
-
-
-int ConfigReader::getNumberOfStrings()
-{
-    int val;
-    return getIntValue(configObj, "numberOfStrings", val, ".", 1, 48) ? val : 0;
-}
-
-
-int ConfigReader::getNumberOfPixelsPerString()
-{
-    int val;
-    return getIntValue(configObj, "numberOfPixelsPerString", val, ".", 1, 2048) ? val : 0;
-}
-
-
-bool ConfigReader::getUseTcpForOpcServer()
-{
-    bool val;
-    return getBoolValue(configObj, "useTcpForOpcServer", val, ".") ? val : false;
-}
-
-
-string ConfigReader::getOpcServerIpAddress()
-{
-    string val;
-    return getStringValue(configObj, "opcServerIpAddress", val, ".") ? val : "";
-}
-
-
-unsigned int ConfigReader::getOpcServerPortNumber()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "opcServerPortNumber", val, ".", 1024, 65535) ? val : 0;
-}
-
-
-string ConfigReader::getPatconIpAddress()
-{
-    string val;
-    return getStringValue(configObj, "patconIpAddress", val, ".") ? val : "";
-}
-
-
-string ConfigReader::getPatternBlendMethod()
-{
-    string val;
-    return getStringValue(configObj, "patternBlendMethod", val, ".") ? val : "";
-}
-
-
-unsigned int ConfigReader::getPatternRunLoopSleepIntervalUs()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "patternRunLoopSleepIntervalUs", val, ".", 1) ? val : 0;
-}
-
-
-unsigned int ConfigReader::getRadioPollingLoopSleepIntervalUs()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "radioPollingLoopSleepIntervalUs", val, ".", 1) ? val : 0;
-}
-
-
-
-bool ConfigReader::getSchedulePeriods(const std::string& scheduleName, std::vector<SchedulePeriod>& schedulePeriods)
-{
-    bool problemEncountered = false;
-
-    for (auto& periodConfigObj : configObj[scheduleName].array_items()) {
-
-        string desc = periodConfigObj["description"].string_value();
-        if (desc.empty()) {
-            cerr << "Scheduled period has no description:  " << periodConfigObj.dump() << endl;
-            problemEncountered = true;
-            continue;
-        }
-        string startTimeStr = periodConfigObj["startDateTime"].string_value();
-        if (startTimeStr.empty()) {
-            cerr << "Scheduled period has no startDateTime:  " << periodConfigObj.dump() << endl;
-            problemEncountered = true;
-            continue;
-        }
-        string endTimeStr = periodConfigObj["endDateTime"].string_value();
-        if (endTimeStr.empty()) {
-            cerr << "Scheduled period has no endDateTime:  " << periodConfigObj.dump() << endl;
-            problemEncountered = true;
-            continue;
-        }
-
-        bool isDaily;
-        string dateTimeFormat;
-        if (startTimeStr.length() == 8) {
-            isDaily = true;
-            dateTimeFormat = "%H:%M:%S";
-        }
-        else {
-            isDaily = false;
-            dateTimeFormat = "%Y-%m-%d %H:%M:%S";
-        }
-
-        struct tm tmTime;
-        char* strptimeRetVal;
-        time_t now;
-        time(&now);
-
-        localtime_r(&now, &tmTime);
-        strptimeRetVal = strptime(startTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
-        if (strptimeRetVal == nullptr) {
-            cerr << "Unable to parse startDateTime \"" << startTimeStr << "\" for \"" << desc
-                << "\" scheduled period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
-                << " or hh:mm:ss for daily events." << endl;
-            problemEncountered = true;
-            continue;
-        }
-        time_t startTime = mktime(&tmTime);
-
-        localtime_r(&now, &tmTime);
-        strptimeRetVal = strptime(endTimeStr.c_str(), dateTimeFormat.c_str(), &tmTime);
-        if (strptimeRetVal == nullptr) {
-            cerr << "Unable to parse endDateTime \"" << endTimeStr << "\" for \"" << desc
-                << "\" scheduled period.  Format must be yyyy-mm-dd hh:mm:ss for one-time events"
-                << " or hh:mm:ss for daily events." << endl;
-            problemEncountered = true;
-            continue;
-        }
-        time_t endTime = mktime(&tmTime);
-
-        SchedulePeriod newSchedulePeriod = {isDaily, desc, startTime, endTime, periodConfigObj};
-        schedulePeriods.emplace_back(newSchedulePeriod);
-    }
-
-    return problemEncountered;
-}
-
-
-int ConfigReader::getWidgetPortNumberBase()
-{
-    unsigned int val;
-    return getUnsignedIntValue(configObj, "widgetPortNumberBase", val, ".", 1024, 65535) ? val : 0;
-}
-
-
-bool ConfigReader::getWidgetGenerateSimulatedMeasurements(const std::string& widgetName)
-{
-    Json widgetConfig = getWidgetConfigJsonObject(widgetName);
-    return widgetConfig["generateSimulatedMeasurements"].bool_value();
-}
-
-
-int ConfigReader::getWidgetAutoInactiveMs(const std::string& widgetName)
-{
-    Json widgetConfig = getWidgetConfigJsonObject(widgetName);
-    // If autoInactiveMs isn't present, the value returned will
-    // be zero, which disables the auto-inactive feature.
-    return widgetConfig["autoInactiveMs"].int_value();
 }
 

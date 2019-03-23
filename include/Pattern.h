@@ -23,11 +23,11 @@
 
 #include "illumiconePixelTypes.h"
 #include "illumiconeTypes.h"
+#include "json11.hpp"
 #include "WidgetChannel.h"
 #include "WidgetId.h"
 
 
-class ConfigReader;
 class Widget;
 
 
@@ -44,7 +44,10 @@ class Pattern
 
         std::string getName() { return name; }
 
-        bool init(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+        bool init(const json11::Json& patternConfigObject,
+                  const json11::Json& topLevelConfigObject,
+                  std::map<WidgetId, Widget*>& widgets);
+
         virtual bool update() = 0;
 
         // configuration
@@ -67,9 +70,10 @@ class Pattern
         };
 
         std::string name;
+        json11::Json patternConfigObject;
 
-        std::vector<ChannelConfiguration> getChannelConfigurations(ConfigReader& config, std::map<WidgetId, Widget*>& widgets);
+        std::vector<ChannelConfiguration> getChannelConfigurations(std::map<WidgetId, Widget*>& widgets);
 
-        virtual bool initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets) = 0;
+        virtual bool initPattern(std::map<WidgetId, Widget*>& widgets) = 0;
 };
 

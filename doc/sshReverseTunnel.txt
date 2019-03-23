@@ -1,8 +1,10 @@
-11/21/2018 -- Set up reverse tunneling using ic2-widpatcon2 as the example
+02/22/2019 -- Set up reverse tunneling using ic2-widpatcon2 as the example
 
 We assign these ports:
 
     50103 ic-widpatcon
+    50104 ic-widpatcon2
+    50105 ic-widpatcon3
     50113 ic2-widpatcon
     50114 ic2-widpatcon2
 
@@ -96,7 +98,7 @@ autossh
 
 install autossh on ic2-widpatcon2.
 
-sudo apt-get autossh
+sudo apt-get install autossh
 
 
 Test autossh.

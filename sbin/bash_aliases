@@ -1,8 +1,12 @@
 alias cp='cp -iv'
 alias h='history 50'
-alias hexd='od -t x1 -A x -v'
+#alias hexd='od -t x1 -A x -v'
+alias hexd='hexdump -C'
 alias la='ls -alGh'
 alias ll='ls -lGh'
 alias mv='mv -iv'
 alias rm='rm -i'
-alias src='cd ~/devl/Illumicone/src'
+
+if [ -f ~/.illumicone_aliases ]; then
+    . ~/.illumicone_aliases
+fi

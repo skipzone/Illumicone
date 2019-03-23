@@ -16,7 +16,7 @@
 # we can use some sort of wildcard to get a list of all cpp sources
 # and convert them to .o
 PROGS=patternController
-OBJS=WidgetId.o widgetFactory.o Widget.o WidgetChannel.o QueuedWidgetChannel.o BatonWidget.o BoogieBoardWidget.o ContortOMaticWidget.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o SchroedersPlaythingWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o patternFactory.o Pattern.o AnnoyingFlashingPattern.o FillAndBurstPattern.o HorizontalStripePattern.o IndicatorRegionsPattern.o MidiActivatedRegionsPattern.o ParticlesPattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o SpinnerPattern.o SpiralPattern.o SwitchActivatedRegionsPattern.o indicatorRegionFactory.o IndicatorRegion.o SimpleBlockIndicator.o json11.o ConfigReader.o log.o illumiconeUtility.o illumiconePixelUtility.o lib8tion.o colorutils.o hsv2rgb.o colorpalettes.o
+OBJS=WidgetId.o widgetFactory.o Widget.o WidgetChannel.o QueuedWidgetChannel.o BatonWidget.o BoogieBoardWidget.o ContortOMaticWidget.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o SchroedersPlaythingWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o patternFactory.o Pattern.o AnnoyingFlashingPattern.o FillAndBurstPattern.o HorizontalStripePattern.o IndicatorRegionsPattern.o MidiActivatedRegionsPattern.o ParticlesPattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o SpinnerPattern.o SpiralPattern.o SwitchActivatedRegionsPattern.o indicatorRegionFactory.o IndicatorRegion.o SimpleBlockIndicator.o json11.o ConfigReader.o Log.o illumiconeUtility.o illumiconePixelUtility.o lib8tion.o colorutils.o hsv2rgb.o colorpalettes.o
 LIBS=
 
 INCLUDE=../include
@@ -40,30 +40,36 @@ $(PROGS): $(OBJS)
 # can use something like this if the implicit linking rule is not sufficient.
 #	$(CXX) $(LDFLAGS) $(LIBS) -o $@ $< $(LDLIBS)
 
-widgetRcvr: widgetRcvr.cpp ConfigReader.o hsv2rgb.o illumiconeUtility.o illumiconePixelUtility.o json11.o log.o WidgetId.o
+widgetRcvr: widgetRcvr.cpp ConfigReader.o hsv2rgb.o illumiconeUtility.o illumiconePixelUtility.o json11.o Log.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
 
-stringTester: stringTester.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
+stringTester: stringTester.cpp hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
-jsonTester: jsonTester.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o WidgetId.o
+jsonTester: jsonTester.cpp hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o WidgetId.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
-unitTests: unitTests.cpp hsv2rgb.o json11.o log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
+logTest: logTest.cpp hsv2rgb.o Log.o illumiconeUtility.o
+	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
+
+unitTests: unitTests.cpp hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
 	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
 
 clean:
 	rm -f $(OBJS) $(PROGS)
 
 clean-widgetRcvr:
-	rm -f widgetRcvr ConfigReader.o illumiconeUtility.o json11.o log.o WidgetId.o
+	rm -f widgetRcvr ConfigReader.o illumiconeUtility.o json11.o Log.o WidgetId.o
 
 clean-stringTester:
-	rm -f stringTester json11.o log.o illumiconeUtility.o ConfigReader.o
+	rm -f stringTester json11.o Log.o illumiconeUtility.o ConfigReader.o
 
 clean-jsonTester:
-	rm -f jsonTester json11.o log.o illumiconeUtility.o ConfigReader.o WidgetId.o
+	rm -f jsonTester json11.o Log.o illumiconeUtility.o ConfigReader.o WidgetId.o
+
+clean-logTest:
+	rm -f logTest Log.o illumiconeUtility.o
 
 clean-unitTests:
-	rm -f unitTests json11.o log.o illumiconeUtility.o ConfigReader.o
+	rm -f unitTests json11.o Log.o illumiconeUtility.o ConfigReader.o
 

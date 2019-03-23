@@ -32,7 +32,7 @@ class IndicatorRegion {
         IndicatorRegion& operator =(const IndicatorRegion&) = delete;
 
         // A derived class's init must call this init before doing anything else.
-        virtual bool init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfig);
+        virtual bool init(unsigned int numStrings, unsigned int pixelsPerString, const json11::Json& indicatorConfigObject);
 
         // A derived class must implement runAnimation if it has animation or
         // transition code to execute.  runAnimation will be called frequently

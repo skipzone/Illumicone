@@ -1,0 +1,34 @@
+Partlist
+
+Exported from WidgetArduinoProMiniBreakout.sch at 8/18/16 11:08 AM
+
+EAGLE Version 7.5.0 Copyright (c) 1988-2015 CadSoft
+
+Assembly variant: 
+
+Part     Value                     Device                     Package                   Library             Sheet
+
+C1       2.2                       CPOL-USSMCA                SMC_A                     rcl                 1
+C2       2.2                       CPOL-USSMCA                SMC_A                     rcl                 1
+C3       2.2                       CPOL-USSMCA                SMC_A                     rcl                 1
+C4       2.2                       CPOL-USSMCA                SMC_A                     rcl                 1
+C5       2.2                       CPOL-USSMCA                SMC_A                     rcl                 1
+J1       Battery                   JST-PH-2                   JST-PH-2-TH-VERT          skipzone            1
+J2       Sensor Power              JST-PH-4                   JST-PH-4-TH-VERT          skipzone            1
+J3       Sensor Digital            JST-PH-7                   JST-PH-7-TH-VERT          skipzone            1
+J4       Sensor Analog             JST-PH-9                   JST-PH-9-TH-VERT          skipzone            1
+JP1      3.3V OR 5V FROM VCC       M03LOCK_LONGPADS           1X03_LOCK_LONGPADS        SparkFun-Connectors 1
+JP2      3.3V REG EN SRC           M03LOCK_LONGPADS           1X03_LOCK_LONGPADS        SparkFun-Connectors 1
+JP3      3.3V FROM REG             M02LOCK_LONGPADS           1X02_LOCK_LONGPADS        SparkFun-Connectors 1
+JP4      5V REG EN SRC             M03LOCK_LONGPADS           1X03_LOCK_LONGPADS        SparkFun-Connectors 1
+JP5      5V FROM REG               M02LOCK_LONGPADS           1X02_LOCK_LONGPADS        SparkFun-Connectors 1
+JP6      M-2X04-DIL-100            M-2X04-DIL-100             DIL-100-2X04              con-headers-jp      1
+JP7      M-2X07-DIL-100            M-2X07-DIL-100             DIL-100-2X07              con-headers-jp      1
+JP8      M-2X08-DIL-100            M-2X08-DIL-100             DIL-100-2X08              con-headers-jp      1
+R1       100k                      R-US_R0603                 R0603                     rcl                 1
+R2       100k                      R-US_R0603                 R0603                     rcl                 1
+U1       SPARKFUN_ARDUINO_PRO_MINI SPARKFUN_ARDUINO_PRO_MINI  SPARKFUN_ARDUINO_PRO_MINI skipzone            1
+U2       NRF24L01+                 NRF24L01P_MODULECHEAPCHEAP CHEAP_NRF24L01P_MODULE    skipzone            1
+U3       RS-485_TO_TTL_MODULE      RS-485_TO_TTL_MODULE       RS-485_TO_TTL_MODULE      skipzone            1
+U4       MIC5205-3.3               MIC52053.3V                SOT23-5                   SparkFun-PowerIC    1
+U5       MIC5205-5.0               MIC52055V                  SOT23-5                   SparkFun-PowerIC    1

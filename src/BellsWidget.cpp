@@ -22,10 +22,13 @@
 #include "BellsWidget.h"
 #include "ConfigReader.h"
 #include "illumiconeWidgetTypes.h"
-#include "log.h"
+#include "Log.h"
 #include "WidgetId.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 BellsWidget::BellsWidget()
@@ -47,7 +50,7 @@ void BellsWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
     if (simStep >= 0) {
         channels[chIdx]->setPositionAndVelocity(simStep, 0);
         channels[chIdx]->setIsActive(true);
-        //logMsg(LOG_DEBUG, channels[chIdx]->getName() + " position=" + to_string(simStep));
+        //logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " position=" + to_string(simStep));
     }
     else {
         channels[chIdx]->setPositionAndVelocity(0, 0);

@@ -22,14 +22,16 @@
 #include "ConfigReader.h"
 #include "illumiconeUtility.h"
 #include "IndicatorRegion.h"
-#include "log.h"
+#include "Log.h"
 #include "SpinnerPattern.h"
 #include "Pattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
-
 using namespace std;
+
+
+extern Log logger;
 
 
 SpinnerPattern::SpinnerPattern(const std::string& name)
@@ -39,20 +41,18 @@ SpinnerPattern::SpinnerPattern(const std::string& name)
 }
 
 
-bool SpinnerPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget*>& widgets)
+bool SpinnerPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
-    if (!IndicatorRegionsPattern::initPattern(config, widgets)) {
+    if (!IndicatorRegionsPattern::initPattern(widgets)) {
         return false;
     }
 
 
     // ----- get pattern configuration -----
 
-    auto patternConfig = config.getPatternConfigJsonObject(name);
-
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    if (!ConfigReader::getUnsignedIntValue(patternConfig,
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject,
                                            "selectedBlockAnimationIntervalMs",
                                            selectedBlockAnimationIntervalMs,
                                            errMsgSuffix)) {
@@ -62,9 +62,9 @@ bool SpinnerPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
 
     // ----- get input channels -----
 
-    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(config, widgets);
+    std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
-        logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
+        logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
         return false;
     }
 
@@ -74,14 +74,14 @@ bool SpinnerPattern::initPattern(ConfigReader& config, std::map<WidgetId, Widget
             spinnerPositionChannel = channelConfig.widgetChannel;
         }
         else {
-            logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
+            logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
                 + "' in input configuration for " + name + " is not recognized.");
             continue;
         }
-        logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+        logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
 
         if (channelConfig.measurement != "position") {
-            logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
+            logger.logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
                 + channelConfig.inputName + " doesn't specify position.");
         }
     }
@@ -103,7 +103,7 @@ bool SpinnerPattern::update()
     bool animationWantsDisplay = IndicatorRegionsPattern::update();
 
     if (!spinnerPositionChannel->getIsActive()) {
-        //logMsg(LOG_DEBUG, "spinnerPositionChannel is inactive");
+        //logger.logMsg(LOG_DEBUG, "spinnerPositionChannel is inactive");
         if (activeIndicator != nullptr) {
             // If the widget has just gone inactive, make the final (selected) block animate for a while.
             if (!activeIndicator->getIsAnimating()) {
@@ -125,7 +125,7 @@ bool SpinnerPattern::update()
             activeIndicator = nullptr;
         }
         unsigned int indicatorIdx = spinnerPositionChannel->getPosition() % indicatorRegions.size();
-        //logMsg(LOG_DEBUG, "indicatorIdx = " + to_string(indicatorIdx));
+        //logger.logMsg(LOG_DEBUG, "indicatorIdx = " + to_string(indicatorIdx));
         activeIndicator = indicatorRegions[indicatorIdx];
         activeIndicator->turnOnImmediately();
         isActive = true;

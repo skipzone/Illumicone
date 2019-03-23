@@ -18,11 +18,14 @@
 #include <string>
 
 #include "illumiconeUtility.h"
-#include "log.h"
+#include "Log.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
 using namespace std;
+
+
+extern Log logger;
 
 
 WidgetChannel::WidgetChannel(unsigned int channelNumber, Widget* widget, unsigned int autoInactiveMs)
@@ -61,7 +64,7 @@ bool WidgetChannel::getIsActive()
             unsigned int nowMs = getNowMs();
             if ((int) (nowMs - forceInactiveMs) >= 0) {
                 isActive = false;
-                logMsg(LOG_INFO, "forcing " + getName()
+                logger.logMsg(LOG_INFO, "forcing " + getName()
                                  + " inactive due to not being explicitly active for "
                                  + to_string(autoInactiveMs) + " ms.");
             }

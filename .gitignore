@@ -1,4 +1,5 @@
 jsonTester
+logTest
 patternController
 stringTester
 unitTests
@@ -13,6 +14,6 @@ database/log*
 database/*.pdf
 database/sql*.sql
 database/widgetRcvr.out*
-config/activeConfig.json
+activeConfig.json
 logs/*
 stuff/*
