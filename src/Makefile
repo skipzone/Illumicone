@@ -37,6 +37,9 @@ CXX=g++
 CFLAGS=-Wall -g -I$(INCLUDE)
 CXXFLAGS=-Wall -g -std=c++11 -pthread -I$(INCLUDE)
 
+LDFLAGS = -pthread
+LDLIBS = -L/usr/local/lib -lrf24
+
 COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
