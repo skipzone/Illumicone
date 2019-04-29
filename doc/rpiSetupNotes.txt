@@ -1,5 +1,4 @@
-9/13/2017 -- Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
-(updated 2/23/2019)
+Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch (updated 4/28/2019)
 
 
 0.  Write the image to a micro-SD card.
@@ -201,20 +200,19 @@
     sudo make install
 
 
-16.  Set up the Illumicone project.
-
+16.  Set up, build, and install the Illumicone project.
+    cd
+    mkdir bin
     cd ~/devl
     git clone https://github.com/skipzone/Illumicone
     cd Illumicone
     git flow init
-    cd src
-    Make sure USE_SPI_DEV is enabled in widgetRcvr.cpp.
-    make widgetRcvr
     make
-    cd ../config
-    ln -s someConfig.json activeConfig.json
+    make install
+    cd
+    ln -s devl/Illumicone/config/someConfig.json activeConfig.json
     git config --global core.editor "vim"
-    cp ~/devl/Illumicone/config/vimrc ~/.vimrc
+    cp devl/Illumicone/config/vimrc ~/.vimrc
 
 
 17.  Set up Wi-Fi to access the development network.
