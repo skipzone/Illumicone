@@ -60,7 +60,7 @@ POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 TIMESTAMP = $(shell date "+_%Y%m%d_%H%M%S")
 
 INSTALLMKDIR = install -d
-ifeq ("Darwin", $(shell uname -s))
+ifeq ("Darwin", "$(shell uname -s)")
 	INSTALL = install -bp -B $(TIMESTAMP)
 else
 	INSTALL = install -bC -S $(TIMESTAMP)
