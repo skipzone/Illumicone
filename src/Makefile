@@ -16,16 +16,30 @@
 # Automatic dependency checking method is from http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
 # on 28 April 2019.
 
-# Can build widgetRcvr only if we're on a system that supports the nRF24L01+ radio module.
+# Can build widgetRcvr only if we're on a system that supports the nRF24L01+ radio
+# module. Such a system might also want hardware-dependent stuff from sbin, too.
 ifneq (,$(wildcard /usr/local/include/RF24))
   PROGS = jsonTester logTest patternController stringTester unitTests widgetRcvr
+  INSTALL_PROGS = patternController stringTester widgetRcvr
+  INSTALL_SBIN = readDS18B20Temperature stepThru48Strings.sh widck widgetPlayback.py
+  LDLIBS = -L/usr/local/lib -lrf24
 else
   PROGS = jsonTester logTest patternController stringTester unitTests
+  INSTALL_PROGS = patternController stringTester
+  INSTALL_SBIN = stepThru48Strings.sh widck widgetPlayback.py
 endif
 
 SRCS = $(wildcard *.cpp) 
 
+SBIN_PATH = ../sbin
 INCLUDE=../include
+
+# Usually, we install to ~/bin.
+ifeq (,$(DESTDIR))
+    ifeq (,$(PREFIX))
+        PREFIX := $(HOME)
+    endif
+endif
 
 DEPDIR := .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
@@ -38,7 +52,6 @@ CFLAGS=-Wall -g -I$(INCLUDE)
 CXXFLAGS=-Wall -g -std=c++11 -pthread -I$(INCLUDE)
 
 LDFLAGS = -pthread
-LDLIBS = -L/usr/local/lib -lrf24
 
 COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
@@ -64,6 +77,7 @@ POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 	$(COMPILE.cc) $(OUTPUT_OPTION) $<
 	$(POSTCOMPILE)
 
+.PHONY: all
 all: $(PROGS)
 
 jsonTester: jsonTester.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o WidgetId.o
@@ -85,8 +99,23 @@ unitTests: unitTests.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePi
 
 widgetRcvr: widgetRcvr.o ConfigReader.o hsv2rgb.o illumiconeUtility.o illumiconePixelUtility.o json11.o Log.o WidgetId.o
 
+.PHONY: install
+install:
+	@install -d $(DESTDIR)$(PREFIX)/bin
+	@for f in $(INSTALL_PROGS); do \
+		install -bpS -B `date "+_%Y%m%d_%H%M%S"` $$f $(DESTDIR)$(PREFIX)/bin; \
+	done
+	@for f in $(INSTALL_SBIN); do \
+		install -bpS -B `date "+_%Y%m%d_%H%M%S"` $(SBIN_PATH)/$$f $(DESTDIR)$(PREFIX)/bin; \
+	done
+
+.PHONY: clean
 clean:
 	rm -f $(wildcard *.o) $(PROGS)
+
+.PHONY: cleandep
+cleandep:
+	rm -rf $(DEPDIR)
 
 $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
