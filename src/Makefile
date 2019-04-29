@@ -13,63 +13,80 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 
-# we can use some sort of wildcard to get a list of all cpp sources
-# and convert them to .o
-PROGS=patternController
-OBJS=WidgetId.o widgetFactory.o Widget.o WidgetChannel.o QueuedWidgetChannel.o BatonWidget.o BoogieBoardWidget.o ContortOMaticWidget.o TriObeliskWidget.o SpinnahWidget.o EyeWidget.o RainstickWidget.o PumpWidget.o SchroedersPlaythingWidget.o BellsWidget.o FourPlay42Widget.o FourPlay43Widget.o patternFactory.o Pattern.o AnnoyingFlashingPattern.o FillAndBurstPattern.o HorizontalStripePattern.o IndicatorRegionsPattern.o MidiActivatedRegionsPattern.o ParticlesPattern.o RainbowExplosionPattern.o RgbVerticalPattern.o SparklePattern.o SpinnerPattern.o SpiralPattern.o SwitchActivatedRegionsPattern.o indicatorRegionFactory.o IndicatorRegion.o SimpleBlockIndicator.o json11.o ConfigReader.o Log.o illumiconeUtility.o illumiconePixelUtility.o lib8tion.o colorutils.o hsv2rgb.o colorpalettes.o
-LIBS=
+# Automatic dependency checking method is from http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
+# on 28 April 2019.
+
+# Can build widgetRcvr only if we're on a system that supports the nRF24L01+ radio module.
+ifneq (,$(wildcard /usr/local/include/RF24))
+  PROGS = logTest patternController stringTester unitTests widgetRcvr
+else
+  PROGS = logTest patternController stringTester unitTests
+endif
+
+SRCS = $(wildcard *.cpp) 
 
 INCLUDE=../include
 
+DEPDIR := .d
+$(shell mkdir -p $(DEPDIR) >/dev/null)
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+
 # using g++ for CC so that g++ will be used to link C++ programs.
 CC=g++
-CFLAGS=-Wall -g -I$(INCLUDE)
 CXX=g++
-###CXXFLAGS=-Wall -g -std=c++0x -pthread -I$(INCLUDE)
+CFLAGS=-Wall -g -I$(INCLUDE)
 CXXFLAGS=-Wall -g -std=c++11 -pthread -I$(INCLUDE)
-#LDFLAGS=-stdlib=libc++
-#LDLIBS=-L$(LIBS) -lpthread
+
+COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
+
+%.o : %.c
+%.o : %.c $(DEPDIR)/%.d
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+%.o : %.cc
+%.o : %.cc $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+%.o : %.cxx
+%.o : %.cxx $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
+
+%.o : %.cpp
+%.o : %.cpp $(DEPDIR)/%.d
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+	$(POSTCOMPILE)
 
 all: $(PROGS)
 
-# dependencies of all the object files
-$(OBJS) : $(INCLUDE)/illumiconeTypes.h $(INCLUDE)/illumiconeUtility.h
+jsonTester: jsonTester.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o WidgetId.o
 
-$(PROGS): $(OBJS)
+logTest: logTest.o hsv2rgb.o Log.o illumiconeUtility.o
 
-# can use something like this if the implicit linking rule is not sufficient.
-#	$(CXX) $(LDFLAGS) $(LIBS) -o $@ $< $(LDLIBS)
+patternController: patternController.o AnnoyingFlashingPattern.o BatonWidget.o BellsWidget.o BoogieBoardWidget.o ConfigReader.o \
+                   ContortOMaticWidget.o EyeWidget.o FillAndBurstPattern.o FourPlay42Widget.o FourPlay43Widget.o \
+                   HorizontalStripePattern.o IndicatorRegion.o IndicatorRegionsPattern.o Log.o MidiActivatedRegionsPattern.o \
+                   ParticlesPattern.o Pattern.o PumpWidget.o QueuedWidgetChannel.o RainbowExplosionPattern.o RainstickWidget.o \
+                   RgbVerticalPattern.o SchroedersPlaythingWidget.o SimpleBlockIndicator.o SparklePattern.o SpinnahWidget.o \
+                   SpinnerPattern.o SpiralPattern.o SwitchActivatedRegionsPattern.o TriObeliskWidget.o Widget.o WidgetChannel.o \
+                   WidgetId.o colorpalettes.o colorutils.o hsv2rgb.o illumiconePixelUtility.o illumiconeUtility.o \
+                   indicatorRegionFactory.o json11.o lib8tion.o patternFactory.o widgetFactory.o
 
-widgetRcvr: widgetRcvr.cpp ConfigReader.o hsv2rgb.o illumiconeUtility.o illumiconePixelUtility.o json11.o Log.o WidgetId.o
-	g++ $(CXXFLAGS) -I$(INCLUDE) -I/usr/local/include/RF24 -L/usr/local/lib -lrf24 -o $@ $^
+stringTester: stringTester.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
 
-stringTester: stringTester.cpp hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
-	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
+unitTests: unitTests.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
 
-jsonTester: jsonTester.cpp hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o WidgetId.o
-	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
-
-logTest: logTest.cpp hsv2rgb.o Log.o illumiconeUtility.o
-	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
-
-unitTests: unitTests.cpp hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
-	g++ $(CXXFLAGS) -I$(INCLUDE) -o $@ $^
+widgetRcvr: widgetRcvr.o ConfigReader.o hsv2rgb.o illumiconeUtility.o illumiconePixelUtility.o json11.o Log.o WidgetId.o
 
 clean:
-	rm -f $(OBJS) $(PROGS)
+	rm -f $(wildcard *.o) $(PROGS)
 
-clean-widgetRcvr:
-	rm -f widgetRcvr ConfigReader.o illumiconeUtility.o json11.o Log.o WidgetId.o
+$(DEPDIR)/%.d: ;
+.PRECIOUS: $(DEPDIR)/%.d
 
-clean-stringTester:
-	rm -f stringTester json11.o Log.o illumiconeUtility.o ConfigReader.o
-
-clean-jsonTester:
-	rm -f jsonTester json11.o Log.o illumiconeUtility.o ConfigReader.o WidgetId.o
-
-clean-logTest:
-	rm -f logTest Log.o illumiconeUtility.o
-
-clean-unitTests:
-	rm -f unitTests json11.o Log.o illumiconeUtility.o ConfigReader.o
+include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS))))
 
