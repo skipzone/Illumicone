@@ -57,6 +57,15 @@ COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 
+TIMESTAMP = $(shell date "+_%Y%m%d_%H%M%S")
+
+INSTALLMKDIR = install -d
+ifeq ("Darwin", $(shell uname -s))
+	INSTALL = install -bp -B $(TIMESTAMP)
+else
+	INSTALL = install -bC -S $(TIMESTAMP)
+endif
+
 %.o : %.c
 %.o : %.c $(DEPDIR)/%.d
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
@@ -101,12 +110,12 @@ widgetRcvr: widgetRcvr.o ConfigReader.o hsv2rgb.o illumiconeUtility.o illumicone
 
 .PHONY: install
 install:
-	@install -d $(DESTDIR)$(PREFIX)/bin
+	@$(INSTALLMKDIR) $(DESTDIR)$(PREFIX)/bin
 	@for f in $(INSTALL_PROGS); do \
-		install -bpS -B `date "+_%Y%m%d_%H%M%S"` $$f $(DESTDIR)$(PREFIX)/bin; \
+		$(INSTALL) $$f $(DESTDIR)$(PREFIX)/bin; \
 	done
 	@for f in $(INSTALL_SBIN); do \
-		install -bpS -B `date "+_%Y%m%d_%H%M%S"` $(SBIN_PATH)/$$f $(DESTDIR)$(PREFIX)/bin; \
+		$(INSTALL) $(SBIN_PATH)/$$f $(DESTDIR)$(PREFIX)/bin; \
 	done
 
 .PHONY: clean
