@@ -18,9 +18,9 @@
 
 # Can build widgetRcvr only if we're on a system that supports the nRF24L01+ radio module.
 ifneq (,$(wildcard /usr/local/include/RF24))
-  PROGS = logTest patternController stringTester unitTests widgetRcvr
+  PROGS = jsonTester logTest patternController stringTester unitTests widgetRcvr
 else
-  PROGS = logTest patternController stringTester unitTests
+  PROGS = jsonTester logTest patternController stringTester unitTests
 endif
 
 SRCS = $(wildcard *.cpp) 
