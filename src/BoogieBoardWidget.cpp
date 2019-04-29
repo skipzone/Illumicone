@@ -48,7 +48,7 @@ void BoogieBoardWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
     int minPos;
     int maxPos;
     int step;
-    int logInterval;
+    //int logInterval;
     switch (chIdx) {
         case 0:
         case 1:
@@ -56,7 +56,7 @@ void BoogieBoardWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
             minPos = -9000;
             maxPos = 9000;
             step = 20;
-            logInterval = 100;
+            //logInterval = 100;
             break;
         case 3:
         case 4:
@@ -64,7 +64,7 @@ void BoogieBoardWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
             minPos = -40;
             maxPos = 40;
             step = 1;
-            logInterval = 5;
+            //logInterval = 5;
             break;
     }
 
