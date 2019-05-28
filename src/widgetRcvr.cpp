@@ -548,6 +548,17 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
         logger.logMsg(LOG_WARNING, "stest message gap:  %d", payloadNumChange);
     }
     lastPayloadNum = payload->payloadNum;
+
+    if (payload->widgetHeader.id != 0) {
+        UdpPayload udpPayload;
+        udpPayload.id       = payload->widgetHeader.id;
+        udpPayload.channel  = payload->widgetHeader.channel;
+        udpPayload.isActive = payload->widgetHeader.isActive;
+        udpPayload.position = payload->payloadNum;
+        udpPayload.velocity = 0;
+
+        sendUdp(udpPayload);
+    }
 }
 
 
