@@ -112,9 +112,10 @@ class ConfigReader
         json11::Json getPatternConfigJsonObject(const std::string& patternName);
         json11::Json getWidgetConfigJsonObject(const std::string& widgetName);
         bool loadConfiguration(const std::string& configFileName);
-        bool readConfigurationFile(const std::string& fileName, json11::Json& configObj);
-
+        
     private:
+
+        bool readConfigurationFile(const std::string& fileName, json11::Json& configObj);
 
         std::string loadedConfigFileName;
         json11::Json loadedConfigObj;

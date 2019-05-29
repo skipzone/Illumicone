@@ -350,13 +350,80 @@ ConfigReader::~ConfigReader()
 
 bool ConfigReader::loadConfiguration(const std::string& configFileName)
 {
-    // TODO:  maybe clear loadedConfigObj
+    // TODO:  clear loadedConfigObj
     loadedConfigFileName = configFileName;
-    return readConfigurationFile(configFileName, loadedConfigObj);
+    Json topLevelObj;
+    if (!readConfigurationFile(configFileName, topLevelObj)) {
+        return false;
+    }
+///    return mergeObject(topLevelObj, loadedConfigObj);
+    loadedConfigObj = topLevelObj;  // TODO:  this should work until includes and recursion are implementecd
 }
 
 
-bool ConfigReader::readConfigurationFile(const std::string& fileName, json11::Json& configObj)
+/*  Nope.
+bool ConfigReader::loadObjectFromFile(const std::string& fileName, Json& configObj)
+{    
+    Json fileConfigObj;
+    if (!readConfigurationFile(configFileName, configObj)) {
+        return false;
+    }
+    return mergeObject(fileConfigObj, configObj);
+}
+*/
+
+/*
+This mergeObject approach is not going to work.
+What has to happen is that an object's includes need to be
+resolved first--at the top level of the object.  Then,
+iterate over all the contained objects and resolve their includes
+recursively.  Same thing for arrays that contain objects.
+Resolving includes is always done at the level
+of the object passed in to the recursive function.
+
+Read object from file
+Resolve includes for object
+
+Resolve includes for object:
+  Iterate over object's contents:
+    If element type is string and key starts with "_include_file_":
+      fileName = element value
+      load file into fileObj
+      copy fileObj elements to object where fileObj.key not in object
+  Iterate over object's contents:
+    If element type is object:
+      Resolve includes for object
+    If element type is array and array data type is object:
+      Iterate over array elements:
+        Resolve includes for object
+    
+Adding objects to the collection while iterating over that collection might be problematic.
+One approach would be to build an array of fileObjs then add them to the object after the
+processing of _include_file_ elements is complete.  Another would be to remove the
+_include_file_ element, copy the fileObj elements, and restart iterating over the collection.
+
+
+bool ConfigReader::mergeObject(const Json& sourceObj, Json& destObj)
+{
+    for (const auto &kv : sourceObj) {
+        if (kv.is_string() && kv.first == "_include_" {
+            Json includeObj;
+            if (!readConfigurationFile(kv.string_value(), includeObj)) {
+                return false;
+            }
+            if (!mergeObject(includeObj, destObj)) {
+                return false;
+            }
+        }
+        // TODO:  need to handle objects and arrays
+        else if (configObj.find(kv.first) == widgets.end()) {
+            configObj[kv.first] = kv.second;
+        }
+    }
+}
+*/
+
+bool ConfigReader::readConfigurationFile(const std::string& fileName, Json& configObj)
 {
     ifstream configFile(fileName, ios_base::in);
     if (!configFile.is_open()) {
