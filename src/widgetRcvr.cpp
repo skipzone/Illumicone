@@ -670,7 +670,7 @@ bool readConfig()
     // instance-specific configuration has priority (i.e., items in the common
     // configuration will not override the same items in the instance-specific
     // configuration).
-    if (!configReader.readConfigurationFile(configFileName)) {
+    if (!configReader.loadConfiguration(configFileName)) {
         return false;
     }
     json11::Json instanceConfigObject;

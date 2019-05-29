@@ -348,13 +348,19 @@ ConfigReader::~ConfigReader()
 }
 
 
-bool ConfigReader::readConfigurationFile(std::string fileName)
+bool ConfigReader::loadConfiguration(const std::string& configFileName)
 {
-    configFileName = fileName;
+    // TODO:  maybe clear loadedConfigObj
+    loadedConfigFileName = configFileName;
+    return readConfigurationFile(configFileName, loadedConfigObj);
+}
 
-    ifstream configFile(configFileName, ios_base::in);
+
+bool ConfigReader::readConfigurationFile(const std::string& fileName, json11::Json& configObj)
+{
+    ifstream configFile(fileName, ios_base::in);
     if (!configFile.is_open()) {
-        logger.logMsg(LOG_ERR, "Can't open configuration file %s.", configFileName.c_str());
+        logger.logMsg(LOG_ERR, "Can't open configuration file %s.", fileName.c_str());
         return false;
     }
     stringstream jsonSstr;
@@ -364,7 +370,7 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
     string err;
     configObj = Json::parse(jsonSstr.str(), err, JsonParse::COMMENTS);
     if (!err.empty()) {
-        logger.logMsg(LOG_ERR, "Parse of configuration file %s failed:  %s", configFileName.c_str(), err.c_str());
+        logger.logMsg(LOG_ERR, "Parse of configuration file %s failed:  %s", fileName.c_str(), err.c_str());
         return false;
     }
 
@@ -374,19 +380,25 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
 
 string ConfigReader::dumpToString()
 {
-    return configObj.dump();
+    return loadedConfigObj.dump();
+}
+
+
+string ConfigReader::getConfigFileName()
+{
+    return loadedConfigFileName;
 }
 
 
 Json ConfigReader::getConfigObject()
 {
-    return configObj;
+    return loadedConfigObj;
 }
 
 
 Json ConfigReader::getWidgetConfigJsonObject(const std::string& widgetName)
 {
-    for (auto& widgetConfigObj : configObj["widgets"].array_items()) {
+    for (auto& widgetConfigObj : loadedConfigObj["widgets"].array_items()) {
         if (widgetConfigObj["name"].string_value() == widgetName) {
             return widgetConfigObj;
         }
@@ -397,7 +409,7 @@ Json ConfigReader::getWidgetConfigJsonObject(const std::string& widgetName)
 
 Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
 {
-    for (auto& patternConfigObj : configObj["patterns"].array_items()) {
+    for (auto& patternConfigObj : loadedConfigObj["patterns"].array_items()) {
         if (patternConfigObj["name"].string_value() == patternName) {
             return patternConfigObj;
         }

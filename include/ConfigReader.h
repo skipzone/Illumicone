@@ -106,17 +106,18 @@ class ConfigReader
         ConfigReader(const ConfigReader&) = delete;
         ConfigReader& operator =(const ConfigReader&) = delete;
 
-        bool readConfigurationFile(std::string fileName);
-
         std::string dumpToString();
+        std::string getConfigFileName();
         json11::Json getConfigObject();
-        json11::Json getWidgetConfigJsonObject(const std::string& widgetName);
         json11::Json getPatternConfigJsonObject(const std::string& patternName);
+        json11::Json getWidgetConfigJsonObject(const std::string& widgetName);
+        bool loadConfiguration(const std::string& configFileName);
+        bool readConfigurationFile(const std::string& fileName, json11::Json& configObj);
 
     private:
 
-        std::string configFileName;
-        json11::Json configObj;
+        std::string loadedConfigFileName;
+        json11::Json loadedConfigObj;
 
 };
 

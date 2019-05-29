@@ -35,7 +35,7 @@ void configReaderUnitTests()
     cout << "----- ConfigReader -----" << endl;
 
     ConfigReader config;
-    assert(config.readConfigurationFile("../config/unitTests.json"));
+    assert(config.loadConfiguration("../config/unitTests.json"));
 
     json11::Json primary, secondary;
     assert(ConfigReader::getJsonObject(config.getConfigObject(), "primary", primary));
@@ -181,7 +181,7 @@ void measurementMapperUnitTests()
 
 
     ConfigReader config;
-    assert(config.readConfigurationFile("../config/unitTests.json"));
+    assert(config.loadConfiguration("../config/unitTests.json"));
 
     MeasurementMapper<int, float> mapper3config;
     assert(mapper3config.readConfig(config.getConfigObject(), "mapper3", "unitTests mapper3config"));
