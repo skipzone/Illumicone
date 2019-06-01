@@ -358,6 +358,8 @@ bool ConfigReader::loadConfiguration(const std::string& configFileName)
     }
 ///    return mergeObject(topLevelObj, loadedConfigObj);
     loadedConfigObj = topLevelObj;  // TODO:  this should work until includes and recursion are implementecd
+
+    return true;
 }
 
 
