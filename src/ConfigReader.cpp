@@ -363,16 +363,43 @@ bool ConfigReader::loadConfiguration(const std::string& configFileName)
 }
 
 
-/*  Nope.
-bool ConfigReader::loadObjectFromFile(const std::string& fileName, Json& configObj)
-{    
-    Json fileConfigObj;
-    if (!readConfigurationFile(configFileName, configObj)) {
-        return false;
+bool ConfigReader::resolveObjectIncludes(Json& obj)
+{
+    // Resolve all the _include_file_ elements at the top level of the object.
+    for (auto it = obj.cbegin; it != obj.cend();) {
+        if ((*it).first == "_include_file_" && (*it).second.is_string())  {
+            Json includeObj;
+            if (!readConfigurationFile((*it).second.string_value(), includeObj)) {
+                return false;
+            }
+            obj.insert(includeObj.cbegin(), includeObj.cend());
+            it = obj.erase(it);
+        }
+        else {
+            ++it;
+        }
     }
-    return mergeObject(fileConfigObj, configObj);
+    
+    // Resolve all the _include_file_ elements in objects
+    // and arrays of objects below the top level.
+    for (auto&& kv : obj) {
+        if (kv.second.is_object()) {
+            if (!resolveObjectIncludes(kv.second)) {
+                return false;
+            }
+        }
+        else if (kv.second.is_array() && arrayContainsObjects) {
+            for (auto& elObj : kv.second.array_items()) {
+                if (!resolveObjectIncludes(elObj)) {
+                    return false;
+                }
+            }
+        }
+    }
+    
+    return true;
 }
-*/
+
 
 /*
 This mergeObject approach is not going to work.
