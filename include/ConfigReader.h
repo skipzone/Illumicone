@@ -116,7 +116,7 @@ class ConfigReader
     private:
 
         bool readConfigurationFile(const std::string& fileName, json11::Json& configObj);
-        bool resolveObjectIncludes(Json& obj, unsigned int curLevel);
+        bool resolveObjectIncludes(json11::Json& obj, unsigned int curLevel);
 
         std::string loadedConfigFileName;
         json11::Json loadedConfigObj;

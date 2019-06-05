@@ -351,7 +351,7 @@ ConfigReader::~ConfigReader()
 bool ConfigReader::loadConfiguration(const std::string& configFileName)
 {
     loadedConfigFileName = configFileName;
-    loadedConfigObj.clear();
+    // TODO:  Need to ensure that loadedConfigObj is empty.  Can't use clear() becausae object_items() returns a const.
     if (!readConfigurationFile(configFileName, loadedConfigObj)) {
         return false;
     }
@@ -361,17 +361,19 @@ bool ConfigReader::loadConfiguration(const std::string& configFileName)
 
 bool ConfigReader::resolveObjectIncludes(Json& obj, unsigned int curLevel)
 {
+    // TODO:  object_items returns const.  So, we need to figure out another way of altering obj.  Look at what mergeConfigObjects does.
+
     // Resolve all the _include_file_ elements at the top level of the object.
-    for (auto it = obj.cbegin; it != obj.cend();) {
-        if ((*it).first.starts_with("_include_file_") && (*it).second.is_string())  {
-            logger.logMsg(LOG_INFO, "Reading " + (*it).first + " " + (*it).second
+    for (auto it = obj.object_items().begin(); it != obj.object_items().end();) {
+        if ((*it).first.find("_include_file_") == 0 && (*it).second.is_string())  {
+            logger.logMsg(LOG_INFO, "Reading " + (*it).first + " " + (*it).second.string_value()
                             + " at level " + to_string(curLevel) + ".");
             Json includeObj;
             if (!readConfigurationFile((*it).second.string_value(), includeObj)) {
                 return false;
             }
-            obj.insert(includeObj.cbegin(), includeObj.cend());
-            it = obj.erase(it);
+            obj.object_items().insert(includeObj.object_items().begin(), includeObj.object_items().end());
+            it = obj.object_items().erase(it);
         }
         else {
             ++it;
@@ -380,7 +382,7 @@ bool ConfigReader::resolveObjectIncludes(Json& obj, unsigned int curLevel)
     
     // Resolve all the _include_file_ elements in objects
     // and arrays of objects below the top level.
-    for (auto&& kv : obj) {
+    for (auto&& kv : obj.object_items()) {
         if (kv.second.is_object()) {
             if (!resolveObjectIncludes(kv.second, curLevel + 1)) {
                 return false;
