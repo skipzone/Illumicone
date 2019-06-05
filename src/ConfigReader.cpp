@@ -350,24 +350,22 @@ ConfigReader::~ConfigReader()
 
 bool ConfigReader::loadConfiguration(const std::string& configFileName)
 {
-    // TODO:  clear loadedConfigObj
     loadedConfigFileName = configFileName;
-    Json topLevelObj;
-    if (!readConfigurationFile(configFileName, topLevelObj)) {
+    loadedConfigObj.clear();
+    if (!readConfigurationFile(configFileName, loadedConfigObj)) {
         return false;
     }
-///    return mergeObject(topLevelObj, loadedConfigObj);
-    loadedConfigObj = topLevelObj;  // TODO:  this should work until includes and recursion are implementecd
-
-    return true;
+    return resolveObjectIncludes(loadedConfigObj, 0);
 }
 
 
-bool ConfigReader::resolveObjectIncludes(Json& obj)
+bool ConfigReader::resolveObjectIncludes(Json& obj, unsigned int curLevel)
 {
     // Resolve all the _include_file_ elements at the top level of the object.
     for (auto it = obj.cbegin; it != obj.cend();) {
-        if ((*it).first == "_include_file_" && (*it).second.is_string())  {
+        if ((*it).first.starts_with("_include_file_") && (*it).second.is_string())  {
+            logger.logMsg(LOG_INFO, "Reading " + (*it).first + " " + (*it).second
+                            + " at level " + to_string(curLevel) + ".");
             Json includeObj;
             if (!readConfigurationFile((*it).second.string_value(), includeObj)) {
                 return false;
@@ -384,13 +382,13 @@ bool ConfigReader::resolveObjectIncludes(Json& obj)
     // and arrays of objects below the top level.
     for (auto&& kv : obj) {
         if (kv.second.is_object()) {
-            if (!resolveObjectIncludes(kv.second)) {
+            if (!resolveObjectIncludes(kv.second, curLevel + 1)) {
                 return false;
             }
         }
-        else if (kv.second.is_array() && arrayContainsObjects) {
+        else if (kv.second.is_array() && kv.second[0].is_object()) {
             for (auto& elObj : kv.second.array_items()) {
-                if (!resolveObjectIncludes(elObj)) {
+                if (!resolveObjectIncludes(elObj, curLevel + 1)) {
                     return false;
                 }
             }
@@ -402,7 +400,6 @@ bool ConfigReader::resolveObjectIncludes(Json& obj)
 
 
 /*
-This mergeObject approach is not going to work.
 What has to happen is that an object's includes need to be
 resolved first--at the top level of the object.  Then,
 iterate over all the contained objects and resolve their includes
@@ -419,6 +416,7 @@ Resolve includes for object:
       fileName = element value
       load file into fileObj
       copy fileObj elements to object where fileObj.key not in object
+      remove _include_file_ element
   Iterate over object's contents:
     If element type is object:
       Resolve includes for object
@@ -430,26 +428,6 @@ Adding objects to the collection while iterating over that collection might be p
 One approach would be to build an array of fileObjs then add them to the object after the
 processing of _include_file_ elements is complete.  Another would be to remove the
 _include_file_ element, copy the fileObj elements, and restart iterating over the collection.
-
-
-bool ConfigReader::mergeObject(const Json& sourceObj, Json& destObj)
-{
-    for (const auto &kv : sourceObj) {
-        if (kv.is_string() && kv.first == "_include_" {
-            Json includeObj;
-            if (!readConfigurationFile(kv.string_value(), includeObj)) {
-                return false;
-            }
-            if (!mergeObject(includeObj, destObj)) {
-                return false;
-            }
-        }
-        // TODO:  need to handle objects and arrays
-        else if (configObj.find(kv.first) == widgets.end()) {
-            configObj[kv.first] = kv.second;
-        }
-    }
-}
 */
 
 bool ConfigReader::readConfigurationFile(const std::string& fileName, Json& configObj)
