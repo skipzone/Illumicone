@@ -19,6 +19,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <libgen.h>
+
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
 #include "Log.h"
@@ -348,32 +350,46 @@ ConfigReader::~ConfigReader()
 }
 
 
-bool ConfigReader::loadConfiguration(const std::string& configFileName)
+bool ConfigReader::loadConfiguration(const std::string& configFilePathName)
 {
-    loadedConfigFileName = configFileName;
-    // TODO:  Need to ensure that loadedConfigObj is empty.  Can't use clear() becausae object_items() returns a const.
-    if (!readConfigurationFile(configFileName, loadedConfigObj)) {
+    loadedConfigFilePathName = configFilePathName;
+
+    char* path = (char *) malloc(configFilePathName.length() + 1);
+    if (path == NULL) {
+        logger.logMsg(LOG_ERR, "ConfigReader::loadConfiguration:  Can't allocate path buffer.");
         return false;
     }
-    return resolveObjectIncludes(loadedConfigObj, 0);
+    strcpy(path, configFilePathName.c_str());
+    loadedConfigFilePath = dirname(path);
+    free(path);
+
+    Json obj;
+    if (!readConfigurationFile(configFilePathName, obj)) {
+        return false;
+    }
+    loadedConfigObj = resolveObjectIncludes(obj, 0);
+    return !loadedConfigObj.is_null();
 }
 
 
-bool ConfigReader::resolveObjectIncludes(Json& obj, unsigned int curLevel)
+Json ConfigReader::resolveObjectIncludes(const Json& inputJsonObj, unsigned int curLevel)
 {
-    // TODO:  object_items returns const.  So, we need to figure out another way of altering obj.  Look at what mergeConfigObjects does.
+    // TODO:  make sure curLevel is not too large (i.e., prevent recursive includes)
+
+    Json::object objItems = inputJsonObj.object_items();    // this is really a map
 
     // Resolve all the _include_file_ elements at the top level of the object.
-    for (auto it = obj.object_items().begin(); it != obj.object_items().end();) {
+    for (auto it = objItems.begin(); it != objItems.end();) {
         if ((*it).first.find("_include_file_") == 0 && (*it).second.is_string())  {
-            logger.logMsg(LOG_INFO, "Reading " + (*it).first + " " + (*it).second.string_value()
+            string includeFilePathName = loadedConfigFilePath + "/" + (*it).second.string_value();
+            logger.logMsg(LOG_INFO, "Reading " + (*it).first + " " + includeFilePathName
                             + " at level " + to_string(curLevel) + ".");
             Json includeObj;
-            if (!readConfigurationFile((*it).second.string_value(), includeObj)) {
-                return false;
+            if (!readConfigurationFile(includeFilePathName, includeObj)) {
+                return Json();
             }
-            obj.object_items().insert(includeObj.object_items().begin(), includeObj.object_items().end());
-            it = obj.object_items().erase(it);
+            objItems.insert(includeObj.object_items().begin(), includeObj.object_items().end());
+            it = objItems.erase(it);
         }
         else {
             ++it;
@@ -382,61 +398,36 @@ bool ConfigReader::resolveObjectIncludes(Json& obj, unsigned int curLevel)
     
     // Resolve all the _include_file_ elements in objects
     // and arrays of objects below the top level.
-    for (auto&& kv : obj.object_items()) {
+    for (auto&& kv : objItems) {
         if (kv.second.is_object()) {
-            if (!resolveObjectIncludes(kv.second, curLevel + 1)) {
-                return false;
+            Json resolvedObj = resolveObjectIncludes(kv.second, curLevel + 1);
+            if (resolvedObj.is_null()) {
+                return Json();
             }
+            objItems[kv.first] = resolvedObj;
         }
         else if (kv.second.is_array() && kv.second[0].is_object()) {
-            for (auto& elObj : kv.second.array_items()) {
-                if (!resolveObjectIncludes(elObj, curLevel + 1)) {
-                    return false;
+            Json::array arrayItems = kv.second.array_items();
+            for (unsigned int i = 0; i < arrayItems.size(); ++i) {
+                Json resolvedObj = resolveObjectIncludes(arrayItems[i], curLevel + 1);
+                if (resolvedObj.is_null()) {
+                    return Json();
                 }
+                arrayItems[i] = resolvedObj;
             }
+            objItems[kv.first] = arrayItems;
         }
     }
     
-    return true;
+    return Json(objItems);
 }
 
 
-/*
-What has to happen is that an object's includes need to be
-resolved first--at the top level of the object.  Then,
-iterate over all the contained objects and resolve their includes
-recursively.  Same thing for arrays that contain objects.
-Resolving includes is always done at the level
-of the object passed in to the recursive function.
-
-Read object from file
-Resolve includes for object
-
-Resolve includes for object:
-  Iterate over object's contents:
-    If element type is string and key starts with "_include_file_":
-      fileName = element value
-      load file into fileObj
-      copy fileObj elements to object where fileObj.key not in object
-      remove _include_file_ element
-  Iterate over object's contents:
-    If element type is object:
-      Resolve includes for object
-    If element type is array and array data type is object:
-      Iterate over array elements:
-        Resolve includes for object
-    
-Adding objects to the collection while iterating over that collection might be problematic.
-One approach would be to build an array of fileObjs then add them to the object after the
-processing of _include_file_ elements is complete.  Another would be to remove the
-_include_file_ element, copy the fileObj elements, and restart iterating over the collection.
-*/
-
-bool ConfigReader::readConfigurationFile(const std::string& fileName, Json& configObj)
+bool ConfigReader::readConfigurationFile(const std::string& filePathName, Json& configObj)
 {
-    ifstream configFile(fileName, ios_base::in);
+    ifstream configFile(filePathName, ios_base::in);
     if (!configFile.is_open()) {
-        logger.logMsg(LOG_ERR, "Can't open configuration file %s.", fileName.c_str());
+        logger.logMsg(LOG_ERR, "Can't open configuration file %s.", filePathName.c_str());
         return false;
     }
     stringstream jsonSstr;
@@ -446,7 +437,7 @@ bool ConfigReader::readConfigurationFile(const std::string& fileName, Json& conf
     string err;
     configObj = Json::parse(jsonSstr.str(), err, JsonParse::COMMENTS);
     if (!err.empty()) {
-        logger.logMsg(LOG_ERR, "Parse of configuration file %s failed:  %s", fileName.c_str(), err.c_str());
+        logger.logMsg(LOG_ERR, "Parse of configuration file %s failed:  %s", filePathName.c_str(), err.c_str());
         return false;
     }
 
@@ -460,9 +451,15 @@ string ConfigReader::dumpToString()
 }
 
 
-string ConfigReader::getConfigFileName()
+string ConfigReader::getConfigFilePath()
 {
-    return loadedConfigFileName;
+    return loadedConfigFilePath;
+}
+
+
+string ConfigReader::getConfigFilePathName()
+{
+    return loadedConfigFilePathName;
 }
 
 
