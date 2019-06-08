@@ -35,12 +35,12 @@ void configReaderIncludeUnitTests()
     cout << "----- ConfigReader include -----" << endl;
 
     ConfigReader config;
-    assert(config.loadConfiguration("../config/unitTests_configReaderInclude_0.json"));
+    assert(config.loadConfiguration("../config/unitTests/unitTests_configReaderInclude_0.json"));
 
     json11::Json resolved(config.getConfigObject());
 
     ConfigReader expect;
-    assert(expect.loadConfiguration("../config/unitTests_configReaderInclude_resolved.json"));
+    assert(expect.loadConfiguration("../config/unitTests/unitTests_configReaderInclude_resolved.json"));
 
     cout << "    resolved result:  " << resolved.dump() << endl;
     cout << "    resolved expect:  " << expect.dumpToString() << endl;
@@ -56,7 +56,7 @@ void configReaderMergeUnitTests()
     cout << "----- ConfigReader merge -----" << endl;
 
     ConfigReader config;
-    assert(config.loadConfiguration("../config/unitTests_configReaderMerge.json"));
+    assert(config.loadConfiguration("../config/unitTests/unitTests_configReaderMerge.json"));
 
     json11::Json primary, secondary;
     assert(ConfigReader::getJsonObject(config.getConfigObject(), "primary", primary));
@@ -202,7 +202,7 @@ void measurementMapperUnitTests()
 
 
     ConfigReader config;
-    assert(config.loadConfiguration("../config/unitTests_configReaderMerge.json"));
+    assert(config.loadConfiguration("../config/unitTests/unitTests_configReaderMerge.json"));
 
     MeasurementMapper<int, float> mapper3config;
     assert(mapper3config.readConfig(config.getConfigObject(), "mapper3", "unitTests mapper3config"));
