@@ -1,6 +1,8 @@
 // ---------- colored sprays on Baton (multiple) ----------
 {
-    "_include_file_sprayWhite_Baton" : "patterns/sprayWhite_Baton.json",
-    "_include_file_sprayPurple_Baton" : "patterns/sprayPurple_Baton.json",
-    "_include_file_sprayAqua_Baton" : "patterns/sprayAqua_Baton.json"
+    "patterns" : [
+        { "_include_file_sprayWhite_Baton" : "patterns/sprayWhite_Baton.json" },
+        { "_include_file_sprayPurple_Baton" : "patterns/sprayPurple_Baton.json" },
+        { "_include_file_sprayAqua_Baton" : "patterns/sprayAqua_Baton.json" }
+    ]
 }

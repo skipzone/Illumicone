@@ -829,6 +829,43 @@ void tearDownWidgets()
 }
 
 
+void loadPattern(const json11::Json& patternConfigObject)
+{
+    //logger.logMsg(LOG_DEBUG, "patternConfigObject:  " + patternConfigObject.dump());
+    string patternName = patternConfigObject["name"].string_value();
+    if (patternName.empty()) {
+        logger.logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfigObject.dump());
+        return;
+    }
+    if (!patternConfigObject["enabled"].bool_value()) {
+        logger.logMsg(LOG_INFO, patternName + " is disabled.");
+        return;
+    }
+    string patternClassName = patternConfigObject["patternClassName"].string_value();
+    if (patternClassName.empty()) {
+        logger.logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfigObject.dump());
+        return;
+    }
+    Pattern* newPattern = patternFactory(patternClassName, patternName);
+    if (newPattern == nullptr) {
+        logger.logMsg(LOG_ERR,
+                "Unable to instantiate " + patternClassName + " object for " + patternName
+                + ".  (Is the pattern class name correct?)");
+        return;
+    }
+    if (!newPattern->init(patternConfigObject, configObject, widgets)) {
+        logger.logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
+        delete newPattern;
+        return;
+    }
+    logger.logMsg(LOG_INFO, patternName + " initialized.");
+
+    PatternState* newPatternState = new PatternState;
+    newPatternState->pattern = newPattern;
+    patternStates.emplace_back(newPatternState);
+}
+
+
 void initPatterns()
 {
     logger.logMsg(LOG_INFO, "Initializing patterns...");
@@ -836,38 +873,14 @@ void initPatterns()
     //logger.logMsg(LOG_DEBUG, "configObject[\"patterns\"] has %ld elements", configObject["patterns"].array_items().size());
     //logger.logMsg(LOG_DEBUG, "configObject[\"patterns\"]:  " + configObject["patterns"].dump());
     for (auto& patternConfigObject : configObject["patterns"].array_items()) {
-        //logger.logMsg(LOG_DEBUG, "patternConfigObject:  " + patternConfigObject.dump());
-        string patternName = patternConfigObject["name"].string_value();
-        if (patternName.empty()) {
-            logger.logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfigObject.dump());
-            continue;
+        if (patternConfigObject["patterns"].is_array()) {
+            for (auto& nestedPatternConfigObject : patternConfigObject["patterns"].array_items()) {
+                loadPattern(nestedPatternConfigObject);
+            }
         }
-        if (!patternConfigObject["enabled"].bool_value()) {
-            logger.logMsg(LOG_INFO, patternName + " is disabled.");
-            continue;
+        else {
+            loadPattern(patternConfigObject);
         }
-        string patternClassName = patternConfigObject["patternClassName"].string_value();
-        if (patternClassName.empty()) {
-            logger.logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfigObject.dump());
-            continue;
-        }
-        Pattern* newPattern = patternFactory(patternClassName, patternName);
-        if (newPattern == nullptr) {
-            logger.logMsg(LOG_ERR,
-                    "Unable to instantiate " + patternClassName + " object for " + patternName
-                    + ".  (Is the pattern class name correct?)");
-            continue;
-        }
-        if (!newPattern->init(patternConfigObject, configObject, widgets)) {
-            logger.logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
-            delete newPattern;
-            continue;
-        }
-        logger.logMsg(LOG_INFO, patternName + " initialized.");
-
-        PatternState* newPatternState = new PatternState;
-        newPatternState->pattern = newPattern;
-        patternStates.emplace_back(newPatternState);
     }
 }
 

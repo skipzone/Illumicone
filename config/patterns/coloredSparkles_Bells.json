@@ -1,8 +1,10 @@
 // ---------- sparkles on Bells (multiple) ----------
 {
-    //"_include_file_multicolorSparkle_Bells" : "patterns/multicolorSparkle_Bells.json",
-    "_include_file_goldSparkle_Bells" : "patterns/goldSparkle_Bells.json",
-    "_include_file_redSparkle_Bells" : "patterns/redSparkle_Bells.json",
-    "_include_file_greenSparkle_Bells" : "patterns/greenSparkle_Bells.json"
+    "patterns" : [
+        //{ "_include_file_multicolorSparkle_Bells" : "patterns/multicolorSparkle_Bells.json" }
+        { "_include_file_goldSparkle_Bells" : "patterns/goldSparkle_Bells.json" },
+        { "_include_file_redSparkle_Bells" : "patterns/redSparkle_Bells.json" },
+        { "_include_file_greenSparkle_Bells" : "patterns/greenSparkle_Bells.json" }
+    ]
 }
 
