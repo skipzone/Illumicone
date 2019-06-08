@@ -1,0 +1,23 @@
+{   "name" : "sprayPurple_Baton",
+    "enabled" : true,
+    "priority" : 2,
+    "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "ParticlesPattern",
+    "inputs" : [
+        {   "inputName" : "emitRate",
+            "widgetName" : "baton",
+            "channelNumber" : 4,        // gyro Y
+            "measurement" : "position"
+        }
+    ],
+    "emitColorDefault" : "purple",
+    "emitIntervalUseMeasmtAbsValue" : true,
+    "emitIntervalMeasmtLow" : 50,
+    "emitIntervalMeasmtHigh" : 300,
+    "emitIntervalLowMs" : 250,
+    "emitIntervalHighMs" : 10,
+    "emitBatchSize" : 15,
+    "emitDirectionIsUp" : true,
+    "particleMoveIntervalMs" : 18
+}
+

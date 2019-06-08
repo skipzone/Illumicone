@@ -1,0 +1,22 @@
+{   "name" : "multicolorSparkle_Spinnah",
+    "enabled" : true,
+    "priority" : 7,
+    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SparklePattern",
+    "inputs" : [
+        {   "inputName" : "density",
+            "widgetName" : "spinnah",
+            "channelNumber" : 0,
+            "measurement" : "velocity"
+        }
+    ],
+    "activationThreshold" : 20,
+    "deactivationThreshold" : 500,
+    "numGoodMeasurementsForReactivation" : 10,
+    "densityScaledownFactor" : 1800,
+    "useRandomColors" : true,
+    "sparkleChangeIntervalMs" : 50
+    //"forwardSparkleColor" : "magenta",
+    //"reverseSparkleColor" : "green"
+}
+

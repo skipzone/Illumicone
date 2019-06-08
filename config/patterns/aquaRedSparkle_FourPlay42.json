@@ -1,0 +1,23 @@
+// TODO:  copied from Triobelisk; probably needs adjustment
+{   "name" : "aquaRedSparkle_FourPlay42",
+    "enabled" : true,
+    "priority" : 7,
+    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SparklePattern",
+    "inputs" : [
+        {   "inputName" : "density",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 2,
+            "measurement" : "velocity"
+        }
+    ],
+    "activationThreshold" : 10,
+    "deactivationThreshold" : 300,
+    "numGoodMeasurementsForReactivation" : 10,
+    "densityScaledownFactor" : 1200,
+    "useRandomColors" : false,
+    "sparkleChangeIntervalMs" : 50,
+    "forwardSparkleColor" : "aqua",
+    "reverseSparkleColor" : "red"
+}
+

@@ -1,0 +1,20 @@
+{   "name" : "multicolorSparkle_FourPlay42",
+    "enabled" : true,
+    "priority" : 7,
+    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SparklePattern",
+    "inputs" : [
+        {   "inputName" : "density",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 0,
+            "measurement" : "velocity"
+        }
+    ],
+    "activationThreshold" : 10,
+    "deactivationThreshold" : 300,
+    "numGoodMeasurementsForReactivation" : 10,
+    "densityScaledownFactor" : 1200,
+    "useRandomColors" : true,
+    "sparkleChangeIntervalMs" : 50
+}
+

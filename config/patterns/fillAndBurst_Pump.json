@@ -1,0 +1,26 @@
+{   "name" : "fillAndBurst_Pump",
+    "enabled" : true,
+    "priority" : 9,
+    "opacity" : 60,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "burstingPriority" : 1,
+    "patternClassName" : "FillAndBurstPattern",
+    "inputs" : [
+        {   "inputName" : "pressure",
+            "widgetName" : "pump",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
+    ],
+    "pressurizationColor" : "orange",
+    //"depressurizationColor" : "32,64,0",
+    "lowPressureCutoff" : 150,          // use 200 when it is very cold
+    "burstThreshold" : 400,             // use 450 when it is very cold
+    "flashThreshold" : 600,
+    "burstDurationMs" : 6000,
+    "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
+    "fillStepIntervalHighMs" : 50,
+    "fillStepIntervalLowMs" : 5,
+    "flashDurationMs" : 4000,
+    "flashIntervalMs" : 20
+}
+

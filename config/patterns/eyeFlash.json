@@ -1,0 +1,19 @@
+{   "name" : "eyeFlash",
+    "enabled" : true,
+    "priority" : 2,
+    "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "AnnoyingFlashingPattern",
+    "inputs" : [
+        {   "inputName" : "intensity",
+            "widgetName" : "eye",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
+    ],
+    "autoDisableTimeoutMs" : 1500,      // pattern disables itself after being active for this amount of time
+    "activationThreshold" : 300,        // 300 is a basic LED flashlight from a few feet away
+    "reactivationThreshold" : 200,      // pattern re-enables itself when measurement drops below this value
+    "allStringsSameColor" : false,
+    "flashChangeIntervalMs" : 50
+}
+

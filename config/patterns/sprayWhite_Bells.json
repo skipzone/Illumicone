@@ -1,0 +1,23 @@
+{   "name" : "sprayWhite_Bells",
+    "enabled" : true,
+    "priority" : 2,
+    "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "ParticlesPattern",
+    "inputs" : [
+        {   "inputName" : "emitRate",
+            "widgetName" : "bells",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
+    ],
+    "emitColorDefault" : "white",
+    "emitIntervalUseMeasmtAbsValue" : true,
+    "emitIntervalMeasmtLow" : 200,
+    "emitIntervalMeasmtHigh" : 1023,
+    "emitIntervalLowMs" : 250,
+    "emitIntervalHighMs" : 10,
+    "emitBatchSize" : 15,
+    "emitDirectionIsUp" : true,
+    "particleMoveIntervalMs" : 6
+}
+

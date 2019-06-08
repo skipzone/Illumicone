@@ -1,0 +1,22 @@
+{   "name" : "goldSparkle_Baton",
+    "enabled" : true,
+    "priority" : 7,
+    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SparklePattern",
+    "inputs" : [
+        {   "inputName" : "density",
+            "widgetName" : "baton",
+            "channelNumber" : 3,        // gyro X
+            "measurement" : "position"
+        }
+    ],
+    "activationThreshold" : 50,
+    "deactivationThreshold" : 999,
+    "numGoodMeasurementsForReactivation" : 1,
+    "densityScaledownFactor" : 1600,
+    "useRandomColors" : false,
+    "sparkleChangeIntervalMs" : 50,
+    "forwardSparkleColor" : "gold",
+    "reverseSparkleColor" : "gold"
+}
+

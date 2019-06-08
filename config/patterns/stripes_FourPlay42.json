@@ -1,0 +1,32 @@
+{   "name" : "stripes_FourPlay42",
+    "enabled" : true,
+    "priority" : 6,
+    "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "RgbVerticalPattern",
+    "inputs" : [
+        {   "inputName" : "redPosition",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        },
+        {   "inputName" : "greenPosition",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 1,
+            "measurement" : "position"
+        },
+        {   "inputName" : "bluePosition",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 2,
+            "measurement" : "position"
+        },
+        {   "inputName" : "width",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 3,
+            "measurement" : "position"
+        }
+    ],
+    "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+    "maxCyclicalWidth" : 6,
+    "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+}
+

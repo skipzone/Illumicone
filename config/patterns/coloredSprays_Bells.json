@@ -1,0 +1,7 @@
+// ---------- colored sprays on Bells (multiple) ----------
+{
+    "_include_file_sprayWhite_Bells" : "patterns/sprayWhite_Bells.json",
+    "_include_file_sprayPurple_Bells" : "patterns/sprayPurple_Bells.json",
+    "_include_file_sprayAqua_Bells" : "patterns/sprayAqua_Bells.json"
+}
+

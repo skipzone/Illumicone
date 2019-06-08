@@ -1,0 +1,8 @@
+// ---------- sparkles on Baton (multiple) ----------
+{
+    //"_include_file_multicolorSparkle_Baton" : "patterns/multicolorSparkle_Baton.json",
+    "_include_file_goldSparkle_Baton" : "patterns/goldSparkle_Baton.json",
+    "_include_file_redSparkle_Baton" : "patterns/redSparkle_Baton.json",
+    "_include_file_greenSparkle_Baton" : "patterns/greenSparkle_Baton.json"
+}
+
