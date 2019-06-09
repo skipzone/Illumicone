@@ -1,0 +1,8 @@
+{
+    "string-0-1" : "string-0-1",
+    "_include_file_0_1" : "unitTests_configReaderInclude_0_1.json",
+    "obj-0-1" : { "string-1-1" : "string-1-1",
+                  "string-1-2" : "string-1-2-override",
+                  "_include_file_1_1" : "unitTests_configReaderInclude_1_1.json"
+                }
+}

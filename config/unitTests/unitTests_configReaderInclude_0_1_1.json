@@ -1,0 +1,7 @@
+{
+    "string-0-3" : "string-0-3",
+    "array-0-3" : [ { "array-0-3-el0-obj0" : "array-0-3-el0-obj0" },
+                    { "_include_file_0_1_1_1" : "unitTests_configReaderInclude_0_1_1_1.json" }
+                  ]
+}
+

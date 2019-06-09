@@ -1,0 +1,43 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "fillAndBurst_Pump",
+    "enabled" : true,
+    "priority" : 9,
+    "opacity" : 60,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "burstingPriority" : 1,
+    "patternClassName" : "FillAndBurstPattern",
+    "inputs" : [
+        {   "inputName" : "pressure",
+            "widgetName" : "pump",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
+    ],
+    "pressurizationColor" : "orange",
+    //"depressurizationColor" : "32,64,0",
+    "lowPressureCutoff" : 150,          // use 200 when it is very cold
+    "burstThreshold" : 400,             // use 450 when it is very cold
+    "flashThreshold" : 600,
+    "burstDurationMs" : 6000,
+    "fillStepSize" : 8,                 // the number of pixels (depth from bottom) to turn on with each fill step
+    "fillStepIntervalHighMs" : 50,
+    "fillStepIntervalLowMs" : 5,
+    "flashDurationMs" : 4000,
+    "flashIntervalMs" : 20
+}
+

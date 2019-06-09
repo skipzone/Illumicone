@@ -1,0 +1,41 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "goldSparkle_Bells",
+    "enabled" : true,
+    "priority" : 7,
+    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SparklePattern",
+    "inputs" : [
+        {   "inputName" : "density",
+            "widgetName" : "bells",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
+    ],
+    "activationThreshold" : 20,         // not sure what this should be--needs to be higher than wind noise
+    "deactivationThreshold" : 9999,
+    "numGoodMeasurementsForReactivation" : 1,
+    "densityScaledownFactor" : 2048,    // 50% sparkle when bells's intensity (position) is at maximum
+    "decayConstant" : 0.5,
+    "decayResetMs" : 3000,
+    "useRandomColors" : false,
+    "sparkleChangeIntervalMs" : 50,
+    "forwardSparkleColor" : "gold",
+    "reverseSparkleColor" : "gold"
+}
+

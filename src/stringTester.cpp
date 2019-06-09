@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     logger.startLogging("stringTester", Log::LogTo::console);
 
     ConfigReader config;
-    if (!config.readConfigurationFile(jsonFileName)) {
+    if (!config.loadConfiguration(jsonFileName)) {
         return(EXIT_FAILURE);
     }
 
