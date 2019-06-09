@@ -958,7 +958,7 @@ bool doInitialization()
     string configFileNameAndTarget = configFileName;
     char buf[512];
     int count = readlink(configFileName.c_str(), buf, sizeof(buf));
-    if (count >= 0) {
+    if (count >= 0 && (unsigned int) count < sizeof(buf)) {
         buf[count] = '\0';
         configFileNameAndTarget += string(" -> ") + buf;
     }
