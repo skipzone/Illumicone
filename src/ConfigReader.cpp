@@ -393,8 +393,8 @@ Json ConfigReader::resolveObjectIncludes(const Json& inputJsonObj, unsigned int 
     for (auto it = objItems.begin(); it != objItems.end();) {
         if ((*it).first.find("_include_file_") == 0 && (*it).second.is_string())  {
             string includeFilePathName = loadedConfigFilePath + "/" + (*it).second.string_value();
-            logger.logMsg(LOG_INFO, "Reading " + (*it).first + " " + includeFilePathName
-                            + " at level " + to_string(curLevel) + ".");
+            //logger.logMsg(LOG_DEBUG, "Reading " + (*it).first + " " + includeFilePathName
+            //                + " at level " + to_string(curLevel) + ".");
             Json includeObj;
             if (!readConfigurationFile(includeFilePathName, includeObj)) {
                 return Json();
