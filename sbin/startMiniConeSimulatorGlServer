@@ -1,0 +1,2 @@
+#!/bin/bash
+~/devl/openpixelcontrol/bin/gl_server -l ~/devl/Illumicone/simulator/coneLayouts/Mini-Cone_24.json -p 7890 &

@@ -1,0 +1,55 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "patternController" : {
+
+        "_include_file_network_symlink" : "network_active.json",
+
+        "numberOfStrings" : 24,
+        "numberOfPixelsPerString" : 20,
+
+        "_include_file_schedule" : "schedule_alwaysOn.json",
+
+        // Effectively never rotate log files.
+        "logRotationIntervalMinutes" : 14400000,
+        "logRotationOffsetHour" : 12,
+        "logRotationOffsetMinute" : 0,
+
+        "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        "patternRunLoopSleepIntervalUs" : 4000,
+
+        "widgets" : [
+            {   "name" : "fourPlay42",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : true,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "fourPlay43",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : true,
+                "autoInactiveMs" : 5000
+            }
+        ],
+
+        "patterns" : [
+            { "_include_file_rings_FourPlay43" : "patterns/rings_FourPlay43_minicone.json" },
+            { "_include_file_stripes_FourPlay42" : "patterns/stripes_FourPlay42_minicone.json" }
+        ]
+    }
+}
+
