@@ -780,40 +780,54 @@ void freeOpcBuffer()
 }
 
 
+void loadWidgetConfig(const json11::Json& widgetConfigObject)
+{
+    string widgetName = widgetConfigObject["name"].string_value();
+    if (widgetName.empty()) {
+        logger.logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfigObject.dump());
+        return;
+    }
+    if (!widgetConfigObject["enabled"].bool_value()) {
+        logger.logMsg(LOG_INFO, widgetName + " is disabled.");
+        return;
+    }
+    WidgetId widgetId = stringToWidgetId(widgetName);
+    if (widgetId == WidgetId::invalid) {
+        logger.logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfigObject.dump());
+        return;
+    }
+    if (widgets.find(widgetId) != widgets.end()) {
+        logger.logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfigObject.dump());
+        return;
+    }
+    Widget* newWidget = widgetFactory(widgetId);
+    if (newWidget == nullptr) {
+        logger.logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
+        return;
+    }
+    if (!newWidget->init(widgetConfigObject, configObject)) {
+        logger.logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
+        return;
+    }
+    logger.logMsg(LOG_INFO, widgetName + " initialized.");
+    widgets[widgetId] = newWidget;
+}
+
+
 void initWidgets()
 {
     logger.logMsg(LOG_INFO, "Initializing widgets...");
 
     for (auto& widgetConfigObject : configObject["widgets"].array_items()) {
-        string widgetName = widgetConfigObject["name"].string_value();
-        if (widgetName.empty()) {
-            logger.logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfigObject.dump());
-            continue;
+
+        if (widgetConfigObject["widgets"].is_array()) {
+            for (auto& nestedWidgetConfigObject : widgetConfigObject["widgets"].array_items()) {
+                loadWidgetConfig(nestedWidgetConfigObject);
+            }
         }
-        if (!widgetConfigObject["enabled"].bool_value()) {
-            logger.logMsg(LOG_INFO, widgetName + " is disabled.");
-            continue;
+        else {
+            loadWidgetConfig(widgetConfigObject);
         }
-        WidgetId widgetId = stringToWidgetId(widgetName);
-        if (widgetId == WidgetId::invalid) {
-            logger.logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfigObject.dump());
-            continue;
-        }
-        if (widgets.find(widgetId) != widgets.end()) {
-            logger.logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfigObject.dump());
-            continue;
-        }
-        Widget* newWidget = widgetFactory(widgetId);
-        if (newWidget == nullptr) {
-            logger.logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
-            continue;
-        }
-        if (!newWidget->init(widgetConfigObject, configObject)) {
-            logger.logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
-            continue;
-        }
-        logger.logMsg(LOG_INFO, widgetName + " initialized.");
-        widgets[widgetId] = newWidget;
     }
 }
 
@@ -829,7 +843,7 @@ void tearDownWidgets()
 }
 
 
-void loadPattern(const json11::Json& patternConfigObject)
+void loadPatternConfig(const json11::Json& patternConfigObject)
 {
     //logger.logMsg(LOG_DEBUG, "patternConfigObject:  " + patternConfigObject.dump());
     string patternName = patternConfigObject["name"].string_value();
@@ -875,11 +889,11 @@ void initPatterns()
     for (auto& patternConfigObject : configObject["patterns"].array_items()) {
         if (patternConfigObject["patterns"].is_array()) {
             for (auto& nestedPatternConfigObject : patternConfigObject["patterns"].array_items()) {
-                loadPattern(nestedPatternConfigObject);
+                loadPatternConfig(nestedPatternConfigObject);
             }
         }
         else {
-            loadPattern(patternConfigObject);
+            loadPatternConfig(patternConfigObject);
         }
     }
 }

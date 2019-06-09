@@ -43,7 +43,9 @@
         "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
         "patternRunLoopSleepIntervalUs" : 4000,
 
-        "_include_file_widgets" : "widgets/allWidgets.json",
+        "widgets" : [
+            { "_include_file_allWidgets" : "widgets/allWidgets.json" }
+        ],
 
         "patterns" : [
             //{ "_include_file_coloredSparkles_Baton" : "patterns/coloredSparkles_Baton.json" },
