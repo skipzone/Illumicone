@@ -16,96 +16,29 @@
 */
 
 {
-
     "common" : {
+        "_include_file_network_symlink" : "network_active.json",
 
-        // ----- normal Illumicone installation -----
-        //"patconIpAddress" : "127.0.0.1",
-        //"opcServerIpAddress": "192.168.69.100",
-        //"useTcpForOpcServer" : false,
-
-        // ----- remote widget receiver -----
-        //"patconIpAddress" : "192.168.69.103",
-        //"opcServerIpAddress": "192.168.69.100",
-        //"useTcpForOpcServer" : false,
-
-        // ----- Xu shop computer simulator -----
-        //"patconIpAddress" : "192.168.69.11",
-        //"opcServerIpAddress": "192.168.69.11",
-        //"useTcpForOpcServer" : true,
-
-        // ----- perry/floyd simulator -----
-        //"patconIpAddress" : "192.168.76.15",
-        //"opcServerIpAddress": "192.168.76.15",
-        //"useTcpForOpcServer" : true,
-
-        // ----- local simulator -----
-        "patconIpAddress" : "127.0.0.1",
-        "opcServerIpAddress": "127.0.0.1",
-        "useTcpForOpcServer" : true,
-
-        // ----- local pattern generator with display on perry/floyd -----
-        //"patconIpAddress" : "127.0.0.1",
-        //"opcServerIpAddress": "192.168.76.15",
-        //"opcServerIpAddress": "192.168.0.83",
-        //"useTcpForOpcServer" : true,
-
-        "opcServerPortNumber" : 7890,
-        "widgetPortNumberBase" : 4200,
-
-        // Rotate log files at noon.
-        "logRotationIntervalMinutes" : 1440,
+        // Effectively never rotate log files.
+        "logRotationIntervalMinutes" : 14400000,
         "logRotationOffsetHour" : 12,
         "logRotationOffsetMinute" : 0
     },
 
 
     "widgetRcvr" : {
-
-        //"lockFilePath" : "/tmp",
-
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 1000,
 
-        // nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
-        // ISM: 2400-2500;  ham: 2390-2450
-        // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
-        //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-        "rfChannel" : 84,
-
-        // Probably no need to ever set auto acknowledgement to false because the sender
-        // can control whether or not acks are sent by using the NO_ACK bit.
-        "autoAck" : true,
-
-        // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-        "rfPowerLevel" : "RF24_PA_MAX",
-
-        // RF24_250KBPS or RF24_1MBPS
-        "dataRate" : "RF24_1MBPS",
-
-        // 250 us additional delay multiplier (0-15)
-        "txRetryDelayMultiplier" : 15,
-
-        // max retries (0-15)
-        "txMaxRetries" : 15,
-
-        // RF24_CRC_DISABLED, RF24_CRC_8, or RF24_CRC_16 (the only sensible value)
-        "crcLength" : "RF24_CRC_16"
+        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
     },
 
 
     "patternController" : {
-
-        //"lockFilePath" : "/tmp",
-
         "numberOfStrings" : 48,
         "numberOfPixelsPerString" : 100,
 
-        "shutoffPeriods" : [
-        ],
-
-        "quiescentPeriods" : [
-        ],
+        "_include_file_schedule" : "schedule_alwaysOn.json",
 
         "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
         "patternRunLoopSleepIntervalUs" : 4000,
@@ -113,11 +46,11 @@
         "_include_file_widgets" : "widgets/allWidgets.json",
 
         "patterns" : [
-            { "_include_file_coloredSparkles_Baton" : "patterns/coloredSparkles_Baton.json" },
+            //{ "_include_file_coloredSparkles_Baton" : "patterns/coloredSparkles_Baton.json" },
             { "_include_file_coloredSparkles_Bells" : "patterns/coloredSparkles_Bells.json" },
-            { "_include_file_coloredSparkles_FourPlay42" : "patterns/coloredSparkles_FourPlay42.json" },
+            //{ "_include_file_coloredSparkles_FourPlay42" : "patterns/coloredSparkles_FourPlay42.json" },
             { "_include_file_coloredSprays_Baton" : "patterns/coloredSprays_Baton.json" },
-            { "_include_file_coloredSprays_Bells" : "patterns/coloredSprays_Bells.json" },
+            //{ "_include_file_coloredSprays_Bells" : "patterns/coloredSprays_Bells.json" },
             { "_include_file_eyeFlash" : "patterns/eyeFlash.json" },
             { "_include_file_fillAndBurst_Pump" : "patterns/fillAndBurst_Pump.json" },
             { "_include_file_multicolorSparkle_Spinnah" : "patterns/multicolorSparkle_Spinnah.json" },
@@ -127,7 +60,5 @@
             { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" },
             { "_include_file_stripes_FourPlay42" : "patterns/stripes_FourPlay42.json" }
         ]
-
     }
-
 }
