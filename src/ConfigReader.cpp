@@ -20,6 +20,7 @@
 #include <sstream>
 
 #include <libgen.h>
+#include <unistd.h>
 
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
@@ -354,17 +355,27 @@ bool ConfigReader::loadConfiguration(const std::string& configFilePathName)
 {
     loadedConfigFilePathName = configFilePathName;
 
-    char* path = (char *) malloc(configFilePathName.length() + 1);
+    // If the config file pathname is really a symbolic link, use the target
+    // pathname because the path to any include files will be relative to the
+    // target's location, not the symlink's location.
+    char buf[512];
+    int count = readlink(loadedConfigFilePathName.c_str(), buf, sizeof(buf));
+    if (count >= 0 && (unsigned int) count < sizeof(buf)) {
+        buf[count] = '\0';
+        loadedConfigFilePathName = buf;
+    }
+
+    char* path = (char *) malloc(loadedConfigFilePathName.length() + 1);
     if (path == NULL) {
         logger.logMsg(LOG_ERR, "ConfigReader::loadConfiguration:  Can't allocate path buffer.");
         return false;
     }
-    strcpy(path, configFilePathName.c_str());
+    strcpy(path, loadedConfigFilePathName.c_str());
     loadedConfigFilePath = dirname(path);
     free(path);
 
     Json obj;
-    if (!readConfigurationFile(configFilePathName, obj)) {
+    if (!readConfigurationFile(loadedConfigFilePathName, obj)) {
         return false;
     }
     loadedConfigObj = resolveObjectIncludes(obj, 0);
