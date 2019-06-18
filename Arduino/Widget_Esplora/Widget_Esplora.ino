@@ -40,9 +40,9 @@
  * Widget Configuration *
  ************************/
 
-//#define WIDGET_RADIO_TESTER
+#define WIDGET_RADIO_TESTER
 //#define FOURPLAY_4_2
-#define FOURPLAY_4_3
+//#define FOURPLAY_4_3
 //#define PUMP
 
 #if defined(WIDGET_RADIO_TESTER)
@@ -99,9 +99,9 @@
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
-#define WANT_ACK false
-#define TX_RETRY_DELAY_MULTIPLIER 0     // use 2 when getting acks
-#define TX_MAX_RETRIES 0                // use 15 when getting acks
+#define WANT_ACK true
+#define TX_RETRY_DELAY_MULTIPLIER 2     // use 2 when getting acks
+#define TX_MAX_RETRIES 15               // use 15 when getting acks
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
@@ -356,4 +356,3 @@ void loop()
   doPump(now);
 #endif
 }
-
