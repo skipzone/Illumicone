@@ -163,6 +163,13 @@ int main(int argc, char **argv)
         return(EXIT_FAILURE);
     }
 
+    if (stringNum == 0) {
+        logger.logMsg(LOG_INFO, "Illuminating all strings with r=%d, g=%d, b=%d.", testColor.r, testColor.g, testColor.b);
+    }
+    else {
+        logger.logMsg(LOG_INFO, "Illuminating string %d with r=%d, g=%d, b=%d.", stringNum, testColor.r, testColor.g, testColor.b);
+    }
+
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in server;
     server.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
