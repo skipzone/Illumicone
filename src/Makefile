@@ -21,12 +21,10 @@
 ifneq (,$(wildcard /usr/local/include/RF24))
   PROGS = jsonTester logTest patternController stringTester unitTests widgetRcvr
   INSTALL_PROGS = patternController stringTester widgetRcvr
-  INSTALL_SBIN = readDS18B20Temperature stepThru48Strings.sh widck widgetPlayback.py
   LDLIBS = -L/usr/local/lib -lrf24
 else
   PROGS = jsonTester logTest patternController stringTester unitTests
   INSTALL_PROGS = patternController stringTester
-  INSTALL_SBIN = stepThru48Strings.sh widck widgetPlayback.py
 endif
 
 SRCS = $(wildcard *.cpp) 
@@ -113,9 +111,6 @@ install:
 	@$(INSTALLMKDIR) $(DESTDIR)$(PREFIX)/bin
 	@for f in $(INSTALL_PROGS); do \
 		$(INSTALL) $$f $(DESTDIR)$(PREFIX)/bin; \
-	done
-	@for f in $(INSTALL_SBIN); do \
-		$(INSTALL) $(SBIN_PATH)/$$f $(DESTDIR)$(PREFIX)/bin; \
 	done
 
 .PHONY: clean
