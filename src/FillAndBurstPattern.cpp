@@ -179,12 +179,13 @@ bool FillAndBurstPattern::update()
 
     bool gotNewMeasmt = false;
     int curMeasmt = 0;
+    isActive = pressureChannel->getIsActive();
     if (pressureChannel->getHasNewPositionMeasurement()) {
         curMeasmt = pressureChannel->getPosition();
         gotNewMeasmt = true;
 
         // Being below the low pressure cutoff is the same as being inactive.
-        isActive = pressureChannel->getIsActive() && curMeasmt > lowPressureCutoff;
+        isActive = isActive && curMeasmt > lowPressureCutoff;
     }
 
     // Are we in one of the bursting states? 
@@ -196,19 +197,14 @@ bool FillAndBurstPattern::update()
         || state == PatternState::fillIndigo
         || state == PatternState::fillViolet)
     {
-        if (gotNewMeasmt) {
+        if (isActive && gotNewMeasmt) {
             if (curMeasmt > flashThreshold) {
+                logger.logMsg(LOG_INFO, name + ":  Flashing.");
                 state = PatternState::startFlashing;
             }
-/*
-            else if (curMeasmt <= burstThreshold || (int) (nowMs - endBurstingMs) >= 0) {
-                priority = fillingPriority;
-                clearAllPixels();
-                state = PatternState::depressurizing;
-            }
-*/
             else {
-                // Map the pressure measurement into the fill step interval millisecond range.
+                // Map the pressure measurement into the fill step interval millisecond range
+                // so that the bursting gets more furious as they keep pumping.
                 fillStepIntervalMs =
                     fillStepIntervalHighMs
                      - (fillStepIntervalRange * (curMeasmt - burstThreshold) / fillStepIntervalMeasmtRange);
@@ -218,7 +214,7 @@ bool FillAndBurstPattern::update()
         }
         // If it isn't time to do the next step, just return that we're active.
         if ((int) (nowMs - nextStepMs) < 0) {
-            return isActive;
+            return true;
         }
     }
 
@@ -234,6 +230,7 @@ bool FillAndBurstPattern::update()
 
             // Start bursting if we're past the maximum pressure.
             if (curMeasmt > burstThreshold) {
+                logger.logMsg(LOG_INFO, name + ":  Bursting.");
                 endBurstingMs = nowMs + burstDurationMs;
                 fillPosition = pixelsPerString;
                 fillStepIntervalMs = fillStepIntervalHighMs;
@@ -346,7 +343,10 @@ bool FillAndBurstPattern::update()
             }
             nextStepMs = nowMs + fillStepIntervalMs;
             if (fillPosition <= 0) {
-                if (curMeasmt <= burstThreshold || (int) (nowMs - endBurstingMs) >= 0) {
+                // If they stopped pumping and the pressure has dropped below the burst threshold, we'll
+                // stop bursting.  Otherwise, we'll keep bursting until the burst time limit is reached.
+                if ((gotNewMeasmt && curMeasmt <= burstThreshold) || (int) (nowMs - endBurstingMs) >= 0) {
+                    logger.logMsg(LOG_INFO, name + ":  Depressurizing.");
                     priority = fillingPriority;
                     clearAllPixels();
                     state = PatternState::depressurizing;
@@ -379,6 +379,7 @@ bool FillAndBurstPattern::update()
                     state = PatternState::flashOn;
                 }
                 else {
+                    logger.logMsg(LOG_INFO, name + ":  Depressurizing after flashing.");
                     priority = fillingPriority;
                     clearAllPixels();
                     state = PatternState::depressurizing;
@@ -389,7 +390,8 @@ bool FillAndBurstPattern::update()
         case PatternState::depressurizing:
             // If the widget has gone inactive, we'll assume that
             // the pressure is below the low pressure cutoff.
-            if (!pressureChannel->getIsActive()) {
+            if (!isActive) {
+                logger.logMsg(LOG_INFO, name + ":  Ending depressurization due to becoming inactive.  Now pressurizing.");
                 state = PatternState::pressurizing;
             }
             else {
@@ -397,6 +399,7 @@ bool FillAndBurstPattern::update()
                 // low pressure cutoff before allowing pressurization again.
                 if (gotNewMeasmt) {
                     if (curMeasmt <= lowPressureCutoff) {
+                        logger.logMsg(LOG_INFO, name + ":  Low-pressure reset reached.  Now pressurizing.");
                         isActive = false;
                         state = PatternState::pressurizing;
                     }
