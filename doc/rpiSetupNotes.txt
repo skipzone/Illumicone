@@ -184,11 +184,11 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
 14.  Add these lines to the end of ~/.profile:
 
     # Set up Illumicone paths.
-    ILLUMICONE_BIN="$HOME/bin"
-    ILLUMICONE_CONFIG="$HOME/devl/Illumicone/config"
-    ILLUMICONE_DEVL="$HOME/devl/Illumicone"
-    ILLUMICONE_LOGS="$HOME/logs"
-    ILLUMICONE_SBIN="$ILLUMICONE_DEVL/sbin"
+    export ILLUMICONE_BIN="$HOME/bin"
+    export ILLUMICONE_LOGS="$HOME/logs"
+    export ILLUMICONE_DEVL="$HOME/devl/Illumicone"
+    export ILLUMICONE_CONFIG="$ILLUMICONE_DEVL/config"
+    export ILLUMICONE_SBIN="$ILLUMICONE_DEVL/sbin"
     PATH="$ILLUMICONE_BIN:$ILLUMICONE_SBIN:$PATH"
 
 
