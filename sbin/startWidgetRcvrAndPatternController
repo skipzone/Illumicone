@@ -1,7 +1,0 @@
-#!/bin/bash
-
-/home/illumicone/devl/Illumicone/src/patternController /home/illumicone/devl/Illumicone/config/activeConfig.json >> /home/illumicone/patternController.out 2>&1
-
-sleep 4
-
-/home/illumicone/devl/Illumicone/src/widgetRcvr /home/illumicone/devl/Illumicone/config/activeConfig.json >> /home/illumicone/widgetRcvr.out 2>&1
