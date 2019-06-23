@@ -185,6 +185,7 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
 
     # Set up Illumicone paths.
     ILLUMICONE_BIN="$HOME/bin"
+    ILLUMICONE_CONFIG="$HOME/devl/Illumicone/config"
     ILLUMICONE_DEVL="$HOME/devl/Illumicone"
     ILLUMICONE_LOGS="$HOME/logs"
     ILLUMICONE_SBIN="$ILLUMICONE_DEVL/sbin"
