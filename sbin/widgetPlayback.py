@@ -58,7 +58,7 @@ def waitUntilTimestamp(timestamp):
                 if intervalS < timeCompressionThresholdSeconds:
                     sleep(intervalS)
                 else:
-                    print('Advancing to {0}.'.format(timestamp))
+                    print('{0}:  Advancing to {1}.'.format(datetime.now(), timestamp))
 
         lastTimestamp = thisTimestamp
 
@@ -118,7 +118,7 @@ def processLogFile(logFileName):
         with open(logFileName, 'r') as f:
             for line in f:
                 if lineCount % 100 == 0:
-                    print('Processed {0} lines.  Last timestamp was {1}.'.format(lineCount, lastTimestamp))
+                    print('{0}:  Processed {1} lines.  Last timestamp was {2}.'.format(datetime.now(), lineCount, lastTimestamp))
                 lineCount += 1
                 line = line.rstrip()
 
