@@ -5,6 +5,7 @@ alias src='cd $ILLUMICONE_DEVL/src'
 alias strdrv='ssh 192.168.69.100'
 alias widpatcon='ssh 192.168.69.103'
 alias widpatcon2='ssh 192.168.69.104'
+alias widpatcon3='ssh ic-widpatcon3.local'
 
 alias testpattern='killall -USR2 patternController'
 
@@ -35,6 +36,15 @@ alias restartwr2='sudo systemctl restart widgetRcvr2.service'
 alias reloadwr2='sudo systemctl reload widgetRcvr2.service'
 alias statuswr2='sudo systemctl status widgetRcvr2.service'
 
+alias reinitwr3='killall widgetRcvr'
+alias disablewr3='sudo systemctl disable widgetRcvr3.service'
+alias enablewr3='sudo systemctl enable widgetRcvr3.service'
+alias startwr3='sudo systemctl start widgetRcvr3.service'
+alias stopwr3='sudo systemctl stop widgetRcvr3.service'
+alias restartwr3='sudo systemctl restart widgetRcvr3.service'
+alias reloadwr3='sudo systemctl reload widgetRcvr3.service'
+alias statuswr3='sudo systemctl status widgetRcvr3.service'
+
 alias tailpc='tail -40 $ILLUMICONE_LOGS/patternController.log'
 alias tailfpc='tail -f $ILLUMICONE_LOGS/patternController.log'
 alias vimpc='vim $ILLUMICONE_LOGS/patternController.log'
@@ -58,6 +68,14 @@ alias vimwr2='vim $ILLUMICONE_LOGS/widgetRcvr2.log'
 alias tailwr2d='tail -40 $ILLUMICONE_LOGS/widgetRcvr2_data.log'
 alias tailfwr2d='tail -f $ILLUMICONE_LOGS/widgetRcvr2_data.log'
 alias vimwr2d='vim $ILLUMICONE_LOGS/widgetRcvr2_data.log'
+
+alias tailwr3='tail -40 $ILLUMICONE_LOGS/widgetRcvr3.log'
+alias tailfwr3='tail -f $ILLUMICONE_LOGS/widgetRcvr3.log'
+alias vimwr3='vim $ILLUMICONE_LOGS/widgetRcvr3.log'
+
+alias tailwr3d='tail -40 $ILLUMICONE_LOGS/widgetRcvr3_data.log'
+alias tailfwr3d='tail -f $ILLUMICONE_LOGS/widgetRcvr3_data.log'
+alias vimwr3d='vim $ILLUMICONE_LOGS/widgetRcvr3_data.log'
 
 alias tailtemp='tail -40 $ILLUMICONE_LOGS/temperature.log'
 alias vimtemp='vim $ILLUMICONE_LOGS/temperature.log'
