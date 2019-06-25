@@ -1,0 +1,94 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "common" : {
+
+        // ----- pattern generator on floyd on illumicone LAN, local simulator display -----
+        "patconIpAddress" : "192.168.76.15",
+        "opcServerIpAddress": "127.0.0.1",
+        "useTcpForOpcServer" : true,
+        "opcServerPortNumber" : 7890,
+        "widgetPortNumberBase" : 4200,
+
+        // Effectively never rotate log files.
+        "logRotationIntervalMinutes" : 14400000,
+        "logRotationOffsetHour" : 12,
+        "logRotationOffsetMinute" : 0
+    },
+
+
+    "widgetRcvr3" : {
+        // Avoid hammering on the SPI interface by sleeping between polls for received data.
+        "radioPollingLoopSleepIntervalUs" : 1000,
+
+        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
+    },
+
+
+    "patternController" : {
+        "numberOfStrings" : 48,
+        "numberOfPixelsPerString" : 100,
+
+        "_include_file_schedule" : "schedule_alwaysOn.json",
+
+        "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        "patternRunLoopSleepIntervalUs" : 4000,
+
+        "widgets" : [
+        {   "name" : "fourPlay43",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        }
+        ],
+
+        "patterns" : [
+            {   "name" : "stripes_FourPlay43",
+                "enabled" : true,
+                "priority" : 6,
+                "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+                "patternClassName" : "RgbVerticalPattern",
+                "inputs" : [
+                    {   "inputName" : "redPosition",
+                        "widgetName" : "fourPlay43",
+                        "channelNumber" : 0,
+                        "measurement" : "position"
+                    },
+                    {   "inputName" : "greenPosition",
+                        "widgetName" : "fourPlay43",
+                        "channelNumber" : 1,
+                        "measurement" : "position"
+                    },
+                    {   "inputName" : "bluePosition",
+                        "widgetName" : "fourPlay43",
+                        "channelNumber" : 2,
+                        "measurement" : "position"
+                    },
+                    {   "inputName" : "width",
+                        "widgetName" : "fourPlay43",
+                        "channelNumber" : 3,
+                        "measurement" : "position"
+                    }
+                ],
+                "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+                "maxCyclicalWidth" : 6,
+                "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+            }
+        ]
+    }
+}
