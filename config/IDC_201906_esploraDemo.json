@@ -19,7 +19,7 @@
     "common" : {
 
         // ----- pattern generator on floyd on illumicone LAN, local simulator display -----
-        "patconIpAddress" : "192.168.76.15",
+        "patconIpAddress" : "192.168.69.13",
         "opcServerIpAddress": "127.0.0.1",
         "useTcpForOpcServer" : true,
         "opcServerPortNumber" : 7890,
@@ -36,7 +36,7 @@
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 1000,
 
-        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
+        "_include_file_widgetRadio" : "widgetRadio_ch80.json"
     },
 
 
