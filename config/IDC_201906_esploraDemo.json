@@ -50,6 +50,11 @@
         "patternRunLoopSleepIntervalUs" : 4000,
 
         "widgets" : [
+        {   "name" : "fourPlay42",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
         {   "name" : "fourPlay43",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
@@ -58,11 +63,44 @@
         ],
 
         "patterns" : [
-            {   "name" : "stripes_FourPlay43",
+
+            {   "name" : "stripes_FourPlay42",
                 "enabled" : true,
                 "priority" : 6,
                 "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
                 "patternClassName" : "RgbVerticalPattern",
+                "inputs" : [
+                    {   "inputName" : "redPosition",
+                        "widgetName" : "fourPlay42",
+                        "channelNumber" : 0,
+                        "measurement" : "position"
+                    },
+                    {   "inputName" : "greenPosition",
+                        "widgetName" : "fourPlay42",
+                        "channelNumber" : 1,
+                        "measurement" : "position"
+                    },
+                    {   "inputName" : "bluePosition",
+                        "widgetName" : "fourPlay42",
+                        "channelNumber" : 2,
+                        "measurement" : "position"
+                    },
+                    {   "inputName" : "width",
+                        "widgetName" : "fourPlay42",
+                        "channelNumber" : 3,
+                        "measurement" : "position"
+                    }
+                ],
+                "widthScaleFactor" : 3,             // effectively gear down a rotating widget
+                "maxCyclicalWidth" : 6,
+                "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+            },
+
+            {   "name" : "rings_FourPlay43",
+                "enabled" : true,
+                "priority" : 5,
+                "opacity" : 75,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+                "patternClassName" : "HorizontalStripePattern",
                 "inputs" : [
                     {   "inputName" : "redPosition",
                         "widgetName" : "fourPlay43",
@@ -86,7 +124,7 @@
                     }
                 ],
                 "widthScaleFactor" : 3,             // effectively gear down a rotating widget
-                "maxCyclicalWidth" : 6,
+                "maxCyclicalWidth" : 20,            // the maximum width when cyclical values are used
                 "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
             }
         ]
