@@ -40,9 +40,8 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_RADIO_TESTER
-//#define FOURPLAY_4_2
-//#define FOURPLAY_4_3
+//#define WIDGET_RADIO_TESTER
+#define FOURPLAY
 //#define PUMP
 
 #if defined(WIDGET_RADIO_TESTER)
@@ -54,24 +53,11 @@
   #define TX_PIPE_ADDRESS "0wdgt"       // 0 for tx stress
   #define PAYLOAD_TYPE StressTestPayload
 
-#elif defined(FOURPLAY_4_2)
+#elif defined(FOURPLAY)
   #define WIDGET_ID 10
+  #define ALT_WIDGET_ID 11
   #define NUM_ENCODERS 4
-  #define VELOCITY_DIVISOR 1
-  #define ACTIVITY_THRESHOLD 2
-  #define SAMPLE_INTERVAL_MS 5
-  #define ACTIVE_TX_INTERVAL_MS 10L
-  #define INACTIVE_TX_INTERVAL_MS 1000L
-  #define SPIN_ACTIVITY_DETECT_MS 50
-  #define SPIN_INACTIVITY_TIMEOUT_MS 500
-  #define NUM_STEPS_PER_REV 20
-  #define TX_PIPE_ADDRESS "1wdgt"
-  #define PAYLOAD_TYPE PositionVelocityPayload
-
-#elif defined(FOURPLAY_4_3)
-  #define WIDGET_ID 11
-  #define NUM_ENCODERS 4
-  #define VELOCITY_DIVISOR 1
+  #define VELOCITY_DIVISOR 4
   #define ACTIVITY_THRESHOLD 2
   #define SAMPLE_INTERVAL_MS 5
   #define ACTIVE_TX_INTERVAL_MS 10L
@@ -114,7 +100,7 @@
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 84
+#define RF_CHANNEL 80
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
@@ -218,7 +204,7 @@ void doWidgetTester(uint32_t now)
 #endif
 
 
-#if defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
+#if defined(FOURPLAY)
 void doFourPlay4x(uint32_t now)
 {
 //  static int32_t lastEncoderValues[NUM_ENCODERS];
@@ -231,24 +217,31 @@ void doFourPlay4x(uint32_t now)
   static int16_t position[NUM_ENCODERS];
   static int32_t lastMeasurementMs;
   static int32_t lastTxMs;
+  static bool button1Pressed;
+  static bool button2Pressed;
+  static bool button3Pressed;
+  static bool button4Pressed;
 
   if (now - lastMeasurementMs >= SAMPLE_INTERVAL_MS) {
     lastMeasurementMs = now;
     for (uint8_t wheelIdx = 0; wheelIdx < NUM_ENCODERS; ++wheelIdx) {
-      int16_t rawVelocity;
-      bool buttonPressed = Esplora.readButton(SWITCH_2) == LOW;
+      int16_t rawVelocity = 0;
+      button1Pressed = Esplora.readButton(SWITCH_1) == LOW;
+      button2Pressed = Esplora.readButton(SWITCH_2) == LOW;
+      button3Pressed = Esplora.readButton(SWITCH_3) == LOW;
+      button4Pressed = Esplora.readButton(SWITCH_4) == LOW;
       switch (wheelIdx) {
         case 0:
-          rawVelocity = !buttonPressed ? Esplora.readJoystickX() - centerJoystickX : 0;
+          rawVelocity = button1Pressed || button2Pressed ? Esplora.readJoystickX() - centerJoystickX : 0;
           break;
         case 1:
-          rawVelocity = !buttonPressed ? Esplora.readJoystickY() - centerJoystickY : 0;
+          rawVelocity = button1Pressed || button2Pressed ? Esplora.readJoystickY() - centerJoystickY : 0;
           break;
         case 2:
-          rawVelocity = buttonPressed ? Esplora.readJoystickX() - centerJoystickX : 0;
+          rawVelocity = button3Pressed || button4Pressed ? Esplora.readJoystickX() - centerJoystickX : 0;
           break;
         case 3:
-          rawVelocity = buttonPressed ? Esplora.readJoystickY() - centerJoystickY : 0;
+          rawVelocity = button3Pressed || button4Pressed ? Esplora.readJoystickY() - centerJoystickY : 0;
           break;
       }
       if (abs(rawVelocity) <= ACTIVITY_THRESHOLD) {
@@ -313,8 +306,14 @@ void doFourPlay4x(uint32_t now)
         payload.widgetHeader.isActive = rpm != 0;
         payload.position = position[wheelIdx];
         payload.velocity = rpm;
-    
-        radio.write(&payload, sizeof(payload), !WANT_ACK);
+        if (button1Pressed || button3Pressed) {
+          payload.widgetHeader.id = WIDGET_ID;
+          radio.write(&payload, sizeof(payload), !WANT_ACK);
+        }
+        if (button2Pressed || button4Pressed) {
+          payload.widgetHeader.id = ALT_WIDGET_ID;
+          radio.write(&payload, sizeof(payload), !WANT_ACK);
+        }
       }
 
       numVelocitySamples = 0;
@@ -350,7 +349,7 @@ void loop()
 
 #if defined(WIDGET_RADIO_TESTER)
   doWidgetTester(now);
-#elif defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
+#elif defined(FOURPLAY)
   doFourPlay4x(now);
 #elif defined(PUMP)
   doPump(now);
