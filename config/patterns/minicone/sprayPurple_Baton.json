@@ -35,6 +35,6 @@
     "emitIntervalHighMs" : 10,
     "emitBatchSize" : 15,
     "emitDirectionIsUp" : true,
-    "particleMoveIntervalMs" : 83
+    "particleMoveIntervalMs" : 73
 }
 

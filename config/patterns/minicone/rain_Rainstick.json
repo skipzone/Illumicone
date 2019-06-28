@@ -45,7 +45,7 @@
     "emitIntervalMeasmtHigh" : 500,             // can go well above 600, but we want lot o' rain with moderate sound
     "emitIntervalLowMs" : 200,
     "emitIntervalHighMs" : 10,
-    "emitBatchSize" : 10,
+    "emitBatchSize" : 3,
     "emitDirectionIsUp" : false,
     "particleMoveIntervalMs" : 40
 }

@@ -29,7 +29,7 @@
         }
     ],
     "pressurizationColor" : "orange",
-    //"depressurizationColor" : "32,64,0",
+    "depressurizationColor" : "32,64,0",
     "lowPressureCutoff" : 150,          // use 200 when it is very cold
     "burstThreshold" : 400,             // use 450 when it is very cold
     "flashThreshold" : 600,
