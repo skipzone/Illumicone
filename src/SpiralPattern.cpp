@@ -357,6 +357,8 @@ bool SpiralPattern::update()
                 if (pixelIdx < pixelsPerString) {
                     pixelArray[stringIdx][pixelIdx] = rgbCurrentColor;
                 }
+                // TODO:  Make width configurable and re-enable this.
+/*
                 // Quick hack to make the spring line wider by turning on adjacent pixels.
                 if (pixelIdx > 0 && pixelIdx <= pixelsPerString) {
                     pixelArray[stringIdx][pixelIdx - 1] = rgbCurrentColor;
@@ -364,6 +366,7 @@ bool SpiralPattern::update()
                 if (pixelIdx + 1 < pixelsPerString) {
                     pixelArray[stringIdx][pixelIdx + 1] = rgbCurrentColor;
                 }
+*/
             }
 
             x += xStep;
