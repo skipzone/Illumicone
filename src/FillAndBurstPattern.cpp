@@ -179,13 +179,20 @@ bool FillAndBurstPattern::update()
 
     bool gotNewMeasmt = false;
     int curMeasmt = 0;
+    bool wasActive = isActive;
     isActive = pressureChannel->getIsActive();
     if (pressureChannel->getHasNewPositionMeasurement()) {
         curMeasmt = pressureChannel->getPosition();
         gotNewMeasmt = true;
 
         // Being below the low pressure cutoff is the same as being inactive.
-        isActive = isActive && curMeasmt > lowPressureCutoff;
+        // TODO:  implement hysteresis
+        if (curMeasmt <= lowPressureCutoff) {
+            if (wasActive && isActive) {
+                logger.logMsg(LOG_INFO, name + ":  Forcing inactive due to pressure at or below low-pressure cutoff.");
+            }
+            isActive = false;
+        }
     }
 
     // Are we in one of the bursting states? 
@@ -239,6 +246,7 @@ bool FillAndBurstPattern::update()
             }
             else {
                 // Fill the cone from the bottom up to represent the current pressure.
+                // TODO:  use MeasurementMapper
                 int fillLevel = pixelsPerString * (curMeasmt - lowPressureCutoff) / (burstThreshold - lowPressureCutoff);
                 for (auto&& pixels:pixelArray) {
                     for (unsigned int i = pixelsPerString - fillLevel; i < pixelsPerString; i++) {
@@ -407,6 +415,7 @@ bool FillAndBurstPattern::update()
                         if (displayDepressurization) {
                             // Fill the cone from the bottom up to represent the current pressure.
                             clearAllPixels();
+                            // TODO:  use MeasurementMapper
                             int fillLevel = curMeasmt >= burstThreshold
                                           ? pixelsPerString
                                           : pixelsPerString * (curMeasmt - lowPressureCutoff) / (burstThreshold - lowPressureCutoff);
