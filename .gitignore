@@ -15,5 +15,7 @@ database/*.pdf
 database/sql*.sql
 database/widgetRcvr.out*
 activeConfig.json
+network_active.json
 logs/*
 stuff/*
+src/.d/*

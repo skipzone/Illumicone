@@ -1,0 +1,68 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "common" : {
+        "_include_file_network_symlink" : "network_active.json",
+
+        // Effectively never rotate log files.
+        "logRotationIntervalMinutes" : 14400000,
+        "logRotationOffsetHour" : 12,
+        "logRotationOffsetMinute" : 0
+    },
+
+
+    "widgetRcvr" : {
+        // Avoid hammering on the SPI interface by sleeping between polls for received data.
+        "radioPollingLoopSleepIntervalUs" : 1000,
+        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
+    },
+    "widgetRcvr3" : {
+        // Avoid hammering on the SPI interface by sleeping between polls for received data.
+        "radioPollingLoopSleepIntervalUs" : 1000,
+        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
+    },
+
+
+    "patternController" : {
+        "numberOfStrings" : 24,
+        "numberOfPixelsPerString" : 20,
+
+        "_include_file_schedule" : "schedule_alwaysOn.json",
+
+        "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        "patternRunLoopSleepIntervalUs" : 4000,
+
+        "widgets" : [
+            { "_include_file_allWidgets" : "widgets/allWidgets.json" }
+        ],
+
+        "patterns" : [
+            //{ "_include_file_coloredSparkles_Baton" : "patterns/coloredSparkles_Baton.json" },
+            { "_include_file_coloredSparkles_Bells" : "patterns/coloredSparkles_Bells.json" },
+            //{ "_include_file_coloredSparkles_FourPlay42" : "patterns/coloredSparkles_FourPlay42.json" },
+            { "_include_file_coloredSprays_Baton" : "patterns/minicone/coloredSprays_Baton.json" },
+            //{ "_include_file_coloredSprays_Bells" : "patterns/coloredSprays_Bells.json" },
+            { "_include_file_eyeFlash" : "patterns/eyeFlash.json" },
+            { "_include_file_fillAndBurst_Pump" : "patterns/minicone/fillAndBurst_Pump.json" },
+            { "_include_file_multicolorSparkle_Spinnah" : "patterns/multicolorSparkle_Spinnah.json" },
+            { "_include_file_rain_Rainstick" : "patterns/minicone/rain_Rainstick.json" },
+            { "_include_file_rings_FourPlay43" : "patterns/rings_FourPlay43_minicone.json" },
+            { "_include_file_stripes_FourPlay42" : "patterns/stripes_FourPlay42_minicone.json" }
+        ]
+    }
+}

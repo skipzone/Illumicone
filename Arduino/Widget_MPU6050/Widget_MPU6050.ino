@@ -27,6 +27,12 @@
 
 
 //#define ENABLE_DEBUG_PRINT
+#define ENABLE_LCD_16x2
+//#define ENABLE_LCD_20x4   // TODO:  not supported yet
+
+#if defined(ENABLE_LCD_16x2) || defined(ENABLE_LCD_20x4)
+  #define ENABLE_LCD
+#endif
 
 
 /**********************************************
@@ -63,6 +69,10 @@
 // is used in I2Cdev.h
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
+#endif
+
+#ifdef ENABLE_LCD
+#include <LiquidCrystal.h>
 #endif
 
 
@@ -461,6 +471,13 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
  * Common Widget Configuration *
  *******************************/
 
+#define LCD_RS A1
+#define LCD_E  A0
+#define LCD_D4  5
+#define LCD_D5  6
+#define LCD_D6  7
+#define LCD_D7  8
+
 // When we aren't retrieving packets from the MPU-6050's FIFO fast enough, FIFO
 // overflow and resulting data corruption become likely.  To help prevent that,
 // we'll clear the FIFO when more than maxPacketsInMpu6050FifoBeforeForcedClear
@@ -476,6 +493,10 @@ static WidgetMode widgetMode = WidgetMode::init;
 static Mpu6050Mode mpu6050Mode = Mpu6050Mode::init;
 
 static RF24 radio(RADIO_CE_PIN, RADIO_CSN_PIN);
+
+#ifdef ENABLE_LCD
+static LiquidCrystal lcd(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+#endif
 
 static MeasurementVectorPayload payload;
 
@@ -774,6 +795,16 @@ void initI2c()
 }
 
 
+void initLcd()
+{
+#if defined(ENABLE_LCD_16x2)
+  lcd.begin(20, 2);
+#elif defined(ENABLE_LCD_20x4)
+  lcd.begin(20, 4);
+#endif
+}
+
+
 void initMpu6050()
 {
 #ifdef ENABLE_DEBUG_PRINT
@@ -858,6 +889,7 @@ void setup()
 
   initI2c();
   initMpu6050();
+  initLcd();
 
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
                  TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
@@ -1270,6 +1302,22 @@ void sendMeasurements()
     Serial.print(":  ");
     Serial.println(payload.measurements[i]);
   }
+#endif
+
+#ifdef ENABLE_LCD_16x2
+  // 0123456789012345
+  // -ddd.d-dd.d-dd.d
+  // -ddd.d-ddd.dxF
+  char buf[17];
+  lcd.setCursor(0, 0);
+  lcd.print(dtostrf(getMovingAverage(maSlotYaw) / 10.0, 6, 1, buf));
+  lcd.print(dtostrf(getMovingAverage(maSlotPitch) / 10.0, 5, 1, buf));
+  lcd.print(dtostrf(getMovingAverage(maSlotRoll) / 10.0, 5, 1, buf));
+  lcd.setCursor(0, 1);
+  lcd.print(dtostrf(getMovingAverage(maSlotGyroZ) / 10.0, 6, 1, buf));
+  lcd.print(dtostrf(getMovingAverage(maSlotTemperature) / 10.0, 6, 1, buf));
+  lcd.print((char) 223);    // degree symbol
+  lcd.print("F");
 #endif
 
   if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * numMaSets, !WANT_ACK)) {

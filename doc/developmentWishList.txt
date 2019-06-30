@@ -36,23 +36,10 @@ Arduino IDE, which is available for free for macOS, Linux, and Windows.
 
 
 
-Makefile
---------
-
-(GNU make)
-
-- detect dependencies properly
-
-- install to /usr/local/...
-
-
-
 Controller environment
 ----------------------
 
 (Linux system admin)
-
-- run patternController and widgetRcvr from /usr/local/bin
 
 - locate config files somewhere other than ~/devl/Illumicone/config (maybe use
   an environment variable such as $ILLUMICONE_DIR to indicate location)
@@ -80,41 +67,16 @@ Web control
 
 
 
-Run patternController and widgetRcvr as services
-------------------------------------------------
-
-(C++, Linux system programming and admin)
-
-- Daemonize?
-
-- Use systemd System and Service Manager
-
-
-
 Logging improvements
 --------------------
 
-(C++, maybe Python for data extraction, bash scripting)
-
-- specify log path on command line or with environment variable
-
-- compact widget message log in widgetRcvr
-
-- compact widget measurement log in patternController
-
-- Programs or shell scripts to extract data from compact logs
-
-- replay compact logs through widgetRcvr and patternController
+(C++, bash scripting)
 
 - Throttling of quiescent and shutdown mode messages
 
-- Log going active from quiescent or shutdown mode
-
-- Automatic log rollover
+- Log going active from quiescent or shutdown mode and vice versa
 
 - Automatic compression of old logs
-
-- Write to main log file via file handle other than just stdout
 
 
 
@@ -162,6 +124,8 @@ New patterns
 (C++)
 
 - snow globe
+
+- wave reflections
 
 
 

@@ -30,12 +30,33 @@ using namespace std;
 Log logger;                     // this is the global Log object used everywhere
 
 
-void configReaderUnitTests()
+void configReaderIncludeUnitTests()
 {
-    cout << "----- ConfigReader -----" << endl;
+    cout << "----- ConfigReader include -----" << endl;
 
     ConfigReader config;
-    assert(config.readConfigurationFile("../config/unitTests.json"));
+    assert(config.loadConfiguration("../config/unitTests/unitTests_configReaderInclude_0.json"));
+
+    json11::Json resolved(config.getConfigObject());
+
+    ConfigReader expect;
+    assert(expect.loadConfiguration("../config/unitTests/unitTests_configReaderInclude_resolved.json"));
+
+    cout << "    resolved result:  " << resolved.dump() << endl;
+    cout << "    resolved expect:  " << expect.dumpToString() << endl;
+
+    assert(expect.getConfigObject() == config.getConfigObject());
+
+    cout << "    All ConfigReader include tests passed." << endl;
+}
+
+
+void configReaderMergeUnitTests()
+{
+    cout << "----- ConfigReader merge -----" << endl;
+
+    ConfigReader config;
+    assert(config.loadConfiguration("../config/unitTests/unitTests_configReaderMerge.json"));
 
     json11::Json primary, secondary;
     assert(ConfigReader::getJsonObject(config.getConfigObject(), "primary", primary));
@@ -65,7 +86,7 @@ void configReaderUnitTests()
     //cout << merged.dump();
     cout << "    merge passed." << endl;
 
-    cout << "    All ConfigReader tests passed." << endl;
+    cout << "    All ConfigReader merge tests passed." << endl;
 }
 
 
@@ -181,7 +202,7 @@ void measurementMapperUnitTests()
 
 
     ConfigReader config;
-    assert(config.readConfigurationFile("../config/unitTests.json"));
+    assert(config.loadConfiguration("../config/unitTests/unitTests_configReaderMerge.json"));
 
     MeasurementMapper<int, float> mapper3config;
     assert(mapper3config.readConfig(config.getConfigObject(), "mapper3", "unitTests mapper3config"));
@@ -315,7 +336,8 @@ int main(int argc, char **argv)
 
     logger.startLogging("unitTests", Log::LogTo::console);
 
-    configReaderUnitTests();
+    configReaderIncludeUnitTests();
+    configReaderMergeUnitTests();
     measurementMapperUnitTests();
 
     logger.stopLogging();

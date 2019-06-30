@@ -667,7 +667,7 @@ bool readConfig()
     // instance-specific configuration has priority (i.e., items in the common
     // configuration will not override the same items in the instance-specific
     // configuration).
-    if (!configReader.readConfigurationFile(configFileName)) {
+    if (!configReader.loadConfiguration(configFileName)) {
         return false;
     }
     json11::Json instanceConfigObject;
@@ -780,40 +780,54 @@ void freeOpcBuffer()
 }
 
 
+void loadWidgetConfig(const json11::Json& widgetConfigObject)
+{
+    string widgetName = widgetConfigObject["name"].string_value();
+    if (widgetName.empty()) {
+        logger.logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfigObject.dump());
+        return;
+    }
+    if (!widgetConfigObject["enabled"].bool_value()) {
+        logger.logMsg(LOG_INFO, widgetName + " is disabled.");
+        return;
+    }
+    WidgetId widgetId = stringToWidgetId(widgetName);
+    if (widgetId == WidgetId::invalid) {
+        logger.logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfigObject.dump());
+        return;
+    }
+    if (widgets.find(widgetId) != widgets.end()) {
+        logger.logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfigObject.dump());
+        return;
+    }
+    Widget* newWidget = widgetFactory(widgetId);
+    if (newWidget == nullptr) {
+        logger.logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
+        return;
+    }
+    if (!newWidget->init(widgetConfigObject, configObject)) {
+        logger.logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
+        return;
+    }
+    logger.logMsg(LOG_INFO, widgetName + " initialized.");
+    widgets[widgetId] = newWidget;
+}
+
+
 void initWidgets()
 {
     logger.logMsg(LOG_INFO, "Initializing widgets...");
 
     for (auto& widgetConfigObject : configObject["widgets"].array_items()) {
-        string widgetName = widgetConfigObject["name"].string_value();
-        if (widgetName.empty()) {
-            logger.logMsg(LOG_ERR, "Widget configuration has no name:  " + widgetConfigObject.dump());
-            continue;
+
+        if (widgetConfigObject["widgets"].is_array()) {
+            for (auto& nestedWidgetConfigObject : widgetConfigObject["widgets"].array_items()) {
+                loadWidgetConfig(nestedWidgetConfigObject);
+            }
         }
-        if (!widgetConfigObject["enabled"].bool_value()) {
-            logger.logMsg(LOG_INFO, widgetName + " is disabled.");
-            continue;
+        else {
+            loadWidgetConfig(widgetConfigObject);
         }
-        WidgetId widgetId = stringToWidgetId(widgetName);
-        if (widgetId == WidgetId::invalid) {
-            logger.logMsg(LOG_ERR, "Widget configuration has invalid name:  " + widgetConfigObject.dump());
-            continue;
-        }
-        if (widgets.find(widgetId) != widgets.end()) {
-            logger.logMsg(LOG_ERR, widgetName + " appears multiple times.  This configuration ignored:  " + widgetConfigObject.dump());
-            continue;
-        }
-        Widget* newWidget = widgetFactory(widgetId);
-        if (newWidget == nullptr) {
-            logger.logMsg(LOG_ERR, "Unable to instantiate Widget object for " + widgetName);
-            continue;
-        }
-        if (!newWidget->init(widgetConfigObject, configObject)) {
-            logger.logMsg(LOG_ERR, "Unable to initialize Widget object for " + widgetName);
-            continue;
-        }
-        logger.logMsg(LOG_INFO, widgetName + " initialized.");
-        widgets[widgetId] = newWidget;
     }
 }
 
@@ -829,6 +843,43 @@ void tearDownWidgets()
 }
 
 
+void loadPatternConfig(const json11::Json& patternConfigObject)
+{
+    //logger.logMsg(LOG_DEBUG, "patternConfigObject:  " + patternConfigObject.dump());
+    string patternName = patternConfigObject["name"].string_value();
+    if (patternName.empty()) {
+        logger.logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfigObject.dump());
+        return;
+    }
+    if (!patternConfigObject["enabled"].bool_value()) {
+        logger.logMsg(LOG_INFO, patternName + " is disabled.");
+        return;
+    }
+    string patternClassName = patternConfigObject["patternClassName"].string_value();
+    if (patternClassName.empty()) {
+        logger.logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfigObject.dump());
+        return;
+    }
+    Pattern* newPattern = patternFactory(patternClassName, patternName);
+    if (newPattern == nullptr) {
+        logger.logMsg(LOG_ERR,
+                "Unable to instantiate " + patternClassName + " object for " + patternName
+                + ".  (Is the pattern class name correct?)");
+        return;
+    }
+    if (!newPattern->init(patternConfigObject, configObject, widgets)) {
+        logger.logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
+        delete newPattern;
+        return;
+    }
+    logger.logMsg(LOG_INFO, patternName + " initialized.");
+
+    PatternState* newPatternState = new PatternState;
+    newPatternState->pattern = newPattern;
+    patternStates.emplace_back(newPatternState);
+}
+
+
 void initPatterns()
 {
     logger.logMsg(LOG_INFO, "Initializing patterns...");
@@ -836,38 +887,14 @@ void initPatterns()
     //logger.logMsg(LOG_DEBUG, "configObject[\"patterns\"] has %ld elements", configObject["patterns"].array_items().size());
     //logger.logMsg(LOG_DEBUG, "configObject[\"patterns\"]:  " + configObject["patterns"].dump());
     for (auto& patternConfigObject : configObject["patterns"].array_items()) {
-        //logger.logMsg(LOG_DEBUG, "patternConfigObject:  " + patternConfigObject.dump());
-        string patternName = patternConfigObject["name"].string_value();
-        if (patternName.empty()) {
-            logger.logMsg(LOG_ERR, "Pattern configuration has no name:  " + patternConfigObject.dump());
-            continue;
+        if (patternConfigObject["patterns"].is_array()) {
+            for (auto& nestedPatternConfigObject : patternConfigObject["patterns"].array_items()) {
+                loadPatternConfig(nestedPatternConfigObject);
+            }
         }
-        if (!patternConfigObject["enabled"].bool_value()) {
-            logger.logMsg(LOG_INFO, patternName + " is disabled.");
-            continue;
+        else {
+            loadPatternConfig(patternConfigObject);
         }
-        string patternClassName = patternConfigObject["patternClassName"].string_value();
-        if (patternClassName.empty()) {
-            logger.logMsg(LOG_ERR, "Pattern configuration does not have a pattern class name:  " + patternConfigObject.dump());
-            continue;
-        }
-        Pattern* newPattern = patternFactory(patternClassName, patternName);
-        if (newPattern == nullptr) {
-            logger.logMsg(LOG_ERR,
-                    "Unable to instantiate " + patternClassName + " object for " + patternName
-                    + ".  (Is the pattern class name correct?)");
-            continue;
-        }
-        if (!newPattern->init(patternConfigObject, configObject, widgets)) {
-            logger.logMsg(LOG_ERR, "Unable to initialize Pattern object for " + patternName);
-            delete newPattern;
-            continue;
-        }
-        logger.logMsg(LOG_INFO, patternName + " initialized.");
-
-        PatternState* newPatternState = new PatternState;
-        newPatternState->pattern = newPattern;
-        patternStates.emplace_back(newPatternState);
     }
 }
 
@@ -945,7 +972,7 @@ bool doInitialization()
     string configFileNameAndTarget = configFileName;
     char buf[512];
     int count = readlink(configFileName.c_str(), buf, sizeof(buf));
-    if (count >= 0) {
+    if (count >= 0 && (unsigned int) count < sizeof(buf)) {
         buf[count] = '\0';
         configFileNameAndTarget += string(" -> ") + buf;
     }

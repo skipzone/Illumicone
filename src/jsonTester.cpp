@@ -42,45 +42,55 @@ int main(int argc, char **argv) {
     logger.startLogging("jsonTester", Log::LogTo::console);
 
     ConfigReader config;
-    if (!config.readConfigurationFile(jsonFileName)) {
+    if (!config.loadConfiguration(jsonFileName)) {
         return(1);
     }
 
     cout << config.dumpToString() << endl << endl;
+
+/*
+    if (!ConfigReader::getUnsignedIntValue(configObject, "numberOfStrings", numberOfStrings, errMsgSuffix)) return false;
+    if (!ConfigReader::getUnsignedIntValue(configObject, "numberOfPixelsPerString", numberOfPixelsPerString, errMsgSuffix)) return false;
 
     cout << "numberOfStrings:  " << config.getNumberOfStrings() << endl;
     cout << "numberOfPixelsPerString:  " << config.getNumberOfPixelsPerString() << endl;
     cout << "opcServerIpAddress:  " << config.getOpcServerIpAddress() << endl;
     cout << "patconIpAddress:  " << config.getPatconIpAddress() << endl;
     cout << "widgetPortNumberBase:  " << config.getWidgetPortNumberBase() << endl;
+*/
 
     Json configJsonObj = config.getConfigObject();
 
-    for (auto& autoShutoffPeriod : configJsonObj["autoShutoffPeriods"].array_items()) {
-        cout << "autoShutoffPeriod:  " << autoShutoffPeriod["description"].string_value() << endl;
-        cout << "    startDate:  " << autoShutoffPeriod["startDate"].string_value() << endl;
-        cout << "    startTime:  " << autoShutoffPeriod["startTime"].string_value() << endl;
-        cout << "      endDate:  " << autoShutoffPeriod["endDate"].string_value() << endl;
-        cout << "      endTime:  " << autoShutoffPeriod["endTime"].string_value() << endl;
+    Json patternControllerJsonObj;
+    ConfigReader::getJsonObject(configJsonObj, "patternController", patternControllerJsonObj, "patternController");
+
+    cout << endl << "---------- autoShutoffPeriods ----------" << endl;
+    for (auto& shutoffPeriod : patternControllerJsonObj["shutoffPeriods"].array_items()) {
+        cout << "  description:  " << shutoffPeriod["description"].string_value() << endl;
+        cout << "startDateTime:  " << shutoffPeriod["startDateTime"].string_value() << endl;
+        cout << "  endDateTime:  " << shutoffPeriod["endDateTime"].string_value() << endl;
+        cout << "-----" << endl;
     }
 
-    for (auto& quiescentModePeriod : configJsonObj["quiescentModePeriods"].array_items()) {
-        cout << "quiescentModePeriod:  " << quiescentModePeriod["description"].string_value() << endl;
-        cout << "      startDate:  " << quiescentModePeriod["startDate"].string_value() << endl;
-        cout << "      startTime:  " << quiescentModePeriod["startTime"].string_value() << endl;
-        cout << "        endDate:  " << quiescentModePeriod["endDate"].string_value() << endl;
-        cout << "        endTime:  " << quiescentModePeriod["endTime"].string_value() << endl;
-        cout << "    idlePattern:  " << quiescentModePeriod["idlePatternName"].string_value() << endl;
+    cout << endl << "---------- quiescentModePeriods ----------" << endl;
+    for (auto& quiescentPeriod : patternControllerJsonObj["quiescentPeriods"].array_items()) {
+        cout << "   description:  " << quiescentPeriod["description"].string_value() << endl;
+        cout << " startDateTime:  " << quiescentPeriod["startDateTime"].string_value() << endl;
+        cout << "   endDateTime:  " << quiescentPeriod["endDateTime"].string_value() << endl;
+        cout << "quiescentColor:  " << quiescentPeriod["quiescentColor"].string_value() << endl;
+        cout << "-----" << endl;
     }
 
-    for (auto& widget : configJsonObj["widgets"].array_items()) {
+    cout << endl << "---------- widgets ----------" << endl;
+    for (auto& widget : patternControllerJsonObj["widgets"].array_items()) {
         cout << "widget:  " << widget["name"].string_value() << endl;
         cout << "    enabled:  " << widget["enabled"].bool_value() << endl;
         cout << "    generateSimulatedMeasurements:  " << widget["generateSimulatedMeasurements"].bool_value() << endl;
     }
 
-    for (auto& pattern : configJsonObj["patterns"].array_items()) {
-        cout << "pattern:  " << pattern["patternName"].string_value() << endl;
+    cout << endl << "---------- patterns ----------" << endl;
+    for (auto& pattern : patternControllerJsonObj["patterns"].array_items()) {
+        cout << "pattern:  " << pattern["name"].string_value() << endl;
         for (auto& input : pattern["inputs"].array_items()) {
             cout << "    input:  " << input["inputName"].string_value() << endl;
             cout << "        widget:  " << input["widgetName"].string_value() << endl;

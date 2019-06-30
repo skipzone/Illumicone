@@ -19,6 +19,9 @@
 #include <iostream>
 #include <sstream>
 
+#include <libgen.h>
+#include <unistd.h>
+
 #include "ConfigReader.h"
 #include "illumiconePixelUtility.h"
 #include "Log.h"
@@ -348,13 +351,94 @@ ConfigReader::~ConfigReader()
 }
 
 
-bool ConfigReader::readConfigurationFile(std::string fileName)
+bool ConfigReader::loadConfiguration(const std::string& configFilePathName)
 {
-    configFileName = fileName;
+    loadedConfigFilePathName = configFilePathName;
 
-    ifstream configFile(configFileName, ios_base::in);
+    // If the config file pathname is really a symbolic link, use the target
+    // pathname because the path to any include files will be relative to the
+    // target's location, not the symlink's location.
+    char buf[512];
+    int count = readlink(loadedConfigFilePathName.c_str(), buf, sizeof(buf));
+    if (count >= 0 && (unsigned int) count < sizeof(buf)) {
+        buf[count] = '\0';
+        loadedConfigFilePathName = buf;
+    }
+
+    char* path = (char *) malloc(loadedConfigFilePathName.length() + 1);
+    if (path == NULL) {
+        logger.logMsg(LOG_ERR, "ConfigReader::loadConfiguration:  Can't allocate path buffer.");
+        return false;
+    }
+    strcpy(path, loadedConfigFilePathName.c_str());
+    loadedConfigFilePath = dirname(path);
+    free(path);
+
+    Json obj;
+    if (!readConfigurationFile(loadedConfigFilePathName, obj)) {
+        return false;
+    }
+    loadedConfigObj = resolveObjectIncludes(obj, 0);
+    return !loadedConfigObj.is_null();
+}
+
+
+Json ConfigReader::resolveObjectIncludes(const Json& inputJsonObj, unsigned int curLevel)
+{
+    // TODO:  make sure curLevel is not too large (i.e., prevent recursive includes)
+
+    Json::object objItems = inputJsonObj.object_items();    // this is really a map
+
+    // Resolve all the _include_file_ elements at the top level of the object.
+    for (auto it = objItems.begin(); it != objItems.end();) {
+        if ((*it).first.find("_include_file_") == 0 && (*it).second.is_string())  {
+            string includeFilePathName = loadedConfigFilePath + "/" + (*it).second.string_value();
+            //logger.logMsg(LOG_DEBUG, "Reading " + (*it).first + " " + includeFilePathName
+            //                + " at level " + to_string(curLevel) + ".");
+            Json includeObj;
+            if (!readConfigurationFile(includeFilePathName, includeObj)) {
+                return Json();
+            }
+            objItems.insert(includeObj.object_items().begin(), includeObj.object_items().end());
+            it = objItems.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+    
+    // Resolve all the _include_file_ elements in objects
+    // and arrays of objects below the top level.
+    for (auto&& kv : objItems) {
+        if (kv.second.is_object()) {
+            Json resolvedObj = resolveObjectIncludes(kv.second, curLevel + 1);
+            if (resolvedObj.is_null()) {
+                return Json();
+            }
+            objItems[kv.first] = resolvedObj;
+        }
+        else if (kv.second.is_array() && kv.second[0].is_object()) {
+            Json::array arrayItems = kv.second.array_items();
+            for (unsigned int i = 0; i < arrayItems.size(); ++i) {
+                Json resolvedObj = resolveObjectIncludes(arrayItems[i], curLevel + 1);
+                if (resolvedObj.is_null()) {
+                    return Json();
+                }
+                arrayItems[i] = resolvedObj;
+            }
+            objItems[kv.first] = arrayItems;
+        }
+    }
+    
+    return Json(objItems);
+}
+
+
+bool ConfigReader::readConfigurationFile(const std::string& filePathName, Json& configObj)
+{
+    ifstream configFile(filePathName, ios_base::in);
     if (!configFile.is_open()) {
-        logger.logMsg(LOG_ERR, "Can't open configuration file %s.", configFileName.c_str());
+        logger.logMsg(LOG_ERR, "Can't open configuration file %s.", filePathName.c_str());
         return false;
     }
     stringstream jsonSstr;
@@ -364,7 +448,7 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
     string err;
     configObj = Json::parse(jsonSstr.str(), err, JsonParse::COMMENTS);
     if (!err.empty()) {
-        logger.logMsg(LOG_ERR, "Parse of configuration file %s failed:  %s", configFileName.c_str(), err.c_str());
+        logger.logMsg(LOG_ERR, "Parse of configuration file %s failed:  %s", filePathName.c_str(), err.c_str());
         return false;
     }
 
@@ -374,19 +458,31 @@ bool ConfigReader::readConfigurationFile(std::string fileName)
 
 string ConfigReader::dumpToString()
 {
-    return configObj.dump();
+    return loadedConfigObj.dump();
+}
+
+
+string ConfigReader::getConfigFilePath()
+{
+    return loadedConfigFilePath;
+}
+
+
+string ConfigReader::getConfigFilePathName()
+{
+    return loadedConfigFilePathName;
 }
 
 
 Json ConfigReader::getConfigObject()
 {
-    return configObj;
+    return loadedConfigObj;
 }
 
 
 Json ConfigReader::getWidgetConfigJsonObject(const std::string& widgetName)
 {
-    for (auto& widgetConfigObj : configObj["widgets"].array_items()) {
+    for (auto& widgetConfigObj : loadedConfigObj["widgets"].array_items()) {
         if (widgetConfigObj["name"].string_value() == widgetName) {
             return widgetConfigObj;
         }
@@ -397,7 +493,7 @@ Json ConfigReader::getWidgetConfigJsonObject(const std::string& widgetName)
 
 Json ConfigReader::getPatternConfigJsonObject(const string& patternName)
 {
-    for (auto& patternConfigObj : configObj["patterns"].array_items()) {
+    for (auto& patternConfigObj : loadedConfigObj["patterns"].array_items()) {
         if (patternConfigObj["name"].string_value() == patternName) {
             return patternConfigObj;
         }

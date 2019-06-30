@@ -548,6 +548,17 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
         logger.logMsg(LOG_WARNING, "stest message gap:  %d", payloadNumChange);
     }
     lastPayloadNum = payload->payloadNum;
+
+    if (payload->widgetHeader.id != 0) {
+        UdpPayload udpPayload;
+        udpPayload.id       = payload->widgetHeader.id;
+        udpPayload.channel  = payload->widgetHeader.channel;
+        udpPayload.isActive = payload->widgetHeader.isActive;
+        udpPayload.position = payload->payloadNum;
+        udpPayload.velocity = 0;
+
+        sendUdp(udpPayload);
+    }
 }
 
 
@@ -659,7 +670,7 @@ bool readConfig()
     // instance-specific configuration has priority (i.e., items in the common
     // configuration will not override the same items in the instance-specific
     // configuration).
-    if (!configReader.readConfigurationFile(configFileName)) {
+    if (!configReader.loadConfiguration(configFileName)) {
         return false;
     }
     json11::Json instanceConfigObject;

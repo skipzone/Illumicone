@@ -1,0 +1,114 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "spring_BoogieBoard",
+    "enabled" : true,
+    "priority" : 5,
+    "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SpiralPattern",
+    "inputs" : [
+        {   "inputName" : "compression",
+            "widgetName" : "boogieBoard",
+            "channelNumber" : 1,                            // pitch, degrees * 10, (-900, 900)
+            "measurement" : "position"
+        },
+        {   "inputName" : "rotation",
+            "widgetName" : "boogieBoard",
+            "channelNumber" : 2,                            // roll, degrees * 10, (-900, 900)
+            "measurement" : "position"
+        },
+        {   "inputName" : "color",
+            "widgetName" : "boogieBoard",
+            "channelNumber" : 5,                            // acceleration of rotation about the z-axis (yaw)
+            "measurement" : "position"
+        }
+    ],
+    "flipSpring" : false,                                   // flip upside down; meaningful for a progressive spring
+    "spiralTightnessFactor" : 6.0,                          // the number of turns around the cone
+    "progressiveSpringFactor" : 3,                          // 1 for non-progressive, >= 3 kinda looks like a bedspring
+    "progressiveSpringCompressionResponseFactor" : -0.5,    // multiplied by comp fac and added to progressiveSpringFactor
+    // The raw compression measurement maps to compression
+    // factor, which is usually in the range [0.8, 4] or so.
+    "compressionMeasurementMapper" : [
+        {   "rawMin" : -901,
+            "rawMax" : -50,
+            "mappedStart" : 0.1,
+            "mappedEnd" : 0.1
+        },
+        {   "rawMin" : -50,
+            "rawMax" : 0,
+            "mappedStart" : 0.1,
+            "mappedEnd" : 1.0
+        },
+        {   "rawMin" : 0,
+            "rawMax" : 50,
+            "mappedStart" : 1.0,
+            "mappedEnd" : 4.0
+        },
+        {   "rawMin" : 50,
+            "rawMax" : 901,
+            "mappedStart" : 4.0,
+            "mappedEnd" : 4.0
+        }
+    ],
+    "compressionResetTimeoutSeconds" : 3,                   // reset to min after period of compression ch inactivity
+    // The raw rotation measurement maps to the delay, in ms, between
+    // rotation steps.  Each rotation step starts the spiral at the next
+    // or previous string.
+    "rotationMeasurementMapper" : [
+        {   "rawMin" : -901,
+            "rawMax" : -30,
+            "mappedStart" : 5,
+            "mappedEnd" : 5
+        },
+        {   "rawMin" : -30,
+            "rawMax" : 30,
+            "mappedStart" : 5,
+            "mappedEnd" : 100
+        },
+        {   "rawMin" : 30,
+            "rawMax" : 130,
+            "mappedStart" : 100,
+            "mappedEnd" : 5 
+        },
+        {   "rawMin" : 130,
+            "rawMax" : 901,
+            "mappedStart" : 5,
+            "mappedEnd" : 5
+        }
+    ],
+    // The raw color measurement maps to the number of steps to rotate
+    // around the color wheel.  The color wheel has 255 steps.
+    "colorMeasurementMapper" : [
+        {   "rawMin" : -999,
+            "rawMax" : -20,
+            "mappedStart" : -40,
+            "mappedEnd" : -40
+        },
+        {   "rawMin" : -20,
+            "rawMax" : 20,
+            "mappedStart" : -40,
+            "mappedEnd" : 40
+        },
+        {   "rawMin" : 20,
+            "rawMax" : 999,
+            "mappedStart" : 40,
+            "mappedEnd" : 40
+        }
+    ]
+}
+

@@ -1,5 +1,5 @@
-9/13/2017 -- Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
-(updated 2/23/2019)
+Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
+(updated 6/22/2019, changes not tested)
 
 
 0.  Write the image to a micro-SD card.
@@ -59,14 +59,7 @@
     Follow the bouncing ball.
 
 
-7.  Create .bash_aliases and .illumicone_aliases
-
-    on development system:
-        scp ~/devl/Illumicone/sbin/bash_aliases illumicone@ic-widpatcon.local:.bash_aliases
-        scp ~/devl/Illumicone/sbin/illumicone_aliases illumicone@ic-widpatcon.local:.illumicone_aliases
-
-
-8.  Set the time zone.
+7.  Set the time zone.
 
     sudo raspi-config
         4 Localisation Options
@@ -79,14 +72,14 @@
     change the Wi-Fi country.
 
 
-9.  Install required and useful packages.
+8.  Install required and useful packages.
 
     sudo apt-get install vim psmisc git git-flow lsof dnsutils
 
     (psmisc gives us the killall utility.)
 
 
-10.  Set up I2C.
+9.  Set up I2C.
 
     sudo apt-get install python-smbus i2c-tools
 
@@ -104,7 +97,7 @@
         i2cdetect -y 1
 
 
-11. Set up SPI.
+10. Set up SPI.
 
     sudo raspi-config
         5 Interfacing Options
@@ -117,7 +110,7 @@
     Log out and back in.
 
 
-12.  Set up the RTC.
+11.  Set up the RTC.
 
     Add these lines to the end of /boot/config.txt, then un-commentout the
     one that matches the installed RTC module:
@@ -156,7 +149,7 @@
         sudo hwclock -s
 
 
-13.  If using the Sunfounder PCF8563 RTC module with DS18B20 temperature
+12.  If using the Sunfounder PCF8563 RTC module with DS18B20 temperature
      sensor, enable 1-Wire support.
 
     Add this line to /boot/config.txt:
@@ -180,7 +173,7 @@
     temperature is 31.5 C (88.7 F).
 
 
-14.  Set up NTP server.
+13.  Set up NTP server.
 
     sudo apt-get install ntp
 
@@ -188,12 +181,37 @@
     /etc/ntp.conf.
 
 
-15.  Install RF24
+14.  Add these lines to the end of ~/.profile:
+
+    # Set up Illumicone paths.
+    export ILLUMICONE_BIN="$HOME/bin"
+    export ILLUMICONE_LOGS="$HOME/logs"
+    export ILLUMICONE_DEVL="$HOME/devl/Illumicone"
+    export ILLUMICONE_CONFIG="$ILLUMICONE_DEVL/config"
+    export ILLUMICONE_SBIN="$ILLUMICONE_DEVL/sbin"
+    PATH="$ILLUMICONE_BIN:$ILLUMICONE_SBIN:$PATH"
+
+
+15.  Set up the Illumicone development environment.
+
+    cd
+    mkdir devl
+    cd devl
+    git clone https://github.com/skipzone/Illumicone
+    cd Illumicone
+    git flow init
+    cd
+    git config --global core.editor "vim"
+    cp devl/Illumicone/config/vimrc ~/.vimrc
+    cp devl/Illumicone/sbin/bash_aliases ~/.bash_aliases
+    cp devl/Illumicone/sbin/illumicone_aliases ~/.illumicone_aliases
+
+
+16.  Install RF24
 
     Use tmrh20's fork of RF24.  This is the same one we use for the widget Arduinos.
 
-    mkdir devl
-    cd devl
+    cd ~/devl
     git clone https://github.com/nRF24/RF24.git
     cd RF24
     ./configure --driver=SPIDEV  (this allows widgetRcvr to be run without sudo)
@@ -201,23 +219,18 @@
     sudo make install
 
 
-16.  Set up the Illumicone project.
+17.  Build and install the Illumicone programs.
 
-    cd ~/devl
-    git clone https://github.com/skipzone/Illumicone
-    cd Illumicone
-    git flow init
-    cd src
-    Make sure USE_SPI_DEV is enabled in widgetRcvr.cpp.
-    make widgetRcvr
+    cd
+    mkdir bin
+    cd devl/Illumicone/src
     make
-    cd ../config
-    ln -s someConfig.json activeConfig.json
-    git config --global core.editor "vim"
-    cp ~/devl/Illumicone/config/vimrc ~/.vimrc
+    make install
+    cd
+    ln -s devl/Illumicone/config/<someConfig>.json activeConfig.json
 
 
-17.  Set up Wi-Fi to access the development network.
+18.  Set up Wi-Fi to access the development network.
 
     Use raspi-config to set the country.
         4 Localisation Options
@@ -262,7 +275,7 @@
         key_mgmt=NONE
 
 
-18.  Assign static IP address 192.168.69.103 for ic-widpatcon on wired network.
+19.  Assign static IP address 192.168.69.103 for ic-widpatcon on wired network.
 
     Add this to /etc/dhcpcd.conf (note the extra "c" in the file name):
         # Assign a lower metric to wlan0 to encourage using it for Internet requests.
@@ -275,8 +288,7 @@
         static domain_name_servers=208.67.222.222 192.168.69.1
         metric 300
 
-
-19.  Set up illumicone's crontab.
+20.  Set up illumicone's crontab.
 
     crontab ~/devl/Illumicone/config/widpatcon_crontab
 
@@ -317,8 +329,8 @@ Useful Commands and Stuff
 Raspberry Pi Setup for Illumicone - 6/22/2017
 
 These notes are not from the original setup done in 2016.  Rather, they are
-notes that I'm writing as I set up another Raspberry Pi to run widgetRcvr for widget
-firmware development.
+notes that I'm writing as I set up another Raspberry Pi to run widgetRcvr for
+widget firmware development.
 
 
 Use raspi-config to enable SPI on boot

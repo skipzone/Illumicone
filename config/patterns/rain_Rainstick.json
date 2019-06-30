@@ -1,0 +1,52 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "rain_Rainstick",
+    "enabled" : true,
+    "priority" : 2,
+    "opacity" : 95,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "ParticlesPattern",
+    "inputs" : [
+        {   "inputName" : "emitRate",
+            "widgetName" : "rainstick",
+            "channelNumber" : 13,               // average sound peak-to-peak amplitude
+            "measurement" : "position"
+        },
+        {   "inputName" : "emitColor",
+            "widgetName" : "rainstick",
+            //"channelNumber" : 4,                // average gyro y-axis (corresponds to pitch and rolling the rainstick)
+            "channelNumber" : 1,                // average pitch, which is really rolling the Rainstick
+            "measurement" : "position"
+        }
+    ],
+    "emitColorDefault" : "rainstickBlue",
+    "emitIntervalUseMeasmtAbsValue" : false,
+    "emitColorMeasmtLow" : -90,
+    "emitColorMeasmtHigh" : 90,
+    "emitColorLow" : "red",                     // same color for low and high means use the entire color wheel
+    "emitColorHigh" : "red",
+    "emitColorMeasmtMultiplier" : 0.1,          // Rainstick reports position in tenths of a degree
+    "emitColorIntegrateMeasmt" : false,
+    "emitIntervalMeasmtLow" : 30,
+    "emitIntervalMeasmtHigh" : 500,             // can go well above 600, but we want lot o' rain with moderate sound
+    "emitIntervalLowMs" : 200,
+    "emitIntervalHighMs" : 10,
+    "emitBatchSize" : 10,
+    "emitDirectionIsUp" : false,
+    "particleMoveIntervalMs" : 10
+}
+

@@ -1,0 +1,2 @@
+#!/bin/bash
+$ILLUMICONE_BIN/gl_server -l $ILLUMICONE_DEVL/simulator/coneLayouts/Mini-Cone_24.json -p 7890 &
