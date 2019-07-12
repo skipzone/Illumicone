@@ -259,10 +259,11 @@ static bool registerSignalHandler()
     bool succeeded = true;
 
     sa.sa_handler = signalHandler;
-    if (sigaction(SIGINT, &sa, NULL) < 0) succeeded = false;    // ^C
-    if (sigaction(SIGTERM, &sa, NULL) < 0) succeeded = false;
-    if (sigaction(SIGQUIT, &sa, NULL) < 0) succeeded = false;
     if (sigaction(SIGHUP, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGINT, &sa, NULL) < 0) succeeded = false;    // ^C
+    if (sigaction(SIGQUIT, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGPIPE, &sa, NULL) < 0) succeeded = false;   // TCP socket sends this when disconnected
+    if (sigaction(SIGTERM, &sa, NULL) < 0) succeeded = false;
     if (sigaction(SIGUSR1, &sa, NULL) < 0) succeeded = false;
     if (sigaction(SIGUSR2, &sa, NULL) < 0) succeeded = false;
 
@@ -282,11 +283,16 @@ static void signalHandler(int signum)
     logger.logMsg(LOG_NOTICE, "Got signal %d.", signum);
     switch(signum) {
 
-        case SIGINT:
-        case SIGTERM:
-        case SIGQUIT:
         case SIGHUP:
+        case SIGINT:
+        case SIGQUIT:
+        case SIGTERM:
             logger.logMsg(LOG_NOTICE, "Setting exit flag.");
+            gotExitSignal = true;
+            break;
+
+        case SIGPIPE:
+            logger.logMsg(LOG_ERR, "Got SIGPIPE.  Connection to OPC server probably lost.  Setting exit flag.");
             gotExitSignal = true;
             break;
 
