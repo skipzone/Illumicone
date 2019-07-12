@@ -323,6 +323,11 @@ Useful Commands and Stuff
     Or, use the skipzone fork to get a fix for the extra space between "83" and
     "Linux" in fdisk output on Ubuntu 14.04.3.
 
+* Updates
+
+    sudo nohup apt-get upgrade --yes > upgrade.out 2>&1 &
+
+
 ================================================================================
 
 
