@@ -32,7 +32,7 @@ class RgbVerticalPattern : public Pattern {
     public:
 
         RgbVerticalPattern(const std::string& name);
-        ~RgbVerticalPattern() {};
+        ~RgbVerticalPattern();
 
         RgbVerticalPattern() = delete;
         RgbVerticalPattern(const RgbVerticalPattern&) = delete;
@@ -63,4 +63,11 @@ class RgbVerticalPattern : public Pattern {
         bool resetWidth;
         int widthPos;
         int widthPosOffset;
+
+        unsigned int pixelsPerVstring;
+        unsigned int numVstrings;
+        unsigned int horizontalVpixelRatio;
+        unsigned int verticalVpixelRatio;
+        RgbConeStrings* vpixelArray;
 };
+

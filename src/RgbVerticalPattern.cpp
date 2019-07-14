@@ -34,12 +34,26 @@ extern Log logger;
 
 RgbVerticalPattern::RgbVerticalPattern(const std::string& name)
     : Pattern(name)
+    , horizontalVpixelRatio(1)
+    , verticalVpixelRatio(1)
+    , vpixelArray(&pixelArray)
 {
+}
+
+
+RgbVerticalPattern::~RgbVerticalPattern()
+{
+    if (vpixelArray != &pixelArray) {
+        delete vpixelArray;
+    }
 }
 
 
 bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
+    horizontalVpixelRatio = 2;
+    verticalVpixelRatio = 1;
+
     if (!patternConfigObject["widthScaleFactor"].is_number()) {
         logger.logMsg(LOG_ERR, "widthScaleFactor not specified in " + name + " pattern configuration.");
         return false;
@@ -103,6 +117,16 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     resetWidth = true;
     widthPos = 1;
 
+    numVstrings = numStrings * horizontalVpixelRatio,
+    pixelsPerVstring = pixelsPerString * verticalVpixelRatio;
+    if (horizontalVpixelRatio > 1 || verticalVpixelRatio > 1) {
+        vpixelArray = new RgbConeStrings;
+        if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(*vpixelArray, numVstrings, pixelsPerVstring))
+        {
+            logger.logMsg(LOG_ERR, "Virtual pixel allocation failed for " + name + ".");
+        }
+    }
+
     return true;
 }
 
@@ -118,7 +142,7 @@ bool RgbVerticalPattern::update()
             isActive = true;
             if (redPositionChannel->getHasNewPositionMeasurement()) {
                 gotPositionOrWidthUpdate = true;
-                rPos = ((unsigned int) redPositionChannel->getPosition()) % numStrings;
+                rPos = ((unsigned int) redPositionChannel->getPosition()) % numVstrings;
             }
         }
     }
@@ -128,7 +152,7 @@ bool RgbVerticalPattern::update()
             isActive = true;
             if (greenPositionChannel->getHasNewPositionMeasurement()) {
                 gotPositionOrWidthUpdate = true;
-                gPos = ((unsigned int) greenPositionChannel->getPosition()) % numStrings;
+                gPos = ((unsigned int) greenPositionChannel->getPosition()) % numVstrings;
             }
         }
     }
@@ -138,7 +162,7 @@ bool RgbVerticalPattern::update()
             isActive = true;
             if (bluePositionChannel->getHasNewPositionMeasurement()) {
                 gotPositionOrWidthUpdate = true;
-                bPos = ((unsigned int) bluePositionChannel->getPosition()) % numStrings;
+                bPos = ((unsigned int) bluePositionChannel->getPosition()) % numVstrings;
             }
         }
     }
@@ -190,7 +214,7 @@ bool RgbVerticalPattern::update()
     // Draw the stripes.
     if (gotPositionOrWidthUpdate) {
 
-        clearAllPixels(pixelArray);
+        clearAllPixels(*vpixelArray);
 
         int leftExtraWidth = 0;
         int rightExtraWidth = 0;
@@ -222,23 +246,31 @@ bool RgbVerticalPattern::update()
         //    + ", bWidthHighIndex=" + to_string(bWidthHighIndex));
 
         for (int i = rWidthLowIndex; i <= rWidthHighIndex; ++i) {
-            int stringIndex = (i % numStrings + numStrings) % numStrings;
-            for (auto&& pixels:pixelArray[stringIndex]) {
+            int stringIndex = (i % numVstrings + numVstrings) % numVstrings;
+            for (auto&& pixels : vpixelArray->at(stringIndex)) {
                 pixels.r = 255;
             }
         }
 
         for (int i = gWidthLowIndex; i <= gWidthHighIndex; ++i) {
-            int stringIndex = (i % numStrings + numStrings) % numStrings;
-            for (auto&& pixels:pixelArray[stringIndex]) {
+            int stringIndex = (i % numVstrings + numVstrings) % numVstrings;
+            for (auto&& pixels : vpixelArray->at(stringIndex)) {
                 pixels.g = 255;
             }
         }
 
         for (int i = bWidthLowIndex; i <= bWidthHighIndex; ++i) {
-            int stringIndex = (i % numStrings + numStrings) % numStrings;
-            for (auto&& pixels:pixelArray[stringIndex]) {
+            int stringIndex = (i % numVstrings + numVstrings) % numVstrings;
+            for (auto&& pixels : vpixelArray->at(stringIndex)) {
                 pixels.b = 255;
+            }
+        }
+
+        for (unsigned int col = 0; col < numStrings; col++) {
+            unsigned int vcol = col * horizontalVpixelRatio;
+            for (unsigned int row = 0; row < pixelsPerString; row++) {
+                unsigned int vrow = row * verticalVpixelRatio;
+                pixelArray[col][row] = vpixelArray->at(vcol)[vrow];
             }
         }
     }
