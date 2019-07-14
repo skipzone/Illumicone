@@ -1108,9 +1108,19 @@ void doPatterns()
                     for (unsigned int col = 0; col < numberOfStrings; col++) {
                         for (unsigned int row = 0; row < numberOfPixelsPerString; row++) {
 
-                            // Figure out if the pixel is transparent, and convert
-                            // it to the required color model, if necessary.
-                            bool pixelIsTransparent;
+                            // Ignore the pixel if it is transparent.
+                            if (patternState->pattern->usesHsvModel) {
+                                if (!patternState->pattern->coneStrings[col][row]) {
+                                    continue;
+                                }
+                            }
+                            else {
+                                if (!patternState->pattern->pixelArray[col][row]) {
+                                    continue;
+                                }
+                            }
+
+                            // Convert the pixel to the required color model, if necessary.
                             RgbPixel rgbPatPixel;
                             HsvPixel hsvPatPixel;
                             switch (patternBlendMethod) {
@@ -1118,82 +1128,57 @@ void doPatterns()
                                 case PatternBlendMethod::rgbAdd:
                                 case PatternBlendMethod::rgbBlend:
                                     if (patternState->pattern->usesHsvModel) {
-                                        // TODO:  use hsvTransparent
-                                        pixelIsTransparent = patternState->pattern->coneStrings[col][row] == HsvPixel(0, 0, 0);
-                                        if (!pixelIsTransparent) {
-                                            hsv2rgb_rainbow(patternState->pattern->coneStrings[col][row], rgbPatPixel);
-                                        }
+                                        hsv2rgb_rainbow(patternState->pattern->coneStrings[col][row], rgbPatPixel);
                                     }
                                     else {
-                                        // TODO:  use rgbTransparent
-                                        pixelIsTransparent =
-                                            patternState->pattern->pixelArray[col][row] == RgbPixel(RgbPixel::Black);
-                                        if (!pixelIsTransparent) {
-                                            rgbPatPixel = patternState->pattern->pixelArray[col][row];
-                                        }
+                                        rgbPatPixel = patternState->pattern->pixelArray[col][row];
                                     }
                                     break;
                                 case PatternBlendMethod::hsvBlend:
                                 case PatternBlendMethod::hsvHueBlend:
                                     if (patternState->pattern->usesHsvModel) {
-                                        // TODO:  use hsvTransparent
-                                        pixelIsTransparent = patternState->pattern->coneStrings[col][row] == HsvPixel(0, 0, 0);
-                                        if (!pixelIsTransparent) {
-                                            hsvPatPixel = patternState->pattern->coneStrings[col][row];
-                                        }
+                                        hsvPatPixel = patternState->pattern->coneStrings[col][row];
                                     }
                                     else {
-                                        // TODO:  use rgbTransparent
-                                        pixelIsTransparent =
-                                            patternState->pattern->pixelArray[col][row] == RgbPixel(RgbPixel::Black);
-                                        if (!pixelIsTransparent) {
-                                            rgb2hsv(patternState->pattern->pixelArray[col][row], hsvPatPixel);
-                                        }
+                                        rgb2hsv(patternState->pattern->pixelArray[col][row], hsvPatPixel);
                                     }
                                     break;
                             }
 
                             // Blend the pattern's pixel into the final frame if it isn't transparent.
-                            if (!pixelIsTransparent) {
-                                anyPixelIsOn = true;
-                                switch (patternBlendMethod) {
-                                    case PatternBlendMethod::overlay:
-                                        // A higher priority pattern overrides a lower priority pattern.
+                            anyPixelIsOn = true;
+                            switch (patternBlendMethod) {
+                                case PatternBlendMethod::overlay:
+                                    // A higher priority pattern overrides a lower priority pattern.
+                                    rgbFinalFrame[col][row] = rgbPatPixel;
+                                    break;
+                                case PatternBlendMethod::rgbAdd:
+                                    // Saturating addition ignores priority, but it looks better than nblend of rgb.
+                                    rgbFinalFrame[col][row] += rgbPatPixel;
+                                    break;
+                                case PatternBlendMethod::rgbBlend:
+                                    // Blending rgb tends to make things look dark when combined.
+                                    if (rgbFinalFrame[col][row]) {
+                                        nblend(rgbFinalFrame[col][row], rgbPatPixel, patternState->amountOfOverlay);
+                                    }
+                                    else {
                                         rgbFinalFrame[col][row] = rgbPatPixel;
-                                        break;
-                                    case PatternBlendMethod::rgbAdd:
-                                        // Saturating addition ignores priority, but it looks better than nblend of rgb.
-                                        rgbFinalFrame[col][row] += rgbPatPixel;
-                                        break;
-                                    case PatternBlendMethod::rgbBlend:
-                                        // Blending rgb tends to make things look dark when combined.
-                                        // TODO:  use RgbPixel::Transparent
-                                        if (rgbFinalFrame[col][row] != RgbPixel(RgbPixel::Black)) {
-                                            nblend(rgbFinalFrame[col][row],
-                                                   rgbPatPixel,
-                                                   patternState->amountOfOverlay);
+                                    }
+                                    break;
+                                case PatternBlendMethod::hsvBlend:
+                                case PatternBlendMethod::hsvHueBlend:
+                                    HsvPixel ffPixel = hsvFinalFrame[col][row];
+                                    if (hsvFinalFrame[col][row]) {
+                                        nblend(hsvFinalFrame[col][row], hsvPatPixel, patternState->amountOfOverlay);
+                                        if (patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
+                                            hsvFinalFrame[col][row].s = max(ffPixel.s, hsvPatPixel.s);
+                                            hsvFinalFrame[col][row].v = max(ffPixel.v, hsvPatPixel.v);
                                         }
-                                        else {
-                                            rgbFinalFrame[col][row] = rgbPatPixel;
-                                        }
-                                        break;
-                                    case PatternBlendMethod::hsvBlend:
-                                    case PatternBlendMethod::hsvHueBlend:
-                                        HsvPixel ffPixel = hsvFinalFrame[col][row];
-                                        if (hsvFinalFrame[col][row] != HsvPixel(0, 0, 0)) {     // TODO:  use hsvTransparent
-                                            nblend(hsvFinalFrame[col][row],
-                                                   hsvPatPixel,
-                                                   patternState->amountOfOverlay);
-                                            if (patternBlendMethod == PatternBlendMethod::hsvHueBlend) {
-                                                hsvFinalFrame[col][row].s = max(ffPixel.s, hsvPatPixel.s);
-                                                hsvFinalFrame[col][row].v = max(ffPixel.v, hsvPatPixel.v);
-                                            }
-                                        }
-                                        else {
-                                            hsvFinalFrame[col][row] = hsvPatPixel;
-                                        }
-                                        break;
-                                }
+                                    }
+                                    else {
+                                        hsvFinalFrame[col][row] = hsvPatPixel;
+                                    }
+                                    break;
                             }
 
                         }
