@@ -73,8 +73,10 @@ struct CHSV {
                 uint8_t value;
                 uint8_t val;
                 uint8_t v; };
+            uint8_t pad;
         };
-        uint8_t raw[3];
+        uint8_t raw[4];
+        uint32_t raw32;
     };
 
     /// default values are UNITIALIZED
@@ -84,23 +86,25 @@ struct CHSV {
 
     /// allow construction from H, S, V
     inline CHSV( uint8_t ih, uint8_t is, uint8_t iv) __attribute__((always_inline))
-        : h(ih), s(is), v(iv)
+        : h(ih), s(is), v(iv), pad(0)
     {
     }
 
     /// allow copy construction
     inline CHSV(const CHSV& rhs) __attribute__((always_inline))
     {
-        h = rhs.h;
-        s = rhs.s;
-        v = rhs.v;
+//        h = rhs.h;
+//        s = rhs.s;
+//        v = rhs.v;
+        raw32 = rhs.raw32;
     }
 
     inline CHSV& operator= (const CHSV& rhs) __attribute__((always_inline))
     {
-        h = rhs.h;
-        s = rhs.s;
-        v = rhs.v;
+//        h = rhs.h;
+//        s = rhs.s;
+//        v = rhs.v;
+        raw32 = rhs.raw32;
         return *this;
     }
 
@@ -111,11 +115,18 @@ struct CHSV {
         v = iv;
         return *this;
     }
+
+    /// this allows testing a CHSV for zero-ness
+    inline operator bool() const __attribute__((always_inline))
+    {
+        return raw32 != 0;
+    }
 };
 
 inline __attribute__((always_inline)) bool operator== (const CHSV& lhs, const CHSV& rhs)
 {
-    return (lhs.h == rhs.h) && (lhs.s == rhs.s) && (lhs.v == rhs.v);
+//    return (lhs.h == rhs.h) && (lhs.s == rhs.s) && (lhs.v == rhs.v);
+    return (lhs.raw32 == rhs.raw32);
 }
 
 inline __attribute__((always_inline)) bool operator!= (const CHSV& lhs, const CHSV& rhs)
@@ -151,8 +162,10 @@ struct CRGB {
                 uint8_t b;
                 uint8_t blue;
             };
+            uint8_t pad;
         };
-        uint8_t raw[3];
+        uint8_t raw[4];
+        uint32_t raw32;
     };
 
     /// Array access operator to index into the crgb object
@@ -174,26 +187,26 @@ struct CRGB {
 
     /// allow construction from R, G, B
     inline CRGB( uint8_t ir, uint8_t ig, uint8_t ib)  __attribute__((always_inline))
-        : r(ir), g(ig), b(ib)
+        : r(ir), g(ig), b(ib), pad(0)
     {
     }
 
     /// allow construction from 32-bit (really 24-bit) bit 0xRRGGBB color code
     inline CRGB( uint32_t colorcode)  __attribute__((always_inline))
-    : r((colorcode >> 16) & 0xFF), g((colorcode >> 8) & 0xFF), b((colorcode >> 0) & 0xFF)
+    : r((colorcode >> 16) & 0xFF), g((colorcode >> 8) & 0xFF), b((colorcode >> 0) & 0xFF), pad(0)
     {
     }
 
     /// allow construction from a LEDColorCorrection enum
     inline CRGB( LEDColorCorrection colorcode) __attribute__((always_inline))
-    : r((colorcode >> 16) & 0xFF), g((colorcode >> 8) & 0xFF), b((colorcode >> 0) & 0xFF)
+    : r((colorcode >> 16) & 0xFF), g((colorcode >> 8) & 0xFF), b((colorcode >> 0) & 0xFF), pad(0)
     {
 
     }
 
     /// allow construction from a ColorTemperature enum
     inline CRGB( ColorTemperature colorcode) __attribute__((always_inline))
-    : r((colorcode >> 16) & 0xFF), g((colorcode >> 8) & 0xFF), b((colorcode >> 0) & 0xFF)
+    : r((colorcode >> 16) & 0xFF), g((colorcode >> 8) & 0xFF), b((colorcode >> 0) & 0xFF), pad(0)
     {
 
     }
@@ -201,9 +214,10 @@ struct CRGB {
     /// allow copy construction
     inline CRGB(const CRGB& rhs) __attribute__((always_inline))
     {
-        r = rhs.r;
-        g = rhs.g;
-        b = rhs.b;
+//        r = rhs.r;
+//        g = rhs.g;
+//        b = rhs.b;
+        raw32 = rhs.raw32;
     }
 
     /// allow construction from HSV color
@@ -215,9 +229,10 @@ struct CRGB {
     /// allow assignment from one RGB struct to another
     inline CRGB& operator= (const CRGB& rhs) __attribute__((always_inline))
     {
-        r = rhs.r;
-        g = rhs.g;
-        b = rhs.b;
+//        r = rhs.r;
+//        g = rhs.g;
+//        b = rhs.b;
+        raw32 = rhs.raw32;
         return *this;
     }
 
@@ -227,6 +242,7 @@ struct CRGB {
         r = (colorcode >> 16) & 0xFF;
         g = (colorcode >>  8) & 0xFF;
         b = (colorcode >>  0) & 0xFF;
+        pad = 0;
         return *this;
     }
 
@@ -236,6 +252,7 @@ struct CRGB {
         r = nr;
         g = ng;
         b = nb;
+        pad = 0;
         return *this;
     }
 
@@ -243,6 +260,7 @@ struct CRGB {
     inline CRGB& setHSV (uint8_t hue, uint8_t sat, uint8_t val) __attribute__((always_inline))
     {
         hsv2rgb_rainbow( CHSV(hue, sat, val), *this);
+        pad = 0;
         return *this;
     }
 
@@ -250,6 +268,7 @@ struct CRGB {
     inline CRGB& setHue (uint8_t hue) __attribute__((always_inline))
     {
         hsv2rgb_rainbow( CHSV(hue, 255, 255), *this);
+        pad = 0;
         return *this;
     }
 
@@ -257,6 +276,7 @@ struct CRGB {
     inline CRGB& operator= (const CHSV& rhs) __attribute__((always_inline))
     {
         hsv2rgb_rainbow( rhs, *this);
+        pad = 0;
         return *this;
     }
 
@@ -266,9 +286,9 @@ struct CRGB {
         r = (colorcode >> 16) & 0xFF;
         g = (colorcode >>  8) & 0xFF;
         b = (colorcode >>  0) & 0xFF;
+        pad = 0;
         return *this;
     }
-
 
     /// add one RGB to another, saturating at 0xFF for each channel
     inline CRGB& operator+= (const CRGB& rhs )
@@ -472,7 +492,8 @@ struct CRGB {
     /// this allows testing a CRGB for zero-ness
     inline operator bool() const __attribute__((always_inline))
     {
-        return r || g || b;
+//        return r || g || b;
+        return raw32 != 0;
     }
 
     /// invert each channel
