@@ -42,8 +42,14 @@
             "measurement" : "position"
         }
     ],
-    "widthScaleFactor" : 3,             // effectively gear down a rotating widget
-    "maxCyclicalWidth" : 6,
-    "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+    "horizontalVpixelRatio" : 1,
+    "verticalVpixelRatio" : 1,          // should always be 1 for straight, vertical stripes
+    "maxSidebandWidth" : 3,
+    "minSidebandWidth" : 1,             // should be equal to or greater than horizontalVpixelRatio
+    "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
+    "rScaledownFactor" : 1,            // effectively gear down a rotating widget
+    "gScaledownFactor" : 1,
+    "bScaledownFactor" : 1,
+    "widthScaledownFactor" : 3
 }
 

@@ -51,29 +51,7 @@ RgbVerticalPattern::~RgbVerticalPattern()
 
 bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
-    horizontalVpixelRatio = 2;
-    verticalVpixelRatio = 1;
-
-    if (!patternConfigObject["widthScaleFactor"].is_number()) {
-        logger.logMsg(LOG_ERR, "widthScaleFactor not specified in " + name + " pattern configuration.");
-        return false;
-    }
-    widthScaleFactor = patternConfigObject["widthScaleFactor"].int_value();
-    logger.logMsg(LOG_INFO, name + " widthScaleFactor=" + to_string(widthScaleFactor));
-
-    if (!patternConfigObject["maxCyclicalWidth"].is_number()) {
-        logger.logMsg(LOG_ERR, "maxCyclicalWidth not specified in " + name + " pattern configuration.");
-        return false;
-    }
-    maxCyclicalWidth = patternConfigObject["maxCyclicalWidth"].int_value();
-    logger.logMsg(LOG_INFO, name + " maxCyclicalWidth=" + to_string(maxCyclicalWidth));
-
-    if (!patternConfigObject["widthResetTimeoutSeconds"].is_number()) {
-        logger.logMsg(LOG_ERR, "widthResetTimeoutSeconds not specified in " + name + " pattern configuration.");
-        return false;
-    }
-    widthResetTimeoutSeconds = patternConfigObject["widthResetTimeoutSeconds"].int_value();
-    logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
+    // ----- get input channels -----
 
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
@@ -108,6 +86,71 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
         }
     }
 
+    // ----- get pattern configuration -----
+
+    string errMsgSuffix = " in " + name + " pattern configuration.";
+
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "horizontalVpixelRatio", horizontalVpixelRatio, errMsgSuffix, 1)) {
+        return false;
+    }
+    if ((horizontalVpixelRatio & (horizontalVpixelRatio - 1)) != 0) {
+        logger.logMsg(LOG_ERR, "horizontalVpixelRatio in " + name + " pattern configuration must be a power of 2.");
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " horizontalVpixelRatio=" + to_string(horizontalVpixelRatio));
+
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "verticalVpixelRatio", verticalVpixelRatio, errMsgSuffix, 1)) {
+        return false;
+    }
+    if ((verticalVpixelRatio & (verticalVpixelRatio - 1)) != 0) {
+        logger.logMsg(LOG_ERR, "verticalVpixelRatio in " + name + " pattern configuration must be a power of 2.");
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " verticalVpixelRatio=" + to_string(verticalVpixelRatio));
+
+    numVstrings = numStrings * horizontalVpixelRatio,
+    pixelsPerVstring = pixelsPerString * verticalVpixelRatio;
+
+    if (!ConfigReader::getIntValue(patternConfigObject, "rScaledownFactor", rScaledownFactor, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " rScaledownFactor=" + to_string(rScaledownFactor));
+
+    if (!ConfigReader::getIntValue(patternConfigObject, "gScaledownFactor", gScaledownFactor, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " gScaledownFactor=" + to_string(gScaledownFactor));
+
+    if (!ConfigReader::getIntValue(patternConfigObject, "bScaledownFactor", bScaledownFactor, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " bScaledownFactor=" + to_string(bScaledownFactor));
+
+    if (!ConfigReader::getIntValue(patternConfigObject, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " widthScaledownFactor=" + to_string(widthScaledownFactor));
+
+    // TODO:  need to support min. sideband width 0
+    if (!ConfigReader::getIntValue(patternConfigObject, "minSidebandWidth", minSidebandWidth, errMsgSuffix,
+                                   1, numVstrings / 2))
+    {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " minSidebandWidth=" + to_string(minSidebandWidth));
+
+    if (!ConfigReader::getIntValue(patternConfigObject, "maxSidebandWidth", maxSidebandWidth, errMsgSuffix,
+                                   minSidebandWidth, numVstrings / 2))
+    {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " maxSidebandWidth=" + to_string(maxSidebandWidth));
+
+    if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
+
     // ----- initialize object data -----
 
     rPos = 0;
@@ -115,10 +158,8 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     bPos = 0;
     nextResetWidthMs = 0;
     resetWidth = true;
-    widthPos = 1;
+    widthPos = minSidebandWidth;
 
-    numVstrings = numStrings * horizontalVpixelRatio,
-    pixelsPerVstring = pixelsPerString * verticalVpixelRatio;
     if (horizontalVpixelRatio > 1 || verticalVpixelRatio > 1) {
         vpixelArray = new RgbConeStrings;
         if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(*vpixelArray, numVstrings, pixelsPerVstring))
@@ -142,7 +183,7 @@ bool RgbVerticalPattern::update()
             isActive = true;
             if (redPositionChannel->getHasNewPositionMeasurement()) {
                 gotPositionOrWidthUpdate = true;
-                rPos = ((unsigned int) redPositionChannel->getPosition()) % numVstrings;
+                rPos = ((unsigned int) redPositionChannel->getPosition()) / rScaledownFactor % numVstrings;
             }
         }
     }
@@ -152,7 +193,7 @@ bool RgbVerticalPattern::update()
             isActive = true;
             if (greenPositionChannel->getHasNewPositionMeasurement()) {
                 gotPositionOrWidthUpdate = true;
-                gPos = ((unsigned int) greenPositionChannel->getPosition()) % numVstrings;
+                gPos = ((unsigned int) greenPositionChannel->getPosition()) / gScaledownFactor % numVstrings;
             }
         }
     }
@@ -162,7 +203,7 @@ bool RgbVerticalPattern::update()
             isActive = true;
             if (bluePositionChannel->getHasNewPositionMeasurement()) {
                 gotPositionOrWidthUpdate = true;
-                bPos = ((unsigned int) bluePositionChannel->getPosition()) % numVstrings;
+                bPos = ((unsigned int) bluePositionChannel->getPosition()) / bScaledownFactor % numVstrings;
             }
         }
     }
@@ -178,18 +219,15 @@ bool RgbVerticalPattern::update()
                     resetWidth = false;
                     widthPosOffset = rawWidthPos;
                 }
-                widthPos = (rawWidthPos - widthPosOffset) / widthScaleFactor;
-                if (maxCyclicalWidth != 0) {
-                    // This is a triangle wave function where the period is
-                    // (maxCyclicalWidth - 1) * 2 and the range is 1 to maxCyclicalWidth.
-                    // We left-shift the wave so that the width starts out at 1.
-                    widthPos = abs(abs(widthPos + (maxCyclicalWidth - 1)) % ((maxCyclicalWidth - 1) * 2) - (maxCyclicalWidth - 1)) + 1;
-                }
-                if (widthPos < 1) {
-                    widthPos = 1;
-                }
+                int scaledWidthPos = (rawWidthPos - widthPosOffset) / widthScaledownFactor;
+                // This is a triangle wave function where the period is
+                // (maxSidebandWidth - 1) * 2 and the range is 1 to maxSidebandWidth.
+                // We left-shift the wave so that the width starts out at 1.
+                widthPos = abs(abs(scaledWidthPos + (maxSidebandWidth - 1)) % ((maxSidebandWidth - 1) * 2) - (maxSidebandWidth - 1))
+                           + minSidebandWidth;
                 //logger.logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
                 //                  + ", widthPosOffset=" + to_string(widthPosOffset)
+                //                  + ", scaledWidthPos=" + to_string(scaledWidthPos)
                 //                  + ", widthPos=" + to_string(widthPos));
             }
         }
@@ -207,7 +245,7 @@ bool RgbVerticalPattern::update()
         else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
             logger.logMsg(LOG_DEBUG, name + ":  Resetting width.");
             resetWidth = true;
-            widthPos = 1;
+            widthPos = minSidebandWidth;
         }
     }
 
@@ -216,64 +254,80 @@ bool RgbVerticalPattern::update()
 
         clearAllPixels(*vpixelArray);
 
-        int leftExtraWidth = 0;
-        int rightExtraWidth = 0;
-        if (widthPos >= 2) {
-            leftExtraWidth = widthPos / 2;
-            rightExtraWidth = widthPos - 1 - leftExtraWidth;
-        }
+        int sidebandWidth = widthPos - 1;
 
-        int rWidthLowIndex = rPos - leftExtraWidth;
-        int rWidthHighIndex = rPos + rightExtraWidth;
+        float intensitySlope = 255.0 / (sidebandWidth + 1);
 
-        int gWidthLowIndex = gPos - leftExtraWidth;
-        int gWidthHighIndex = gPos + rightExtraWidth;
+        int rLow = rPos - sidebandWidth;
+        int rHigh = rPos + sidebandWidth;
 
-        int bWidthLowIndex = bPos - leftExtraWidth;
-        int bWidthHighIndex = bPos + rightExtraWidth;
+        int gLow = gPos - sidebandWidth;
+        int gHigh = gPos + sidebandWidth;
 
-        //logger.logMsg(LOG_DEBUG, name
-        //    + ":  leftExtraWidth=" + to_string(leftExtraWidth)
-        //    + ", rightExtraWidth=" + to_string(rightExtraWidth)
-        //    + ", rPos=" + to_string(rPos)
-        //    + ", rWidthLowIndex=" + to_string(rWidthLowIndex)
-        //    + ", rWidthHighIndex=" + to_string(rWidthHighIndex)
-        //    + ", gPos=" + to_string(gPos)
-        //    + ", gWidthLowIndex=" + to_string(gWidthLowIndex)
-        //    + ", gWidthHighIndex=" + to_string(gWidthHighIndex)
-        //    + ", bPos=" + to_string(bPos)
-        //    + ", bWidthLowIndex=" + to_string(bWidthLowIndex)
-        //    + ", bWidthHighIndex=" + to_string(bWidthHighIndex));
+        int bLow = bPos - sidebandWidth;
+        int bHigh = bPos + sidebandWidth;
 
-        for (int i = rWidthLowIndex; i <= rWidthHighIndex; ++i) {
-            int stringIndex = (i % numVstrings + numVstrings) % numVstrings;
-            for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                pixels.r = 255;
+/*
+        logger.logMsg(LOG_DEBUG, name
+            + ":  widthPos=" + to_string(widthPos)
+            + ":  sidebandWidth=" + to_string(sidebandWidth)
+            + ", intensitySlope=" + to_string(intensitySlope)
+            + ", rPos=" + to_string(rPos)
+            + ", rLow=" + to_string(rLow)
+            + ", rHigh=" + to_string(rHigh)
+            + ", gPos=" + to_string(gPos)
+            + ", gLow=" + to_string(gLow)
+            + ", gHigh=" + to_string(gHigh)
+            + ", bPos=" + to_string(bPos)
+            + ", bLow=" + to_string(bLow)
+            + ", bHigh=" + to_string(bHigh));
+*/
+
+        if (redPositionChannel != nullptr) {
+            for (int i = rLow; i <= rHigh; ++i) {
+                float distanceToCenter = abs(i - rPos);
+                uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
+                int stringIndex = ((i + numVstrings) % numVstrings);
+                for (auto&& pixels : vpixelArray->at(stringIndex)) {
+                    pixels.r = intensity;
+                }
             }
         }
 
-        for (int i = gWidthLowIndex; i <= gWidthHighIndex; ++i) {
-            int stringIndex = (i % numVstrings + numVstrings) % numVstrings;
-            for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                pixels.g = 255;
+        if (greenPositionChannel != nullptr) {
+            for (int i = gLow; i <= gHigh; ++i) {
+                float distanceToCenter = abs(i - gPos);
+                uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
+                int stringIndex = ((i + numVstrings) % numVstrings);
+                for (auto&& pixels : vpixelArray->at(stringIndex)) {
+                    pixels.g = intensity;
+                }
             }
         }
 
-        for (int i = bWidthLowIndex; i <= bWidthHighIndex; ++i) {
-            int stringIndex = (i % numVstrings + numVstrings) % numVstrings;
-            for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                pixels.b = 255;
+        if (bluePositionChannel != nullptr) {
+            for (int i = bLow; i <= bHigh; ++i) {
+                float distanceToCenter = abs(i - bPos);
+                uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
+                int stringIndex = ((i + numVstrings) % numVstrings);
+                for (auto&& pixels : vpixelArray->at(stringIndex)) {
+                    pixels.b = intensity;
+                }
             }
         }
 
-        for (unsigned int col = 0; col < numStrings; col++) {
-            unsigned int vcol = col * horizontalVpixelRatio;
-            for (unsigned int row = 0; row < pixelsPerString; row++) {
-                unsigned int vrow = row * verticalVpixelRatio;
-                pixelArray[col][row] = vpixelArray->at(vcol)[vrow];
+        if (horizontalVpixelRatio > 1 || verticalVpixelRatio > 1) {
+            // Map virtual pixels onto physical pixels.
+            for (unsigned int col = 0; col < numStrings; col++) {
+                unsigned int vcol = col * horizontalVpixelRatio;
+                for (unsigned int row = 0; row < pixelsPerString; row++) {
+                    unsigned int vrow = row * verticalVpixelRatio;
+                    pixelArray[col][row] = vpixelArray->at(vcol)[vrow];
+                }
             }
         }
     }
 
     return isActive;
 }
+

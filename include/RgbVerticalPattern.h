@@ -46,10 +46,6 @@ class RgbVerticalPattern : public Pattern {
 
     private:
 
-        int widthScaleFactor;
-        int maxCyclicalWidth;
-        int widthResetTimeoutSeconds;
-
         std::shared_ptr<WidgetChannel> redPositionChannel;
         std::shared_ptr<WidgetChannel> greenPositionChannel;
         std::shared_ptr<WidgetChannel> bluePositionChannel;
@@ -58,10 +54,18 @@ class RgbVerticalPattern : public Pattern {
         int rPos;
         int gPos;
         int bPos;
+        int widthPos;
 
+        int rScaledownFactor;
+        int gScaledownFactor;
+        int bScaledownFactor;
+        int widthScaledownFactor;
+
+        int maxSidebandWidth;
+        int minSidebandWidth;
+        int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
         bool resetWidth;
-        int widthPos;
         int widthPosOffset;
 
         unsigned int pixelsPerVstring;
