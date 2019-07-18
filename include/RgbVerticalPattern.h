@@ -46,33 +46,23 @@ class RgbVerticalPattern : public Pattern {
 
     private:
 
-        constexpr static int iRed = 0;
-        constexpr static int iGreen = 1;
-        constexpr static int iBlue = 2;
-        constexpr static char rgbColorNames[3][] = {"red", "green", "blue"};
+        static constexpr int numColors = 3;
+        static constexpr char rgbPrefix[numColors + 1] = "rgb";
 
-        std::shared_ptr<WidgetChannel> positionChannel[3];
-        std::shared_ptr<WidgetChannel> greenPositionChannel;
-        std::shared_ptr<WidgetChannel> bluePositionChannel;
+        std::shared_ptr<WidgetChannel> positionChannel[numColors];
         std::shared_ptr<WidgetChannel> widthChannel;
 
-        int stripePos[3];
-        int widthPos;
+        int stripePos[numColors];
+        int widthPos[numColors];
 
-        int rNumStripes;
-        int gNumStripes;
-        int bNumStripes;
-        int rStripeStep;
-        int gStripeStep;
-        int bStripeStep;
+        int numStripes[numColors];
+        int stripeStep[numColors];
 
-        int rScaledownFactor;
-        int gScaledownFactor;
-        int bScaledownFactor;
+        int scaledownFactor[numColors];
         int widthScaledownFactor;
 
-        int maxSidebandWidth;
-        int minSidebandWidth;
+        int maxSidebandWidth[numColors];
+        int minSidebandWidth[numColors];
         int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
         bool resetWidth;

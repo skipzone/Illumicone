@@ -15,23 +15,23 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "stripes_FourPlay42",
+{   "name" : "stripes_traditional_FourPlay42",
     "enabled" : true,
     "priority" : 6,
     "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "RgbVerticalPattern",
     "inputs" : [
-        {   "inputName" : "redPosition",
+        {   "inputName" : "rPosition",
             "widgetName" : "fourPlay42",
             "channelNumber" : 0,
             "measurement" : "position"
         },
-        {   "inputName" : "greenPosition",
+        {   "inputName" : "gPosition",
             "widgetName" : "fourPlay42",
             "channelNumber" : 1,
             "measurement" : "position"
         },
-        {   "inputName" : "bluePosition",
+        {   "inputName" : "bPosition",
             "widgetName" : "fourPlay42",
             "channelNumber" : 2,
             "measurement" : "position"
@@ -44,10 +44,17 @@
     ],
     "horizontalVpixelRatio" : 1,
     "verticalVpixelRatio" : 1,          // should always be 1 for straight, vertical stripes
-    "maxSidebandWidth" : 3,
-    "minSidebandWidth" : 1,             // should be equal to or greater than horizontalVpixelRatio
+    "rMaxSidebandWidth" : 3,
+    "gMaxSidebandWidth" : 3,
+    "bMaxSidebandWidth" : 3,
+    "rMinSidebandWidth" : 1,            // should be equal to or greater than horizontalVpixelRatio
+    "gMinSidebandWidth" : 1,
+    "bMinSidebandWidth" : 1,
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
-    "rScaledownFactor" : 1,            // effectively gear down a rotating widget
+    "rNumStripes" : 1,
+    "gNumStripes" : 1,
+    "bNumStripes" : 1,
+    "rScaledownFactor" : 1,             // effectively gear down a rotating widget
     "gScaledownFactor" : 1,
     "bScaledownFactor" : 1,
     "widthScaledownFactor" : 3

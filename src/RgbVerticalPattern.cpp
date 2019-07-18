@@ -32,6 +32,9 @@ using namespace std;
 extern Log logger;
 
 
+constexpr char RgbVerticalPattern::rgbPrefix[];
+
+
 RgbVerticalPattern::RgbVerticalPattern(const std::string& name)
     : Pattern(name)
     , horizontalVpixelRatio(1)
@@ -60,29 +63,31 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     }
 
     for (auto&& channelConfig : channelConfigs) {
+        bool recognizedChannel = false;
 
-        if (channelConfig.inputName == "redPosition") {
-            redPositionChannel = channelConfig.widgetChannel;
-        }
-        else if (channelConfig.inputName == "greenPosition") {
-            greenPositionChannel = channelConfig.widgetChannel;
-        }
-        else if (channelConfig.inputName == "bluePosition") {
-            bluePositionChannel = channelConfig.widgetChannel;
-        }
-        else if (channelConfig.inputName == "width") {
+        if (channelConfig.inputName == "width") {
             widthChannel = channelConfig.widgetChannel;
+            recognizedChannel = true;
+        }
+
+        for (int iColor = 0; !recognizedChannel && iColor < numColors; ++iColor) {
+            string inputName = rgbPrefix[iColor] + string("Position");
+            if (channelConfig.inputName == inputName) {
+                positionChannel[iColor] = channelConfig.widgetChannel;
+                recognizedChannel = true;
+            }
+        }
+
+        if (recognizedChannel) {
+            logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
+            if (channelConfig.measurement != "position") {
+                logger.logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
+                              + channelConfig.inputName + " doesn't specify position.");
+            }
         }
         else {
             logger.logMsg(LOG_WARNING, "inputName '" + channelConfig.inputName
-                + "' in input configuration for " + name + " is not recognized.");
-            continue;
-        }
-        logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
-
-        if (channelConfig.measurement != "position") {
-            logger.logMsg(LOG_WARNING, name + " supports only position measurements, but the input configuration for "
-                + channelConfig.inputName + " doesn't specify position.");
+                          + "' in input configuration for " + name + " is not recognized.");
         }
     }
 
@@ -111,51 +116,27 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     numVstrings = numStrings * horizontalVpixelRatio,
     pixelsPerVstring = pixelsPerString * verticalVpixelRatio;
 
-    if (!ConfigReader::getIntValue(patternConfigObject, "rNumStripes", rNumStripes, errMsgSuffix, 1, numVstrings / 2)) {
-        return false;
+    for (int iColor = 0; iColor < numColors; ++iColor) {
+        string elName = rgbPrefix[iColor] + string("NumStripes");
+        if (!ConfigReader::getIntValue(patternConfigObject, elName, numStripes[iColor], errMsgSuffix, 1, numVstrings / 2)) {
+            return false;
+        }
+        if (numVstrings % numStripes[iColor] != 0) {
+            logger.logMsg(LOG_ERR, "%s in %s pattern configuration must be a factor of %d.",
+                          elName.c_str(), name.c_str(), numVstrings);
+            return false;
+        }
+        logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), numStripes[iColor]);
+        stripeStep[iColor] = numVstrings / numStripes[iColor];
     }
-    if (numVstrings % rNumStripes != 0) {
-        logger.logMsg(LOG_ERR, "rNumStripes in %s pattern configuration must be a factor of %d.", name.c_str(), numVstrings);
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " rNumStripes=" + to_string(rNumStripes));
 
-    if (!ConfigReader::getIntValue(patternConfigObject, "gNumStripes", gNumStripes, errMsgSuffix, 1, numVstrings / 2)) {
-        return false;
+    for (int iColor = 0; iColor < numColors; ++iColor) {
+        string elName = rgbPrefix[iColor] + string("ScaledownFactor");
+        if (!ConfigReader::getIntValue(patternConfigObject, elName, scaledownFactor[iColor], errMsgSuffix, 1)) {
+            return false;
+        }
+        logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), scaledownFactor[iColor]);
     }
-    if (numVstrings % gNumStripes != 0) {
-        logger.logMsg(LOG_ERR, "gNumStripes in %s pattern configuration must be a factor of %d.", name.c_str(), numVstrings);
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " gNumStripes=" + to_string(gNumStripes));
-
-    if (!ConfigReader::getIntValue(patternConfigObject, "bNumStripes", bNumStripes, errMsgSuffix, 1, numVstrings / 2)) {
-        return false;
-    }
-    if (numVstrings % bNumStripes != 0) {
-        logger.logMsg(LOG_ERR, "bNumStripes in %s pattern configuration must be a factor of %d.", name.c_str(), numVstrings);
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " bNumStripes=" + to_string(bNumStripes));
-
-    rStripeStep = numVstrings / rNumStripes;
-    gStripeStep = numVstrings / gNumStripes;
-    bStripeStep = numVstrings / bNumStripes;
-
-    if (!ConfigReader::getIntValue(patternConfigObject, "rScaledownFactor", rScaledownFactor, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " rScaledownFactor=" + to_string(rScaledownFactor));
-
-    if (!ConfigReader::getIntValue(patternConfigObject, "gScaledownFactor", gScaledownFactor, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " gScaledownFactor=" + to_string(gScaledownFactor));
-
-    if (!ConfigReader::getIntValue(patternConfigObject, "bScaledownFactor", bScaledownFactor, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " bScaledownFactor=" + to_string(bScaledownFactor));
 
     if (!ConfigReader::getIntValue(patternConfigObject, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1)) {
         return false;
@@ -163,19 +144,25 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     logger.logMsg(LOG_INFO, name + " widthScaledownFactor=" + to_string(widthScaledownFactor));
 
     // TODO:  need to support min. sideband width 0
-    if (!ConfigReader::getIntValue(patternConfigObject, "minSidebandWidth", minSidebandWidth, errMsgSuffix,
-                                   1, numVstrings / 2))
-    {
-        return false;
+    for (int iColor = 0; iColor < numColors; ++iColor) {
+        string elName = rgbPrefix[iColor] + string("MinSidebandWidth");
+        if (!ConfigReader::getIntValue(patternConfigObject, elName, minSidebandWidth[iColor], errMsgSuffix,
+                                       1, numVstrings / 2))
+        {
+            return false;
+        }
+        logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), minSidebandWidth[iColor]);
     }
-    logger.logMsg(LOG_INFO, name + " minSidebandWidth=" + to_string(minSidebandWidth));
 
-    if (!ConfigReader::getIntValue(patternConfigObject, "maxSidebandWidth", maxSidebandWidth, errMsgSuffix,
-                                   minSidebandWidth, numVstrings / 2))
-    {
-        return false;
+    for (int iColor = 0; iColor < numColors; ++iColor) {
+        string elName = rgbPrefix[iColor] + string("MaxSidebandWidth");
+        if (!ConfigReader::getIntValue(patternConfigObject, elName, maxSidebandWidth[iColor], errMsgSuffix,
+                                       minSidebandWidth[iColor], numVstrings / 2))
+        {
+            return false;
+        }
+        logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), maxSidebandWidth[iColor]);
     }
-    logger.logMsg(LOG_INFO, name + " maxSidebandWidth=" + to_string(maxSidebandWidth));
 
     if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
         return false;
@@ -184,12 +171,12 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
     // ----- initialize object data -----
 
-    rPos = 0;
-    gPos = 0;
-    bPos = 0;
+    for (int iColor = 0; iColor < numColors; ++iColor) {
+        stripePos[iColor] = 0;
+        widthPos[iColor] = minSidebandWidth[iColor];
+    }
     nextResetWidthMs = 0;
     resetWidth = true;
-    widthPos = minSidebandWidth;
 
     if (horizontalVpixelRatio > 1 || verticalVpixelRatio > 1) {
         vpixelArray = new RgbConeStrings;
@@ -209,32 +196,15 @@ bool RgbVerticalPattern::update()
     bool gotPositionOrWidthUpdate = false;
     unsigned int nowMs = getNowMs();
 
-    if (redPositionChannel != nullptr) {
-        if (redPositionChannel->getIsActive()) {
-            isActive = true;
-            if (redPositionChannel->getHasNewPositionMeasurement()) {
-                gotPositionOrWidthUpdate = true;
-                rPos = ((unsigned int) redPositionChannel->getPosition()) / rScaledownFactor % numVstrings;
-            }
-        }
-    }
-
-    if (greenPositionChannel != nullptr) {
-        if (greenPositionChannel->getIsActive()) {
-            isActive = true;
-            if (greenPositionChannel->getHasNewPositionMeasurement()) {
-                gotPositionOrWidthUpdate = true;
-                gPos = ((unsigned int) greenPositionChannel->getPosition()) / gScaledownFactor % numVstrings;
-            }
-        }
-    }
-
-    if (bluePositionChannel != nullptr) {
-        if (bluePositionChannel->getIsActive()) {
-            isActive = true;
-            if (bluePositionChannel->getHasNewPositionMeasurement()) {
-                gotPositionOrWidthUpdate = true;
-                bPos = ((unsigned int) bluePositionChannel->getPosition()) / bScaledownFactor % numVstrings;
+    for (int iColor = 0; iColor < numColors; ++iColor) {
+        if (positionChannel[iColor] != nullptr) {
+            if (positionChannel[iColor]->getIsActive()) {
+                isActive = true;
+                if (positionChannel[iColor]->getHasNewPositionMeasurement()) {
+                    gotPositionOrWidthUpdate = true;
+                    stripePos[iColor] =
+                        ((unsigned int) positionChannel[iColor]->getPosition()) / scaledownFactor[iColor] % numVstrings;
+                }
             }
         }
     }
@@ -245,21 +215,29 @@ bool RgbVerticalPattern::update()
             isActive = true;
             if (widthChannel->getHasNewPositionMeasurement()) {
                 gotPositionOrWidthUpdate = true;
+
                 int rawWidthPos = widthChannel->getPosition();
                 if (resetWidth) {
                     resetWidth = false;
                     widthPosOffset = rawWidthPos;
                 }
                 int scaledWidthPos = (rawWidthPos - widthPosOffset) / widthScaledownFactor;
+                //logger.logMsg(LOG_DEBUG, name
+                //                         + ":  rawWidthPos=" + to_string(rawWidthPos)
+                //                         + ", widthPosOffset=" + to_string(widthPosOffset)
+                //                         + ", scaledWidthPos=" + to_string(scaledWidthPos));
+
                 // This is a triangle wave function where the period is
                 // (maxSidebandWidth - 1) * 2 and the range is 1 to maxSidebandWidth.
                 // We left-shift the wave so that the width starts out at 1.
-                widthPos = abs(abs(scaledWidthPos + (maxSidebandWidth - 1)) % ((maxSidebandWidth - 1) * 2) - (maxSidebandWidth - 1))
-                           + minSidebandWidth;
-                //logger.logMsg(LOG_DEBUG, name + ":  rawWidthPos=" + to_string(rawWidthPos)
-                //                  + ", widthPosOffset=" + to_string(widthPosOffset)
-                //                  + ", scaledWidthPos=" + to_string(scaledWidthPos)
-                //                  + ", widthPos=" + to_string(widthPos));
+                for (int iColor = 0; iColor < numColors; ++iColor) {
+                    widthPos[iColor] = abs(abs(scaledWidthPos + (maxSidebandWidth[iColor] - 1))
+                                           % ((maxSidebandWidth[iColor] - 1) * 2) - (maxSidebandWidth[iColor] - 1))
+                                       + minSidebandWidth[iColor];
+                    //logger.logMsg(LOG_DEBUG, name
+                    //                  + ":  iColor=" + to_string(iColor)
+                    //                  + ", widthPos[iColor]=" + to_string(widthPos[iColor]));
+                }
             }
         }
     }
@@ -276,7 +254,9 @@ bool RgbVerticalPattern::update()
         else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
             logger.logMsg(LOG_DEBUG, name + ":  Resetting width.");
             resetWidth = true;
-            widthPos = minSidebandWidth;
+            for (int iColor = 0; iColor < numColors; ++iColor) {
+                widthPos[iColor] = minSidebandWidth[iColor];
+            }
         }
     }
 
@@ -285,73 +265,33 @@ bool RgbVerticalPattern::update()
 
         clearAllPixels(*vpixelArray);
 
-        int sidebandWidth = widthPos - 1;
+        for (int iColor = 0; iColor < numColors; ++iColor) {
+            if (positionChannel[iColor] != nullptr) {
 
-        float intensitySlope = 255.0 / (sidebandWidth + 1);
+                int sidebandWidth = widthPos[iColor] - 1;
+                float intensitySlope = 255.0 / (sidebandWidth + 1);
+                int lowString = stripePos[iColor] - sidebandWidth;
+                int highString = stripePos[iColor] + sidebandWidth;
 
-        int rLow = rPos - sidebandWidth;
-        int rHigh = rPos + sidebandWidth;
+                //logger.logMsg(LOG_DEBUG, name
+                //    + ":  iColor=" + to_string(iColor)
+                //    + ",  widthPos[iColor]=" + to_string(widthPos[iColor])
+                //    + ",  sidebandWidth=" + to_string(sidebandWidth)
+                //    + ", intensitySlope=" + to_string(intensitySlope)
+                //    + ", stripePos[iColor]=" + to_string(stripePos[iColor])
+                //    + ", lowString=" + to_string(lowString)
+                //    + ", highString=" + to_string(highString));
 
-        int gLow = gPos - sidebandWidth;
-        int gHigh = gPos + sidebandWidth;
-
-        int bLow = bPos - sidebandWidth;
-        int bHigh = bPos + sidebandWidth;
-
-/*
-        logger.logMsg(LOG_DEBUG, name
-            + ":  widthPos=" + to_string(widthPos)
-            + ":  sidebandWidth=" + to_string(sidebandWidth)
-            + ", intensitySlope=" + to_string(intensitySlope)
-            + ", rPos=" + to_string(rPos)
-            + ", rLow=" + to_string(rLow)
-            + ", rHigh=" + to_string(rHigh)
-            + ", gPos=" + to_string(gPos)
-            + ", gLow=" + to_string(gLow)
-            + ", gHigh=" + to_string(gHigh)
-            + ", bPos=" + to_string(bPos)
-            + ", bLow=" + to_string(bLow)
-            + ", bHigh=" + to_string(bHigh));
-*/
-
-        if (redPositionChannel != nullptr) {
-            for (int i = rLow; i <= rHigh; ++i) {
-                float distanceToCenter = abs(i - rPos);
-                uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
-                int stringIndex = ((i + numVstrings) % numVstrings);
-                for (int iStripe = 0; iStripe < rNumStripes; ++iStripe) {
-                    for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                        pixels.r = intensity;
+                for (int i = lowString; i <= highString; ++i) {
+                    float distanceToCenter = abs(i - stripePos[iColor]);
+                    uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
+                    int stringIndex = ((i + numVstrings) % numVstrings);
+                    for (int iStripe = 0; iStripe < numStripes[iColor]; ++iStripe) {
+                        for (auto&& pixels : vpixelArray->at(stringIndex)) {
+                            pixels.raw[iColor] = intensity;
+                        }
+                        stringIndex = (stringIndex + stripeStep[iColor]) % numVstrings;
                     }
-                    stringIndex = (stringIndex + rStripeStep) % numVstrings;
-                }
-            }
-        }
-
-        if (greenPositionChannel != nullptr) {
-            for (int i = gLow; i <= gHigh; ++i) {
-                float distanceToCenter = abs(i - gPos);
-                uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
-                int stringIndex = ((i + numVstrings) % numVstrings);
-                for (int iStripe = 0; iStripe < gNumStripes; ++iStripe) {
-                    for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                        pixels.g = intensity;
-                    }
-                    stringIndex = (stringIndex + gStripeStep) % numVstrings;
-                }
-            }
-        }
-
-        if (bluePositionChannel != nullptr) {
-            for (int i = bLow; i <= bHigh; ++i) {
-                float distanceToCenter = abs(i - bPos);
-                uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
-                int stringIndex = ((i + numVstrings) % numVstrings);
-                for (int iStripe = 0; iStripe < bNumStripes; ++iStripe) {
-                    for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                        pixels.b = intensity;
-                    }
-                    stringIndex = (stringIndex + bStripeStep) % numVstrings;
                 }
             }
         }
