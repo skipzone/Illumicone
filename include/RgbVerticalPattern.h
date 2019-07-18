@@ -46,15 +46,25 @@ class RgbVerticalPattern : public Pattern {
 
     private:
 
-        std::shared_ptr<WidgetChannel> redPositionChannel;
+        constexpr static int iRed = 0;
+        constexpr static int iGreen = 1;
+        constexpr static int iBlue = 2;
+        constexpr static char rgbColorNames[3][] = {"red", "green", "blue"};
+
+        std::shared_ptr<WidgetChannel> positionChannel[3];
         std::shared_ptr<WidgetChannel> greenPositionChannel;
         std::shared_ptr<WidgetChannel> bluePositionChannel;
         std::shared_ptr<WidgetChannel> widthChannel;
 
-        int rPos;
-        int gPos;
-        int bPos;
+        int stripePos[3];
         int widthPos;
+
+        int rNumStripes;
+        int gNumStripes;
+        int bNumStripes;
+        int rStripeStep;
+        int gStripeStep;
+        int bStripeStep;
 
         int rScaledownFactor;
         int gScaledownFactor;

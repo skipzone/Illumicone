@@ -111,6 +111,37 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     numVstrings = numStrings * horizontalVpixelRatio,
     pixelsPerVstring = pixelsPerString * verticalVpixelRatio;
 
+    if (!ConfigReader::getIntValue(patternConfigObject, "rNumStripes", rNumStripes, errMsgSuffix, 1, numVstrings / 2)) {
+        return false;
+    }
+    if (numVstrings % rNumStripes != 0) {
+        logger.logMsg(LOG_ERR, "rNumStripes in %s pattern configuration must be a factor of %d.", name.c_str(), numVstrings);
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " rNumStripes=" + to_string(rNumStripes));
+
+    if (!ConfigReader::getIntValue(patternConfigObject, "gNumStripes", gNumStripes, errMsgSuffix, 1, numVstrings / 2)) {
+        return false;
+    }
+    if (numVstrings % gNumStripes != 0) {
+        logger.logMsg(LOG_ERR, "gNumStripes in %s pattern configuration must be a factor of %d.", name.c_str(), numVstrings);
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " gNumStripes=" + to_string(gNumStripes));
+
+    if (!ConfigReader::getIntValue(patternConfigObject, "bNumStripes", bNumStripes, errMsgSuffix, 1, numVstrings / 2)) {
+        return false;
+    }
+    if (numVstrings % bNumStripes != 0) {
+        logger.logMsg(LOG_ERR, "bNumStripes in %s pattern configuration must be a factor of %d.", name.c_str(), numVstrings);
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " bNumStripes=" + to_string(bNumStripes));
+
+    rStripeStep = numVstrings / rNumStripes;
+    gStripeStep = numVstrings / gNumStripes;
+    bStripeStep = numVstrings / bNumStripes;
+
     if (!ConfigReader::getIntValue(patternConfigObject, "rScaledownFactor", rScaledownFactor, errMsgSuffix, 1)) {
         return false;
     }
@@ -288,8 +319,11 @@ bool RgbVerticalPattern::update()
                 float distanceToCenter = abs(i - rPos);
                 uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
                 int stringIndex = ((i + numVstrings) % numVstrings);
-                for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                    pixels.r = intensity;
+                for (int iStripe = 0; iStripe < rNumStripes; ++iStripe) {
+                    for (auto&& pixels : vpixelArray->at(stringIndex)) {
+                        pixels.r = intensity;
+                    }
+                    stringIndex = (stringIndex + rStripeStep) % numVstrings;
                 }
             }
         }
@@ -299,8 +333,11 @@ bool RgbVerticalPattern::update()
                 float distanceToCenter = abs(i - gPos);
                 uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
                 int stringIndex = ((i + numVstrings) % numVstrings);
-                for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                    pixels.g = intensity;
+                for (int iStripe = 0; iStripe < gNumStripes; ++iStripe) {
+                    for (auto&& pixels : vpixelArray->at(stringIndex)) {
+                        pixels.g = intensity;
+                    }
+                    stringIndex = (stringIndex + gStripeStep) % numVstrings;
                 }
             }
         }
@@ -310,8 +347,11 @@ bool RgbVerticalPattern::update()
                 float distanceToCenter = abs(i - bPos);
                 uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
                 int stringIndex = ((i + numVstrings) % numVstrings);
-                for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                    pixels.b = intensity;
+                for (int iStripe = 0; iStripe < bNumStripes; ++iStripe) {
+                    for (auto&& pixels : vpixelArray->at(stringIndex)) {
+                        pixels.b = intensity;
+                    }
+                    stringIndex = (stringIndex + bStripeStep) % numVstrings;
                 }
             }
         }
