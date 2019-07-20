@@ -122,11 +122,10 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     }
     logger.logMsg(LOG_INFO, name + " widthScaledownFactor=" + to_string(widthScaledownFactor));
 
-    // TODO:  need to support min. sideband width 0
     for (int iColor = 0; iColor < numColors; ++iColor) {
         string elName = rgbPrefix[iColor] + string("MinSidebandWidth");
         if (!ConfigReader::getIntValue(patternConfigObject, elName, minSidebandWidth[iColor], errMsgSuffix,
-                                       1, numVStrings / 2))
+                                       0, numVStrings / 2))
         {
             return false;
         }
@@ -152,7 +151,7 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
     for (int iColor = 0; iColor < numColors; ++iColor) {
         stripeVPos[iColor] = 0;
-        widthPos[iColor] = minSidebandWidth[iColor];
+        widthPos[iColor] = 0;
     }
     nextResetWidthMs = 0;
     resetWidth = true;
@@ -198,13 +197,15 @@ bool RgbVerticalPattern::update()
                 //                         + ", widthPosOffset=" + to_string(widthPosOffset)
                 //                         + ", scaledWidthPos=" + to_string(scaledWidthPos));
 
-                // This is a triangle wave function where the period is
-                // (maxSidebandWidth - 1) * 2 and the range is 1 to maxSidebandWidth.
-                // We left-shift the wave so that the width starts out at 1.
                 for (int iColor = 0; iColor < numColors; ++iColor) {
-                    widthPos[iColor] = abs(abs(scaledWidthPos + (maxSidebandWidth[iColor] - 1))
-                                           % ((maxSidebandWidth[iColor] - 1) * 2) - (maxSidebandWidth[iColor] - 1))
-                                       + minSidebandWidth[iColor];
+                    if (maxSidebandWidth[iColor] > 0) {
+                        // This is a triangle wave function where the period is maxSidebandWidth * 2
+                        // and the range is minSidebandWidth to maxSidebandWidth.  We right-shift the
+                        // wave so that the width starts out at minSidebandWidth.
+                        widthPos[iColor] = abs(abs(scaledWidthPos + maxSidebandWidth[iColor])
+                                               % (maxSidebandWidth[iColor] * 2) - maxSidebandWidth[iColor])
+                                           + minSidebandWidth[iColor];
+                    }
                     //logger.logMsg(LOG_DEBUG, name
                     //                  + ":  iColor=" + to_string(iColor)
                     //                  + ", widthPos[iColor]=" + to_string(widthPos[iColor]));
@@ -226,7 +227,7 @@ bool RgbVerticalPattern::update()
             logger.logMsg(LOG_DEBUG, name + ":  Resetting width.");
             resetWidth = true;
             for (int iColor = 0; iColor < numColors; ++iColor) {
-                widthPos[iColor] = minSidebandWidth[iColor];
+                widthPos[iColor] = 0;
             }
         }
     }
@@ -239,7 +240,7 @@ bool RgbVerticalPattern::update()
         for (int iColor = 0; iColor < numColors; ++iColor) {
             if (positionChannel[iColor] != nullptr) {
 
-                int sidebandWidth = widthPos[iColor] - 1;
+                int sidebandWidth = widthPos[iColor];
                 float intensitySlope = 255.0 / (sidebandWidth + 1);
                 int lowVString = stripeVPos[iColor] - sidebandWidth;
                 int highVString = stripeVPos[iColor] + sidebandWidth;
