@@ -32,7 +32,7 @@ class RgbVerticalPattern : public Pattern {
     public:
 
         RgbVerticalPattern(const std::string& name);
-        ~RgbVerticalPattern();
+        ~RgbVerticalPattern() {};
 
         RgbVerticalPattern() = delete;
         RgbVerticalPattern(const RgbVerticalPattern&) = delete;
@@ -52,7 +52,7 @@ class RgbVerticalPattern : public Pattern {
         std::shared_ptr<WidgetChannel> positionChannel[numColors];
         std::shared_ptr<WidgetChannel> widthChannel;
 
-        int stripePos[numColors];
+        int stripeVPos[numColors];
         int widthPos[numColors];
 
         int numStripes[numColors];
@@ -68,10 +68,7 @@ class RgbVerticalPattern : public Pattern {
         bool resetWidth;
         int widthPosOffset;
 
-        unsigned int pixelsPerVstring;
-        unsigned int numVstrings;
-        unsigned int horizontalVpixelRatio;
-        unsigned int verticalVpixelRatio;
-        RgbConeStrings* vpixelArray;
+        unsigned int numVStrings;
+        unsigned int horizontalVPixelRatio;
 };
 

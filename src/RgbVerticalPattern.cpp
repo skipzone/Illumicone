@@ -37,18 +37,8 @@ constexpr char RgbVerticalPattern::rgbPrefix[];
 
 RgbVerticalPattern::RgbVerticalPattern(const std::string& name)
     : Pattern(name)
-    , horizontalVpixelRatio(1)
-    , verticalVpixelRatio(1)
-    , vpixelArray(&pixelArray)
+    , horizontalVPixelRatio(1)
 {
-}
-
-
-RgbVerticalPattern::~RgbVerticalPattern()
-{
-    if (vpixelArray != &pixelArray) {
-        delete vpixelArray;
-    }
 }
 
 
@@ -95,39 +85,28 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "horizontalVpixelRatio", horizontalVpixelRatio, errMsgSuffix, 1)) {
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "horizontalVPixelRatio", horizontalVPixelRatio, errMsgSuffix, 1)) {
         return false;
     }
-    if ((horizontalVpixelRatio & (horizontalVpixelRatio - 1)) != 0) {
-        logger.logMsg(LOG_ERR, "horizontalVpixelRatio in " + name + " pattern configuration must be a power of 2.");
+    if ((horizontalVPixelRatio & (horizontalVPixelRatio - 1)) != 0) {
+        logger.logMsg(LOG_ERR, "horizontalVPixelRatio in " + name + " pattern configuration must be a power of 2.");
         return false;
     }
-    logger.logMsg(LOG_INFO, name + " horizontalVpixelRatio=" + to_string(horizontalVpixelRatio));
-
-    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "verticalVpixelRatio", verticalVpixelRatio, errMsgSuffix, 1)) {
-        return false;
-    }
-    if ((verticalVpixelRatio & (verticalVpixelRatio - 1)) != 0) {
-        logger.logMsg(LOG_ERR, "verticalVpixelRatio in " + name + " pattern configuration must be a power of 2.");
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " verticalVpixelRatio=" + to_string(verticalVpixelRatio));
-
-    numVstrings = numStrings * horizontalVpixelRatio,
-    pixelsPerVstring = pixelsPerString * verticalVpixelRatio;
+    logger.logMsg(LOG_INFO, name + " horizontalVPixelRatio=" + to_string(horizontalVPixelRatio));
+    numVStrings = numStrings * horizontalVPixelRatio;
 
     for (int iColor = 0; iColor < numColors; ++iColor) {
         string elName = rgbPrefix[iColor] + string("NumStripes");
-        if (!ConfigReader::getIntValue(patternConfigObject, elName, numStripes[iColor], errMsgSuffix, 1, numVstrings / 2)) {
+        if (!ConfigReader::getIntValue(patternConfigObject, elName, numStripes[iColor], errMsgSuffix, 1, numStrings / 2)) {
             return false;
         }
-        if (numVstrings % numStripes[iColor] != 0) {
+        if (numStrings % numStripes[iColor] != 0) {
             logger.logMsg(LOG_ERR, "%s in %s pattern configuration must be a factor of %d.",
-                          elName.c_str(), name.c_str(), numVstrings);
+                          elName.c_str(), name.c_str(), numStrings);
             return false;
         }
         logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), numStripes[iColor]);
-        stripeStep[iColor] = numVstrings / numStripes[iColor];
+        stripeStep[iColor] = numStrings / numStripes[iColor];
     }
 
     for (int iColor = 0; iColor < numColors; ++iColor) {
@@ -147,7 +126,7 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     for (int iColor = 0; iColor < numColors; ++iColor) {
         string elName = rgbPrefix[iColor] + string("MinSidebandWidth");
         if (!ConfigReader::getIntValue(patternConfigObject, elName, minSidebandWidth[iColor], errMsgSuffix,
-                                       1, numVstrings / 2))
+                                       1, numVStrings / 2))
         {
             return false;
         }
@@ -157,7 +136,7 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     for (int iColor = 0; iColor < numColors; ++iColor) {
         string elName = rgbPrefix[iColor] + string("MaxSidebandWidth");
         if (!ConfigReader::getIntValue(patternConfigObject, elName, maxSidebandWidth[iColor], errMsgSuffix,
-                                       minSidebandWidth[iColor], numVstrings / 2))
+                                       minSidebandWidth[iColor], numVStrings / 2))
         {
             return false;
         }
@@ -172,19 +151,11 @@ bool RgbVerticalPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     // ----- initialize object data -----
 
     for (int iColor = 0; iColor < numColors; ++iColor) {
-        stripePos[iColor] = 0;
+        stripeVPos[iColor] = 0;
         widthPos[iColor] = minSidebandWidth[iColor];
     }
     nextResetWidthMs = 0;
     resetWidth = true;
-
-    if (horizontalVpixelRatio > 1 || verticalVpixelRatio > 1) {
-        vpixelArray = new RgbConeStrings;
-        if (!allocateConePixels<RgbConeStrings, RgbPixelString, RgbPixel>(*vpixelArray, numVstrings, pixelsPerVstring))
-        {
-            logger.logMsg(LOG_ERR, "Virtual pixel allocation failed for " + name + ".");
-        }
-    }
 
     return true;
 }
@@ -202,8 +173,8 @@ bool RgbVerticalPattern::update()
                 isActive = true;
                 if (positionChannel[iColor]->getHasNewPositionMeasurement()) {
                     gotPositionOrWidthUpdate = true;
-                    stripePos[iColor] =
-                        ((unsigned int) positionChannel[iColor]->getPosition()) / scaledownFactor[iColor] % numVstrings;
+                    stripeVPos[iColor] =
+                        ((unsigned int) positionChannel[iColor]->getPosition()) / scaledownFactor[iColor] % numVStrings;
                 }
             }
         }
@@ -263,46 +234,40 @@ bool RgbVerticalPattern::update()
     // Draw the stripes.
     if (gotPositionOrWidthUpdate) {
 
-        clearAllPixels(*vpixelArray);
+        clearAllPixels(pixelArray);
 
         for (int iColor = 0; iColor < numColors; ++iColor) {
             if (positionChannel[iColor] != nullptr) {
 
                 int sidebandWidth = widthPos[iColor] - 1;
                 float intensitySlope = 255.0 / (sidebandWidth + 1);
-                int lowString = stripePos[iColor] - sidebandWidth;
-                int highString = stripePos[iColor] + sidebandWidth;
+                int lowVString = stripeVPos[iColor] - sidebandWidth;
+                int highVString = stripeVPos[iColor] + sidebandWidth;
 
                 //logger.logMsg(LOG_DEBUG, name
                 //    + ":  iColor=" + to_string(iColor)
                 //    + ",  widthPos[iColor]=" + to_string(widthPos[iColor])
                 //    + ",  sidebandWidth=" + to_string(sidebandWidth)
                 //    + ", intensitySlope=" + to_string(intensitySlope)
-                //    + ", stripePos[iColor]=" + to_string(stripePos[iColor])
-                //    + ", lowString=" + to_string(lowString)
-                //    + ", highString=" + to_string(highString));
+                //    + ", stripeVPos[iColor]=" + to_string(stripeVPos[iColor])
+                //    + ", lowVString=" + to_string(lowVString)
+                //    + ", highVString=" + to_string(highVString));
 
-                for (int i = lowString; i <= highString; ++i) {
-                    float distanceToCenter = abs(i - stripePos[iColor]);
-                    uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
-                    int stringIndex = ((i + numVstrings) % numVstrings);
-                    for (int iStripe = 0; iStripe < numStripes[iColor]; ++iStripe) {
-                        for (auto&& pixels : vpixelArray->at(stringIndex)) {
-                            pixels.raw[iColor] = intensity;
+                for (int i = lowVString; i <= highVString; ++i) {
+                    unsigned int vstringIndex = ((i + numVStrings) % numVStrings);
+                    // If this virtual string corresponds to a physical
+                    // string we'll draw into the physical string.
+                    if (vstringIndex % horizontalVPixelRatio == 0) {
+                        unsigned int stringIndex = vstringIndex / horizontalVPixelRatio;
+                        float distanceToCenter = abs(i - stripeVPos[iColor]);
+                        uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
+                        for (int iStripe = 0; iStripe < numStripes[iColor]; ++iStripe) {
+                            for (auto&& pixels : pixelArray[stringIndex]) {
+                                pixels.raw[iColor] = intensity;
+                            }
+                            stringIndex = (stringIndex + stripeStep[iColor]) % numStrings;
                         }
-                        stringIndex = (stringIndex + stripeStep[iColor]) % numVstrings;
                     }
-                }
-            }
-        }
-
-        if (horizontalVpixelRatio > 1 || verticalVpixelRatio > 1) {
-            // Map virtual pixels onto physical pixels.
-            for (unsigned int col = 0; col < numStrings; col++) {
-                unsigned int vcol = col * horizontalVpixelRatio;
-                for (unsigned int row = 0; row < pixelsPerString; row++) {
-                    unsigned int vrow = row * verticalVpixelRatio;
-                    pixelArray[col][row] = vpixelArray->at(vcol)[vrow];
                 }
             }
         }
