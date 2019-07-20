@@ -42,16 +42,15 @@
             "measurement" : "position"
         }
     ],
-    "horizontalVpixelRatio" : 4,
-    "verticalVpixelRatio" : 1,          // should always be 1 for straight, vertical stripes
-    "rMaxSidebandWidth" : 32,
+    "horizontalVPixelRatio" : 4,
+    "rMaxSidebandWidth" : 32,           // sideband widths are in the context of virtual pixels
     "gMaxSidebandWidth" : 24,
     "bMaxSidebandWidth" : 16,
-    "rMinSidebandWidth" : 4,            // should be equal to or greater than horizontalVpixelRatio
+    "rMinSidebandWidth" : 4,            // should be equal to or greater than horizontalVPixelRatio
     "gMinSidebandWidth" : 4,
     "bMinSidebandWidth" : 4,
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
-    "rNumStripes" : 3,
+    "rNumStripes" : 3,                  // number of stripes is in the context of physical pixels (strings)
     "gNumStripes" : 4,
     "bNumStripes" : 6,
     "rScaledownFactor" : 1,             // effectively gear down a rotating widget
