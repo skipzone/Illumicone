@@ -1081,7 +1081,7 @@ void doPatterns()
         //logger.logMsg(LOG_DEBUG, "calling update for " + patternState->pattern->getName());
         patternState->wantsDisplay = patternState->pattern->update();
         patternState->priority = patternState->pattern->priority;
-        patternState->amountOfOverlay = patternState->pattern->opacity * 255 / 100;
+        patternState->amountOfOverlay = (int) patternState->pattern->opacity * 255 / 100;
         anyPatternIsActive |= patternState->wantsDisplay;
         minPriority = min(patternState->priority, minPriority);
         maxPriority = max(patternState->priority, maxPriority);
