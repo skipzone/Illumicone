@@ -15,23 +15,23 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "stripes_FourPlay42",
+{   "name" : "stripes_346_FourPlay42",
     "enabled" : true,
     "priority" : 6,
     "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "RgbVerticalPattern",
     "inputs" : [
-        {   "inputName" : "redPosition",
+        {   "inputName" : "rPosition",
             "widgetName" : "fourPlay42",
             "channelNumber" : 0,
             "measurement" : "position"
         },
-        {   "inputName" : "greenPosition",
+        {   "inputName" : "gPosition",
             "widgetName" : "fourPlay42",
             "channelNumber" : 1,
             "measurement" : "position"
         },
-        {   "inputName" : "bluePosition",
+        {   "inputName" : "bPosition",
             "widgetName" : "fourPlay42",
             "channelNumber" : 2,
             "measurement" : "position"
@@ -42,8 +42,20 @@
             "measurement" : "position"
         }
     ],
-    "widthScaleFactor" : 3,             // effectively gear down a rotating widget
-    "maxCyclicalWidth" : 6,
-    "widthResetTimeoutSeconds" : 3      // reset width to normal after this period of inactivity of the width channel
+    "horizontalVPixelRatio" : 4,
+    "rMaxSidebandWidth" : 32,           // sideband widths are in the context of virtual pixels
+    "gMaxSidebandWidth" : 24,
+    "bMaxSidebandWidth" : 16,
+    "rMinSidebandWidth" : 4,            // should be equal to or greater than horizontalVPixelRatio
+    "gMinSidebandWidth" : 4,
+    "bMinSidebandWidth" : 4,
+    "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
+    "rNumStripes" : 3,                  // number of stripes is in the context of physical pixels (strings)
+    "gNumStripes" : 4,
+    "bNumStripes" : 6,
+    "rScaledownFactor" : 1,             // effectively gear down a rotating widget
+    "gScaledownFactor" : 1,
+    "bScaledownFactor" : 1,
+    "widthScaledownFactor" : 1
 }
 

@@ -1,0 +1,62 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "stripes_traditional_FourPlay42_minicone",
+    "enabled" : true,
+    "priority" : 6,
+    "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "RgbVerticalPattern",
+    "inputs" : [
+        {   "inputName" : "rPosition",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        },
+        {   "inputName" : "gPosition",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 1,
+            "measurement" : "position"
+        },
+        {   "inputName" : "bPosition",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 2,
+            "measurement" : "position"
+        },
+        {   "inputName" : "width",
+            "widgetName" : "fourPlay42",
+            "channelNumber" : 3,
+            "measurement" : "position"
+        }
+    ],
+    "horizontalVPixelRatio" : 1,
+    "verticalVpixelRatio" : 1,          // should always be 1 for straight, vertical stripes
+    "rMaxSidebandWidth" : 2,            // sideband widths are in the context of virtual pixels
+    "gMaxSidebandWidth" : 2,
+    "bMaxSidebandWidth" : 2,
+    "rMinSidebandWidth" : 1,            // should be equal to or greater than horizontalVPixelRatio
+    "gMinSidebandWidth" : 1,
+    "bMinSidebandWidth" : 1,
+    "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
+    "rNumStripes" : 1,                  // number of stripes is in the context of physical pixels (strings)
+    "gNumStripes" : 1,
+    "bNumStripes" : 1,
+    "rScaledownFactor" : 1,             // effectively gear down a rotating widget
+    "gScaledownFactor" : 1,
+    "bScaledownFactor" : 1,
+    "widthScaledownFactor" : 3
+}
+

@@ -27,16 +27,16 @@
 class Widget;
 
 
-class RgbVerticalPattern : public Pattern {
+class RgbStripePattern : public Pattern {
 
     public:
 
-        RgbVerticalPattern(const std::string& name);
-        ~RgbVerticalPattern() {};
+        RgbStripePattern(const std::string& name);
+        ~RgbStripePattern() {};
 
-        RgbVerticalPattern() = delete;
-        RgbVerticalPattern(const RgbVerticalPattern&) = delete;
-        RgbVerticalPattern& operator =(const RgbVerticalPattern&) = delete;
+        RgbStripePattern() = delete;
+        RgbStripePattern(const RgbStripePattern&) = delete;
+        RgbStripePattern& operator =(const RgbStripePattern&) = delete;
 
         bool update();       
 
@@ -48,6 +48,8 @@ class RgbVerticalPattern : public Pattern {
 
         static constexpr int numColors = 3;
         static constexpr char rgbPrefix[numColors + 1] = "rgb";
+
+        bool isVertical;
 
         std::shared_ptr<WidgetChannel> positionChannel[numColors];
         std::shared_ptr<WidgetChannel> widthChannel;
@@ -68,7 +70,9 @@ class RgbVerticalPattern : public Pattern {
         bool resetWidth;
         int widthPosOffset;
 
+        unsigned int vPixelsPerString;
         unsigned int numVStrings;
         unsigned int horizontalVPixelRatio;
+        unsigned int verticalVPixelRatio;
 };
 

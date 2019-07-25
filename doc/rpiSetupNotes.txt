@@ -325,7 +325,8 @@ Useful Commands and Stuff
 
 * Updates
 
-    sudo nohup apt-get upgrade --yes > upgrade.out 2>&1 &
+    sudo nohup apt-get update --yes > update.out 2>update.err &
+    sudo nohup apt-get upgrade --yes > upgrade.out 2>upgrade.err &
 
 
 ================================================================================

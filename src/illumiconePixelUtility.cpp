@@ -130,11 +130,9 @@ bool stringToHsvPixel(const string& hsvString, HsvPixel& hsvPixel)
         hsvPixel.setHSV(HUE_RED, 255, 255);
     }
     else if (hsvString == "transparent") {
-        // TODO 8/8/2017 ross:  use the defined transparent color
         hsvPixel.setHSV(0, 0, 0);
     }
     else if (hsvString == "white") {
-        // TODO 8/8/2017 ross:  use the defined white color
         hsvPixel.setHSV(0, 0, 255);
     }
     else if (hsvString == "yellow") {
@@ -210,14 +208,12 @@ bool stringToRgbPixel(const string& rgbString, RgbPixel& rgbPixel)
         rgbPixel = RgbPixel::Teal;
     }
     else if (rgbString == "transparent") {
-        // TODO 8/20/2017 ross:  use the defined transparent color
         rgbPixel = RgbPixel::Black;
     }
     else if (rgbString == "violet") {
         rgbPixel = RgbPixel::Violet;
     }
     else if (rgbString == "white") {
-        // TODO 8/20/2017 ross:  use the defined white color
         rgbPixel = RgbPixel::White;
     }
     else if (rgbString == "yellow") {
