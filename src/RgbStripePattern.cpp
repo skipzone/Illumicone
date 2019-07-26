@@ -45,6 +45,8 @@ RgbStripePattern::RgbStripePattern(const std::string& name)
 {
     numPixelsForOrientation[horiz] = numStrings;
     numPixelsForOrientation[vert] = pixelsPerString;
+    numVPixelsForOrientation[horiz] = vPixelsPerString;
+    numVPixelsForOrientation[vert] = numVStrings;
 }
 
 
@@ -198,7 +200,7 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
         for (int iColor = 0; iColor < numColors; ++iColor) {
             stripeVPos[iOrient][iColor] = 0;
-            widthPos[iOrient][iColor] = 0;
+            widthPos[iOrient][iColor] = minSidebandWidth[iOrient][iColor];
         }
     }
     nextResetWidthMs = 0;
@@ -220,11 +222,12 @@ bool RgbStripePattern::update()
                 isActive = true;
                 if (positionChannel[iColor]->getHasNewPositionMeasurement()) {
                     gotPositionOrWidthUpdate = true;
+                    int rawPosition = positionChannel[iColor]->getPosition();
                     for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
                         if (orientationIsEnabled[iOrient]) {
                             stripeVPos[iOrient][iColor] =
-                                ((unsigned int) positionChannel[iColor]->getPosition()) / scaledownFactor[iOrient][iColor]
-                                % numPixelsForOrientation[iOrient];
+                                ((unsigned int) rawPosition) / scaledownFactor[iOrient][iColor]
+                                % numVPixelsForOrientation[iOrient];
                         }
                     }
                 }
@@ -286,7 +289,7 @@ bool RgbStripePattern::update()
             resetWidth = true;
             for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
                 for (int iColor = 0; iColor < numColors; ++iColor) {
-                    widthPos[iOrient][iColor] = 0;
+                    widthPos[iOrient][iColor] = minSidebandWidth[iOrient][iColor];
                 }
             }
         }
@@ -314,7 +317,7 @@ bool RgbStripePattern::update()
 
                             //logger.logMsg(LOG_DEBUG, name
                             //    + " vert:  iColor=" + to_string(iColor)
-                            //    + ",  widthPos[iColor]=" + to_string(widthPos[iColor])
+                            //    + ",  widthPos[iColor]=" + to_string(widthPos[iOrient][iColor])
                             //    + ",  sidebandWidth=" + to_string(sidebandWidth)
                             //    + ", intensitySlope=" + to_string(intensitySlope)
                             //    + ", stripeVPos[iOrient][iColor]=" + to_string(stripeVPos[iOrient][iColor])
