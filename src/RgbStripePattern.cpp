@@ -33,6 +33,7 @@ extern Log logger;
 
 
 constexpr char RgbStripePattern::rgbPrefix[];
+constexpr char RgbStripePattern::orientationPrefix[];
 
 
 RgbStripePattern::RgbStripePattern(const std::string& name)
@@ -42,6 +43,8 @@ RgbStripePattern::RgbStripePattern(const std::string& name)
     , horizontalVPixelRatio(1)
     , verticalVPixelRatio(1)
 {
+    numPixelsForOrientation[horiz] = numStrings;
+    numPixelsForOrientation[vert] = pixelsPerString;
 }
 
 
@@ -88,70 +91,101 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    if (!ConfigReader::getBoolValue(patternConfigObject, "isVertical", isVertical, errMsgSuffix)) {
-        return false;
-    }
+    for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
 
-    if (isVertical) {
-        if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "horizontalVPixelRatio", horizontalVPixelRatio, errMsgSuffix, 1)) {
+        string elName = orientationPrefix[iOrient] + string("Enable");
+        if (!ConfigReader::getBoolValue(patternConfigObject, elName, orientationIsEnabled[iOrient], errMsgSuffix)) {
             return false;
         }
-        logger.logMsg(LOG_INFO, name + " horizontalVPixelRatio=" + to_string(horizontalVPixelRatio));
-        numVStrings = numStrings * horizontalVPixelRatio;
-    }
-    else {
-        if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "verticalVPixelRatio", verticalVPixelRatio, errMsgSuffix, 1)) {
-            return false;
-        }
-        logger.logMsg(LOG_INFO, name + " verticalVPixelRatio=" + to_string(verticalVPixelRatio));
-        vPixelsPerString = pixelsPerString * verticalVPixelRatio;
-    }
+        logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), orientationIsEnabled[iOrient]);
 
-    for (int iColor = 0; iColor < numColors; ++iColor) {
-        string elName = rgbPrefix[iColor] + string("NumStripes");
-        if (!ConfigReader::getIntValue(patternConfigObject, elName, numStripes[iColor], errMsgSuffix, 1, numStrings / 2)) {
-            return false;
-        }
-        if (numStrings % numStripes[iColor] != 0) {
-            logger.logMsg(LOG_ERR, "%s in %s pattern configuration must be a factor of %d.",
-                          elName.c_str(), name.c_str(), numStrings);
-            return false;
-        }
-        logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), numStripes[iColor]);
-        stripeStep[iColor] = (isVertical ? numStrings : pixelsPerString) / numStripes[iColor];
-    }
+        if (orientationIsEnabled[iOrient]) {
 
-    for (int iColor = 0; iColor < numColors; ++iColor) {
-        string elName = rgbPrefix[iColor] + string("ScaledownFactor");
-        if (!ConfigReader::getIntValue(patternConfigObject, elName, scaledownFactor[iColor], errMsgSuffix, 1)) {
-            return false;
-        }
-        logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), scaledownFactor[iColor]);
-    }
+            string orientConfigName = orientationPrefix[iOrient] + string("Config");
+            json11::Json orientConfigObj;
+            if (!ConfigReader::getJsonObject(patternConfigObject,
+                                             orientConfigName,
+                                             orientConfigObj,
+                                             errMsgSuffix))
+            {
+                return false;
+            }
 
-    if (!ConfigReader::getIntValue(patternConfigObject, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " widthScaledownFactor=" + to_string(widthScaledownFactor));
+            unsigned int vPixelRatio;
+            if (!ConfigReader::getUnsignedIntValue(orientConfigObj, "virtualPixelRatio", vPixelRatio, errMsgSuffix, 1)) {
+                return false;
+            }
+            logger.logMsg(LOG_INFO, "%s %s virtualPixelRatio=%d", name.c_str(), orientConfigName.c_str(), vPixelRatio);
+            switch (iOrient) {
+                case horiz:
+                    verticalVPixelRatio = vPixelRatio;
+                    vPixelsPerString = pixelsPerString * verticalVPixelRatio;
+                    numPixelsForOrientation[horiz] = pixelsPerString;
+                    numVPixelsForOrientation[horiz] = vPixelsPerString;
+                    break;
+                case vert:
+                    horizontalVPixelRatio = vPixelRatio;
+                    numVStrings = numStrings * horizontalVPixelRatio;
+                    numPixelsForOrientation[vert] = numStrings;
+                    numVPixelsForOrientation[vert] = numVStrings;
+                    break;
+                default:
+                    logger.logMsg(LOG_ERR, "Unsupported orientation %d in %s %s pattern configuration.",
+                                  iOrient, name.c_str(), orientConfigName.c_str());
 
-    for (int iColor = 0; iColor < numColors; ++iColor) {
-        string elName = rgbPrefix[iColor] + string("MinSidebandWidth");
-        if (!ConfigReader::getIntValue(patternConfigObject, elName, minSidebandWidth[iColor], errMsgSuffix,
-                                       0, (isVertical ? numVStrings : vPixelsPerString) / 2))
-        {
-            return false;
-        }
-        logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), minSidebandWidth[iColor]);
-    }
+            }
 
-    for (int iColor = 0; iColor < numColors; ++iColor) {
-        string elName = rgbPrefix[iColor] + string("MaxSidebandWidth");
-        if (!ConfigReader::getIntValue(patternConfigObject, elName, maxSidebandWidth[iColor], errMsgSuffix,
-                                       minSidebandWidth[iColor], (isVertical ? numVStrings : vPixelsPerString) / 2))
-        {
-            return false;
+            if (!ConfigReader::getIntValue(orientConfigObj, "widthScaledownFactor", widthScaledownFactor[iOrient], errMsgSuffix, 1)) {
+                return false;
+            }
+            logger.logMsg(LOG_INFO, "%s %s widthScaledownFactor=%d",
+                          name.c_str(), orientConfigName.c_str(), widthScaledownFactor[iOrient]);
+
+            for (int iColor = 0; iColor < numColors; ++iColor) {
+                string elName;
+
+                elName = rgbPrefix[iColor] + string("NumStripes");
+                if (!ConfigReader::getIntValue(
+                    orientConfigObj, elName, numStripes[iOrient][iColor], errMsgSuffix, 1, numStrings / 2))
+                {
+                    return false;
+                }
+                if (numPixelsForOrientation[iOrient] % numStripes[iOrient][iColor] != 0) {
+                    logger.logMsg(LOG_WARNING, "%s in %s %s pattern configuration should be a factor of %d.",
+                                  elName.c_str(), name.c_str(), orientConfigName.c_str(), numPixelsForOrientation[iOrient]);
+                }
+                logger.logMsg(LOG_INFO, "%s %s %s=%d",
+                              name.c_str(), orientConfigName.c_str(), elName.c_str(), numStripes[iOrient][iColor]);
+                stripeStep[iOrient][iColor] = numPixelsForOrientation[iOrient] / numStripes[iOrient][iColor];
+
+                elName = rgbPrefix[iColor] + string("ScaledownFactor");
+                if (!ConfigReader::getIntValue(orientConfigObj, elName, scaledownFactor[iOrient][iColor], errMsgSuffix, 1)) {
+                    return false;
+                }
+                logger.logMsg(LOG_INFO, "%s %s %s=%d",
+                              name.c_str(), orientConfigName.c_str(), elName.c_str(), scaledownFactor[iOrient][iColor]);
+
+                elName = rgbPrefix[iColor] + string("MinSidebandWidth");
+                if (!ConfigReader::getIntValue(
+                    orientConfigObj, elName, minSidebandWidth[iOrient][iColor], errMsgSuffix,
+                    0, numVPixelsForOrientation[iOrient] / 2))
+                {
+                    return false;
+                }
+                logger.logMsg(LOG_INFO, "%s %s %s=%d",
+                              name.c_str(), orientConfigName.c_str(), elName.c_str(), minSidebandWidth[iOrient][iColor]);
+
+                elName = rgbPrefix[iColor] + string("MaxSidebandWidth");
+                if (!ConfigReader::getIntValue(
+                    orientConfigObj, elName, maxSidebandWidth[iOrient][iColor], errMsgSuffix,
+                    minSidebandWidth[iOrient][iColor], numVPixelsForOrientation[iOrient] / 2))
+                {
+                    return false;
+                }
+                logger.logMsg(LOG_INFO, "%s %s %s=%d",
+                              name.c_str(), orientConfigName.c_str(), elName.c_str(), maxSidebandWidth[iOrient][iColor]);
+            }
         }
-        logger.logMsg(LOG_INFO, "%s %s=%d", name.c_str(), elName.c_str(), maxSidebandWidth[iColor]);
     }
 
     if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
@@ -161,9 +195,11 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
     // ----- initialize object data -----
 
-    for (int iColor = 0; iColor < numColors; ++iColor) {
-        stripeVPos[iColor] = 0;
-        widthPos[iColor] = 0;
+    for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
+        for (int iColor = 0; iColor < numColors; ++iColor) {
+            stripeVPos[iOrient][iColor] = 0;
+            widthPos[iOrient][iColor] = 0;
+        }
     }
     nextResetWidthMs = 0;
     resetWidth = true;
@@ -184,9 +220,13 @@ bool RgbStripePattern::update()
                 isActive = true;
                 if (positionChannel[iColor]->getHasNewPositionMeasurement()) {
                     gotPositionOrWidthUpdate = true;
-                    stripeVPos[iColor] =
-                        ((unsigned int) positionChannel[iColor]->getPosition()) / scaledownFactor[iColor]
-                        % (isVertical ? numVStrings : vPixelsPerString);
+                    for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
+                        if (orientationIsEnabled[iOrient]) {
+                            stripeVPos[iOrient][iColor] =
+                                ((unsigned int) positionChannel[iColor]->getPosition()) / scaledownFactor[iOrient][iColor]
+                                % numPixelsForOrientation[iOrient];
+                        }
+                    }
                 }
             }
         }
@@ -204,24 +244,29 @@ bool RgbStripePattern::update()
                     resetWidth = false;
                     widthPosOffset = rawWidthPos;
                 }
-                int scaledWidthPos = (rawWidthPos - widthPosOffset) / widthScaledownFactor;
-                //logger.logMsg(LOG_DEBUG, name
-                //                         + ":  rawWidthPos=" + to_string(rawWidthPos)
-                //                         + ", widthPosOffset=" + to_string(widthPosOffset)
-                //                         + ", scaledWidthPos=" + to_string(scaledWidthPos));
 
                 for (int iColor = 0; iColor < numColors; ++iColor) {
-                    if (maxSidebandWidth[iColor] > 0) {
-                        // This is a triangle wave function where the period is maxSidebandWidth * 2
-                        // and the range is minSidebandWidth to maxSidebandWidth.  We right-shift the
-                        // wave so that the width starts out at minSidebandWidth.
-                        widthPos[iColor] = abs(abs(scaledWidthPos + maxSidebandWidth[iColor])
-                                               % (maxSidebandWidth[iColor] * 2) - maxSidebandWidth[iColor])
-                                           + minSidebandWidth[iColor];
+                    for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
+                        if (orientationIsEnabled[iOrient]) {
+                            if (maxSidebandWidth[iOrient][iColor] > 0) {
+                                int scaledWidthPos = (rawWidthPos - widthPosOffset) / widthScaledownFactor[iOrient];
+                                // This is a triangle wave function where the period is maxSidebandWidth * 2
+                                // and the range is minSidebandWidth to maxSidebandWidth.  We right-shift the
+                                // wave so that the width starts out at minSidebandWidth.
+                                widthPos[iOrient][iColor] =
+                                    abs( abs(scaledWidthPos + maxSidebandWidth[iOrient][iColor])
+                                         % (maxSidebandWidth[iOrient][iColor] * 2) - maxSidebandWidth[iOrient][iColor] )
+                                    + minSidebandWidth[iOrient][iColor];
+                            }
+                            //logger.logMsg(LOG_DEBUG, name
+                            //              + ":  iColor=" + to_string(iColor)
+                            //              + ", iOrient=" + to_string(iOrient)
+                            //              + ", rawWidthPos=" + to_string(rawWidthPos)
+                            //              + ", widthPosOffset=" + to_string(widthPosOffset)
+                            //              + ", scaledWidthPos=" + to_string(scaledWidthPos));
+                            //              + ", widthPos[iOrient][iColor]=" + to_string(widthPos[iOrient][iColor]));
+                        }
                     }
-                    //logger.logMsg(LOG_DEBUG, name
-                    //                  + ":  iColor=" + to_string(iColor)
-                    //                  + ", widthPos[iColor]=" + to_string(widthPos[iColor]));
                 }
             }
         }
@@ -239,8 +284,10 @@ bool RgbStripePattern::update()
         else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
             logger.logMsg(LOG_DEBUG, name + ":  Resetting width.");
             resetWidth = true;
-            for (int iColor = 0; iColor < numColors; ++iColor) {
-                widthPos[iColor] = 0;
+            for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
+                for (int iColor = 0; iColor < numColors; ++iColor) {
+                    widthPos[iOrient][iColor] = 0;
+                }
             }
         }
     }
@@ -252,69 +299,76 @@ bool RgbStripePattern::update()
 
         for (int iColor = 0; iColor < numColors; ++iColor) {
             if (positionChannel[iColor] != nullptr) {
+                for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
+                    if (orientationIsEnabled[iOrient]) {
 
-                int sidebandWidth = widthPos[iColor];
-                float intensitySlope = 255.0 / (sidebandWidth + 1);
+                    int sidebandWidth = widthPos[iOrient][iColor];
+                    float intensitySlope = 255.0 / (sidebandWidth + 1);
 
-                if (isVertical) {
+                    int lowVEl = stripeVPos[iOrient][iColor] - sidebandWidth;
+                    int highVEl = stripeVPos[iOrient][iColor] + sidebandWidth;
 
-                    int lowVString = stripeVPos[iColor] - sidebandWidth;
-                    int highVString = stripeVPos[iColor] + sidebandWidth;
+                    switch (iOrient) {
 
-                    //logger.logMsg(LOG_DEBUG, name
-                    //    + ":  iColor=" + to_string(iColor)
-                    //    + ",  widthPos[iColor]=" + to_string(widthPos[iColor])
-                    //    + ",  sidebandWidth=" + to_string(sidebandWidth)
-                    //    + ", intensitySlope=" + to_string(intensitySlope)
-                    //    + ", stripeVPos[iColor]=" + to_string(stripeVPos[iColor])
-                    //    + ", lowVString=" + to_string(lowVString)
-                    //    + ", highVString=" + to_string(highVString));
+                        case vert:
 
-                    for (int i = lowVString; i <= highVString; ++i) {
-                        unsigned int vStringIndex = ((i + numVStrings) % numVStrings);
-                        // If this virtual string corresponds to a physical
-                        // string, we'll draw into the physical string.
-                        if (vStringIndex % horizontalVPixelRatio == 0) {
-                            unsigned int stringIndex = vStringIndex / horizontalVPixelRatio;
-                            float distanceToCenter = abs(i - stripeVPos[iColor]);
-                            uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
-                            for (int iStripe = 0; iStripe < numStripes[iColor]; ++iStripe) {
-                                for (auto&& pixels : pixelArray[stringIndex]) {
-                                    pixels.raw[iColor] = intensity;
+                            //logger.logMsg(LOG_DEBUG, name
+                            //    + " vert:  iColor=" + to_string(iColor)
+                            //    + ",  widthPos[iColor]=" + to_string(widthPos[iColor])
+                            //    + ",  sidebandWidth=" + to_string(sidebandWidth)
+                            //    + ", intensitySlope=" + to_string(intensitySlope)
+                            //    + ", stripeVPos[iOrient][iColor]=" + to_string(stripeVPos[iOrient][iColor])
+                            //    + ", lowVEl=" + to_string(lowVEl)
+                            //    + ", highVEl=" + to_string(highVEl));
+
+                            for (int i = lowVEl; i <= highVEl; ++i) {
+                                unsigned int vStringIndex = ((i + numVStrings) % numVStrings);
+                                // If this virtual string corresponds to a physical
+                                // string, we'll draw into the physical string.
+                                if (vStringIndex % horizontalVPixelRatio == 0) {
+                                    unsigned int stringIndex = vStringIndex / horizontalVPixelRatio;
+                                    float distanceToCenter = abs(i - stripeVPos[iOrient][iColor]);
+                                    uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
+                                    for (int iStripe = 0; iStripe < numStripes[iOrient][iColor]; ++iStripe) {
+                                        for (auto&& pixels : pixelArray[stringIndex]) {
+                                            pixels.raw[iColor] = intensity;
+                                        }
+                                        stringIndex = (stringIndex + stripeStep[iOrient][iColor]) % numStrings;
+                                    }
                                 }
-                                stringIndex = (stringIndex + stripeStep[iColor]) % numStrings;
                             }
-                        }
-                    }
-                }
-                else {
 
-                    int lowVPixel = stripeVPos[iColor] - sidebandWidth;
-                    int highVPixel = stripeVPos[iColor] + sidebandWidth;
+                            break;
 
-                    //logger.logMsg(LOG_DEBUG, name
-                    //    + ":  iColor=" + to_string(iColor)
-                    //    + ",  widthPos[iColor]=" + to_string(widthPos[iColor])
-                    //    + ",  sidebandWidth=" + to_string(sidebandWidth)
-                    //    + ", intensitySlope=" + to_string(intensitySlope)
-                    //    + ", stripeVPos[iColor]=" + to_string(stripeVPos[iColor])
-                    //    + ", lowVPixel=" + to_string(lowVPixel)
-                    //    + ", highVPixel=" + to_string(highVPixel));
+                        case horiz:
 
-                    for (int i = lowVPixel; i <= highVPixel; ++i) {
-                        unsigned int vPixelIndex = ((i + vPixelsPerString) % vPixelsPerString);
-                        // If this virtual pixel corresponds to a physical
-                        // pixel, we'll draw into the physical pixels.
-                        if (vPixelIndex % verticalVPixelRatio == 0) {
-                            unsigned int pixelIndex = vPixelIndex / verticalVPixelRatio;
-                            float distanceToCenter = abs(i - stripeVPos[iColor]);
-                            uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
-                            for (int iStripe = 0; iStripe < numStripes[iColor]; ++iStripe) {
-                                for (auto&& stringPixels : pixelArray) {
-                                    stringPixels[pixelIndex].raw[iColor] = intensity;
+                            //logger.logMsg(LOG_DEBUG, name
+                            //    + " horiz:  iColor=" + to_string(iColor)
+                            //    + ",  widthPos[iColor]=" + to_string(widthPos[iColor])
+                            //    + ",  sidebandWidth=" + to_string(sidebandWidth)
+                            //    + ", intensitySlope=" + to_string(intensitySlope)
+                            //    + ", stripeVPos[iOrient][iColor]=" + to_string(stripeVPos[iOrient][iColor])
+                            //    + ", lowVEl=" + to_string(lowVEl)
+                            //    + ", highVEl=" + to_string(highVEl));
+
+                            for (int i = lowVEl; i <= highVEl; ++i) {
+                                unsigned int vPixelIndex = ((i + vPixelsPerString) % vPixelsPerString);
+                                // If this virtual pixel corresponds to a physical
+                                // pixel, we'll draw into the physical pixels.
+                                if (vPixelIndex % verticalVPixelRatio == 0) {
+                                    unsigned int pixelIndex = vPixelIndex / verticalVPixelRatio;
+                                    float distanceToCenter = abs(i - stripeVPos[iOrient][iColor]);
+                                    uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
+                                    for (int iStripe = 0; iStripe < numStripes[iOrient][iColor]; ++iStripe) {
+                                        for (auto&& stringPixels : pixelArray) {
+                                            stringPixels[pixelIndex].raw[iColor] = intensity;
+                                        }
+                                        pixelIndex = (pixelIndex + stripeStep[iOrient][iColor]) % pixelsPerString;
+                                    }
                                 }
-                                pixelIndex = (pixelIndex + stripeStep[iColor]) % pixelsPerString;
                             }
+
+                            break;
                         }
                     }
                 }
