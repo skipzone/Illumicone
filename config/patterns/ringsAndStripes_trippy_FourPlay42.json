@@ -47,51 +47,51 @@
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
     "hConfig" : {
         "virtualPixelRatio" : 4,
-        "widthScaledownFactor" : 50,
+        "widthScaledownFactor" : 1,
         "rConfig" : {
             "maxSidebandWidth" : 66,    // sideband widths are in the context of virtual pixels
             "minSidebandWidth" : 4,     // min should be equal to or greater than virtualPixelRatio
             "numStripes" : 3,           // number of stripes is in the context of physical pixels
-            "scaledownFactor" : 3,      // effectively gear down a rotating widget
+            "scaledownFactor" : 1,      // effectively gear down a rotating widget
             "baseIntensity" : 128
         },
         "gConfig" : {
             "maxSidebandWidth" : 50,
             "minSidebandWidth" : 4,
             "numStripes" : 4,
-            "scaledownFactor" : 5,
+            "scaledownFactor" : 1,
             "baseIntensity" : 128
         },
         "bConfig" : {
             "maxSidebandWidth" : 25,
             "minSidebandWidth" : 4,
             "numStripes" : 8,
-            "scaledownFactor" : 9,
+            "scaledownFactor" : 1,
             "baseIntensity" : 192
         }
     },
     "vConfig" : {
         "virtualPixelRatio" : 4,
-        "widthScaledownFactor" : 100,
+        "widthScaledownFactor" : 1,
         "rConfig" : {
             "maxSidebandWidth" : 16,    // sideband widths are in the context of virtual pixels
             "minSidebandWidth" : 4,     // min should be equal to or greater than virtualPixelRatio
             "numStripes" : 3,           // number of stripes is in the context of physical pixels
-            "scaledownFactor" : 3,      // effectively gear down a rotating widget
+            "scaledownFactor" : 1,      // effectively gear down a rotating widget
             "baseIntensity" : 128
         },
         "gConfig" : {
             "maxSidebandWidth" : 12,
             "minSidebandWidth" : 4,
             "numStripes" : 4,
-            "scaledownFactor" : 9,
+            "scaledownFactor" : 1,
             "baseIntensity" : 128
         },
         "bConfig" : {
             "maxSidebandWidth" : 8,
             "minSidebandWidth" : 4,
             "numStripes" : 6,
-            "scaledownFactor" : 27,
+            "scaledownFactor" : 1,
             "baseIntensity" : 192
         }
     }
