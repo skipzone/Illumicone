@@ -93,6 +93,11 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
+    if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
+
     for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
 
         string elName = orientationPrefix[iOrient] + string("Enable");
@@ -105,11 +110,7 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
             string orientConfigName = orientationPrefix[iOrient] + string("Config");
             json11::Json orientConfigObj;
-            if (!ConfigReader::getJsonObject(patternConfigObject,
-                                             orientConfigName,
-                                             orientConfigObj,
-                                             errMsgSuffix))
-            {
+            if (!ConfigReader::getJsonObject(patternConfigObject, orientConfigName, orientConfigObj, errMsgSuffix)) {
                 return false;
             }
 
@@ -137,72 +138,74 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
             }
 
-            if (!ConfigReader::getIntValue(orientConfigObj, "widthScaledownFactor", widthScaledownFactor[iOrient], errMsgSuffix, 1)) {
+            if (!ConfigReader::getIntValue(
+                orientConfigObj, "widthScaledownFactor", widthScaledownFactor[iOrient], errMsgSuffix, 1))
+            {
                 return false;
             }
             logger.logMsg(LOG_INFO, "%s %s widthScaledownFactor=%d",
                           name.c_str(), orientConfigName.c_str(), widthScaledownFactor[iOrient]);
 
             for (int iColor = 0; iColor < numColors; ++iColor) {
-                string elName;
 
-                elName = rgbPrefix[iColor] + string("NumStripes");
+                string colorConfigName = rgbPrefix[iColor] + string("Config");
+                json11::Json colorConfigObj;
+                if (!ConfigReader::getJsonObject(orientConfigObj, colorConfigName, colorConfigObj, errMsgSuffix)) {
+                    return false;
+                }
+
                 if (!ConfigReader::getIntValue(
-                    orientConfigObj, elName, numStripes[iOrient][iColor], errMsgSuffix, 1, numStrings / 2))
+                    colorConfigObj, "numStripes", numStripes[iOrient][iColor], errMsgSuffix, 1, numStrings / 2))
                 {
                     return false;
                 }
                 if (numPixelsForOrientation[iOrient] % numStripes[iOrient][iColor] != 0) {
-                    logger.logMsg(LOG_WARNING, "%s in %s %s pattern configuration should be a factor of %d.",
-                                  elName.c_str(), name.c_str(), orientConfigName.c_str(), numPixelsForOrientation[iOrient]);
+                    logger.logMsg(LOG_WARNING, "numStripes in %s %s %s pattern configuration should be a factor of %d.",
+                                  name.c_str(), orientConfigName.c_str(), colorConfigName.c_str(),
+                                  numPixelsForOrientation[iOrient]);
                 }
-                logger.logMsg(LOG_INFO, "%s %s %s=%d",
-                              name.c_str(), orientConfigName.c_str(), elName.c_str(), numStripes[iOrient][iColor]);
+                logger.logMsg(LOG_INFO, "%s %s %s numStripes=%d",
+                              name.c_str(), orientConfigName.c_str(), colorConfigName.c_str(), numStripes[iOrient][iColor]);
                 stripeStep[iOrient][iColor] = numPixelsForOrientation[iOrient] / numStripes[iOrient][iColor];
 
-                elName = rgbPrefix[iColor] + string("ScaledownFactor");
-                if (!ConfigReader::getIntValue(orientConfigObj, elName, scaledownFactor[iOrient][iColor], errMsgSuffix, 1)) {
+                if (!ConfigReader::getIntValue(
+                    colorConfigObj, "scaledownFactor", scaledownFactor[iOrient][iColor], errMsgSuffix, 1))
+                {
                     return false;
                 }
-                logger.logMsg(LOG_INFO, "%s %s %s=%d",
-                              name.c_str(), orientConfigName.c_str(), elName.c_str(), scaledownFactor[iOrient][iColor]);
+                logger.logMsg(LOG_INFO, "%s %s %s scaledownFactor=%d",
+                              name.c_str(), orientConfigName.c_str(), colorConfigName.c_str(), scaledownFactor[iOrient][iColor]);
 
-                elName = rgbPrefix[iColor] + string("MinSidebandWidth");
                 if (!ConfigReader::getIntValue(
-                    orientConfigObj, elName, minSidebandWidth[iOrient][iColor], errMsgSuffix,
+                    colorConfigObj, "minSidebandWidth", minSidebandWidth[iOrient][iColor], errMsgSuffix,
                     0, numVPixelsForOrientation[iOrient] / 2))
                 {
                     return false;
                 }
-                logger.logMsg(LOG_INFO, "%s %s %s=%d",
-                              name.c_str(), orientConfigName.c_str(), elName.c_str(), minSidebandWidth[iOrient][iColor]);
+                logger.logMsg(LOG_INFO, "%s %s %s minSidebandWidth=%d",
+                              name.c_str(), orientConfigName.c_str(), colorConfigName.c_str(), minSidebandWidth[iOrient][iColor]);
 
-                elName = rgbPrefix[iColor] + string("MaxSidebandWidth");
                 if (!ConfigReader::getIntValue(
-                    orientConfigObj, elName, maxSidebandWidth[iOrient][iColor], errMsgSuffix,
+                    colorConfigObj, "maxSidebandWidth", maxSidebandWidth[iOrient][iColor], errMsgSuffix,
                     minSidebandWidth[iOrient][iColor], numVPixelsForOrientation[iOrient] / 2))
                 {
                     return false;
                 }
-                logger.logMsg(LOG_INFO, "%s %s %s=%d",
-                              name.c_str(), orientConfigName.c_str(), elName.c_str(), maxSidebandWidth[iOrient][iColor]);
+                logger.logMsg(LOG_INFO, "%s %s %s maxSidebandWidth=%d",
+                              name.c_str(), orientConfigName.c_str(), colorConfigName.c_str(), maxSidebandWidth[iOrient][iColor]);
 
-                elName = rgbPrefix[iColor] + string("BaseIntensity");
                 unsigned int baseIntensityValue;
-                if (!ConfigReader::getUnsignedIntValue(orientConfigObj, elName, baseIntensityValue, errMsgSuffix, 0, 255)) {
+                if (!ConfigReader::getUnsignedIntValue(
+                    colorConfigObj, "baseIntensity", baseIntensityValue, errMsgSuffix, 0, 255))
+                {
                     return false;
                 }
                 baseIntensity[iOrient][iColor] = baseIntensityValue;
-                logger.logMsg(LOG_INFO, "%s %s %s=%d",
-                              name.c_str(), orientConfigName.c_str(), elName.c_str(), baseIntensity[iOrient][iColor]);
+                logger.logMsg(LOG_INFO, "%s %s %s baseIntensity=%d",
+                              name.c_str(), orientConfigName.c_str(), colorConfigName.c_str(), baseIntensity[iOrient][iColor]);
             }
         }
     }
-
-    if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
 
     // ----- initialize object data -----
 
