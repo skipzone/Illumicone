@@ -186,6 +186,15 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
                 }
                 logger.logMsg(LOG_INFO, "%s %s %s=%d",
                               name.c_str(), orientConfigName.c_str(), elName.c_str(), maxSidebandWidth[iOrient][iColor]);
+
+                elName = rgbPrefix[iColor] + string("BaseIntensity");
+                unsigned int baseIntensityValue;
+                if (!ConfigReader::getUnsignedIntValue(orientConfigObj, elName, baseIntensityValue, errMsgSuffix, 0, 255)) {
+                    return false;
+                }
+                baseIntensity[iOrient][iColor] = baseIntensityValue;
+                logger.logMsg(LOG_INFO, "%s %s %s=%d",
+                              name.c_str(), orientConfigName.c_str(), elName.c_str(), baseIntensity[iOrient][iColor]);
             }
         }
     }
@@ -306,7 +315,7 @@ bool RgbStripePattern::update()
                     if (orientationIsEnabled[iOrient]) {
 
                     int sidebandWidth = widthPos[iOrient][iColor];
-                    float intensitySlope = 255.0 / (sidebandWidth + 1);
+                    float intensitySlope = (float) baseIntensity[iOrient][iColor] / (float) (sidebandWidth + 1);
 
                     int lowVEl = stripeVPos[iOrient][iColor] - sidebandWidth;
                     int highVEl = stripeVPos[iOrient][iColor] + sidebandWidth;
@@ -331,10 +340,11 @@ bool RgbStripePattern::update()
                                 if (vStringIndex % horizontalVPixelRatio == 0) {
                                     unsigned int stringIndex = vStringIndex / horizontalVPixelRatio;
                                     float distanceToCenter = abs(i - stripeVPos[iOrient][iColor]);
-                                    uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
+                                    uint8_t intensity =
+                                        baseIntensity[iOrient][iColor] - (uint8_t) (intensitySlope * distanceToCenter);
                                     for (int iStripe = 0; iStripe < numStripes[iOrient][iColor]; ++iStripe) {
                                         for (auto&& pixels : pixelArray[stringIndex]) {
-                                            pixels.raw[iColor] = intensity;
+                                            pixels.raw[iColor] = qadd8(pixels.raw[iColor], intensity);
                                         }
                                         stringIndex = (stringIndex + stripeStep[iOrient][iColor]) % numStrings;
                                     }
@@ -361,10 +371,12 @@ bool RgbStripePattern::update()
                                 if (vPixelIndex % verticalVPixelRatio == 0) {
                                     unsigned int pixelIndex = vPixelIndex / verticalVPixelRatio;
                                     float distanceToCenter = abs(i - stripeVPos[iOrient][iColor]);
-                                    uint8_t intensity = 255 - (uint8_t) (intensitySlope * distanceToCenter);
+                                    uint8_t intensity =
+                                        baseIntensity[iOrient][iColor] - (uint8_t) (intensitySlope * distanceToCenter);
                                     for (int iStripe = 0; iStripe < numStripes[iOrient][iColor]; ++iStripe) {
                                         for (auto&& stringPixels : pixelArray) {
-                                            stringPixels[pixelIndex].raw[iColor] = intensity;
+                                            stringPixels[pixelIndex].raw[iColor] =
+                                                qadd8(stringPixels[pixelIndex].raw[iColor], intensity);
                                         }
                                         pixelIndex = (pixelIndex + stripeStep[iOrient][iColor]) % pixelsPerString;
                                     }

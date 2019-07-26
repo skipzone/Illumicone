@@ -71,6 +71,8 @@ class RgbStripePattern : public Pattern {
         int maxSidebandWidth[numOrientations][numColors];
         int minSidebandWidth[numOrientations][numColors];
 
+        uint8_t baseIntensity[numOrientations][numColors];
+
         int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
         bool resetWidth;
