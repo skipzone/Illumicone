@@ -46,25 +46,33 @@ class RgbStripePattern : public Pattern {
 
     private:
 
+        static constexpr int numOrientations = 2;
+        static constexpr char orientationPrefix[numOrientations + 1] = "hv";
+        static constexpr int horiz = 0;
+        static constexpr int vert = 1;
+
         static constexpr int numColors = 3;
         static constexpr char rgbPrefix[numColors + 1] = "rgb";
 
-        bool isVertical;
+        bool orientationIsEnabled[numOrientations];
 
         std::shared_ptr<WidgetChannel> positionChannel[numColors];
         std::shared_ptr<WidgetChannel> widthChannel;
 
-        int stripeVPos[numColors];
-        int widthPos[numColors];
+        int stripeVPos[numOrientations][numColors];
+        int widthPos[numOrientations][numColors];
 
-        int numStripes[numColors];
-        int stripeStep[numColors];
+        int numStripes[numOrientations][numColors];
+        int stripeStep[numOrientations][numColors];
 
-        int scaledownFactor[numColors];
-        int widthScaledownFactor;
+        int scaledownFactor[numOrientations][numColors];
+        int widthScaledownFactor[numOrientations];
 
-        int maxSidebandWidth[numColors];
-        int minSidebandWidth[numColors];
+        int maxSidebandWidth[numOrientations][numColors];
+        int minSidebandWidth[numOrientations][numColors];
+
+        uint8_t baseIntensity[numOrientations][numColors];
+
         int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
         bool resetWidth;
@@ -74,5 +82,7 @@ class RgbStripePattern : public Pattern {
         unsigned int numVStrings;
         unsigned int horizontalVPixelRatio;
         unsigned int verticalVPixelRatio;
+        unsigned int numPixelsForOrientation[numOrientations];
+        unsigned int numVPixelsForOrientation[numOrientations];
 };
 

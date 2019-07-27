@@ -47,23 +47,23 @@
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
     "vConfig" : {
         "virtualPixelRatio" : 1,
-        "widthScaledownFactor" : 3,
+        "widthScaledownFactor" : 2,
         "rConfig" : {
-            "maxSidebandWidth" : 3,     // sideband widths are in the context of virtual pixels
+            "maxSidebandWidth" : 2,     // sideband widths are in the context of virtual pixels
             "minSidebandWidth" : 0,     // min should be equal to or greater than virtualPixelRatio
             "numStripes" : 1,           // number of stripes is in the context of physical pixels
             "scaledownFactor" : 1,      // effectively gear down a rotating widget
             "baseIntensity" : 255
         },
         "gConfig" : {
-            "maxSidebandWidth" : 3,
+            "maxSidebandWidth" : 2,
             "minSidebandWidth" : 0,
             "numStripes" : 1,
             "scaledownFactor" : 1,
             "baseIntensity" : 255
         },
         "bConfig" : {
-            "maxSidebandWidth" : 3,
+            "maxSidebandWidth" : 2,
             "minSidebandWidth" : 0,
             "numStripes" : 1,
             "scaledownFactor" : 1,

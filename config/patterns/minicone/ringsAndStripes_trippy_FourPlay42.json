@@ -15,9 +15,9 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "stripes_traditional_FourPlay42",
+{   "name" : "ringsAndStripes_trippy_FourPlay42",
     "enabled" : true,
-    "priority" : 6,
+    "priority" : 7,
     "opacity" : 25,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "RgbStripePattern",
     "inputs" : [
@@ -42,32 +42,57 @@
             "measurement" : "position"
         }
     ],
-    "hEnable" : false,
+    "hEnable" : true,
     "vEnable" : true,
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
-    "vConfig" : {
-        "virtualPixelRatio" : 1,
-        "widthScaledownFactor" : 3,
+    "hConfig" : {
+        "virtualPixelRatio" : 4,
+        "widthScaledownFactor" : 1,
         "rConfig" : {
-            "maxSidebandWidth" : 3,     // sideband widths are in the context of virtual pixels
-            "minSidebandWidth" : 0,     // min should be equal to or greater than virtualPixelRatio
-            "numStripes" : 1,           // number of stripes is in the context of physical pixels
+            "maxSidebandWidth" : 16,    // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 4,     // min should be equal to or greater than virtualPixelRatio
+            "numStripes" : 2,           // number of stripes is in the context of physical pixels
             "scaledownFactor" : 1,      // effectively gear down a rotating widget
-            "baseIntensity" : 255
+            "baseIntensity" : 128
         },
         "gConfig" : {
-            "maxSidebandWidth" : 3,
-            "minSidebandWidth" : 0,
-            "numStripes" : 1,
+            "maxSidebandWidth" : 12,
+            "minSidebandWidth" : 4,
+            "numStripes" : 3,
             "scaledownFactor" : 1,
-            "baseIntensity" : 255
+            "baseIntensity" : 128
         },
         "bConfig" : {
-            "maxSidebandWidth" : 3,
-            "minSidebandWidth" : 0,
-            "numStripes" : 1,
+            "maxSidebandWidth" : 8,
+            "minSidebandWidth" : 4,
+            "numStripes" : 4,
             "scaledownFactor" : 1,
-            "baseIntensity" : 255
+            "baseIntensity" : 160
+        }
+    },
+    "vConfig" : {
+        "virtualPixelRatio" : 4,
+        "widthScaledownFactor" : 1,
+        "rConfig" : {
+            "maxSidebandWidth" : 16,    // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 4,     // min should be equal to or greater than virtualPixelRatio
+            "numStripes" : 2,           // number of stripes is in the context of physical pixels
+            "scaledownFactor" : 1,      // effectively gear down a rotating widget
+            "baseIntensity" : 128
+        },
+        "gConfig" : {
+            "maxSidebandWidth" : 12,
+            "minSidebandWidth" : 4,
+            "numStripes" : 3,
+            "scaledownFactor" : 1,
+            "baseIntensity" : 128
+        },
+        "bConfig" : {
+            "maxSidebandWidth" : 8,
+            "minSidebandWidth" : 4,
+            "numStripes" : 4,
+            "scaledownFactor" : 1,
+            "baseIntensity" : 160
         }
     }
 }
