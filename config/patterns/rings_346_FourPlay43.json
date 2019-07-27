@@ -15,57 +15,57 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "stripes_traditional_FourPlay42",
+{   "name" : "rings_346_FourPlay43",
     "enabled" : true,
-    "priority" : 6,
-    "opacity" : 25,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "priority" : 5,
+    "opacity" : 75,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "RgbStripePattern",
     "inputs" : [
         {   "inputName" : "rPosition",
-            "widgetName" : "fourPlay42",
+            "widgetName" : "fourPlay43",
             "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "gPosition",
-            "widgetName" : "fourPlay42",
+            "widgetName" : "fourPlay43",
             "channelNumber" : 1,
             "measurement" : "position"
         },
         {   "inputName" : "bPosition",
-            "widgetName" : "fourPlay42",
+            "widgetName" : "fourPlay43",
             "channelNumber" : 2,
             "measurement" : "position"
         },
         {   "inputName" : "width",
-            "widgetName" : "fourPlay42",
+            "widgetName" : "fourPlay43",
             "channelNumber" : 3,
             "measurement" : "position"
         }
     ],
-    "hEnable" : false,
-    "vEnable" : true,
+    "hEnable" : true,
+    "vEnable" : false,
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
-    "vConfig" : {
-        "virtualPixelRatio" : 1,
+    "hConfig" : {
+        "virtualPixelRatio" : 4,
         "widthScaledownFactor" : 3,
         "rConfig" : {
-            "maxSidebandWidth" : 3,     // sideband widths are in the context of virtual pixels
-            "minSidebandWidth" : 0,     // min should be equal to or greater than virtualPixelRatio
-            "numStripes" : 1,           // number of stripes is in the context of physical pixels
+            "maxSidebandWidth" : 32,    // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 4,     // min should be equal to or greater than virtualPixelRatio
+            "numStripes" : 3,           // number of stripes is in the context of physical pixels
             "scaledownFactor" : 1,      // effectively gear down a rotating widget
             "baseIntensity" : 255
         },
         "gConfig" : {
-            "maxSidebandWidth" : 3,
-            "minSidebandWidth" : 0,
-            "numStripes" : 1,
+            "maxSidebandWidth" : 24,
+            "minSidebandWidth" : 4,
+            "numStripes" : 4,
             "scaledownFactor" : 1,
             "baseIntensity" : 255
         },
         "bConfig" : {
-            "maxSidebandWidth" : 3,
-            "minSidebandWidth" : 0,
-            "numStripes" : 1,
+            "maxSidebandWidth" : 16,
+            "minSidebandWidth" : 4,
+            "numStripes" : 6,
             "scaledownFactor" : 1,
             "baseIntensity" : 255
         }
