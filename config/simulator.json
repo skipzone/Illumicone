@@ -62,8 +62,8 @@
 
             { "_include_file_rain_Rainstick" : "patterns/rain_Rainstick.json" },
 
-            //{ "_include_file_rings_FourPlay43" : "patterns/rings_traditional_FourPlay43.json" },
             //{ "_include_file_rings_FourPlay43" : "patterns/rings_346_FourPlay43.json" },
+            //{ "_include_file_rings_FourPlay43" : "patterns/rings_traditional_FourPlay43.json" },
             { "_include_file_ringsAndStripes_FourPlay42" : "patterns/ringsAndstripes_trippy_FourPlay42.json" },
             //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_346_FourPlay42.json" },
             //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_traditional_FourPlay42.json" },
