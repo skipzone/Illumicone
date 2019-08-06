@@ -46,8 +46,8 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 # using g++ for CC so that g++ will be used to link C++ programs.
 CC=g++
 CXX=g++
-CFLAGS=-Wall -g -I$(INCLUDE)
-CXXFLAGS=-Wall -g -std=c++11 -pthread -I$(INCLUDE)
+CFLAGS=-Wall -Wno-unknown-warning-option -g -I$(INCLUDE)
+CXXFLAGS=-Wall -Wno-unknown-warning-option -g -std=c++11 -pthread -I$(INCLUDE)
 
 LDFLAGS = -pthread
 

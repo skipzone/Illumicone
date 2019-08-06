@@ -51,7 +51,6 @@
 // copy-assignment; use copy-assignment or copy-initialization instead
 // [-Wclass-memaccess]" warning for each memmove8 call that started with gcc 8.
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wclass-memaccess"
 
 
