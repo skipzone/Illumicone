@@ -1,5 +1,5 @@
-Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
-(updated 6/22/2019, changes not tested)
+Set up ic-widpatcon on a Raspberry Pi 3 B or 4 using Raspbian Buster Lite
+(updated 5 Aug. 2019)
 
 
 -1.  Download Raspbian Buster Lite from here:
