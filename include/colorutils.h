@@ -47,6 +47,12 @@
 
 #include "pixeltypes.h"
 
+// Disable "writing to an object of type 'struct <whatever>' with no trivial
+// copy-assignment; use copy-assignment or copy-initialization instead
+// [-Wclass-memaccess]" warning for each memmove8 call that started with gcc 8.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
+
 
 /// functions for color fill, paletters, blending, and more
 
@@ -1746,4 +1752,6 @@ CRGB&  napplyGamma_video( CRGB& rgb, float gammaR, float gammaG, float gammaB);
 void   napplyGamma_video( CRGB* rgbarray, uint16_t count, float gamma);
 void   napplyGamma_video( CRGB* rgbarray, uint16_t count, float gammaR, float gammaG, float gammaB);
 
+
+#pragma GCC diagnostic pop
 
