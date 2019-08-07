@@ -126,6 +126,11 @@ Set up ic-widpatcon on a Raspberry Pi 3 B or 4 using Raspbian Buster Lite
     Log out and back in.
 
 
+10.5.  Make illumicone a member of the gpio group.
+
+    sudo usermod -aG gpio illumicone
+
+
 11.  Set up the RTC.
 
     Add these lines to the end of /boot/config.txt, then un-commentout the
