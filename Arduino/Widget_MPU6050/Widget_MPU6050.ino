@@ -27,7 +27,7 @@
 
 
 //#define ENABLE_DEBUG_PRINT
-#define ENABLE_LCD_16x2
+//#define ENABLE_LCD_16x2
 //#define ENABLE_LCD_20x4   // TODO:  not supported yet
 
 #if defined(ENABLE_LCD_16x2) || defined(ENABLE_LCD_20x4)
@@ -323,6 +323,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 //#define IMU_NORMAL_INDICATOR_LED_ON HIGH
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
+#define VIBRATION_SENSOR_PIN 3
 #define RADIO_CE_PIN 9
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
@@ -542,6 +543,7 @@ static uint16_t packetSize;       // expected DMP packet size (default is 42 byt
 static uint8_t packetBuffer[42];  // must be at least as large as packet size returned by dmpGetFIFOPacketSize
 
 static volatile bool gotMpu6050Interrupt;
+static volatile int16_t vibrationSensorInterruptCount;
 
 static int32_t nextTxMs;
 static int32_t lastTemperatureSampleMs;
@@ -568,7 +570,8 @@ int16_t getMovingAverage(uint8_t setIdx);
 bool detectMovingAverageChange(uint8_t setIdx, int16_t threshold);
 
 
-ISR(WDT_vect) {
+ISR(WDT_vect)
+{
   if (widgetMode == WidgetMode::standby) {
     sleep_disable();
   }
@@ -576,11 +579,22 @@ ISR(WDT_vect) {
 
 
 // top half of the MPU-6050 ISR (bottom half is processMpu6050Interrupt)
-void handleMpu6050Interrupt() {
+void handleMpu6050Interrupt()
+{
   if (widgetMode == WidgetMode::standby) {
     sleep_disable();
   }
   gotMpu6050Interrupt = true;
+}
+
+
+// top half of the vibration sensor ISR
+void handleVibrationSensorInterrupt()
+{
+//  if (widgetMode == WidgetMode::standby) {
+//    sleep_disable();
+//  }
+  ++vibrationSensorInterruptCount;
 }
 
 
@@ -867,6 +881,15 @@ void initMpu6050()
 }
 
 
+void initVibrationSensor()
+{
+#ifdef VIBRATION_SENSOR_PIN
+  pinMode(VIBRATION_SENSOR_PIN, INPUT);
+  digitalWrite(VIBRATION_SENSOR_PIN, HIGH);
+  attachInterrupt(digitalPinToInterrupt(VIBRATION_SENSOR_PIN), handleVibrationSensorInterrupt, CHANGE);
+#endif  
+}
+
 void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
@@ -889,6 +912,7 @@ void setup()
 
   initI2c();
   initMpu6050();
+  initVibrationSensor();
   initLcd();
 
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
@@ -1293,6 +1317,9 @@ void sendMeasurements()
   for (int i = 0; i < numMaSets; ++i) {
     payload.measurements[i] = getMovingAverage(i);
   }
+  // TODO:  hack to send vibrationSensorInterruptCount in place of temperature
+  payload.measurements[maSlotTemperature] = vibrationSensorInterruptCount;
+  vibrationSensorInterruptCount = 0;
 
   payload.widgetHeader.isActive = widgetMode == WidgetMode::active;
 
@@ -1427,4 +1454,3 @@ void loop()
     // The world may be a different place then.  Just thought you should know.
   }
 }
-
