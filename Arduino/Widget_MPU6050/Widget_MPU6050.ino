@@ -543,7 +543,7 @@ static uint16_t packetSize;       // expected DMP packet size (default is 42 byt
 static uint8_t packetBuffer[42];  // must be at least as large as packet size returned by dmpGetFIFOPacketSize
 
 static volatile bool gotMpu6050Interrupt;
-static volatile int16_t vibrationSensorInterruptCount;
+static volatile int16_t gotVibrationSensorInterrupt;
 
 static int32_t nextTxMs;
 static int32_t lastTemperatureSampleMs;
@@ -591,21 +591,26 @@ void handleMpu6050Interrupt()
 // top half of the vibration sensor ISR
 void handleVibrationSensorInterrupt()
 {
-//  if (widgetMode == WidgetMode::standby) {
-//    sleep_disable();
-//  }
-  ++vibrationSensorInterruptCount;
+  if (widgetMode == WidgetMode::standby) {
+    sleep_disable();
+  }
+  gotVibrationSensorInterrupt = true;
 }
 
 
-bool widgetWake()
+bool widgetWakeUp()
 {
+  // Returns true if widget should stay awake, false if it should go back to sleep.
+
   uint32_t now = millis();
 
-  if (!gotMpu6050Interrupt) {
+  if (!gotMpu6050Interrupt && !gotVibrationSensorInterrupt) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("Woken up by watchdog."));
 #endif
+    // Watchdog wake-ups occur at 8-second intervals.  We'll count down until
+    // enough watchdog wake-ups have occurred, then we'll send a "still alive"
+    // message at the specified interval (STANDBY_TX_INTERVAL_S).
     if (--stayAwakeCountdown == 0) {
       stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
       // Let the pattern controller know we're still alive.
@@ -617,7 +622,7 @@ bool widgetWake()
   }
 
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("Woken up by MPU-6050."));
+  Serial.println(gotMpu6050Interrupt ? F("Woken up by MPU-6050.") : F("Woken up by vibration sensor."));
 #endif
 
   // Reinitialize all the time trackers because the ms timer has been off.
@@ -634,6 +639,11 @@ bool widgetWake()
   isSoundActive = false;
 #endif
 
+  if (gotVibrationSensorInterrupt) {
+    setMpu6050Mode(Mpu6050Mode::normal, millis());
+    gotVibrationSensorInterrupt = false;
+  }
+
   return true;
 }
 
@@ -649,8 +659,9 @@ void widgetSleep()
   // and we don't want the ISR to disable sleep before we go to sleep.
   noInterrupts();
 
-  // Ignore an IMU interrupt that hasn't been serviced yet.
+  // Ignore an interrupt that hasn't been serviced yet.
   gotMpu6050Interrupt = false;
+  gotVibrationSensorInterrupt = false;
 
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
@@ -693,7 +704,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       while (!stayAwake) {
         // widgetSleep returns after we sleep then wake up.
         widgetSleep();
-        stayAwake = widgetWake();
+        stayAwake = widgetWakeUp();
       }
 #ifdef ENABLE_SOUND
       digitalWrite(MIC_POWER_PIN, HIGH);
@@ -756,6 +767,7 @@ void setMpu6050Mode(Mpu6050Mode newMode, uint32_t now)
       // Put MPU-6050 in cycle mode.
       mpu6050Mode = Mpu6050Mode::cycle;
       mpu6050.setWakeFrequency(mpu6050WakeFrequency);
+      gotMpu6050Interrupt = false;
       mpu6050.setWakeCycleEnabled(true);
       mpu6050.setIntMotionEnabled(true);
 #ifdef IMU_NORMAL_INDICATOR_LED_PIN
@@ -769,6 +781,7 @@ void setMpu6050Mode(Mpu6050Mode newMode, uint32_t now)
 #endif
       mpu6050.setIntMotionEnabled(false);
       mpu6050.setWakeCycleEnabled(false);
+      gotMpu6050Interrupt = false;
       clearMpu6050Fifo();
       mpu6050Mode = Mpu6050Mode::normal;
       mpu6050.setDMPEnabled(true);
@@ -887,7 +900,7 @@ void initVibrationSensor()
 #ifdef VIBRATION_SENSOR_PIN
   pinMode(VIBRATION_SENSOR_PIN, INPUT);
   digitalWrite(VIBRATION_SENSOR_PIN, HIGH);
-//  attachInterrupt(digitalPinToInterrupt(VIBRATION_SENSOR_PIN), handleVibrationSensorInterrupt, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(VIBRATION_SENSOR_PIN), handleVibrationSensorInterrupt, CHANGE);
 #endif  
 }
 
@@ -1450,8 +1463,9 @@ void loop()
 #endif
     setWidgetMode(WidgetMode::standby, now);
     // Setting the widget mode to standby will put the processor to sleep.
-    // It wakes when it gets a motion detection interrupt from the MPU-6050.
-    // Sometime after that, setWidgetMode returns, and execution resumes here.
-    // The world may be a different place then.  Just thought you should know.
+    // It wakes when it gets a motion detection interrupt from the MPU-6050
+    // or an interrupt from the vibration sensor.  Sometime after that,
+    // setWidgetMode returns, and execution resumes here.  The world may be
+    // a different place then.  Just thought you should know.
   }
 }
