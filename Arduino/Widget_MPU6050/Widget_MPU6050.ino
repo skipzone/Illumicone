@@ -322,7 +322,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 //#define IMU_NORMAL_INDICATOR_LED_PIN 16
 //#define IMU_NORMAL_INDICATOR_LED_ON HIGH
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
-#define DEBUG_A_PIN LED_BUILTIN
+#define DEBUG_A_PIN 16
 #define IMU_INTERRUPT_PIN 2
 #define VIBRATION_SENSOR_PIN 3
 #define RADIO_CE_PIN 9
@@ -1077,13 +1077,7 @@ void gatherMotionMeasurements(uint32_t now)
   uint16_t fifoCount = mpu6050.getFIFOCount();
   while (fifoCount >= packetSize) {
 
-#ifdef DEBUG_A_PIN
-    digitalWrite(DEBUG_A_PIN, HIGH);
-#endif
     mpu6050.getFIFOBytes(packetBuffer, packetSize);
-#ifdef DEBUG_A_PIN
-  digitalWrite(DEBUG_A_PIN, LOW);
-#endif
     fifoCount -= packetSize;
 
 //#ifdef ENABLE_DEBUG_PRINT
@@ -1091,6 +1085,10 @@ void gatherMotionMeasurements(uint32_t now)
 //    Serial.print(F("Got packet from fifo.  fifoCount now "));
 //    Serial.println(fifoCount);
 //#endif
+
+#ifdef DEBUG_A_PIN
+    digitalWrite(DEBUG_A_PIN, HIGH);
+#endif
 
     VectorInt16 gyro;
     Quaternion quat;            // [w, x, y, z] quaternion container
@@ -1139,6 +1137,10 @@ void gatherMotionMeasurements(uint32_t now)
       break;
     }
   }
+
+#ifdef DEBUG_A_PIN
+  digitalWrite(DEBUG_A_PIN, LOW);
+#endif
 
 //#ifdef ENABLE_DEBUG_PRINT
 //      // Careful:  We might not be able to keep up if this debug print is enabled.
