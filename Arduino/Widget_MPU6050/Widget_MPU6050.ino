@@ -322,6 +322,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 //#define IMU_NORMAL_INDICATOR_LED_PIN 16
 //#define IMU_NORMAL_INDICATOR_LED_ON HIGH
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
+#define DEBUG_A_PIN LED_BUILTIN
 #define IMU_INTERRUPT_PIN 2
 #define VIBRATION_SENSOR_PIN 3
 #define RADIO_CE_PIN 9
@@ -919,6 +920,10 @@ void setup()
   pinMode(IMU_NORMAL_INDICATOR_LED_PIN, OUTPUT);
   digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_OFF);
 #endif
+#ifdef DEBUG_A_PIN
+  pinMode(DEBUG_A_PIN, OUTPUT);
+  digitalWrite(DEBUG_A_PIN, LOW);
+#endif
 #ifdef ENABLE_SOUND
   pinMode(MIC_POWER_PIN, OUTPUT);
   digitalWrite(MIC_POWER_PIN, LOW);
@@ -1071,7 +1076,14 @@ void gatherMotionMeasurements(uint32_t now)
 {
   uint16_t fifoCount = mpu6050.getFIFOCount();
   while (fifoCount >= packetSize) {
+
+#ifdef DEBUG_A_PIN
+    digitalWrite(DEBUG_A_PIN, HIGH);
+#endif
     mpu6050.getFIFOBytes(packetBuffer, packetSize);
+#ifdef DEBUG_A_PIN
+  digitalWrite(DEBUG_A_PIN, LOW);
+#endif
     fifoCount -= packetSize;
 
 //#ifdef ENABLE_DEBUG_PRINT
@@ -1357,6 +1369,9 @@ void sendMeasurements()
   lcd.print("F");
 #endif
 
+//#ifdef ENABLE_DEBUG_PRINT
+//    Serial.println(F("Calling radio.write."));
+//#endif
   if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * numMaSets, !WANT_ACK)) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write failed."));
