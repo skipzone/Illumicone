@@ -1048,11 +1048,16 @@ void clearMpu6050Fifo()
 
 void gatherTemperatureMeasurement()
 {
+#ifdef DEBUG_A_PIN
+  digitalWrite(DEBUG_A_PIN, HIGH);
+#endif
   int16_t rawTemperature = mpu6050.getTemperature();
+#ifdef DEBUG_A_PIN
+  digitalWrite(DEBUG_A_PIN, LOW);
+#endif
 
-  // TODO:  comment this out
-  float temperatureC = (float) rawTemperature / 340.0 + 36.53;
-  float temperatureF = temperatureC * 9.0/5.0 + 32.0;
+//  float temperatureC = (float) rawTemperature / 340.0 + 36.53;
+//  float temperatureF = temperatureC * 9.0/5.0 + 32.0;
 
   float temperatureFTimes10 = (float) rawTemperature / 18.8889 + 977.54;
   updateMovingAverage(maSlotTemperature, temperatureFTimes10);
@@ -1060,12 +1065,10 @@ void gatherTemperatureMeasurement()
 #ifdef ENABLE_DEBUG_PRINT
   Serial.print(F("rawTemp="));
   Serial.print(rawTemperature);
-  // TODO:  comment this out
-  Serial.print(F("  tempC="));
-  Serial.print(temperatureC);
-  // TODO:  comment this out
-  Serial.print(F("  tempF="));
-  Serial.println(temperatureF);
+//  Serial.print(F("  tempC="));
+//  Serial.print(temperatureC);
+//  Serial.print(F("  tempF="));
+//  Serial.println(temperatureF);
   Serial.print(F("  temp10F="));
   Serial.println(temperatureFTimes10);
 #endif
@@ -1085,10 +1088,6 @@ void gatherMotionMeasurements(uint32_t now)
 //    Serial.print(F("Got packet from fifo.  fifoCount now "));
 //    Serial.println(fifoCount);
 //#endif
-
-#ifdef DEBUG_A_PIN
-    digitalWrite(DEBUG_A_PIN, HIGH);
-#endif
 
     VectorInt16 gyro;
     Quaternion quat;            // [w, x, y, z] quaternion container
@@ -1137,10 +1136,6 @@ void gatherMotionMeasurements(uint32_t now)
       break;
     }
   }
-
-#ifdef DEBUG_A_PIN
-  digitalWrite(DEBUG_A_PIN, LOW);
-#endif
 
 //#ifdef ENABLE_DEBUG_PRINT
 //      // Careful:  We might not be able to keep up if this debug print is enabled.
