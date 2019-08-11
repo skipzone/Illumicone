@@ -17,6 +17,7 @@
 
 
 #include "AnnoyingFlashingPattern.h"
+#include "DiamondsPattern.h"
 #include "FillAndBurstPattern.h"
 #include "HorizontalStripePattern.h"
 #include "Log.h"
@@ -39,6 +40,9 @@ Pattern* patternFactory(const std::string& patternClassName, const std::string& 
 {
     if (patternClassName == "AnnoyingFlashingPattern") {
         return new AnnoyingFlashingPattern(patternName);
+    }
+    else if (patternClassName == "DiamondsPattern") {
+        return new DiamondsPattern(patternName);
     }
     else if (patternClassName == "FillAndBurstPattern") {
         return new FillAndBurstPattern(patternName);
