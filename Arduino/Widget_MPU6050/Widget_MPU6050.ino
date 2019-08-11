@@ -1331,19 +1331,15 @@ void sendMeasurements()
   for (int i = 0; i < numMaSets; ++i) {
     payload.measurements[i] = getMovingAverage(i);
   }
-  // TODO:  hack to send vibrationSensorInterruptCount in place of temperature
-  payload.measurements[maSlotTemperature] = vibrationSensorInterruptCount;
-  vibrationSensorInterruptCount = 0;
-
   payload.widgetHeader.isActive = widgetMode == WidgetMode::active;
 
-#ifdef ENABLE_DEBUG_PRINT
-  for (int i = 0; i < numMaSets; ++i) {
-    Serial.print(i);
-    Serial.print(":  ");
-    Serial.println(payload.measurements[i]);
-  }
-#endif
+//#ifdef ENABLE_DEBUG_PRINT
+//  for (int i = 0; i < numMaSets; ++i) {
+//    Serial.print(i);
+//    Serial.print(":  ");
+//    Serial.println(payload.measurements[i]);
+//  }
+//#endif
 
 #ifdef ENABLE_LCD_16x2
   // 0123456789012345
