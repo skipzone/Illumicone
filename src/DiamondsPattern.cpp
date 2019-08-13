@@ -38,22 +38,24 @@ constexpr char DiamondsPattern::orientationPrefix[];
 
 DiamondsPattern::DiamondsPattern(const std::string& name)
     : Pattern(name)
-    , vPixelsPerString(pixelsPerString)
-    , numVStrings(numStrings)
-    , horizontalVPixelRatio(1)
-    , verticalVPixelRatio(1)
+    , vPixelsPerString(pixelsPerString * 10)
+    , numVStrings(numStrings * 10)
+    , horizontalVPixelRatio(10)
+    , verticalVPixelRatio(10)
 {
+/*
     numPixelsForOrientation[horiz] = numStrings;
     numPixelsForOrientation[vert] = pixelsPerString;
     numVPixelsForOrientation[horiz] = vPixelsPerString;
     numVPixelsForOrientation[vert] = numVStrings;
+*/
 }
 
 
 bool DiamondsPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     // ----- get input channels -----
-
+/*
     std::vector<Pattern::ChannelConfiguration> channelConfigs = getChannelConfigurations(widgets);
     if (channelConfigs.empty()) {
         logger.logMsg(LOG_ERR, "No valid widget channels are configured for " + name + ".");
@@ -88,9 +90,10 @@ bool DiamondsPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
                           + "' in input configuration for " + name + " is not recognized.");
         }
     }
+*/
 
     // ----- get pattern configuration -----
-
+/*
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
     if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
@@ -206,6 +209,7 @@ bool DiamondsPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
             }
         }
     }
+*/
 
     // ----- initialize object data -----
 
@@ -287,6 +291,7 @@ bool DiamondsPattern::update()
         }
     }
 
+/*
     // Set flag to force width back to 1 when width channel
     // has been inactive for widthResetTimeoutSeconds.
     if (isActive) {
@@ -306,11 +311,15 @@ bool DiamondsPattern::update()
             }
         }
     }
+*/
 
-    // Draw the stripes.
-    if (gotPositionOrWidthUpdate) {
+    // Draw the diagonal lines.
+//    if (gotPositionOrWidthUpdate) {
 
         clearAllPixels(pixelArray);
+
+        //for (int b = 0; b < =-=-=-=-= resume here
+
 
         for (int iColor = 0; iColor < numColors; ++iColor) {
             if (positionChannel[iColor] != nullptr) {
@@ -392,7 +401,7 @@ bool DiamondsPattern::update()
                 }
             }
         }
-    }
+//    }
 
     return isActive;
 }
