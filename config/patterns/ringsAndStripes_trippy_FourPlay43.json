@@ -1,0 +1,99 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "ringsAndStripes_trippy_FourPlay43",
+    "enabled" : true,
+    "priority" : 7,
+    "opacity" : 25,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "RgbStripePattern",
+    "inputs" : [
+        {   "inputName" : "rPosition",
+            "widgetName" : "fourPlay43",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        },
+        {   "inputName" : "gPosition",
+            "widgetName" : "fourPlay43",
+            "channelNumber" : 1,
+            "measurement" : "position"
+        },
+        {   "inputName" : "bPosition",
+            "widgetName" : "fourPlay43",
+            "channelNumber" : 2,
+            "measurement" : "position"
+        },
+        {   "inputName" : "width",
+            "widgetName" : "fourPlay43",
+            "channelNumber" : 3,
+            "measurement" : "position"
+        }
+    ],
+    "hEnable" : true,
+    "vEnable" : true,
+    "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
+    "hConfig" : {
+        "virtualPixelRatio" : 4,
+        "widthScaledownFactor" : 1,
+        "rConfig" : {
+            "maxSidebandWidth" : 33,    // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 4,     // min should be equal to or greater than virtualPixelRatio
+            "numStripes" : 3,           // number of stripes is in the context of physical pixels
+            "scaledownFactor" : 1,      // effectively gear down a rotating widget
+            "baseIntensity" : 128
+        },
+        "gConfig" : {
+            "maxSidebandWidth" : 25,
+            "minSidebandWidth" : 4,
+            "numStripes" : 4,
+            "scaledownFactor" : 1,
+            "baseIntensity" : 128
+        },
+        "bConfig" : {
+            "maxSidebandWidth" : 12,
+            "minSidebandWidth" : 4,
+            "numStripes" : 8,
+            "scaledownFactor" : 1,
+            "baseIntensity" : 128
+        }
+    },
+    "vConfig" : {
+        "virtualPixelRatio" : 4,
+        "widthScaledownFactor" : 1,
+        "rConfig" : {
+            "maxSidebandWidth" : 8,    // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 4,     // min should be equal to or greater than virtualPixelRatio
+            "numStripes" : 3,           // number of stripes is in the context of physical pixels
+            "scaledownFactor" : 1,      // effectively gear down a rotating widget
+            "baseIntensity" : 128
+        },
+        "gConfig" : {
+            "maxSidebandWidth" : 6,
+            "minSidebandWidth" : 4,
+            "numStripes" : 4,
+            "scaledownFactor" : 1,
+            "baseIntensity" : 128
+        },
+        "bConfig" : {
+            "maxSidebandWidth" : 4,
+            "minSidebandWidth" : 4,
+            "numStripes" : 6,
+            "scaledownFactor" : 1,
+            "baseIntensity" : 128
+        }
+    }
+}
+
