@@ -37,6 +37,8 @@
 
 #define WIDGET_ID 1
 #define TX_INTERVAL_MS 250L
+#define ILLUMINATION_OFF_THRESHOLD 500
+#define ILLUMINATION_ON_THRESHOLD 400
 #define PHOTOSENSOR_POWER_PIN 2
 #define PHOTOSENSOR_SIGNAL_PIN A2
 #define ILLUMINATION_LED_PIN 3
@@ -112,6 +114,7 @@ void setup()
 void loop() {
 
   static int32_t lastTxMs;
+  static bool illuminationIsOff;
 
   uint32_t now = millis();
   if (now - lastTxMs >= TX_INTERVAL_MS) {
@@ -125,7 +128,16 @@ void loop() {
     Serial.print("Sending ");
     Serial.println(photosensorValue);
 #endif
-    
+
+    if (!illuminationIsOff && photosensorValue > ILLUMINATION_OFF_THRESHOLD) {
+      digitalWrite(ILLUMINATION_LED_PIN, LOW);
+      illuminationIsOff = true;
+    }
+    else if (illuminationIsOff && photosensorValue < ILLUMINATION_ON_THRESHOLD) {
+      digitalWrite(ILLUMINATION_LED_PIN, HIGH);
+      illuminationIsOff = false;
+    }
+
     payload.position = photosensorValue;
     payload.velocity = 0;
 
