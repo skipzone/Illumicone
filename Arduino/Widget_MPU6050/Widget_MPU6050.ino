@@ -26,7 +26,7 @@
 */
 
 
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 //#define ENABLE_LCD_16x2
 //#define ENABLE_LCD_20x4   // TODO:  not supported yet
 
