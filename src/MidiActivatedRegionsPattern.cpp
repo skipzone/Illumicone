@@ -143,6 +143,11 @@ bool MidiActivatedRegionsPattern::update()
                 activeIndicator->transitionOff();
             }
             else {
+                // KLUDGE 2019-08-28:  After Schroeder's is active for a while, blocks appear to be turning black without being transparent.
+                // We'll try to work around that problem by calling turnOffImmediately, which sets the block to the background
+                // color (transparent by default).
+                activeIndicator->turnOffImmediately();
+                // END KLUDGE
                 inactiveIndicators.push_back(activeIndicator);
             }
         }
@@ -160,6 +165,14 @@ bool MidiActivatedRegionsPattern::update()
             }
             activeIndicators.clear();
         }
+        // KLUDGE 2019-08-28:  After Schroeder's is active for a while, blocks appear to be turning black without being transparent.
+        // We'll try to work around the problem by making sure all the regions are transparent (the default background color).
+        HsvPixel transparentPixel(0, 0, 0);
+        for (auto&& indicatorRegion : indicatorRegions) {
+            indicatorRegion->setBackgroundColor(transparentPixel);
+            indicatorRegion->turnOffImmediately();
+        }
+        // END KLUDGE
         isActive = false;
     }
 

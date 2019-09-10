@@ -1,0 +1,4 @@
+#! /bin/bash
+tempraw=$(vcgencmd measure_temp)
+tempc=$(echo $tempraw)
+echo $tempc

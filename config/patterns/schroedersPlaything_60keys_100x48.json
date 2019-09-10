@@ -17,8 +17,8 @@
 
 {   "name" : "schroedersPlaything_60keys_100x48",
     "enabled" : true,
-    "priority" : 3,
-    "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "priority" : 2,
+    "opacity" : 95,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "MidiActivatedRegionsPattern",
     "inputs" : [
         {   "inputName" : "midiInput",
