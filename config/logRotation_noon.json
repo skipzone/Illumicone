@@ -15,23 +15,9 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "multicolorSparkle_FourPlay42",
-    "enabled" : true,
-    "priority" : 7,
-    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-    "patternClassName" : "SparklePattern",
-    "inputs" : [
-        {   "inputName" : "density",
-            "widgetName" : "fourPlay42",
-            "channelNumber" : 0,
-            "measurement" : "velocity"
-        }
-    ],
-    "activationThreshold" : 10,
-    "deactivationThreshold" : 300,
-    "numGoodMeasurementsForReactivation" : 10,
-    "densityScaledownFactor" : 2400,
-    "useRandomColors" : true,
-    "sparkleChangeIntervalMs" : 50
+{
+    // Rotate log files at noon.
+    "logRotationIntervalMinutes" : 1440,
+    "logRotationOffsetHour" : 12,
+    "logRotationOffsetMinute" : 0
 }
-

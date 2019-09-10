@@ -18,34 +18,20 @@
 {
     "common" : {
         "_include_file_network_symlink" : "network_active.json",
-
-        // Effectively never rotate log files.
-        "logRotationIntervalMinutes" : 14400000,
-        "logRotationOffsetHour" : 12,
-        "logRotationOffsetMinute" : 0
+        "_include_file_logRotation" : "logRotation_noon.json"
     },
-
 
     "widgetRcvr" : {
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 1000,
-
         "_include_file_widgetRadio" : "widgetRadio_ch84.json"
     },
-
-    "widgetRcvr3" : {
-        // Avoid hammering on the SPI interface by sleeping between polls for received data.
-        "radioPollingLoopSleepIntervalUs" : 1000,
-
-        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
-    },
-
 
     "patternController" : {
         "numberOfStrings" : 48,
         "numberOfPixelsPerString" : 100,
 
-        "_include_file_schedule" : "schedule_alwaysOn.json",
+        "_include_file_schedule" : "schedule_BurningMan.json",
 
         "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
         "patternRunLoopSleepIntervalUs" : 4000,
@@ -60,6 +46,11 @@
             //{ "_include_file_coloredSparkles_FourPlay42" : "patterns/coloredSparkles_FourPlay42.json" },
             { "_include_file_multicolorSparkle_Spinnah" : "patterns/multicolorSparkle_Spinnah.json" },
 
+            { "_include_file_aquaRedSparkle_FourPlay42" : "patterns/aquaRedSparkle_FourPlay42.json" },
+            { "_include_file_magentaGreenSparkle_FourPlay42" : "patterns/magentaGreenSparkle_FourPlay42.json" },
+            { "_include_file_multicolorSparkle_FourPlay42" : "patterns/multicolorSparkle_FourPlay42.json" },
+            { "_include_file_yellowBlueSparkle_FourPlay42" : "patterns/yellowBlueSparkle_FourPlay42.json" },
+
             { "_include_file_coloredSprays_Baton" : "patterns/coloredSprays_Baton.json" },
             //{ "_include_file_coloredSprays_Bells" : "patterns/coloredSprays_Bells.json" },
 
@@ -71,7 +62,7 @@
 
             //{ "_include_file_rings_FourPlay43" : "patterns/rings_346_FourPlay43.json" },
             //{ "_include_file_rings_FourPlay43" : "patterns/rings_traditional_FourPlay43.json" },
-            { "_include_file_ringsAndStripes_FourPlay42" : "patterns/ringsAndStripes_trippy_FourPlay42.json" },
+            { "_include_file_ringsAndStripes_FourPlay43" : "patterns/ringsAndStripes_trippy_FourPlay43.json" },
             //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_346_FourPlay42.json" },
             //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_traditional_FourPlay42.json" },
 

@@ -52,17 +52,27 @@
         ],
 
         "patterns" : [
+
             //{ "_include_file_coloredSparkles_Baton" : "patterns/coloredSparkles_Baton.json" },
             { "_include_file_coloredSparkles_Bells" : "patterns/coloredSparkles_Bells.json" },
             //{ "_include_file_coloredSparkles_FourPlay42" : "patterns/coloredSparkles_FourPlay42.json" },
+            { "_include_file_multicolorSparkle_Spinnah" : "patterns/multicolorSparkle_Spinnah.json" },
+
             { "_include_file_coloredSprays_Baton" : "patterns/minicone/coloredSprays_Baton.json" },
             //{ "_include_file_coloredSprays_Bells" : "patterns/coloredSprays_Bells.json" },
+
             { "_include_file_eyeFlash" : "patterns/eyeFlash.json" },
+
             { "_include_file_fillAndBurst_Pump" : "patterns/minicone/fillAndBurst_Pump.json" },
-            { "_include_file_multicolorSparkle_Spinnah" : "patterns/multicolorSparkle_Spinnah.json" },
+
             { "_include_file_rain_Rainstick" : "patterns/minicone/rain_Rainstick.json" },
-            { "_include_file_rings_FourPlay43" : "patterns/rings_FourPlay43_minicone.json" },
-            { "_include_file_stripes_FourPlay42" : "patterns/stripes_FourPlay42_minicone.json" }
+
+            //{ "_include_file_rings_FourPlay43" : "patterns/minicone/rings_234_FourPlay43.json" },
+            { "_include_file_rings_FourPlay43" : "patterns/minicone/rings_traditional_FourPlay43.json" },
+            //{ "_include_file_ringsAndStripes_FourPlay42" : "patterns/minicone/ringsAndstripes_trippy_FourPlay42.json" }
+            //{ "_include_file_stripes_FourPlay42" : "patterns/minicone/stripes_234_FourPlay42.json" }
+            { "_include_file_stripes_FourPlay42" : "patterns/minicone/stripes_traditional_FourPlay42.json" }
+
         ]
     }
 }

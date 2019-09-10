@@ -1,5 +1,10 @@
-Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
-(updated 6/22/2019, changes not tested)
+Set up ic-widpatcon on a Raspberry Pi 3 B or 4 using Raspbian Buster Lite
+(updated 5 Aug. 2019)
+
+
+-1.  Download Raspbian Buster Lite from here:
+
+    https://downloads.raspberrypi.org/raspbian_lite_latest
 
 
 0.  Write the image to a micro-SD card.
@@ -19,27 +24,38 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
     pi, password is raspberry.  Otherwise, use a Linux VM to access the boot
     partition and create the file.
     
-    sudo touch /boot/ssh
-    sudo reboot
+    If you have a monitor and keyboard connected to the RPi:
+
+        sudo touch /boot/ssh
+        sudo reboot
+
+    If you are accessing the SD card via Ubuntu 14:
+
+        touch /media/<your username>/boot/ssh
+
+    There should be two USB drive icons in Launcher:  one for boot and one for
+    rootfs.  Unmount the SD card by right clicking on one of the USB drive icons
+    and selecting Eject Parent Volume.  Do the same thing for the other icon.
 
 
-2.  Update everything.
-
-    sudo apt-get update
-    sudo apt-get upgrade
-
-
-3.  Create user illumicone and add it to the sudo group.
+2.  Create user illumicone and add it to the sudo group.
 
     sudo adduser illumicone
     sudo adduser illumicone sudo
 
 
-4.  Change user pi's password to be the same as illumicone's.
+3.  Change user pi's password to be the same as illumicone's.
 
     passwd
 
-    log in as illumicone
+
+3.5  Exit the ssh session then reconnect and log in as illumicone.
+
+
+4.  Update everything.
+
+    sudo apt-get update
+    sudo apt-get upgrade
 
 
 5.  Set up ssh keys.
@@ -110,6 +126,11 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
     Log out and back in.
 
 
+10.5.  Make illumicone a member of the gpio group.
+
+    sudo usermod -aG gpio illumicone
+
+
 11.  Set up the RTC.
 
     Add these lines to the end of /boot/config.txt, then un-commentout the
@@ -122,7 +143,7 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
 
     Check if RTC is present:
         i2cdetect -y 1
-        Look for UU at address 0x68.
+        Look for UU at address 0x68 (0x51 for PCF8563).
 
     Disable the fake hwclock.
         sudo apt-get -y remove fake-hwclock
@@ -143,7 +164,7 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
         sudo hwclock -w
 
     To read the time directly from the RTC (with debug output):
-        sudo hwclock -D -r
+        sudo hwclock -r --verbose
 
     To copy the time from the clock module to the system clock:
         sudo hwclock -s
@@ -194,6 +215,9 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
 
 15.  Set up the Illumicone development environment.
 
+    git config --global user.email "illumicone@gmail.com"
+    git config --global user.name "illumicone"
+    git config --global core.editor "vim"
     cd
     mkdir devl
     cd devl
@@ -201,7 +225,6 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
     cd Illumicone
     git flow init
     cd
-    git config --global core.editor "vim"
     cp devl/Illumicone/config/vimrc ~/.vimrc
     cp devl/Illumicone/sbin/bash_aliases ~/.bash_aliases
     cp devl/Illumicone/sbin/illumicone_aliases ~/.illumicone_aliases
@@ -223,6 +246,7 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
 
     cd
     mkdir bin
+    mkdir logs
     cd devl/Illumicone/src
     make
     make install
@@ -253,7 +277,10 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
     Use ifconfig to see if the connection was successful.
 
     wpa-supplicant should notice the change.  If it doesn't, try this:
-        sudo wpa_cli reconfigure
+        sudo wpa_cli
+            interface wlan0
+            reconfigure
+
     If that doesn't work, reboot.
 
     Another way to do this is to use the wpa_passphrase utility:
@@ -293,6 +320,11 @@ Set up ic-widpatcon on a Raspberry Pi 3 B using Raspbian Stretch
     crontab ~/devl/Illumicone/config/widpatcon_crontab
 
 
+21.  Follow the instructions in config/patternController.service and
+     config/widgetRcvr.service to set up those services.
+
+
+
 ================================================================================
 
 Useful Commands and Stuff
@@ -312,6 +344,10 @@ Useful Commands and Stuff
     view detected networks:  sudo wpa_cli scan_results
     re-read configuration:  sudo wpa_cli reconfigure
 
+    wpa_cli may not default to the correct interface.  If you don't see
+    reasonable results to the above commands, run wpa_cli interactively, use
+    "interface wlan0" to select the built-in Wi-Fi interface, then execute the
+    above commands in the interactive session.
 
 * Shrink image file
 
@@ -323,67 +359,9 @@ Useful Commands and Stuff
     Or, use the skipzone fork to get a fix for the extra space between "83" and
     "Linux" in fdisk output on Ubuntu 14.04.3.
 
-================================================================================
+* Updates
 
-
-Raspberry Pi Setup for Illumicone - 6/22/2017
-
-These notes are not from the original setup done in 2016.  Rather, they are
-notes that I'm writing as I set up another Raspberry Pi to run widgetRcvr for
-widget firmware development.
-
-
-Use raspi-config to enable SPI on boot
---------------------------------------
-sudo raspi-config 
-advanced options
-A6 SPI
-enable
-load kernel module automatically or whatever
-save and reboot
-
-
-Use the static IP address 192.168.69.102
-----------------------------------------
-
-At some point in the past, the only modifications needed were to
-/etc/network/interfaces:
-
-    auto eth0
-    iface eth0 inet static
-        address 192.168.69.102
-        netmask 255.255.255.0
-        gateway 192.168.69.1
-
-At present, even with that change to interfaces, dhcpd5 will still use DHCP to
-get a second address for eth0.  To stop that from happening, the static
-address must be configured in /etc/dhcpcd.conf (note the extra "c" in the file
-name) by adding this:
-
-    # Use a static IP address on the Illumicone network.
-    interface eth0
-        static ip_address=192.168.69.102/24
-        static routers=192.168.69.1
-        static domain_name_servers=192.168.69.1 8.8.8.8
-
-(At least we're not having to deal with that fucking connman.)
-
-
-Install git-flow, clone the Illumicone project, init git flow, pull current feature
------------------------------------------------------------------------------------
-sudo apt-get install git-flow
-cd ~/devl
-git clone https://github.com/skipzone/Illumicone.git
-cd Illumicone/
-git flow init
-git flow feature pull origin ContortOMatic
-
-
-Install RF24
-------------
-Use tmrh20's fork of RF24.  This is the same one we use for the widget Arduinos.
-cd ~/devl
-git clone https://github.com/nRF24/RF24.git
-sudo make install -B
+    sudo nohup apt-get update --yes > update.out 2>update.err &
+    sudo nohup apt-get upgrade --yes > upgrade.out 2>upgrade.err &
 
 

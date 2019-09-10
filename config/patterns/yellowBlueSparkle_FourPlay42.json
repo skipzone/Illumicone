@@ -31,7 +31,7 @@
     "activationThreshold" : 10,
     "deactivationThreshold" : 300,
     "numGoodMeasurementsForReactivation" : 10,
-    "densityScaledownFactor" : 1200,
+    "densityScaledownFactor" : 2400,
     "useRandomColors" : false,
     "sparkleChangeIntervalMs" : 50,
     "forwardSparkleColor" : "yellow",

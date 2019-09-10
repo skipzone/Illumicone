@@ -37,8 +37,11 @@
 
 #define WIDGET_ID 1
 #define TX_INTERVAL_MS 250L
+#define ILLUMINATION_OFF_THRESHOLD 500
+#define ILLUMINATION_ON_THRESHOLD 400
 #define PHOTOSENSOR_POWER_PIN 2
 #define PHOTOSENSOR_SIGNAL_PIN A2
+#define ILLUMINATION_LED_PIN 3
 
 // ---------- radio configuration ----------
 
@@ -51,9 +54,9 @@
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
-#define WANT_ACK false
-#define TX_RETRY_DELAY_MULTIPLIER 0     // use 15 when getting acks
-#define TX_MAX_RETRIES 0                // use 15 when getting acks
+#define WANT_ACK true
+#define TX_RETRY_DELAY_MULTIPLIER 15    // use 15 when getting acks
+#define TX_MAX_RETRIES 15               // use 15 when getting acks
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
@@ -93,7 +96,10 @@ void setup()
 #endif
 
   pinMode(PHOTOSENSOR_POWER_PIN, OUTPUT);
-  digitalWrite(PHOTOSENSOR_POWER_PIN , LOW); 
+  digitalWrite(PHOTOSENSOR_POWER_PIN , LOW);
+
+  pinMode(ILLUMINATION_LED_PIN, OUTPUT);
+  digitalWrite(ILLUMINATION_LED_PIN, HIGH);
 
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
                  TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
@@ -108,6 +114,7 @@ void setup()
 void loop() {
 
   static int32_t lastTxMs;
+  static bool illuminationIsOff;
 
   uint32_t now = millis();
   if (now - lastTxMs >= TX_INTERVAL_MS) {
@@ -117,11 +124,37 @@ void loop() {
     unsigned int photosensorValue = analogRead(PHOTOSENSOR_SIGNAL_PIN);
     //digitalWrite(PHOTOSENSOR_POWER_PIN, LOW); 
 
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.print("Sending ");
+    Serial.println(photosensorValue);
+#endif
+
+    if (!illuminationIsOff && photosensorValue > ILLUMINATION_OFF_THRESHOLD) {
+      digitalWrite(ILLUMINATION_LED_PIN, LOW);
+      illuminationIsOff = true;
+    }
+    else if (illuminationIsOff && photosensorValue < ILLUMINATION_ON_THRESHOLD) {
+      digitalWrite(ILLUMINATION_LED_PIN, HIGH);
+      illuminationIsOff = false;
+    }
+
     payload.position = photosensorValue;
     payload.velocity = 0;
 
-    radio.write(&payload, sizeof(payload));
-    
+//#ifdef ENABLE_DEBUG_PRINT
+//    Serial.println(F("Calling radio.write."));
+//#endif
+    if (!radio.write(&payload, sizeof(payload), !WANT_ACK)) {
+        radio.write(&payload, sizeof(payload));
+#ifdef ENABLE_DEBUG_PRINT
+        Serial.println(F("radio.write failed."));
+#endif
+    }
+    else {
+#ifdef ENABLE_DEBUG_PRINT
+        Serial.println(F("radio.write succeeded."));
+#endif
+    }
     lastTxMs = now;
   }
 

@@ -297,10 +297,17 @@ bool Log::resolveLogFilePathName(const std::string& logFilePath)
                 << ":  Invalid log file path \"" << logFilePath << "\"; "
                 << errDesc << " (" << std::to_string(errCode)
                 << ").  we_wordc=" << p.we_wordc << "." << std::endl;
-            return false;
+            // TODO:  2019-07-28:  wordexp appears to be partially broken under macOS Mojave.  The second call to wordexp
+            //                     always fails with WRDE_BADVAL.  For now, we'll ignore any wordexp failure and try to use
+            //                     the path exactly as specified.
+            //return false;
+            std::cerr << std::string(__FUNCTION__) << ":  Will try to use " << logFilePath << std::endl;
+            expandedLogFilePath = logFilePath;
         }
-        expandedLogFilePath = p.we_wordv[0];
-        wordfree(&p);
+        else {
+            expandedLogFilePath = p.we_wordv[0];
+            wordfree(&p);
+        }
 
         // We expect the path to end in a slash.
         if (expandedLogFilePath.back() != '/') {

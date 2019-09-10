@@ -15,23 +15,15 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "multicolorSparkle_FourPlay42",
-    "enabled" : true,
-    "priority" : 7,
-    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-    "patternClassName" : "SparklePattern",
-    "inputs" : [
-        {   "inputName" : "density",
-            "widgetName" : "fourPlay42",
-            "channelNumber" : 0,
-            "measurement" : "velocity"
+{
+    "shutoffPeriods" : [
+        {   "description" : "Burning Man daytime shutoff",
+            "startDateTime" : "07:00:00",   // 06:00 PDT
+            "endDateTime" : "20:05:00"      // 19:05 PDT
         }
     ],
-    "activationThreshold" : 10,
-    "deactivationThreshold" : 300,
-    "numGoodMeasurementsForReactivation" : 10,
-    "densityScaledownFactor" : 2400,
-    "useRandomColors" : true,
-    "sparkleChangeIntervalMs" : 50
+
+    "quiescentPeriods" : [
+    ]
 }
 

@@ -26,10 +26,10 @@ using namespace std;
 FourPlay43Widget::FourPlay43Widget()
     : Widget(WidgetId::fourPlay43, 4)
 {
-    simulationUpdateIntervalMs[0] = 20;
-    simulationUpdateIntervalMs[1] = 40;
-    simulationUpdateIntervalMs[2] = 80;
-    simulationUpdateIntervalMs[3] = 50;
+    simulationUpdateIntervalMs[0] = 2;
+    simulationUpdateIntervalMs[1] = 2;
+    simulationUpdateIntervalMs[2] = 2;
+    simulationUpdateIntervalMs[3] = 2;
 }
 
 

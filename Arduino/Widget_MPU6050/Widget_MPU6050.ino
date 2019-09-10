@@ -27,7 +27,7 @@
 
 
 //#define ENABLE_DEBUG_PRINT
-#define ENABLE_LCD_16x2
+//#define ENABLE_LCD_16x2
 //#define ENABLE_LCD_20x4   // TODO:  not supported yet
 
 #if defined(ENABLE_LCD_16x2) || defined(ENABLE_LCD_20x4)
@@ -289,7 +289,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 #define ACTIVATE_WITH_MOVEMENT
 
 static constexpr int16_t movementDetectionThreshold = 1;              // tenths of a degree of change in yaw, pitch, or roll
-static constexpr uint32_t inactiveTransitionDelayMs = 10000;          // delay between inactivity detection and going inactive
+static constexpr uint32_t inactiveTransitionDelayMs = 5000;          // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;         // unit is 2 mg
 static constexpr uint8_t mpu6050MotionDetectionCounterDecrement = 1;
@@ -298,7 +298,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
 #define ACTIVE_TX_INTERVAL_MS 53L
-#define INACTIVE_TX_INTERVAL_MS 5000L
+#define INACTIVE_TX_INTERVAL_MS 2500L
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
 // every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
@@ -307,7 +307,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 
 // The MPU-6050 is placed in cycle mode, and the processor is put to sleep
 // when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
-#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 600000L
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 10000L
 
 // We use the time elapsed since getting good data from the MPU-6050 to determine
 // if we need to reinitialize the little bastard because he's quit working right.
@@ -322,7 +322,9 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                    // 0 = 1.2
 //#define IMU_NORMAL_INDICATOR_LED_PIN 16
 //#define IMU_NORMAL_INDICATOR_LED_ON HIGH
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
+#define DEBUG_A_PIN 16
 #define IMU_INTERRUPT_PIN 2
+#define VIBRATION_SENSOR_PIN 3
 #define RADIO_CE_PIN 9
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
@@ -542,6 +544,7 @@ static uint16_t packetSize;       // expected DMP packet size (default is 42 byt
 static uint8_t packetBuffer[42];  // must be at least as large as packet size returned by dmpGetFIFOPacketSize
 
 static volatile bool gotMpu6050Interrupt;
+static volatile int16_t gotVibrationSensorInterrupt;
 
 static int32_t nextTxMs;
 static int32_t lastTemperatureSampleMs;
@@ -568,7 +571,8 @@ int16_t getMovingAverage(uint8_t setIdx);
 bool detectMovingAverageChange(uint8_t setIdx, int16_t threshold);
 
 
-ISR(WDT_vect) {
+ISR(WDT_vect)
+{
   if (widgetMode == WidgetMode::standby) {
     sleep_disable();
   }
@@ -576,7 +580,8 @@ ISR(WDT_vect) {
 
 
 // top half of the MPU-6050 ISR (bottom half is processMpu6050Interrupt)
-void handleMpu6050Interrupt() {
+void handleMpu6050Interrupt()
+{
   if (widgetMode == WidgetMode::standby) {
     sleep_disable();
   }
@@ -584,14 +589,29 @@ void handleMpu6050Interrupt() {
 }
 
 
-bool widgetWake()
+// top half of the vibration sensor ISR
+void handleVibrationSensorInterrupt()
 {
+  if (widgetMode == WidgetMode::standby) {
+    sleep_disable();
+  }
+  gotVibrationSensorInterrupt = true;
+}
+
+
+bool widgetWakeUp()
+{
+  // Returns true if widget should stay awake, false if it should go back to sleep.
+
   uint32_t now = millis();
 
-  if (!gotMpu6050Interrupt) {
+  if (!gotMpu6050Interrupt && !gotVibrationSensorInterrupt) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("Woken up by watchdog."));
 #endif
+    // Watchdog wake-ups occur at 8-second intervals.  We'll count down until
+    // enough watchdog wake-ups have occurred, then we'll send a "still alive"
+    // message at the specified interval (STANDBY_TX_INTERVAL_S).
     if (--stayAwakeCountdown == 0) {
       stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
       // Let the pattern controller know we're still alive.
@@ -603,7 +623,7 @@ bool widgetWake()
   }
 
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("Woken up by MPU-6050."));
+  Serial.println(gotMpu6050Interrupt ? F("Woken up by MPU-6050.") : F("Woken up by vibration sensor."));
 #endif
 
   // Reinitialize all the time trackers because the ms timer has been off.
@@ -620,6 +640,11 @@ bool widgetWake()
   isSoundActive = false;
 #endif
 
+  if (gotVibrationSensorInterrupt) {
+    setMpu6050Mode(Mpu6050Mode::normal, millis());
+    gotVibrationSensorInterrupt = false;
+  }
+
   return true;
 }
 
@@ -635,8 +660,9 @@ void widgetSleep()
   // and we don't want the ISR to disable sleep before we go to sleep.
   noInterrupts();
 
-  // Ignore an IMU interrupt that hasn't been serviced yet.
+  // Ignore an interrupt that hasn't been serviced yet.
   gotMpu6050Interrupt = false;
+  gotVibrationSensorInterrupt = false;
 
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
@@ -679,7 +705,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       while (!stayAwake) {
         // widgetSleep returns after we sleep then wake up.
         widgetSleep();
-        stayAwake = widgetWake();
+        stayAwake = widgetWakeUp();
       }
 #ifdef ENABLE_SOUND
       digitalWrite(MIC_POWER_PIN, HIGH);
@@ -742,6 +768,7 @@ void setMpu6050Mode(Mpu6050Mode newMode, uint32_t now)
       // Put MPU-6050 in cycle mode.
       mpu6050Mode = Mpu6050Mode::cycle;
       mpu6050.setWakeFrequency(mpu6050WakeFrequency);
+      gotMpu6050Interrupt = false;
       mpu6050.setWakeCycleEnabled(true);
       mpu6050.setIntMotionEnabled(true);
 #ifdef IMU_NORMAL_INDICATOR_LED_PIN
@@ -755,6 +782,7 @@ void setMpu6050Mode(Mpu6050Mode newMode, uint32_t now)
 #endif
       mpu6050.setIntMotionEnabled(false);
       mpu6050.setWakeCycleEnabled(false);
+      gotMpu6050Interrupt = false;
       clearMpu6050Fifo();
       mpu6050Mode = Mpu6050Mode::normal;
       mpu6050.setDMPEnabled(true);
@@ -832,6 +860,7 @@ void initMpu6050()
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Enabling interrupt..."));
 #endif
+      pinMode(IMU_INTERRUPT_PIN, INPUT);
       attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), handleMpu6050Interrupt, RISING);
 
       // Get expected DMP packet size, and make sure packetBuffer is large enough.
@@ -867,6 +896,15 @@ void initMpu6050()
 }
 
 
+void initVibrationSensor()
+{
+#ifdef VIBRATION_SENSOR_PIN
+  pinMode(VIBRATION_SENSOR_PIN, INPUT);
+  digitalWrite(VIBRATION_SENSOR_PIN, HIGH);
+  attachInterrupt(digitalPinToInterrupt(VIBRATION_SENSOR_PIN), handleVibrationSensorInterrupt, CHANGE);
+#endif  
+}
+
 void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
@@ -882,6 +920,10 @@ void setup()
   pinMode(IMU_NORMAL_INDICATOR_LED_PIN, OUTPUT);
   digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_OFF);
 #endif
+#ifdef DEBUG_A_PIN
+  pinMode(DEBUG_A_PIN, OUTPUT);
+  digitalWrite(DEBUG_A_PIN, LOW);
+#endif
 #ifdef ENABLE_SOUND
   pinMode(MIC_POWER_PIN, OUTPUT);
   digitalWrite(MIC_POWER_PIN, LOW);
@@ -889,6 +931,7 @@ void setup()
 
   initI2c();
   initMpu6050();
+  initVibrationSensor();
   initLcd();
 
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
@@ -1005,11 +1048,16 @@ void clearMpu6050Fifo()
 
 void gatherTemperatureMeasurement()
 {
+#ifdef DEBUG_A_PIN
+  digitalWrite(DEBUG_A_PIN, HIGH);
+#endif
   int16_t rawTemperature = mpu6050.getTemperature();
+#ifdef DEBUG_A_PIN
+  digitalWrite(DEBUG_A_PIN, LOW);
+#endif
 
-  // TODO:  comment this out
-  float temperatureC = (float) rawTemperature / 340.0 + 36.53;
-  float temperatureF = temperatureC * 9.0/5.0 + 32.0;
+//  float temperatureC = (float) rawTemperature / 340.0 + 36.53;
+//  float temperatureF = temperatureC * 9.0/5.0 + 32.0;
 
   float temperatureFTimes10 = (float) rawTemperature / 18.8889 + 977.54;
   updateMovingAverage(maSlotTemperature, temperatureFTimes10);
@@ -1017,12 +1065,10 @@ void gatherTemperatureMeasurement()
 #ifdef ENABLE_DEBUG_PRINT
   Serial.print(F("rawTemp="));
   Serial.print(rawTemperature);
-  // TODO:  comment this out
-  Serial.print(F("  tempC="));
-  Serial.print(temperatureC);
-  // TODO:  comment this out
-  Serial.print(F("  tempF="));
-  Serial.println(temperatureF);
+//  Serial.print(F("  tempC="));
+//  Serial.print(temperatureC);
+//  Serial.print(F("  tempF="));
+//  Serial.println(temperatureF);
   Serial.print(F("  temp10F="));
   Serial.println(temperatureFTimes10);
 #endif
@@ -1033,6 +1079,7 @@ void gatherMotionMeasurements(uint32_t now)
 {
   uint16_t fifoCount = mpu6050.getFIFOCount();
   while (fifoCount >= packetSize) {
+
     mpu6050.getFIFOBytes(packetBuffer, packetSize);
     fifoCount -= packetSize;
 
@@ -1293,16 +1340,15 @@ void sendMeasurements()
   for (int i = 0; i < numMaSets; ++i) {
     payload.measurements[i] = getMovingAverage(i);
   }
-
   payload.widgetHeader.isActive = widgetMode == WidgetMode::active;
 
-#ifdef ENABLE_DEBUG_PRINT
-  for (int i = 0; i < numMaSets; ++i) {
-    Serial.print(i);
-    Serial.print(":  ");
-    Serial.println(payload.measurements[i]);
-  }
-#endif
+//#ifdef ENABLE_DEBUG_PRINT
+//  for (int i = 0; i < numMaSets; ++i) {
+//    Serial.print(i);
+//    Serial.print(":  ");
+//    Serial.println(payload.measurements[i]);
+//  }
+//#endif
 
 #ifdef ENABLE_LCD_16x2
   // 0123456789012345
@@ -1320,6 +1366,9 @@ void sendMeasurements()
   lcd.print("F");
 #endif
 
+//#ifdef ENABLE_DEBUG_PRINT
+//    Serial.println(F("Calling radio.write."));
+//#endif
   if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * numMaSets, !WANT_ACK)) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write failed."));
@@ -1422,9 +1471,9 @@ void loop()
 #endif
     setWidgetMode(WidgetMode::standby, now);
     // Setting the widget mode to standby will put the processor to sleep.
-    // It wakes when it gets a motion detection interrupt from the MPU-6050.
-    // Sometime after that, setWidgetMode returns, and execution resumes here.
-    // The world may be a different place then.  Just thought you should know.
+    // It wakes when it gets a motion detection interrupt from the MPU-6050
+    // or an interrupt from the vibration sensor.  Sometime after that,
+    // setWidgetMode returns, and execution resumes here.  The world may be
+    // a different place then.  Just thought you should know.
   }
 }
-

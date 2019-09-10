@@ -58,11 +58,11 @@ enum class WidgetMode {
  * Widget Configuration *
  ************************/
 
-//#define SPINNAH
+#define SPINNAH
 //#define FOURPLAY
 //#define FOURPLAY_4_2
 //#define FOURPLAY_4_3
-#define TRIOBELISK
+//#define TRIOBELISK
 
 #if defined(SPINNAH)
   #define WIDGET_ID 2
@@ -151,21 +151,21 @@ enum class WidgetMode {
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
-#define WANT_ACK false
-#define TX_RETRY_DELAY_MULTIPLIER 0     // use widget-specific values below when getting acks
-#define TX_MAX_RETRIES 0                // use 15 when getting acks
+#define WANT_ACK true
+//#define TX_RETRY_DELAY_MULTIPLIER 0     // use widget-specific values below when getting acks
+#define TX_MAX_RETRIES 15               // use 15 when getting acks
 // Use these when getting acks:
-//#if defined(SPINNAH)
-//#define TX_RETRY_DELAY_MULTIPLIER 11
-//#elif defined(FOURPLAY)
-//#define TX_RETRY_DELAY_MULTIPLIER 15
-//#elif defined(FOURPLAY_4_2)
-//#define TX_RETRY_DELAY_MULTIPLIER 7
-//#elif defined(FOURPLAY_4_3)
-//#define TX_RETRY_DELAY_MULTIPLIER 4
-//#elif defined(TRIOBELISK)
-//#define TX_RETRY_DELAY_MULTIPLIER 6
-//#endif
+#if defined(SPINNAH)
+#define TX_RETRY_DELAY_MULTIPLIER 11
+#elif defined(FOURPLAY)
+#define TX_RETRY_DELAY_MULTIPLIER 15
+#elif defined(FOURPLAY_4_2)
+#define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(FOURPLAY_4_3)
+#define TX_RETRY_DELAY_MULTIPLIER 4
+#elif defined(TRIOBELISK)
+#define TX_RETRY_DELAY_MULTIPLIER 6
+#endif
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)

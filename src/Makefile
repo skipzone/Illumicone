@@ -46,8 +46,8 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 # using g++ for CC so that g++ will be used to link C++ programs.
 CC=g++
 CXX=g++
-CFLAGS=-Wall -g -I$(INCLUDE)
-CXXFLAGS=-Wall -g -std=c++11 -pthread -I$(INCLUDE)
+CFLAGS=-Wall -Wno-unknown-warning-option -g -I$(INCLUDE)
+CXXFLAGS=-Wall -Wno-unknown-warning-option -g -std=c++11 -pthread -I$(INCLUDE)
 
 LDFLAGS = -pthread
 
@@ -95,9 +95,9 @@ patternController: patternController.o AnnoyingFlashingPattern.o BatonWidget.o B
                    ContortOMaticWidget.o EyeWidget.o FillAndBurstPattern.o FourPlay42Widget.o FourPlay43Widget.o \
                    HorizontalStripePattern.o IndicatorRegion.o IndicatorRegionsPattern.o Log.o MidiActivatedRegionsPattern.o \
                    ParticlesPattern.o Pattern.o PumpWidget.o QueuedWidgetChannel.o RainbowExplosionPattern.o RainstickWidget.o \
-                   RgbVerticalPattern.o SchroedersPlaythingWidget.o SimpleBlockIndicator.o SparklePattern.o SpinnahWidget.o \
-                   SpinnerPattern.o SpiralPattern.o SwitchActivatedRegionsPattern.o TriObeliskWidget.o Widget.o WidgetChannel.o \
-                   WidgetId.o colorpalettes.o colorutils.o hsv2rgb.o illumiconePixelUtility.o illumiconeUtility.o \
+                   RgbStripePattern.o RgbVerticalPattern.o SchroedersPlaythingWidget.o SimpleBlockIndicator.o SparklePattern.o \
+				   SpinnahWidget.o SpinnerPattern.o SpiralPattern.o SwitchActivatedRegionsPattern.o TriObeliskWidget.o Widget.o \
+				   WidgetChannel.o WidgetId.o colorpalettes.o colorutils.o hsv2rgb.o illumiconePixelUtility.o illumiconeUtility.o \
                    indicatorRegionFactory.o json11.o lib8tion.o patternFactory.o widgetFactory.o
 
 stringTester: stringTester.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o

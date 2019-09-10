@@ -27,16 +27,16 @@
 class Widget;
 
 
-class RgbVerticalPattern : public Pattern {
+class RgbStripePattern : public Pattern {
 
     public:
 
-        RgbVerticalPattern(const std::string& name);
-        ~RgbVerticalPattern() {};
+        RgbStripePattern(const std::string& name);
+        ~RgbStripePattern() {};
 
-        RgbVerticalPattern() = delete;
-        RgbVerticalPattern(const RgbVerticalPattern&) = delete;
-        RgbVerticalPattern& operator =(const RgbVerticalPattern&) = delete;
+        RgbStripePattern() = delete;
+        RgbStripePattern(const RgbStripePattern&) = delete;
+        RgbStripePattern& operator =(const RgbStripePattern&) = delete;
 
         bool update();       
 
@@ -46,29 +46,43 @@ class RgbVerticalPattern : public Pattern {
 
     private:
 
+        static constexpr int numOrientations = 2;
+        static constexpr char orientationPrefix[numOrientations + 1] = "hv";
+        static constexpr int horiz = 0;
+        static constexpr int vert = 1;
+
         static constexpr int numColors = 3;
         static constexpr char rgbPrefix[numColors + 1] = "rgb";
+
+        bool orientationIsEnabled[numOrientations];
 
         std::shared_ptr<WidgetChannel> positionChannel[numColors];
         std::shared_ptr<WidgetChannel> widthChannel;
 
-        int stripeVPos[numColors];
-        int widthPos[numColors];
+        int stripeVPos[numOrientations][numColors];
+        int widthPos[numOrientations][numColors];
 
-        int numStripes[numColors];
-        int stripeStep[numColors];
+        int numStripes[numOrientations][numColors];
+        int stripeStep[numOrientations][numColors];
 
-        int scaledownFactor[numColors];
-        int widthScaledownFactor;
+        int scaledownFactor[numOrientations][numColors];
+        int widthScaledownFactor[numOrientations];
 
-        int maxSidebandWidth[numColors];
-        int minSidebandWidth[numColors];
+        int maxSidebandWidth[numOrientations][numColors];
+        int minSidebandWidth[numOrientations][numColors];
+
+        uint8_t baseIntensity[numOrientations][numColors];
+
         int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
         bool resetWidth;
         int widthPosOffset;
 
+        unsigned int vPixelsPerString;
         unsigned int numVStrings;
         unsigned int horizontalVPixelRatio;
+        unsigned int verticalVPixelRatio;
+        unsigned int numPixelsForOrientation[numOrientations];
+        unsigned int numVPixelsForOrientation[numOrientations];
 };
 

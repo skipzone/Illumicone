@@ -24,6 +24,7 @@
 #include "ParticlesPattern.h"
 #include "patternFactory.h"
 #include "RainbowExplosionPattern.h"
+#include "RgbStripePattern.h"
 #include "RgbVerticalPattern.h"
 #include "SparklePattern.h"
 #include "SpinnerPattern.h"
@@ -53,6 +54,9 @@ Pattern* patternFactory(const std::string& patternClassName, const std::string& 
     }
     else if (patternClassName == "RainbowExplosionPattern") {
         return new RainbowExplosionPattern(patternName);
+    }
+    else if (patternClassName == "RgbStripePattern") {
+        return new RgbStripePattern(patternName);
     }
     else if (patternClassName == "RgbVerticalPattern") {
         return new RgbVerticalPattern(patternName);
