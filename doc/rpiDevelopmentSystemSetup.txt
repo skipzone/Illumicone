@@ -1,88 +1,75 @@
 **** work in progress ****
 
 Set up a development system using a Raspberry Pi 4
-(updated 24 Sept. 2019)
+(updated 28 Sept. 2019)
 
 You should be comfortable working in a terminal window.
+
+What you will need:
+
+    - Raspberry Pi 4 Model B with 2 GB or 4 GB of RAM (4 GB recommended)
+    - 3-amp (minimum) power supply with USB-C connector
+    - USB-C to USB-C cable if the power supply does not have an attached cable
+    - micro-HDMI-to-HDMI cable
+    - HDMI monitor
+    - USB keyboard
+    - USB mouse or other pointing device
+    - Wi-Fi or wired Ethernet network with Internet connection
+    - Ethernet cable if you will be using a wired network
+    - 8 GB or larger micro-SD card, preferrably a high endurance model
+
 
 
 1.  Download Raspbian Buster with desktop from here:
 
     https://downloads.raspberrypi.org/raspbian_latest
 
-    Unzip the file, and note the name of the resulting .img file.
+
+2.  Write the image to a micro-SD card.  The Raspberry Pi Foundation has a
+    good resource that explains how.
+
+    https://www.raspberrypi.org/documentation/installation/installing-images/README.md
 
 
-2.  Write the image to a micro-SD card.  A 4 GB card will barely be large
-    enough.  An 8 GB or larger, high endurance card would be better.
-
-    This is the procedure for macOS:
-
-    a.  Insert the card (using a micro-to-standard size adapter, if necessary) in
-        the SD slot.  If using a reader, connect it to a USB port.
-
-    b.  In a terminal window, enter this command:  diskutil list
-        (From here on out, "enter this command" will be omitted; only the
-        command will be shown.)  Several disk devices will be shown.  Find the
-        one that corresponds to the SD card.  Usually, it is the last entry.
-        Use the size to help recognize it.  IMPORTANT:  Don't make a mistake
-        here!  If you use the wrong disk device in the commands below, you
-        will wipe out something that you probably care deeply about.  Note the
-        number of the SD card disk--/dev/disk1 is 1, /dev/disk2 is 2, etc.  In
-        the commands below, replace N with that number.
-
-    c.  diskutil unmountDisk /dev/diskN
-
-    d.  sudo dd bs=1m if=path/to/downloaded/file.img of=/dev/rdiskN
-
-        Enter your password (for sudo) when prompted.
-
-        This command will write the image to the SD card.  Depending on the
-        write speed of the card, this can take several minutes or longer.  You
-        can see the progress by typing ctrl-T (which sends SIGINFO to the
-        process).  The "r" in rdiskN causes the raw device to be used, which
-        is much faster than writing to diskN.
-
-    e.  When dd is finished,
-
-        diskutil unmountDisk /dev/diskN
-
-        Then, unplug the reader (if you used one), remove the card from the SD
-        slot, and insert it into the slot on the RPi.
+3.  Connect the keyboard, mouse, monitor, network cable (if using a wired
+    network), and power supply to the RPi.  Plug in the power supply.  After a
+    few moments, the "Welcome to Raspberry Pi" dialog should appear on the
+    monitor.  Follow the bouncing ball to do the basic setup.  Don't worry if
+    the software update doesn't work.  Select the restart option at the end of
+    the process.
 
 
-3.  Connect a keyboard, mouse, monitor, and power supply to the RPi.  Plug in
-the power supply.  After a few moments, the "Welcome to Raspberry Pi" dialog
-should appear.  Follow the bouncing ball to do the basic setup.  Don't worry
-if the software update doesn't work.  Select the restart option at the end of the process.
-
-
-4.  After the RPi restarts, open a terminal window by clicking on the terminal
-promt looking icon in the launcher bar at the top left of the screen.
-
-
-5.  If the software update during the setup process did not work, do the
-update manually.
+4.  If the software update during the setup process did not work, do the update
+    manually.  Open a terminal window by clicking on the terminal-prompt-looking
+    icon in the launcher bar at the top left of the screen.  Then, enter these
+    commands at the command prompt:
 
     sudo apt-get update
     sudo apt-get upgrade
     sudo reboot
 
 
-6.  Click on the raspberry in the upper left corner, hover over Preferences,
+5.  Click on the raspberry in the upper left corner, hover over Preferences,
     then click on Raspberry Pi Configuration.
 
-    a.  Consider changing the host name to something else.
+    a.  Change the password.  It is the password for user pi.
 
-    b.  On the Interfaces tab, enable ssh.  Being able to ssh to the system
-    can come in very handy.  (Use hostname.local to connect to it.)
+    b.  Consider changing the host name to something else.
 
-    c.  If you are going to connect an RF24 module to receive widget data,
-    enable SPI.
+    c.  Turn off auto login so that you can log in with your username rather
+        than user pi.
+
+    d.  On the Interfaces tab, enable ssh and VNC.  Being able to connect
+        to the system via ssh or VNC can come in very handy.  (Use
+        hostname.local to connect to it.)
+
+    e.  If you are going to connect an RF24 module to receive widget data,
+        enable SPI.
 
 
-7.  Install some useful software.  Use the Add / Remove Software option on the
-Raspberry/Preferences menu.
+6.  Install the required and nice-to-have useful software.  Use the Add / Remove
+    Software option on the raspberry -> Preferences menu.  You can use the
+    search feature to locate each package listed below.
 
     Vi IMproved - enhanced vi editor - with GTK2 gui
     git (Should already be installed.)
@@ -94,7 +81,22 @@ Raspberry/Preferences menu.
     freeglut3-dev (for openpixelcontrol)
 
 
-8.  Add these lines to the end of ~/.bashrc:
+7.  Create your user account, and add it to the sudo group.  Open a terminal
+    window by clicking on the terminal-prompt-looking icon in the launcher bar
+    at the top left of the screen.  Then, enter these commands at the command
+    prompt:
+
+    sudo adduser <username>
+    sudo adduser <username> sudo
+
+
+8.  Log out (raspberry -> Shutdown -> Logout), then log back in with your
+    username.  Open another terminal window for entering commands in subsequent
+    steps.
+
+
+9.  Using your text editor of preference, add these lines to the end of
+    the ~/.bashrc file:
 
     # Set up Illumicone paths.
     export ILLUMICONE_BIN="$HOME/bin"
@@ -103,13 +105,15 @@ Raspberry/Preferences menu.
     export ILLUMICONE_CONFIG="$ILLUMICONE_DEVL/config"
     export ILLUMICONE_SBIN="$ILLUMICONE_DEVL/sbin"
     PATH="$ILLUMICONE_BIN:$ILLUMICONE_SBIN:$PATH"
+=-=-=-= TODO:  Put this stuff in config/bashrc_additions and add a step in 10 to
+               cat ~/devl/Illumicone/config/bashrc_additions >> ~/.bashrc
+               Include a caution to use the double greater-than sign.
 
 
-9.  Set up the Illumicone development environment.
+10. Set up the Illumicone development environment.
 
-    git config --global user.email "illumicone@gmail.com"
-    git config --global user.name "illumicone"
-    git config --global core.editor "vim"
+    git config --global user.email <your e-mail address>
+    git config --global user.name <your username>
     cd
     mkdir devl
     mkdir bin
@@ -124,8 +128,10 @@ Raspberry/Preferences menu.
     cp devl/Illumicone/sbin/illumicone_aliases .illumicone_aliases
 
 
-10. Install RF24 using tmrh20's fork of RF24 on Github.  This is the same one we
-    use for the widget Arduinos.
+11. Install RF24 using tmrh20's fork of RF24 on Github.  This is the same one we
+    use for the widget Arduinos.  You will need RF24 to build the Illumicone
+    programs even if you don't plan on connecting an nRF24L01+ module to receive
+    widget data.
 
     cd ~/devl
     git clone https://github.com/nRF24/RF24.git
@@ -135,7 +141,7 @@ Raspberry/Preferences menu.
     sudo make install
 
 
-11. Build and install the Illumicone programs.
+12. Build and install the Illumicone programs.
 
     cd ~/devl/Illumicone/src
     make
@@ -146,18 +152,53 @@ Raspberry/Preferences menu.
     ln -s devl/Illumicone/config/simulator.json activeConfig.json
 
 
-12. Install openpixelcontrol, which provides the on-screen simulator display
-of Illumicone's pixels.
+13. Install openpixelcontrol, which provides the on-screen simulator display of
+    Illumicone's pixels.
 
     cd ~/devl
     git clone https://github.com/zestyping/openpixelcontrol.git
     cd openpixelcontrol
-    Edit Makefile, modify as shown below:
-        TODO:  put lines here
-    make
+    make bin/gl_server
     cp bin/gl_server ~/bin
 
-=-=-=-= resume here, add test step and commands for simulator
+
+14. Test the Illumicone simulation tools and environment.
+
+    cd ~/devl
+    startSimulatorGlServer
+
+    A window titled "OPC" should open.  Resize the window, making it much
+    larger.  Then, reduce the size of the Illumicone image inside the window
+    by holding down shift then left-click and drag downward somewhere inside
+    the window.  Do the drag very slowly because the redraw is super slow.  If
+    you make it too small, drag upward to make it bigger.  The trick is to
+    drag in small movements then allow the redraw to catch up and stop before
+    dragging further.  Once the Illumicone image the correct size to fit in
+    the window, you can rotate it by dragging without holding the shift key.
+    (One could argue that the graphics performance of gl_server is so poor as
+    to be barely usable.  But, hey, it's runing on a $50 computer, which is
+    pretty cool!)
+
+    gl_server puts itself in the background.  Press <enter> in the terminal
+    window to see a prompt again.
+
+    patternController
+
+    You should see the magenta safety lights at the top and bottom of
+    Illumicone turn on.
+
+    Open a second terminal window, then start the widget data playback
+    program.
+
+    widgetPlayback.py devl/Illumicone/testData/rainstick.log
+
+    You should now see colored raindrops cascading down Illumicone.
+
+    To terminate widgetPlayback.py or patternController, just type control-C
+    in the respective terminal window.  Terminate gl_server by clicking on the
+    X in the upper right-hand corner of the OPC window.
+
+=-=-=-= resume here
 
 =-=-=-=-=-=-=-=
 
@@ -165,75 +206,6 @@ of Illumicone's pixels.
 
 =-=-= check this:    It appears that the file system will be expanded automatically upon first
     boot.
-
-
-1.  Create a file named ssh on the boot partition.
-
-    The easiest way is to boot the RPi with an HDMI monitor connected.  User is
-    pi, password is raspberry.  Otherwise, use a Linux VM to access the boot
-    partition and create the file.
-    
-    If you have a monitor and keyboard connected to the RPi:
-
-        sudo touch /boot/ssh
-        sudo reboot
-
-    If you are accessing the SD card via Ubuntu 14:
-
-        touch /media/<your username>/boot/ssh
-
-    There should be two USB drive icons in Launcher:  one for boot and one for
-    rootfs.  Unmount the SD card by right clicking on one of the USB drive icons
-    and selecting Eject Parent Volume.  Do the same thing for the other icon.
-
-
-
-
-
-
-
-2.  Create user illumicone and add it to the sudo group.
-
-    sudo adduser illumicone
-    sudo adduser illumicone sudo
-
-
-3.  Change user pi's password to be the same as illumicone's.
-
-    passwd
-
-
-3.5  Exit the ssh session then reconnect and log in as illumicone.
-
-
-5.  Set up ssh keys.
-
-    on development system:  scp ~/.ssh/id_rsa.pub illumicone@raspberrypi.local:myrsa.pub
-
-    mkdir .ssh
-    cd .ssh
-    ssh-keygen
-    mv ../myrsa.pub authorized_keys
-    chmod 600 authorized_keys
-
-
-6.  Use raspi-config to change the host name to ic-widpatcon.
-
-    sudo raspi-config 
-    Follow the bouncing ball.
-
-
-7.  Set the time zone.
-
-    sudo raspi-config
-        4 Localisation Options
-        I2 Change Timezone
-        US
-        Mountain
-
-    If using the local console (HDMI and keyboard), it would be a good idea to
-    change the keyboard to a US layout.  It would also be a good idea to
-    change the Wi-Fi country.
 
 
 
@@ -272,185 +244,4 @@ of Illumicone's pixels.
 
     sudo usermod -aG gpio illumicone
 
-
-11.  Set up the RTC.
-
-    Add these lines to the end of /boot/config.txt, then un-commentout the
-    one that matches the installed RTC module:
-        #dtoverlay=i2c-rtc,ds1307
-        #dtoverlay=i2c-rtc,ds3231
-        #dtoverlay=i2c-rtc,pcf8523
-        #dtoverlay=i2c-rtc,pcf8563
-    Reboot.
-
-    Check if RTC is present:
-        i2cdetect -y 1
-        Look for UU at address 0x68 (0x51 for PCF8563).
-
-    Disable the fake hwclock.
-        sudo apt-get -y remove fake-hwclock
-        sudo update-rc.d -f fake-hwclock remove
-
-    Comment out these three lines in /lib/udev/hwclock-set:
-        #if [ -e /run/systemd/system ] ; then
-        # exit 0
-        #fi
-    Also may need to comment out the two lines with --systz.  Adafruit (where
-    these steps came from) says nothing about that, but Durham's "Raspberry Pi
-    2 in a Pieshell" says to do that.
-
-    Set the system time (UTC), or allow it to be set from a network source.
-        sudo date --set="2017-09-16 02:44:38"
-
-    Write the current system time to the RTC:
-        sudo hwclock -w
-
-    To read the time directly from the RTC (with debug output):
-        sudo hwclock -r --verbose
-
-    To copy the time from the clock module to the system clock:
-        sudo hwclock -s
-
-
-12.  If using the Sunfounder PCF8563 RTC module with DS18B20 temperature
-     sensor, enable 1-Wire support.
-
-    Add this line to /boot/config.txt:
-        dtoverlay=w1-gpio
-    Reboot.
-    (May also be able to do this through raspi-config.)
-
-    Use lsmod to verify that the w1-gpio and w1-therm modules are loaded.
-
-    Look in /sys/bus/w1/devices for a directory name starting with 28-xxx,
-    where xxx is the serial number of the DS18B20 device.  Example:
-        illumicone@ic-widpatcon:~ $ ls /sys/bus/w1/devices
-        28-0416b35037ff  w1_bus_master1
-
-    To read the device, Use cat to read the w1_slave file in the directory.
-        illumicone@ic-widpatcon:~ $ cat /sys/bus/w1/devices/28-0416b35037ff/w1_slave 
-        f8 01 4b 46 1f ff 1f 10 d1 : crc=d1 YES
-        f8 01 4b 46 1f ff 1f 10 d1 t=31500
-
-    t is the temperature in degrees C * 1000.  So, in the above example, the
-    temperature is 31.5 C (88.7 F).
-
-
-13.  Set up NTP server.
-
-    sudo apt-get install ntp
-
-    Merge the differences between ~/devl/Illumicone/config/ntp_server.conf and
-    /etc/ntp.conf.
-
-
-18.  Set up Wi-Fi to access the development network.
-
-    Use raspi-config to set the country.
-        4 Localisation Options
-        I4 Change Wi-Fi Country
-        US
-
-    To see what networks are visible:
-        sudo iwlist wlan0 scan
-        sudo wpa_cli scan_results
-
-    Add this to /etc/wpa_supplicant/wpa_supplicant.conf:
-        network={
-                ssid="thessid"
-                psk="thepassword"
-        }
-    Or, decrypt ~devl/Illumicone/config/wpa_supplicant.conf.gpg into
-    wpa_supplicant.conf, copy the file to /etc/wpa_supplicant, and set its
-    permissions to 600.
-
-    Use ifconfig to see if the connection was successful.
-
-    wpa-supplicant should notice the change.  If it doesn't, try this:
-        sudo wpa_cli
-            interface wlan0
-            reconfigure
-
-    If that doesn't work, reboot.
-
-    Another way to do this is to use the wpa_passphrase utility:
-        wpa_passphrase "thessid" "thepassword" | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
-    Then, edit wpa_supplicant.conf and removed the commented-out password.
-
-    This might help with hidden networks:
-        scan_ssid=1
-
-    Add this when configuring multiple networks (higher priority value means
-    more preferred):
-        priority=1
-        id_str="networkOne"
-        ...
-        priority=2
-        id_str="networkTwo"
-
-    For unsecured networks, use this instead of psk:
-        key_mgmt=NONE
-
-
-19.  Assign static IP address 192.168.69.103 for ic-widpatcon on wired network.
-
-    Add this to /etc/dhcpcd.conf (note the extra "c" in the file name):
-        # Assign a lower metric to wlan0 to encourage using it for Internet requests.
-        interface wlan0
-        metric 200
-        # Use a static IP address on the Illumicone network.
-        interface eth0
-        static ip_address=192.168.69.103/24
-        static routers=192.168.69.1
-        static domain_name_servers=208.67.222.222 192.168.69.1
-        metric 300
-
-20.  Set up illumicone's crontab.
-
-    crontab ~/devl/Illumicone/config/widpatcon_crontab
-
-
-21.  Follow the instructions in config/patternController.service and
-     config/widgetRcvr.service to set up those services.
-
-
-
-================================================================================
-
-Useful Commands and Stuff
--------------------------
-
-* Networking
-
-    View kernel routing table:  route -n
-
-    Change config without reboot:
-        sudo systemctl daemon-reload
-        sudo systemctl restart dhcpcd
-
-* Wi-Fi
-
-    status:  sudo wpa_cli status
-    view detected networks:  sudo wpa_cli scan_results
-    re-read configuration:  sudo wpa_cli reconfigure
-
-    wpa_cli may not default to the correct interface.  If you don't see
-    reasonable results to the above commands, run wpa_cli interactively, use
-    "interface wlan0" to select the built-in Wi-Fi interface, then execute the
-    above commands in the interactive session.
-
-* Shrink image file
-
-    raspbian-shrink is a nice script for shrinking an RPi (or BBB) image file.
-    It runs fine under Ubuntu 14.04.  You can get it here:
-
-    https://github.com/aoakley/cotswoldjam.git
-
-    Or, use the skipzone fork to get a fix for the extra space between "83" and
-    "Linux" in fdisk output on Ubuntu 14.04.3.
-
-* Updates
-
-    sudo nohup apt-get update --yes > update.out 2>update.err &
-    sudo nohup apt-get upgrade --yes > upgrade.out 2>upgrade.err &
 
