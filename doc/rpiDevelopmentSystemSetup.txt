@@ -79,6 +79,7 @@ What you will need:
     dnsutils
     mesa-common-dev (for openpixelcontrol)
     freeglut3-dev (for openpixelcontrol)
+    -=-= TODO:  No.  Installs ancient version 1.0.5.  arduino (use the one titled "AVR development board IDE . . ."
 
 
 7.  Create your user account, and add it to the sudo group.  Open a terminal
@@ -126,7 +127,6 @@ What you will need:
     cp devl/Illumicone/config/vimrc .vimrc
     cp devl/Illumicone/sbin/bash_aliases .bash_aliases
     cp devl/Illumicone/sbin/illumicone_aliases .illumicone_aliases
-
 
 11. Install RF24 using tmrh20's fork of RF24 on Github.  This is the same one we
     use for the widget Arduinos.  You will need RF24 to build the Illumicone
@@ -199,6 +199,28 @@ What you will need:
     X in the upper right-hand corner of the OPC window.
 
 =-=-=-= resume here
+
+Install the Arduino IDE.  (Download from arduino.cc rather than installing via
+Add / Remove Software in order to get a current version.)
+
+cd
+wget -P Downloads https://downloads.arduino.cc/arduino-1.8.10-linuxarm.tar.xz
+tar -xvf Downloads/arduino-1.8.10-linuxarm.tar.xz
+cd arduino-1.8.10
+sudo ./install.sh
+sudo usermod -a -G dialout <username>
+cp -Rv devl/Illumicone/Arduino/libraries/Illumicone/ Arduino/libraries/
+
+Log out then log back in again.
+
+https://www.arduino.cc/en/Guide/Linux
+
+Install the following libraries in the Arduino IDE:
+
+    RF24 by TMRh20
+
+
+
 
 =-=-=-=-=-=-=-=
 
