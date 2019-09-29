@@ -15,7 +15,8 @@ set ai
 set nocompatible
 
 " turn on the "visual bell" - which is much quieter than the "audio blink"
-set vb
+" Note:  This can cause the display frequently to go blank.
+"set vb
 
 " do not highlight words when searching for them. it's distracting.
 "set nohlsearch
