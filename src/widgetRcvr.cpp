@@ -674,18 +674,18 @@ bool loadRadioConfig(const json11::Json& radioConfigObject, unsigned int radioId
     bool successful = true;
     int i;
 
-    if (!ConfigReader::getIntValue(configObject, "rfChannel", i, errMsgSuffix, 1, 125)) {
+    if (!ConfigReader::getIntValue(radioConfigObject, "rfChannel", i, errMsgSuffix, 1, 125)) {
         successful = false;
     }
     else {
         rfChannel[radioIdx] = i;
     }
 
-    if (!ConfigReader::getBoolValue(configObject, "autoAck", autoAck[radioIdx], errMsgSuffix)) {
+    if (!ConfigReader::getBoolValue(radioConfigObject, "autoAck", autoAck[radioIdx], errMsgSuffix)) {
         successful = false;
     }
 
-    if (!ConfigReader::getStringValue(configObject, "rfPowerLevel", rfPowerLevelStr[radioIdx], errMsgSuffix)) {
+    if (!ConfigReader::getStringValue(radioConfigObject, "rfPowerLevel", rfPowerLevelStr[radioIdx], errMsgSuffix)) {
         successful = false;
     }
     else if (rfPowerLevelStr[radioIdx] == "RF24_PA_MIN") {
@@ -708,7 +708,7 @@ bool loadRadioConfig(const json11::Json& radioConfigObject, unsigned int radioId
         successful = false;
     }
 
-    if (!ConfigReader::getStringValue(configObject, "dataRate", dataRateStr[radioIdx], errMsgSuffix)) {
+    if (!ConfigReader::getStringValue(radioConfigObject, "dataRate", dataRateStr[radioIdx], errMsgSuffix)) {
         successful = false;
     }
     else if (dataRateStr[radioIdx] == "RF24_250KBPS") {
@@ -724,21 +724,21 @@ bool loadRadioConfig(const json11::Json& radioConfigObject, unsigned int radioId
         successful = false;
     }
 
-    if (!ConfigReader::getIntValue(configObject, "txRetryDelayMultiplier", i, errMsgSuffix, 0, 15)) {
+    if (!ConfigReader::getIntValue(radioConfigObject, "txRetryDelayMultiplier", i, errMsgSuffix, 0, 15)) {
         successful = false;
     }
     else {
         txRetryDelayMultiplier[radioIdx] = i;
     }
 
-    if (!ConfigReader::getIntValue(configObject, "txMaxRetries", i, errMsgSuffix, 1, 15)) {
+    if (!ConfigReader::getIntValue(radioConfigObject, "txMaxRetries", i, errMsgSuffix, 1, 15)) {
         successful = false;
     }
     else {
         txMaxRetries[radioIdx] = i;
     }
 
-    if (!ConfigReader::getStringValue(configObject, "crcLength", crcLengthStr[radioIdx], errMsgSuffix)) {
+    if (!ConfigReader::getStringValue(radioConfigObject, "crcLength", crcLengthStr[radioIdx], errMsgSuffix)) {
         successful = false;
     }
     else if (crcLengthStr[radioIdx] == "RF24_CRC_DISABLED") {
@@ -839,6 +839,10 @@ bool readConfig()
             }
         }
     }
+    if (numRadios == 0) {
+        logger.logMsg(LOG_ERR, "No radios are configured.");
+        return false;
+    }
 
     if (!ConfigReader::getUnsignedIntValue(configObject, "logRotationIntervalMinutes", logRotationIntervalMinutes, errMsgSuffix, 1)) {
         return false;
@@ -900,6 +904,7 @@ bool configureRadios()
 {
     for (unsigned int radioIdx = 0; radioIdx < numRadios; ++radioIdx) {
 
+        logger.logMsg(LOG_DEBUG, "Instantiating RF24 object for radio %d.", radioIdx);
         switch(radioIdx) {
             // RF24 constructor takes CE GPIO, A*10+B for SPI device at /dev/spidevA.B
             case 0:
@@ -913,11 +918,13 @@ bool configureRadios()
                 return false;
         }
 
+        logger.logMsg(LOG_DEBUG, "Calling radio[%d]->begin.", radioIdx);
         if (!radio[radioIdx]->begin()) {
             logger.logMsg(LOG_ERR, "radio[%d]->begin failed.", radioIdx);
             return false;
         }
 
+        logger.logMsg(LOG_DEBUG, "Setting configuration of radio %d.", radioIdx);
         radio[radioIdx]->setPALevel(rfPowerLevel[radioIdx]);
         radio[radioIdx]->setRetries(txRetryDelayMultiplier[radioIdx], txMaxRetries[radioIdx]);
         radio[radioIdx]->setDataRate(dataRate[radioIdx]);
@@ -927,12 +934,14 @@ bool configureRadios()
         radio[radioIdx]->setCRCLength(crcLength[radioIdx]);
 
         for (uint8_t i = 0; i < numReadPipes; ++i) {
+            logger.logMsg(LOG_DEBUG, "Opening read pipe %d for radio %d.", i, radioIdx);
             radio[radioIdx]->openReadingPipe(i, readPipeAddresses[i]);
         }
 
         logger.logMsg(LOG_INFO, "Radio %d configuration details:", radioIdx);
         radio[radioIdx]->printDetails();
 
+        logger.logMsg(LOG_DEBUG, "Calling radio[%d]->startListening.", radioIdx);
         radio[radioIdx]->startListening();
         logger.logMsg(LOG_INFO, "Now listening for widget data on radio %d.", radioIdx);
     }
