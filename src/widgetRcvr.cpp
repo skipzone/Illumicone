@@ -59,6 +59,8 @@ constexpr uint8_t maxPayloadSize = 32;
 constexpr uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
 constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 
+constexpr int maxRadios = 2;
+
 
 // ---------- command line options and their defaults ----------
 
@@ -120,6 +122,8 @@ static volatile bool gotReinitSignal;
 static struct sockaddr_in widgetSockAddr[16];
 static int widgetSock[16];
 
+RF24* radio[maxRadios];
+/*
 #ifdef RF24_SPI_DEV
 // RF24 radio(<ce_pin>, <a>*10+<b>) for spi device at /dev/spidev<a>.<b>
 // See http://pi.gadgetoid.com/pinout
@@ -132,7 +136,7 @@ RF24 radio(25, 0);
 #error oh shit!
 RF24 radio(RPI_BPLUS_GPIO_J8_22, RPI_BPLUS_GPIO_J8_24, BCM2835_SPI_SPEED_8MHZ);
 #endif
-
+*/
 
 static void usage();
 static void getCommandLineOptions(int argc, char* argv[]);
@@ -862,27 +866,30 @@ bool closeUdpPorts()
 
 bool configureRadio()
 {
-    if (!radio.begin()) {
-        logger.logMsg(LOG_ERR, "radio.begin failed.");
+    radio[0] = new RF24(25, 0);
+    radio[1] = new RF24(24, 1);
+
+    if (!radio[0]->begin()) {
+        logger.logMsg(LOG_ERR, "radio[0]->begin failed.");
         return false;
     }
 
-    radio.setPALevel(rfPowerLevel);
-    radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
-    radio.setDataRate(dataRate);
-    radio.setChannel(rfChannel);
-    radio.setAutoAck(autoAck);
-    radio.enableDynamicPayloads();
-    radio.setCRCLength(crcLength);
+    radio[0]->setPALevel(rfPowerLevel);
+    radio[0]->setRetries(txRetryDelayMultiplier, txMaxRetries);
+    radio[0]->setDataRate(dataRate);
+    radio[0]->setChannel(rfChannel);
+    radio[0]->setAutoAck(autoAck);
+    radio[0]->enableDynamicPayloads();
+    radio[0]->setCRCLength(crcLength);
 
     for (uint8_t i = 0; i < numReadPipes; ++i) {
-        radio.openReadingPipe(i, readPipeAddresses[i]);
+        radio[0]->openReadingPipe(i, readPipeAddresses[i]);
     }
 
     logger.logMsg(LOG_INFO, "Radio configuration details:");
-    radio.printDetails();
+    radio[0]->printDetails();
 
-    radio.startListening();
+    radio[0]->startListening();
     logger.logMsg(LOG_INFO, "Now listening for widget data.");
 
     return true;
@@ -892,10 +899,15 @@ bool configureRadio()
 bool shutDownRadio()
 {
     for (uint8_t i = 0; i < numReadPipes; ++i) {
-        radio.closeReadingPipe(i);
+        radio[0]->closeReadingPipe(i);
     }
 
     // TODO:  Maybe someday power it off here (and also power it on in configureRadio).
+
+    delete radio[0];
+    radio[0] = nullptr;
+    delete radio[1];
+    radio[1] = nullptr;
 
     return true;
 }
@@ -1006,12 +1018,12 @@ bool runLoop()
         }
 
         uint8_t pipeNum;
-        while (radio.available(&pipeNum)) {
+        while (radio[0]->available(&pipeNum)) {
 
             time(&lastDataReceivedTime);
             noDataReceivedMessageIntervalS = 2;
 
-            unsigned int payloadSize = radio.getDynamicPayloadSize();
+            unsigned int payloadSize = radio[0]->getDynamicPayloadSize();
             if (payloadSize == 0) {
                 // The zero-length packet burst problem makes the log file massive.
                 // To prevent that until we can find and fix the cause, we'll log
@@ -1039,14 +1051,14 @@ bool runLoop()
                 // apparently didn't do that.  Who knows what we're supposed
                 // to do now.  We'll try turning receive off and on to clear
                 // the rx buffers and start over.
-                radio.stopListening();
+                radio[0]->stopListening();
                 delay(100);
-                radio.startListening();
+                radio[0]->startListening();
                 continue;
             }
 
             uint8_t payload[payloadSize];
-            radio.read(payload, payloadSize);
+            radio[0]->read(payload, payloadSize);
 
             stringstream sstr;
 
