@@ -521,19 +521,20 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
 }
 
 
-void handleStressTestPayload(const StressTestPayload* payload, unsigned int payloadSize)
+void handleStressTestPayload(const StressTestPayload* payload, unsigned int payloadSize, unsigned int radioIdx)
 {
-    static int lastPayloadNum;
+    static int lastPayloadNum[maxRadios];
 
     if (payloadSize != sizeof(StressTestPayload)) {
         logger.logMsg(LOG_ERR,
-                      "Got StressTestPayload payload with size %d, but size %d was expected.",
-                      payloadSize, sizeof(StressTestPayload));
+                      "Got StressTestPayload payload on radio %d with size %d, but size %d was expected.",
+                      radioIdx, payloadSize, sizeof(StressTestPayload));
         return;
     }
 
     dataLogger.logMsg(LOG_INFO,
-                  "stest: id=%d a=%d ch=%d seq=%d lastTxUs=%d fails=%d(%d%%)",
+                  "stest: radio=%d id=%d a=%d ch=%d seq=%d lastTxUs=%d fails=%d(%d%%)",
+                  radioIdx,
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
                   payload->widgetHeader.channel,
@@ -542,11 +543,11 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
                   payload->numTxFailures,
                   payload->numTxFailures * 100 / payload->payloadNum);
 
-    int payloadNumChange = (int) payload->payloadNum - lastPayloadNum;
+    int payloadNumChange = (int) payload->payloadNum - lastPayloadNum[radioIdx];
     if (payloadNumChange != 1) {
-        logger.logMsg(LOG_WARNING, "stest message gap:  %d", payloadNumChange);
+        logger.logMsg(LOG_WARNING, "radio %d stest message gap:  %d", radioIdx, payloadNumChange);
     }
-    lastPayloadNum = payload->payloadNum;
+    lastPayloadNum[radioIdx] = payload->payloadNum;
 
     if (payload->widgetHeader.id != 0) {
         UdpPayload udpPayload;
@@ -1112,7 +1113,7 @@ bool pollRadio(unsigned int radioIdx)
         switch(pipeNum) {
 
             case 0:
-                handleStressTestPayload((StressTestPayload*) payload, payloadSize);
+                handleStressTestPayload((StressTestPayload*) payload, payloadSize, radioIdx);
                 break;
 
             case 1:
