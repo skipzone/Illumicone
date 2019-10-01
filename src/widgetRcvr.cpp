@@ -46,9 +46,6 @@
 using namespace std;
 
 
-#define RF24_SPI_DEV
-
-
 // ---------- constants ----------
 
 constexpr unsigned int reinitializationSleepIntervalS = 1;
@@ -78,6 +75,7 @@ static string lockFilePath;
 static string logFilePath = ".";
 static std::string pidFilePathName;
 static string patconIpAddress;
+static unsigned int numRadios;
 static unsigned int radioPollingLoopSleepIntervalUs;
 static unsigned int widgetPortNumberBase;
 static unsigned int logRotationIntervalMinutes;
@@ -88,26 +86,26 @@ static int logRotationOffsetMinute;
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-static uint8_t rfChannel;
+static uint8_t rfChannel[maxRadios];
 
 // Probably no need to ever set auto acknowledgement to false because the sender
 // can control whether or not acks are sent by using the NO_ACK bit.
-static bool autoAck;
+static bool autoAck[maxRadios];
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-static rf24_pa_dbm_e rfPowerLevel;
-static string rfPowerLevelStr;
+static rf24_pa_dbm_e rfPowerLevel[maxRadios];
+static string rfPowerLevelStr[maxRadios];
 
 // RF24_250KBPS or RF24_1MBPS
-static rf24_datarate_e dataRate;
-static string dataRateStr;
+static rf24_datarate_e dataRate[maxRadios];
+static string dataRateStr[maxRadios];
 
-static uint8_t txRetryDelayMultiplier = 15;  // 250 us additional delay multiplier (0-15)
-static uint8_t txMaxRetries = 15;            // max retries (0-15)
+static uint8_t txRetryDelayMultiplier[maxRadios] = 15;  // 250 us additional delay multiplier (0-15)
+static uint8_t txMaxRetries[maxRadios] = 15;            // max retries (0-15)
 
 // RF24_CRC_DISABLED, RF24_CRC_8, or RF24_CRC_16 (the only sane choice)
-static rf24_crclength_e crcLength;
-static string crcLengthStr;
+static rf24_crclength_e crcLength[maxRadios];
+static string crcLengthStr[maxRadios];
 
 
 // ---------- globals ----------
@@ -123,20 +121,6 @@ static struct sockaddr_in widgetSockAddr[16];
 static int widgetSock[16];
 
 RF24* radio[maxRadios];
-/*
-#ifdef RF24_SPI_DEV
-// RF24 radio(<ce_pin>, <a>*10+<b>) for spi device at /dev/spidev<a>.<b>
-// See http://pi.gadgetoid.com/pinout
-RF24 radio(25, 0);
-#else
-// Radio CE Pin, CSN Pin, SPI Speed
-// See http://www.airspayce.com/mikem/bcm2835/group__constants.html#ga63c029bd6500167152db4e57736d0939
-// and the related enumerations for pin information.  (That's some pretty useful shit right there, Maynard.)
-// Raspberry Pi B+:  CE connected to GPIO25 on J8-22, CSN connected to CE0
-#error oh shit!
-RF24 radio(RPI_BPLUS_GPIO_J8_22, RPI_BPLUS_GPIO_J8_24, BCM2835_SPI_SPEED_8MHZ);
-#endif
-*/
 
 static void usage();
 static void getCommandLineOptions(int argc, char* argv[]);
@@ -667,6 +651,105 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
  * Initialization, Run Loop, and Entry Point *
  *********************************************/
 
+bool loadRadioConfig(const json11::Json& radioConfigObject, unsigned int radioIdx)
+{
+    //logger.logMsg(LOG_DEBUG, "radioConfigObject:  " + radioConfigObject.dump());
+
+    if (radioIdx >= maxRadios) {
+        logger.logMsg(LOG_ERR, "Too many radios configured.  Maximum is %d.", maxRadios);
+        return false;
+    }
+
+    bool successful = true;
+    int i;
+
+    if (!ConfigReader::getIntValue(configObject, "rfChannel", i, errMsgSuffix, 1, 125)) {
+        successful = false;
+    }
+    else {
+        rfChannel[radioIdx] = i;
+    }
+
+    if (!ConfigReader::getBoolValue(configObject, "autoAck", autoAck[radioIdx], errMsgSuffix)) {
+        successful = false;
+    }
+
+    if (!ConfigReader::getStringValue(configObject, "rfPowerLevel", rfPowerLevelStr[radioIdx], errMsgSuffix)) {
+        successful = false;
+    }
+    else if (rfPowerLevelStr[radioIdx] == "RF24_PA_MIN") {
+        rfPowerLevel[radioIdx] = RF24_PA_MIN;
+    }
+    else if (rfPowerLevelStr[radioIdx] == "RF24_PA_LOW") {
+        rfPowerLevel[radioIdx] = RF24_PA_LOW;
+    }
+    else if (rfPowerLevelStr[radioIdx] == "RF24_PA_HIGH") {
+        rfPowerLevel[radioIdx] = RF24_PA_HIGH;
+    }
+    else if (rfPowerLevelStr[radioIdx] == "RF24_PA_MAX") {
+        rfPowerLevel[radioIdx] = RF24_PA_MAX;
+    }
+    else {
+        logger.logMsg(LOG_ERR,
+                      "Invalid rfPowerLevel value \"%s\".  Valid values are"
+                      " RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, and RF24_PA_MAX.",
+                      rfPowerLevelStr[radioIdx].c_str());
+        successful = false;
+    }
+
+    if (!ConfigReader::getStringValue(configObject, "dataRate", dataRateStr[radioIdx], errMsgSuffix)) {
+        successful = false;
+    }
+    else if (dataRateStr[radioIdx] == "RF24_250KBPS") {
+        dataRate[radioIdx] = RF24_250KBPS;
+    }
+    else if (dataRateStr[radioIdx] == "RF24_1MBPS") {
+        dataRate[radioIdx] = RF24_1MBPS;
+    }
+    else {
+        logger.logMsg(LOG_ERR,
+                      "Invalid dataRate value \"%s\".  Valid values are RF24_250KBPS and RF24_1MBPS.",
+                      dataRateStr[radioIdx].c_str());
+        successful = false;
+    }
+
+    if (!ConfigReader::getIntValue(configObject, "txRetryDelayMultiplier", i, errMsgSuffix, 0, 15)) {
+        successful = false;
+    }
+    else {
+        txRetryDelayMultiplier[radioIdx] = i;
+    }
+
+    if (!ConfigReader::getIntValue(configObject, "txMaxRetries", i, errMsgSuffix, 1, 15)) {
+        successful = false;
+    }
+    else {
+        txMaxRetries[radioIdx] = i;
+    }
+
+    if (!ConfigReader::getStringValue(configObject, "crcLength", crcLengthStr[radioIdx], errMsgSuffix)) {
+        successful = false;
+    }
+    else if (crcLengthStr[radioIdx] == "RF24_CRC_DISABLED") {
+        crcLength[radioIdx] = RF24_CRC_DISABLED;
+    }
+    else if (crcLengthStr[radioIdx] == "RF24_CRC_8") {
+        crcLength[radioIdx] = RF24_CRC_8;
+    }
+    else if (crcLengthStr[radioIdx] == "RF24_CRC_16") {
+        crcLength[radioIdx] = RF24_CRC_16;
+    }
+    else {
+        logger.logMsg(LOG_ERR,
+                      "Invalid dataRate value \"%s\".  Valid values are RF24_CRC_DISABLED, RF24_CRC_8, and RF24_CRC_16.",
+                      crcLengthStr[radioIdx].c_str());
+        successful = false;
+    }
+
+    return successful;
+}
+
+
 bool readConfig()
 {
     // Read the configuration file, and merge the instance-specific and common
@@ -724,88 +807,26 @@ bool readConfig()
         successful = false;
     }
 
-    int i;
-    if (!ConfigReader::getIntValue(configObject, "rfChannel", i, errMsgSuffix, 1, 125)) {
-        successful = false;
-    }
-    else {
-        rfChannel = i;
-    }
-
-    if (!ConfigReader::getBoolValue(configObject, "autoAck", autoAck, errMsgSuffix)) {
-        successful = false;
-    }
-
-    if (!ConfigReader::getStringValue(configObject, "rfPowerLevel", rfPowerLevelStr, errMsgSuffix)) {
-        successful = false;
-    }
-    else if (rfPowerLevelStr == "RF24_PA_MIN") {
-        rfPowerLevel = RF24_PA_MIN;
-    }
-    else if (rfPowerLevelStr == "RF24_PA_LOW") {
-        rfPowerLevel = RF24_PA_LOW;
-    }
-    else if (rfPowerLevelStr == "RF24_PA_HIGH") {
-        rfPowerLevel = RF24_PA_HIGH;
-    }
-    else if (rfPowerLevelStr == "RF24_PA_MAX") {
-        rfPowerLevel = RF24_PA_MAX;
-    }
-    else {
-        logger.logMsg(LOG_ERR,
-                      "Invalid rfPowerLevel value \"%s\".  Valid values are"
-                      " RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, and RF24_PA_MAX.",
-                      rfPowerLevelStr.c_str());
-        successful = false;
-    }
-
-    if (!ConfigReader::getStringValue(configObject, "dataRate", dataRateStr, errMsgSuffix)) {
-        successful = false;
-    }
-    else if (dataRateStr == "RF24_250KBPS") {
-        dataRate = RF24_250KBPS;
-    }
-    else if (dataRateStr == "RF24_1MBPS") {
-        dataRate = RF24_1MBPS;
-    }
-    else {
-        logger.logMsg(LOG_ERR,
-                      "Invalid dataRate value \"%s\".  Valid values are RF24_250KBPS and RF24_1MBPS.",
-                      dataRateStr.c_str());
-        successful = false;
-    }
-
-    if (!ConfigReader::getIntValue(configObject, "txRetryDelayMultiplier", i, errMsgSuffix, 0, 15)) {
-        successful = false;
-    }
-    else {
-        txRetryDelayMultiplier = i;
-    }
-
-    if (!ConfigReader::getIntValue(configObject, "txMaxRetries", i, errMsgSuffix, 1, 15)) {
-        successful = false;
-    }
-    else {
-        txMaxRetries = i;
-    }
-
-    if (!ConfigReader::getStringValue(configObject, "crcLength", crcLengthStr, errMsgSuffix)) {
-        successful = false;
-    }
-    else if (crcLengthStr == "RF24_CRC_DISABLED") {
-        crcLength = RF24_CRC_DISABLED;
-    }
-    else if (crcLengthStr == "RF24_CRC_8") {
-        crcLength = RF24_CRC_8;
-    }
-    else if (crcLengthStr == "RF24_CRC_16") {
-        crcLength = RF24_CRC_16;
-    }
-    else {
-        logger.logMsg(LOG_ERR,
-                      "Invalid dataRate value \"%s\".  Valid values are RF24_CRC_DISABLED, RF24_CRC_8, and RF24_CRC_16.",
-                      crcLengthStr.c_str());
-        successful = false;
+    numRadios = 0;
+    for (auto& radioConfigObject : configObject["radios"].array_items()) {
+        if (radioConfigObject["radios"].is_array()) {
+            for (auto& nestedRadioConfigObject : radioConfigObject["radios"].array_items()) {
+                if (loadRadioConfig(nestedRadioConfigObject, numRadios)) {
+                    ++numRadios;
+                }
+                else {
+                    successful = false;
+                }
+            }
+        }
+        else {
+            if (loadRadioConfig(radioConfigObject, numRadios)) {
+                ++numRadios;
+            }
+            else {
+                successful = false;
+            }
+        }
     }
 
     if (!ConfigReader::getUnsignedIntValue(configObject, "logRotationIntervalMinutes", logRotationIntervalMinutes, errMsgSuffix, 1)) {
@@ -864,50 +885,64 @@ bool closeUdpPorts()
 }
 
 
-bool configureRadio()
+bool configureRadios()
 {
-    radio[0] = new RF24(25, 0);
-    radio[1] = new RF24(24, 1);
+    for (radioIdx = 0; radioIdx < numRadios; ++radioIdx) {
 
-    if (!radio[0]->begin()) {
-        logger.logMsg(LOG_ERR, "radio[0]->begin failed.");
-        return false;
+        switch(radioIdx) {
+            // RF24 constructor takes CE GPIO, A*10+B for SPI device at /dev/spidevA.B
+            case 0:
+                radio[radioIdx] = new RF24(25, 0);      // CE on GPIO 25 (J8 pin 22), SPI device spidev0.0
+                break;
+            case 1:
+                radio[radioIdx] = new RF24(24, 1);      // CE on GPIO 24 (J8 pin 18), SPI device spidev0.1
+                break;
+            default:
+                logger.logMsg(LOG_ERR, "No SPI interface defined for radio %d.", radioIdx);
+                return false;
+        }
+
+        if (!radio[radioIdx]->begin()) {
+            logger.logMsg(LOG_ERR, "radio[%d]->begin failed.", radioIdx);
+            return false;
+        }
+
+        radio[radioIdx]->setPALevel(rfPowerLevel);
+        radio[radioIdx]->setRetries(txRetryDelayMultiplier, txMaxRetries);
+        radio[radioIdx]->setDataRate(dataRate);
+        radio[radioIdx]->setChannel(rfChannel[0]);
+        radio[radioIdx]->setAutoAck(autoAck);
+        radio[radioIdx]->enableDynamicPayloads();
+        radio[radioIdx]->setCRCLength(crcLength);
+
+        for (uint8_t i = 0; i < numReadPipes; ++i) {
+            radio[radioIdx]->openReadingPipe(i, readPipeAddresses[i]);
+        }
+
+        logger.logMsg(LOG_INFO, "Radio %d configuration details:", radioIdx);
+        radio[radioIdx]->printDetails();
+
+        radio[radioIdx]->startListening();
+        logger.logMsg(LOG_INFO, "Now listening for widget data on radio %d.", radioIdx);
     }
-
-    radio[0]->setPALevel(rfPowerLevel);
-    radio[0]->setRetries(txRetryDelayMultiplier, txMaxRetries);
-    radio[0]->setDataRate(dataRate);
-    radio[0]->setChannel(rfChannel);
-    radio[0]->setAutoAck(autoAck);
-    radio[0]->enableDynamicPayloads();
-    radio[0]->setCRCLength(crcLength);
-
-    for (uint8_t i = 0; i < numReadPipes; ++i) {
-        radio[0]->openReadingPipe(i, readPipeAddresses[i]);
-    }
-
-    logger.logMsg(LOG_INFO, "Radio configuration details:");
-    radio[0]->printDetails();
-
-    radio[0]->startListening();
-    logger.logMsg(LOG_INFO, "Now listening for widget data.");
 
     return true;
 }
 
 
-bool shutDownRadio()
+bool shutDownRadios()
 {
-    for (uint8_t i = 0; i < numReadPipes; ++i) {
-        radio[0]->closeReadingPipe(i);
+    for (radioIdx = 0; radioIdx < numRadios; ++radioIdx) {
+
+        for (uint8_t i = 0; i < numReadPipes; ++i) {
+            radio[radioIdx]->closeReadingPipe(i);
+        }
+
+        // TODO:  Maybe someday power it off here (and also power it on in configureRadios).
+
+        delete radio[radioIdx];
+        radio[radioIdx] = nullptr;
     }
-
-    // TODO:  Maybe someday power it off here (and also power it on in configureRadio).
-
-    delete radio[0];
-    radio[0] = nullptr;
-    delete radio[1];
-    radio[1] = nullptr;
 
     return true;
 }
@@ -941,13 +976,17 @@ bool doInitialization()
     logger.logMsg(LOG_INFO, "patconIpAddress = " + patconIpAddress);
     logger.logMsg(LOG_INFO, "radioPollingLoopSleepIntervalUs = %u", radioPollingLoopSleepIntervalUs);
     logger.logMsg(LOG_INFO, "widgetPortNumberBase = %u", widgetPortNumberBase);
-    logger.logMsg(LOG_INFO, "rfChannel = %d", rfChannel);
-    logger.logMsg(LOG_INFO, "autoAck = %s", autoAck ? "true" : "false");
-    logger.logMsg(LOG_INFO, "rfPowerLevel = " + rfPowerLevelStr);
-    logger.logMsg(LOG_INFO, "dataRate = " + dataRateStr);
-    logger.logMsg(LOG_INFO, "txRetryDelayMultiplier = %d", txRetryDelayMultiplier);
-    logger.logMsg(LOG_INFO, "txMaxRetries = %d", txMaxRetries);
-    logger.logMsg(LOG_INFO, "crcLength = " + crcLengthStr);
+
+    for (int i = 0; i < maxRadios; ++i) {
+        logger.logMsg(LOG_INFO, "Radio %d", i);
+        logger.logMsg(LOG_INFO, "  rfChannel = %d", rfChannel[i]);
+        logger.logMsg(LOG_INFO, "  autoAck = %s", autoAck[i] ? "true" : "false");
+        logger.logMsg(LOG_INFO, "  rfPowerLevel = " + rfPowerLevelStr[i]);
+        logger.logMsg(LOG_INFO, "  dataRate = " + dataRateStr);
+        logger.logMsg(LOG_INFO, "  txRetryDelayMultiplier = %d", txRetryDelayMultiplier);
+        logger.logMsg(LOG_INFO, "  txMaxRetries = %d", txMaxRetries);
+        logger.logMsg(LOG_INFO, "  crcLength = " + crcLengthStr);
+    }
 
     logger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
 
@@ -958,7 +997,7 @@ bool doInitialization()
         return false;
     }
 
-    if (!configureRadio()) {
+    if (!configureRadios()) {
         return false;
     }
 
@@ -976,7 +1015,7 @@ bool doTeardown()
         return false;
     }
 
-    if (!shutDownRadio()) {
+    if (!shutDownRadios()) {
         return false;
     }
 
