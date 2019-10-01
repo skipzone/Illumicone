@@ -100,8 +100,8 @@ static string rfPowerLevelStr[maxRadios];
 static rf24_datarate_e dataRate[maxRadios];
 static string dataRateStr[maxRadios];
 
-static uint8_t txRetryDelayMultiplier[maxRadios] = 15;  // 250 us additional delay multiplier (0-15)
-static uint8_t txMaxRetries[maxRadios] = 15;            // max retries (0-15)
+static uint8_t txRetryDelayMultiplier[maxRadios];   // 250 us additional delay multiplier (0-15)
+static uint8_t txMaxRetries[maxRadios];             // max retries (0-15)
 
 // RF24_CRC_DISABLED, RF24_CRC_8, or RF24_CRC_16 (the only sane choice)
 static rf24_crclength_e crcLength[maxRadios];
@@ -122,11 +122,22 @@ static int widgetSock[16];
 
 RF24* radio[maxRadios];
 
+// radio-specific statistics and state data
+// TODO 9/30/2019 ross:  this stuff really should be in an array of struct radioStatistics
+static time_t lastDataReceivedTime[maxRadios];
+static time_t noDataReceivedMessageIntervalS[maxRadios];
+static time_t noDataReceivedMessageTime[maxRadios];
+static int zeroLengthPacketCount[maxRadios];
+static bool lastPacketWasZeroLength[maxRadios];
+
+
+/*
 static void usage();
 static void getCommandLineOptions(int argc, char* argv[]);
 static bool registerSignalHandler();
 static void signalHandler(int signum);
 static void daemonize();
+*/
 
 
 void usage()
@@ -250,33 +261,6 @@ static void getCommandLineOptions(int argc, char* argv[])
 }
 
 
-static bool registerSignalHandler()
-{
-    struct sigaction sa;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-
-    bool succeeded = true;
-
-    sa.sa_handler = signalHandler;
-    if (sigaction(SIGINT, &sa, NULL) < 0) succeeded = false;    // ^C
-    if (sigaction(SIGTERM, &sa, NULL) < 0) succeeded = false;
-    if (sigaction(SIGQUIT, &sa, NULL) < 0) succeeded = false;
-    if (sigaction(SIGHUP, &sa, NULL) < 0) succeeded = false;
-    if (sigaction(SIGUSR1, &sa, NULL) < 0) succeeded = false;
-    if (sigaction(SIGUSR2, &sa, NULL) < 0) succeeded = false;
-
-    sa.sa_handler = SIG_IGN;
-    if (sigaction(SIGCHLD, &sa, NULL) < 0) succeeded = false;
-
-    if (!succeeded) {
-        logger.logMsg(LOG_ERR, "Registration of a handler for one or more signals failed.");
-    }
-
-    return succeeded;
-}
-
-
 static void signalHandler(int signum)
 {
     logger.logMsg(LOG_NOTICE, "Got signal %d.", signum);
@@ -302,6 +286,33 @@ static void signalHandler(int signum)
         default:
             logger.logMsg(LOG_WARNING, "Signal %d is not supported.", signum);
     }
+}
+
+
+static bool registerSignalHandler()
+{
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    bool succeeded = true;
+
+    sa.sa_handler = signalHandler;
+    if (sigaction(SIGINT, &sa, NULL) < 0) succeeded = false;    // ^C
+    if (sigaction(SIGTERM, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGQUIT, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGHUP, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGUSR1, &sa, NULL) < 0) succeeded = false;
+    if (sigaction(SIGUSR2, &sa, NULL) < 0) succeeded = false;
+
+    sa.sa_handler = SIG_IGN;
+    if (sigaction(SIGCHLD, &sa, NULL) < 0) succeeded = false;
+
+    if (!succeeded) {
+        logger.logMsg(LOG_ERR, "Registration of a handler for one or more signals failed.");
+    }
+
+    return succeeded;
 }
 
 
@@ -651,7 +662,7 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
  * Initialization, Run Loop, and Entry Point *
  *********************************************/
 
-bool loadRadioConfig(const json11::Json& radioConfigObject, unsigned int radioIdx)
+bool loadRadioConfig(const json11::Json& radioConfigObject, unsigned int radioIdx, const string& errMsgSuffix)
 {
     //logger.logMsg(LOG_DEBUG, "radioConfigObject:  " + radioConfigObject.dump());
 
@@ -811,7 +822,7 @@ bool readConfig()
     for (auto& radioConfigObject : configObject["radios"].array_items()) {
         if (radioConfigObject["radios"].is_array()) {
             for (auto& nestedRadioConfigObject : radioConfigObject["radios"].array_items()) {
-                if (loadRadioConfig(nestedRadioConfigObject, numRadios)) {
+                if (loadRadioConfig(nestedRadioConfigObject, numRadios, errMsgSuffix)) {
                     ++numRadios;
                 }
                 else {
@@ -820,7 +831,7 @@ bool readConfig()
             }
         }
         else {
-            if (loadRadioConfig(radioConfigObject, numRadios)) {
+            if (loadRadioConfig(radioConfigObject, numRadios, errMsgSuffix)) {
                 ++numRadios;
             }
             else {
@@ -887,7 +898,7 @@ bool closeUdpPorts()
 
 bool configureRadios()
 {
-    for (radioIdx = 0; radioIdx < numRadios; ++radioIdx) {
+    for (unsigned int radioIdx = 0; radioIdx < numRadios; ++radioIdx) {
 
         switch(radioIdx) {
             // RF24 constructor takes CE GPIO, A*10+B for SPI device at /dev/spidevA.B
@@ -907,13 +918,13 @@ bool configureRadios()
             return false;
         }
 
-        radio[radioIdx]->setPALevel(rfPowerLevel);
-        radio[radioIdx]->setRetries(txRetryDelayMultiplier, txMaxRetries);
-        radio[radioIdx]->setDataRate(dataRate);
-        radio[radioIdx]->setChannel(rfChannel[0]);
-        radio[radioIdx]->setAutoAck(autoAck);
+        radio[radioIdx]->setPALevel(rfPowerLevel[radioIdx]);
+        radio[radioIdx]->setRetries(txRetryDelayMultiplier[radioIdx], txMaxRetries[radioIdx]);
+        radio[radioIdx]->setDataRate(dataRate[radioIdx]);
+        radio[radioIdx]->setChannel(rfChannel[radioIdx]);
+        radio[radioIdx]->setAutoAck(autoAck[radioIdx]);
         radio[radioIdx]->enableDynamicPayloads();
-        radio[radioIdx]->setCRCLength(crcLength);
+        radio[radioIdx]->setCRCLength(crcLength[radioIdx]);
 
         for (uint8_t i = 0; i < numReadPipes; ++i) {
             radio[radioIdx]->openReadingPipe(i, readPipeAddresses[i]);
@@ -932,7 +943,7 @@ bool configureRadios()
 
 bool shutDownRadios()
 {
-    for (radioIdx = 0; radioIdx < numRadios; ++radioIdx) {
+    for (unsigned int radioIdx = 0; radioIdx < numRadios; ++radioIdx) {
 
         for (uint8_t i = 0; i < numReadPipes; ++i) {
             radio[radioIdx]->closeReadingPipe(i);
@@ -982,10 +993,10 @@ bool doInitialization()
         logger.logMsg(LOG_INFO, "  rfChannel = %d", rfChannel[i]);
         logger.logMsg(LOG_INFO, "  autoAck = %s", autoAck[i] ? "true" : "false");
         logger.logMsg(LOG_INFO, "  rfPowerLevel = " + rfPowerLevelStr[i]);
-        logger.logMsg(LOG_INFO, "  dataRate = " + dataRateStr);
-        logger.logMsg(LOG_INFO, "  txRetryDelayMultiplier = %d", txRetryDelayMultiplier);
-        logger.logMsg(LOG_INFO, "  txMaxRetries = %d", txMaxRetries);
-        logger.logMsg(LOG_INFO, "  crcLength = " + crcLengthStr);
+        logger.logMsg(LOG_INFO, "  dataRate = " + dataRateStr[i]);
+        logger.logMsg(LOG_INFO, "  txRetryDelayMultiplier = %d", txRetryDelayMultiplier[i]);
+        logger.logMsg(LOG_INFO, "  txMaxRetries = %d", txMaxRetries[i]);
+        logger.logMsg(LOG_INFO, "  crcLength = " + crcLengthStr[i]);
     }
 
     logger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
@@ -1027,14 +1038,136 @@ bool doTeardown()
 }
 
 
+void initRadioStatistics()
+{
+    for (unsigned int radioIdx = 0; radioIdx < numRadios; ++radioIdx) {
+        time(&lastDataReceivedTime[radioIdx]);
+        noDataReceivedMessageIntervalS[radioIdx] = 2;
+        noDataReceivedMessageTime[radioIdx] = 0;
+        zeroLengthPacketCount[radioIdx] = 0;
+        lastPacketWasZeroLength[radioIdx] = false;
+    }
+}
+
+
+bool pollRadio(unsigned int radioIdx)
+{
+    bool dataReceived = false;
+    uint8_t pipeNum;
+
+    while (radio[radioIdx]->available(&pipeNum)) {
+
+        dataReceived = true;
+
+        unsigned int payloadSize = radio[radioIdx]->getDynamicPayloadSize();
+        if (payloadSize == 0) {
+            // The zero-length packet burst problem makes the log file massive.
+            // To prevent that until we can find and fix the cause, we'll log
+            // one message when the first zero-length packet is received and
+            // another with the zero-length packet count when a non-zero-length
+            // packet is finally received.
+            if (!lastPacketWasZeroLength[radioIdx]) {
+                lastPacketWasZeroLength[radioIdx] = true;
+                zeroLengthPacketCount[radioIdx] = 1;
+                logger.logMsg(LOG_ERR, "Got invalid packet (payloadSize = 0) on radio %d.", radioIdx);
+            }
+            else {
+                ++zeroLengthPacketCount[radioIdx];
+            }
+            continue;
+        }
+        if (lastPacketWasZeroLength[radioIdx]) {
+            lastPacketWasZeroLength[radioIdx] = false;
+            logger.logMsg(LOG_ERR,
+                          "%d zero-length packets were received on radio %d.",
+                          zeroLengthPacketCount[radioIdx], radioIdx);
+        }
+        if (payloadSize > maxPayloadSize) {
+            logger.logMsg(LOG_ERR, "Got unsupported payload size %d on radio %d.", payloadSize, radioIdx);
+            // RF24 is supposed to do a Flush_RX command and return 0 for
+            // the size if an invalid payload length is detected.  It
+            // apparently didn't do that.  Who knows what we're supposed
+            // to do now.  We'll try turning receive off and on to clear
+            // the rx buffers and start over.
+            radio[radioIdx]->stopListening();
+            delay(100);
+            radio[radioIdx]->startListening();
+            continue;
+        }
+
+        uint8_t payload[payloadSize];
+        radio[radioIdx]->read(payload, payloadSize);
+
+        stringstream sstr;
+
+        switch(pipeNum) {
+
+            case 0:
+                handleStressTestPayload((StressTestPayload*) payload, payloadSize);
+                break;
+
+            case 1:
+                handlePositionVelocityPayload((PositionVelocityPayload*) payload, payloadSize);
+                break;
+
+            case 2:
+                handleMeasurementVectorPayload((MeasurementVectorPayload*) payload, payloadSize);
+                break;
+
+            case 3:
+            case 4:
+                for (unsigned int i = 0; i < maxPayloadSize; ++i) {
+                    sstr << " 0x" << hex << (int) payload[i];
+                }
+                logger.logMsg(LOG_ERR,
+                       "Got payload with size %d via unsupported pipe %d on radio %d.  Contents: %s",
+                       payloadSize, (int) pipeNum, radioIdx, sstr.str().c_str());
+                break;
+
+            case 5:
+                handleCustomPayload((CustomPayload*) payload, payloadSize);
+                break;
+
+            default:
+                for (unsigned int i = 0; i < maxPayloadSize; ++i) {
+                    sstr << " 0x" << hex << (int) payload[i];
+                }
+                logger.logMsg(LOG_ERR,
+                       "pipeNum on radio %d is %d, which should never happen!  Payload contents: %s",
+                       radioIdx, (int) pipeNum, sstr.str().c_str());
+        }
+    }
+
+    if (dataReceived) {
+        time(&lastDataReceivedTime[radioIdx]);
+        noDataReceivedMessageIntervalS[radioIdx] = 2;
+    }
+    else {
+        time_t now;
+        time(&now);
+        if (now != noDataReceivedMessageTime[radioIdx]) {
+            time_t noDataReceivedIntervalS = now - lastDataReceivedTime[radioIdx];
+            if (noDataReceivedIntervalS >= noDataReceivedMessageIntervalS[radioIdx]
+                && noDataReceivedIntervalS % noDataReceivedMessageIntervalS[radioIdx] == 0)
+            {
+                logger.logMsg(LOG_INFO,
+                              "No widget data received on radio %d for %ld seconds.",
+                              radioIdx, noDataReceivedIntervalS);
+                noDataReceivedMessageTime[radioIdx] = now;
+                if (noDataReceivedMessageIntervalS[radioIdx] <= 32) {
+                    noDataReceivedMessageIntervalS[radioIdx] *= 2;
+                }
+            }
+        }
+    }
+
+    return dataReceived;
+}
+
+
 bool runLoop()
 {
-    time_t lastDataReceivedTime;
-    time(&lastDataReceivedTime);
-    time_t noDataReceivedMessageIntervalS = 2;
-    time_t noDataReceivedMessageTime = 0;
-    int zeroLengthPacketCount = 0;
-    bool lastPacketWasZeroLength = false;
+    initRadioStatistics();
 
     while (!gotExitSignal) {
 
@@ -1051,114 +1184,19 @@ bool runLoop()
             if (!readConfig() || !doInitialization()) {
                 return false;
             }
-            time(&lastDataReceivedTime);
-            noDataReceivedMessageIntervalS = 2;
-            noDataReceivedMessageTime = 0;
+            initRadioStatistics();
         }
 
-        uint8_t pipeNum;
-        while (radio[0]->available(&pipeNum)) {
-
-            time(&lastDataReceivedTime);
-            noDataReceivedMessageIntervalS = 2;
-
-            unsigned int payloadSize = radio[0]->getDynamicPayloadSize();
-            if (payloadSize == 0) {
-                // The zero-length packet burst problem makes the log file massive.
-                // To prevent that until we can find and fix the cause, we'll log
-                // one message when the first zero-length packet is received and
-                // another with the zero-length packet count when a non-zero-length
-                // packet is finally received.
-                if (!lastPacketWasZeroLength) {
-                    lastPacketWasZeroLength = true;
-                    zeroLengthPacketCount = 1;
-                    logger.logMsg(LOG_ERR, "Got invalid packet (payloadSize = 0).");
-                }
-                else {
-                    ++zeroLengthPacketCount;
-                }
-                continue;
-            }
-            if (lastPacketWasZeroLength) {
-                lastPacketWasZeroLength = false;
-                logger.logMsg(LOG_ERR, "%d zero-length packets were received.", zeroLengthPacketCount);
-            }
-            if (payloadSize > maxPayloadSize) {
-                logger.logMsg(LOG_ERR, "Got unsupported payload size " + to_string(payloadSize));
-                // RF24 is supposed to do a Flush_RX command and return 0 for
-                // the size if an invalid payload length is detected.  It
-                // apparently didn't do that.  Who knows what we're supposed
-                // to do now.  We'll try turning receive off and on to clear
-                // the rx buffers and start over.
-                radio[0]->stopListening();
-                delay(100);
-                radio[0]->startListening();
-                continue;
-            }
-
-            uint8_t payload[payloadSize];
-            radio[0]->read(payload, payloadSize);
-
-            stringstream sstr;
-
-            switch(pipeNum) {
-
-                case 0:
-                    handleStressTestPayload((StressTestPayload*) payload, payloadSize);
-                    break;
-
-                case 1:
-                    handlePositionVelocityPayload((PositionVelocityPayload*) payload, payloadSize);
-                    break;
-
-                case 2:
-                    handleMeasurementVectorPayload((MeasurementVectorPayload*) payload, payloadSize);
-                    break;
-
-                case 3:
-                case 4:
-                    for (unsigned int i = 0; i < maxPayloadSize; ++i) {
-                        sstr << " 0x" << hex << (int) payload[i];
-                    }
-                    logger.logMsg(LOG_ERR,
-                           "Got payload with size " + to_string(payloadSize)
-                           + " via unsupported pipe " + to_string((int) pipeNum)
-                           + ".  Contents: " + sstr.str());
-                    break;
-
-                case 5:
-                    handleCustomPayload((CustomPayload*) payload, payloadSize);
-                    break;
-
-                default:
-                    for (unsigned int i = 0; i < maxPayloadSize; ++i) {
-                        sstr << " 0x" << hex << (int) payload[i];
-                    }
-                    logger.logMsg(LOG_ERR,
-                           "pipeNum is " + to_string((int) pipeNum)
-                           + ", which should never happen!  Payload contents: " + sstr.str());
-            }
+        bool dataReceived = false;
+        for (unsigned int radioIdx = 0; radioIdx < numRadios; ++radioIdx) {
+            dataReceived |= pollRadio(radioIdx);
         }
-
-        time_t now;
-        time(&now);
-        if (now != noDataReceivedMessageTime) {
-            time_t noDataReceivedIntervalS = now - lastDataReceivedTime;
-            if (noDataReceivedIntervalS >= noDataReceivedMessageIntervalS
-                && noDataReceivedIntervalS % noDataReceivedMessageIntervalS == 0)
-            {
-                logger.logMsg(LOG_INFO, "No widget data received for " + to_string(noDataReceivedIntervalS) + " seconds.");
-                noDataReceivedMessageTime = now;
-                if (noDataReceivedMessageIntervalS <= 32) {
-                    noDataReceivedMessageIntervalS *= 2;
-                }
-            }
+        if (!dataReceived) {
+            // There are no payloads to process, so give other threads a chance to
+            // run.  Also, don't hammmer on the SPI interface too hard (and drive
+            // up cpu usage) by polling for data too often.
+            usleep(radioPollingLoopSleepIntervalUs);
         }
-
-        // There are no payloads to process, so give other threads a chance to
-        // run.  Also, don't hammmer on the SPI interface too hard (and drive
-        // up cpu usage) by polling for data too often.
-        usleep(radioPollingLoopSleepIntervalUs);
     }
 
     return true;
