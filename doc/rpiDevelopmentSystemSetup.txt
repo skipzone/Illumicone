@@ -63,8 +63,7 @@ What you will need:
         to the system via ssh or VNC can come in very handy.  (Use
         hostname.local to connect to it.)
 
-    e.  If you are going to connect an RF24 module to receive widget data,
-        enable SPI.
+    e.  Enable SPI (required by the RF24 module).
 
 
 6.  Install the required and nice-to-have useful software.  Use the Add / Remove
@@ -88,7 +87,7 @@ What you will need:
     prompt:
 
     sudo adduser <username>
-    sudo adduser <username> sudo
+    sudo usermod -aG sudo,dialout,spi,gpio <username>
 
 
 8.  Log out (raspberry -> Shutdown -> Logout), then log back in with your
@@ -149,7 +148,7 @@ What you will need:
     cd ../config
     ln -s network_localSimulator.json network_active.json
     cd
-    ln -s devl/Illumicone/config/simulator.json activeConfig.json
+    ln -s ~/devl/Illumicone/config/simulator.json activeConfig.json
 
 
 13. Install openpixelcontrol, which provides the on-screen simulator display of
@@ -208,10 +207,7 @@ wget -P Downloads https://downloads.arduino.cc/arduino-1.8.10-linuxarm.tar.xz
 tar -xvf Downloads/arduino-1.8.10-linuxarm.tar.xz
 cd arduino-1.8.10
 sudo ./install.sh
-sudo usermod -a -G dialout <username>
 cp -Rv devl/Illumicone/Arduino/libraries/Illumicone/ Arduino/libraries/
-
-Log out then log back in again.
 
 https://www.arduino.cc/en/Guide/Linux
 
@@ -223,12 +219,6 @@ Install the following libraries in the Arduino IDE:
 
 
 =-=-=-=-=-=-=-=
-
-
-
-=-=-= check this:    It appears that the file system will be expanded automatically upon first
-    boot.
-
 
 
 9.  Set up I2C.
@@ -247,23 +237,5 @@ Install the following libraries in the Arduino IDE:
 
     Check if I2C is working:
         i2cdetect -y 1
-
-
-10. Set up SPI.
-
-    sudo raspi-config
-        5 Interfacing Options
-        P4 SPI
-        Yes (to enable the SPI interface)
-    Reboot.
-
-    Make illumicone a member of the spi group.
-        sudo usermod -aG spi illumicone
-    Log out and back in.
-
-
-10.5.  Make illumicone a member of the gpio group.
-
-    sudo usermod -aG gpio illumicone
 
 

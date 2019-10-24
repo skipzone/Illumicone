@@ -41,7 +41,7 @@
 
 #define WIDGET_ID 0
 #define TX_INTERVAL_MS 10L
-#define STATS_PRINT_INTERVAL_MS 1000L
+#define STATS_PRINT_INTERVAL_MS 5000L
 //#define LED_PIN 2
 
 // ---------- radio configuration ----------
@@ -168,4 +168,3 @@ void loop() {
 #endif
 
 }
-
