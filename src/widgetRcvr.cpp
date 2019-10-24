@@ -131,15 +131,6 @@ static int zeroLengthPacketCount[maxRadios];
 static bool lastPacketWasZeroLength[maxRadios];
 
 
-/*
-static void usage();
-static void getCommandLineOptions(int argc, char* argv[]);
-static bool registerSignalHandler();
-static void signalHandler(int signum);
-static void daemonize();
-*/
-
-
 void usage()
 {
     //               1         2         3         4         5         6         7         8
@@ -240,13 +231,14 @@ static void getCommandLineOptions(int argc, char* argv[])
                         pidFilePathName = optarg;
                         break;
                     case version:
-                        printf("%s last modified on %s, compiled on %s %s\n", __BASE_FILE__, __TIMESTAMP__, __DATE__, __TIME__);
+                        printf("%s last modified on %s, compiled on %s %s\n",
+                               __BASE_FILE__, __TIMESTAMP__, __DATE__, __TIME__);
                         exit(EXIT_SUCCESS);
                         break;
                     default:
                         fprintf(stderr, "Unhandled long option encountered.\n");
                         exit(EXIT_FAILURE);
-                }                    
+                }
                 break;
             default:
                 // Invalid or unrecognized option message has already been printed.
@@ -399,7 +391,8 @@ bool openUdpPort(WidgetId widgetId)
     unsigned int widgetIdNumber = widgetIdToInt(widgetId);
     unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
 
-    logger.logMsg(LOG_INFO, "Creating and binding socket for %s.", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+    logger.logMsg(LOG_INFO, "Creating and binding socket for %s.",
+                  widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
 
     memset(&widgetSockAddr[widgetIdNumber], 0, sizeof(struct sockaddr_in));
 
@@ -408,11 +401,15 @@ bool openUdpPort(WidgetId widgetId)
     widgetSockAddr[widgetIdNumber].sin_port = htons(0);
 
     if ((widgetSock[widgetIdNumber] = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        logger.logMsg(LOG_ERR, errno, "Failed to create socket for %s.", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket for %s.",
+                      widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
         return false;
     }
 
-    if (::bind(widgetSock[widgetIdNumber], (struct sockaddr *) &widgetSockAddr[widgetIdNumber], sizeof(struct sockaddr_in)) < 0) {
+    if (::bind(widgetSock[widgetIdNumber],
+               (struct sockaddr *) &widgetSockAddr[widgetIdNumber],
+               sizeof(struct sockaddr_in)) < 0)
+    {
         logger.logMsg(LOG_ERR, errno, "bind failed for %s.", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
         return false;
     }
@@ -433,7 +430,8 @@ bool closeUdpPort(WidgetId widgetId)
     logger.logMsg(LOG_INFO, "Closing UDP port for %s...", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
     // TODO 2/3/2018 ross:  make sure this implementation is correct
     if (close(widgetSock[widgetIdNumber]) != 0) {
-        logger.logMsg(LOG_ERR, errno, "Unable to close UDP port for %s.", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+        logger.logMsg(LOG_ERR, errno, "Unable to close UDP port for %s.",
+                      widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
         return false;
     }
     return true;
@@ -510,12 +508,14 @@ void handleContortOMaticPayload(const CustomPayload* payload, unsigned int paylo
                               payloadSize, sizeof(ContortOMaticCalibrationDataPayload));
                 return;
             }
-            handleContortOMaticCalibrationDataPayload(reinterpret_cast<const ContortOMaticCalibrationDataPayload*>(payload));
+            handleContortOMaticCalibrationDataPayload(
+                reinterpret_cast<const ContortOMaticCalibrationDataPayload*>(payload));
             break;
 
         default:
             logger.logMsg(LOG_ERR,
-                          "Got ContortOMatic payload on channel %d, but there is no payload subtype assigned to that channel.",
+                          "Got ContortOMatic payload on channel %d, "
+                          "but there is no payload subtype assigned to that channel.",
                           payload->widgetHeader.channel);
     }
 }
@@ -533,7 +533,7 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
     }
 
     dataLogger.logMsg(LOG_INFO,
-                  "stest: radio=%d id=%d a=%d ch=%d seq=%d lastTxUs=%d fails=%d(%d%%)",
+                  "stest: r=%d id=%d a=%d ch=%d seq=%d lastTxUs=%d fails=%d(%d%%)",
                   radioIdx,
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
@@ -562,17 +562,21 @@ void handleStressTestPayload(const StressTestPayload* payload, unsigned int payl
 }
 
 
-void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsigned int payloadSize)
+void handlePositionVelocityPayload(
+    const PositionVelocityPayload* payload,
+    unsigned int payloadSize,
+    unsigned int radioIdx)
 {
     if (payloadSize != sizeof(PositionVelocityPayload)) {
         logger.logMsg(LOG_ERR,
-                      "Got PositionVelocityPayload payload with size %d, but size %d was expected.",
-                      payloadSize, sizeof(PositionVelocityPayload));
+                      "Got PositionVelocityPayload payload on radio %d with size %d, but size %d was expected.",
+                      radioIdx, payloadSize, sizeof(PositionVelocityPayload));
         return;
     }
 
     dataLogger.logMsg(LOG_INFO,
-                  "pv: id=%d a=%d ch=%d p=%d v=%d",
+                  "pv: r=%d id=%d a=%d ch=%d p=%d v=%d",
+                  radioIdx,
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
                   payload->widgetHeader.channel,
@@ -590,10 +594,13 @@ void handlePositionVelocityPayload(const PositionVelocityPayload* payload, unsig
 }
 
 
-void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, unsigned int payloadSize)
+void handleMeasurementVectorPayload(
+    const MeasurementVectorPayload* payload,
+    unsigned int payloadSize,
+    unsigned int radioIdx)
 {
     if (payloadSize < (1 + sizeof(int16_t))) {
-        logger.logMsg(LOG_ERR, "Got MeasurementVectorPayload without any data.");
+        logger.logMsg(LOG_ERR, "Got MeasurementVectorPayload on radio %d without any data.", radioIdx);
         return;
     }
     // TODO 8/3/2017 ross:  might be a good idea to make sure payloadSize is odd
@@ -605,7 +612,8 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
         sstr << " " << setfill(' ') << setw(6) << payload->measurements[i];
     }
     dataLogger.logMsg(LOG_INFO,
-                  "mvec: id=%d a=%d ch=%d n=%d %s",
+                  "mvec: r=%d id=%d a=%d ch=%d n=%d %s",
+                  radioIdx,
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
                   payload->widgetHeader.channel,
@@ -627,10 +635,10 @@ void handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uns
 }
 
 
-void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
+void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize, unsigned int radioIdx)
 {
     if (payloadSize < 2) {
-        logger.logMsg(LOG_ERR, "Got CustomPayload without any data.");
+        logger.logMsg(LOG_ERR, "Got CustomPayload on radio %d without any data.", radioIdx);
         return;
     }
 
@@ -641,7 +649,8 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize)
         sstr << " 0x" << hex << (int) payload->buf[i];
     }
     dataLogger.logMsg(LOG_INFO,
-                  "custom: id=%d a=%d ch=%d bufLen=%d %s",
+                  "custom: r=%d id=%d a=%d ch=%d bufLen=%d %s",
+                  radioIdx,
                   payload->widgetHeader.id,
                   payload->widgetHeader.isActive,
                   payload->widgetHeader.channel,
@@ -776,7 +785,7 @@ bool readConfig()
     if (!ConfigReader::getJsonObject(configReader.getConfigObject(),
                                      instanceName,
                                      instanceConfigObject,
-                                     " in " + configFileName + ".")) 
+                                     " in " + configFileName + "."))
     {
         return false;
     }
@@ -815,7 +824,10 @@ bool readConfig()
         successful = false;
     }
 
-    if (!ConfigReader::getUnsignedIntValue(configObject, "widgetPortNumberBase", widgetPortNumberBase, errMsgSuffix, 1024, 65535)) {
+    if (!ConfigReader::getUnsignedIntValue(configObject,
+                                           "widgetPortNumberBase", widgetPortNumberBase,
+                                           errMsgSuffix, 1024, 65535))
+    {
         successful = false;
     }
 
@@ -845,15 +857,24 @@ bool readConfig()
         return false;
     }
 
-    if (!ConfigReader::getUnsignedIntValue(configObject, "logRotationIntervalMinutes", logRotationIntervalMinutes, errMsgSuffix, 1)) {
+    if (!ConfigReader::getUnsignedIntValue(configObject,
+                                           "logRotationIntervalMinutes", logRotationIntervalMinutes,
+                                           errMsgSuffix, 1))
+    {
         return false;
     }
 
-    if (!ConfigReader::getIntValue(configObject, "logRotationOffsetHour", logRotationOffsetHour, errMsgSuffix, 0, 23)) {
+    if (!ConfigReader::getIntValue(configObject,
+                                   "logRotationOffsetHour", logRotationOffsetHour,
+                                   errMsgSuffix, 0, 23))
+    {
         return false;
     }
 
-    if (!ConfigReader::getIntValue(configObject, "logRotationOffsetMinute", logRotationOffsetMinute, errMsgSuffix, 0, 59)) {
+    if (!ConfigReader::getIntValue(configObject,
+                                   "logRotationOffsetMinute", logRotationOffsetMinute,
+                                   errMsgSuffix, 0, 59))
+    {
         return false;
     }
 
@@ -863,7 +884,7 @@ bool readConfig()
 
 bool openUdpPorts()
 {
-    bool retval = 
+    bool retval =
            openUdpPort(WidgetId::eye)
         && openUdpPort(WidgetId::spinnah)
         && openUdpPort(WidgetId::bells)
@@ -883,7 +904,7 @@ bool openUdpPorts()
 
 bool closeUdpPorts()
 {
-    bool retval = 
+    bool retval =
            closeUdpPort(WidgetId::eye)
         && closeUdpPort(WidgetId::spinnah)
         && closeUdpPort(WidgetId::bells)
@@ -973,7 +994,7 @@ bool doInitialization()
 {
     // We print the configuration here rather than in readConfig because readConfig
     // can be called before we know if we're the only instance and can run.  When
-    // using the one-minute restart approach via crontab, printing anything in 
+    // using the one-minute restart approach via crontab, printing anything in
     // readConfig would result in writing a lot of unnecessary crap to the log.
 
     // If the config file is really a symbolic link,
@@ -1117,11 +1138,11 @@ bool pollRadio(unsigned int radioIdx)
                 break;
 
             case 1:
-                handlePositionVelocityPayload((PositionVelocityPayload*) payload, payloadSize);
+                handlePositionVelocityPayload((PositionVelocityPayload*) payload, payloadSize, radioIdx);
                 break;
 
             case 2:
-                handleMeasurementVectorPayload((MeasurementVectorPayload*) payload, payloadSize);
+                handleMeasurementVectorPayload((MeasurementVectorPayload*) payload, payloadSize, radioIdx);
                 break;
 
             case 3:
@@ -1135,7 +1156,7 @@ bool pollRadio(unsigned int radioIdx)
                 break;
 
             case 5:
-                handleCustomPayload((CustomPayload*) payload, payloadSize);
+                handleCustomPayload((CustomPayload*) payload, payloadSize, radioIdx);
                 break;
 
             default:
