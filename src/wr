@@ -1,0 +1,2 @@
+#! /bin/bash
+./widgetRcvr -c ~/activeConfig.json -l ~/logs --log_to_console
