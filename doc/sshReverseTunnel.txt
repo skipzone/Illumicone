@@ -7,6 +7,7 @@ We assign these ports:
     50105 ic-widpatcon3
     50113 ic2-widpatcon
     50114 ic2-widpatcon2
+    50120 ic-devl
 
 Replace myEc2Instance.com with the name or IP address of the relay server.  An
 Amazon Web Services (AWS) Elastic Compute Cloud (EC2) server is assumed.
@@ -48,11 +49,14 @@ From the host that now has ssh access to myEc2Instance.com as illumicone:
 
     scp illumicone@myEc2Instance.com:.ssh/id_rsa.pub illumicone_ec2_id_rsa.pub
     scp illumicone_ec2_id_rsa.pub illumicone@ic2-widpatcon2.local:
+    rm illumicone_ec2_id_rsa.pub
+    scp illumicone@ic2-widpatcon2.local:.ssh/id_rsa.pub illumicone_ic2-widpatcon2_id_rsa.pub
+    scp illumicone_ic2-widpatcon2_id_rsa.pub illumicone@myEc2Instance.com:
+    rm illumicone_ic2-widpatcon2_id_rsa.pub
 
 On ic2-widpatcon2.local:
     cat illumicone_ec2_id_rsa.pub >> ~/.ssh/authorized_keys
     rm illumicone_ec2_id_rsa.pub
-    scp ~/.ssh/id_rsa.pub illumicone@myEc2Instance.com:illumicone_ic2-widpatcon2_id_rsa.pub
 
 As illumicone on myEc2Instance.com:
     cat illumicone_ic2-widpatcon2_id_rsa.pub >> ~/.ssh/authorized_keys
