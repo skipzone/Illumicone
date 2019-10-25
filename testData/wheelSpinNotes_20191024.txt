@@ -1,0 +1,16 @@
+board facing towward the outer edge of the wheel
+20:07:20  slow spin ccw
+20:08:30 faster spin ccw (~40 RPM)
+20:09:40 ~60 rpm
+20:10:50 fast spin -- sensor might have twisted
+20:12:15 fast as Sam can
+20:12:58 coast to stop
+
+board facing to the side
+20:17:02 fast spin
+20:17:44 fast spin the other way
+20:18:10 slow rock back and forth
+20:18:33 really slow rock
+20:19:45 settle, done at 20:20:00
+20:20:09 settle, done at ~20:20:28
+
