@@ -1,2 +1,10 @@
 #!/bin/bash
-$ILLUMICONE_BIN/gl_server -l $ILLUMICONE_DEVL/simulator/coneLayouts/cone_med_48.json -p 7890 &
+
+if [ $# -eq 1 ]
+then
+    configName=$1
+else
+    configName="cone_med_48"
+fi
+
+$ILLUMICONE_BIN/gl_server -l $ILLUMICONE_DEVL/simulator/coneLayouts/$configName.json -p 7890 &
