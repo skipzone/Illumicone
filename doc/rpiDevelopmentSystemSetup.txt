@@ -1,7 +1,7 @@
 **** work in progress ****
 
 Set up a development system using a Raspberry Pi 4
-(updated 28 Sept. 2019)
+(updated 03 Nov. 2019)
 
 You should be comfortable working in a terminal window.
 
@@ -214,8 +214,22 @@ https://www.arduino.cc/en/Guide/Linux
 Install the following libraries in the Arduino IDE:
 
     RF24 by TMRh20
+        In the Arduino IDE:
+            Go to Tools/Manage Libraries.
+            Search for RF24.
+            Scroll down to RF24 by TMRh20.
+            Click on Install.
 
+    I2Cdev and MPU6050 by jrowberg
+        cd ~/devl
+        git clone http://github.com/jrowberg/i2cdevlib
+        cp -Rv i2cdevlib/Arduino/I2Cdev ~/Documents/Arduino/libraries/
+        cp -Rv i2cdevlib/Arduino/MPU6050 ~/Documents/Arduino/libraries/
 
+    Illumicone
+        cp -Rv ~/devl/Illumicone/Arduino/libraries/Illumicone ~/Documents/Arduino/libraries/
+
+=-=-=-= TODO:  verify Arduino library path on RPi
 
 
 =-=-=-=-=-=-=-=
