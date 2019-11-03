@@ -1,2 +1,2 @@
 #! /bin/bash
-./widgetRcvr -c ~/activeConfig.json -l ~/logs --log_to_console
+./widgetRcvr -c $ILLUMICONE_CONFIG/activeConfig.json -l $ILLUMICONE_LOGS/logs --log_to_console
