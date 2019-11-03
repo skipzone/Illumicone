@@ -66,6 +66,10 @@ What you will need:
     e.  Enable SPI (required by the RF24 module).
 
 
+=-=-=-=-= TODO:  Add a step for setting the VNC password (because the fancy
+authentication method is incompatible with macOS's built-in VNC viewer).
+
+
 6.  Install the required and nice-to-have useful software.  Use the Add / Remove
     Software option on the raspberry -> Preferences menu.  You can use the
     search feature to locate each package listed below.
@@ -78,7 +82,6 @@ What you will need:
     dnsutils
     mesa-common-dev (for openpixelcontrol)
     freeglut3-dev (for openpixelcontrol)
-    -=-= TODO:  No.  Installs ancient version 1.0.5.  arduino (use the one titled "AVR development board IDE . . ."
 
 
 7.  Create your user account, and add it to the sudo group.  Open a terminal
@@ -100,14 +103,11 @@ What you will need:
 
     # Set up Illumicone paths.
     export ILLUMICONE_BIN="$HOME/bin"
-    export ILLUMICONE_LOGS="$HOME/logs"
     export ILLUMICONE_DEVL="$HOME/devl/Illumicone"
+    export ILLUMICONE_LOGS="$ILLUMICONE_DEVL/logs"
     export ILLUMICONE_CONFIG="$ILLUMICONE_DEVL/config"
     export ILLUMICONE_SBIN="$ILLUMICONE_DEVL/sbin"
     PATH="$ILLUMICONE_BIN:$ILLUMICONE_SBIN:$PATH"
-=-=-=-= TODO:  Put this stuff in config/bashrc_additions and add a step in 10 to
-               cat ~/devl/Illumicone/config/bashrc_additions >> ~/.bashrc
-               Include a caution to use the double greater-than sign.
 
 
 10. Set up the Illumicone development environment.
@@ -117,15 +117,16 @@ What you will need:
     cd
     mkdir devl
     mkdir bin
-    mkdir logs
     cd devl
     git clone https://github.com/skipzone/Illumicone
     cd Illumicone
+    mkdir logs
     git flow init  (use the default responses)
     cd
     cp devl/Illumicone/config/vimrc .vimrc
     cp devl/Illumicone/sbin/bash_aliases .bash_aliases
     cp devl/Illumicone/sbin/illumicone_aliases .illumicone_aliases
+
 
 11. Install RF24 using tmrh20's fork of RF24 on Github.  This is the same one we
     use for the widget Arduinos.  You will need RF24 to build the Illumicone
@@ -140,18 +141,20 @@ What you will need:
     sudo make install
 
 
-12. Build and install the Illumicone programs.
+12. Build the Illumicone programs.
 
     cd ~/devl/Illumicone/src
     make
-    make install
-    cd ../config
-    ln -s network_localSimulator.json network_active.json
-    cd
-    ln -s ~/devl/Illumicone/config/simulator.json activeConfig.json
 
 
-13. Install openpixelcontrol, which provides the on-screen simulator display of
+13. Set up the Illumicone simulation configuration.
+
+    cd ~/devl/Illumicone/config
+    ln -s $HOME/devl/Illumicone/config/network_localSimulator.json network_active.json
+    ln -s $HOME/devl/Illumicone/config/simulator.json activeConfig.json
+
+
+14. Install openpixelcontrol, which provides the on-screen simulator display of
     Illumicone's pixels.
 
     cd ~/devl
@@ -161,7 +164,7 @@ What you will need:
     cp bin/gl_server ~/bin
 
 
-14. Test the Illumicone simulation tools and environment.
+15. Test the Illumicone simulation tools and environment.
 
     cd ~/devl
     startSimulatorGlServer
@@ -175,7 +178,7 @@ What you will need:
     dragging further.  Once the Illumicone image the correct size to fit in
     the window, you can rotate it by dragging without holding the shift key.
     (One could argue that the graphics performance of gl_server is so poor as
-    to be barely usable.  But, hey, it's runing on a $50 computer, which is
+    to be barely usable.  But, hey, it's runing on a $55 computer, which is
     pretty cool!)
 
     gl_server puts itself in the background.  Press <enter> in the terminal
@@ -197,21 +200,21 @@ What you will need:
     in the respective terminal window.  Terminate gl_server by clicking on the
     X in the upper right-hand corner of the OPC window.
 
-=-=-=-= resume here
 
-Install the Arduino IDE.  (Download from arduino.cc rather than installing via
-Add / Remove Software in order to get a current version.)
+16. Install the Arduino IDE.  (Download from arduino.cc rather than installing
+    via Add / Remove Software in order to get a current version.)
 
-cd
-wget -P Downloads https://downloads.arduino.cc/arduino-1.8.10-linuxarm.tar.xz
-tar -xvf Downloads/arduino-1.8.10-linuxarm.tar.xz
-cd arduino-1.8.10
-sudo ./install.sh
-cp -Rv devl/Illumicone/Arduino/libraries/Illumicone/ Arduino/libraries/
+    cd
+    wget -P Downloads https://downloads.arduino.cc/arduino-1.8.10-linuxarm.tar.xz
+    tar -xvf Downloads/arduino-1.8.10-linuxarm.tar.xz
+    cd arduino-1.8.10
+    sudo ./install.sh
+    cp -Rv devl/Illumicone/Arduino/libraries/Illumicone/ Arduino/libraries/
 
-https://www.arduino.cc/en/Guide/Linux
+    For more information:  https://www.arduino.cc/en/Guide/Linux
 
-Install the following libraries in the Arduino IDE:
+
+16. Install the required Arduino libraries.
 
     RF24 by TMRh20
         In the Arduino IDE:
@@ -223,16 +226,14 @@ Install the following libraries in the Arduino IDE:
     I2Cdev and MPU6050 by jrowberg
         cd ~/devl
         git clone http://github.com/jrowberg/i2cdevlib
-        cp -Rv i2cdevlib/Arduino/I2Cdev ~/Documents/Arduino/libraries/
-        cp -Rv i2cdevlib/Arduino/MPU6050 ~/Documents/Arduino/libraries/
+        cp -Rv i2cdevlib/Arduino/I2Cdev ~/Arduino/libraries/
+        cp -Rv i2cdevlib/Arduino/MPU6050 ~/Arduino/libraries/
 
     Illumicone
-        cp -Rv ~/devl/Illumicone/Arduino/libraries/Illumicone ~/Documents/Arduino/libraries/
-
-=-=-=-= TODO:  verify Arduino library path on RPi
+        cp -Rv ~/devl/Illumicone/Arduino/libraries/Illumicone ~/Arduino/libraries/
 
 
-=-=-=-=-=-=-=-=
+=-=-=-= resume here
 
 
 9.  Set up I2C.
