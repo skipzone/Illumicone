@@ -26,7 +26,11 @@
 #include <SPI.h>
 #include "RF24.h"
 
+#ifndef ENABLE_DEBUG_PRINT
 #include "DmxSimple.h"
+#else
+#include "printf.h"
+#endif
 
 
 /*********************************************
@@ -51,9 +55,9 @@ constexpr int16_t maxPpSoundForStrobe = 500;
 constexpr uint8_t minStrobeValue = 225;
 constexpr uint8_t maxStrobeValue = 250;
 
-#define NUM_LAMPS 5
+#define NUM_LAMPS 9
 
-#define LAMP_MIN_INTENSITY 128
+#define LAMP_MIN_INTENSITY 64
 
 // With RGB lamps, enable red-green-blue-red wraparound as widget value
 // varies from one extreme to another.  (Without wraparound, the lamp
@@ -66,7 +70,7 @@ constexpr uint8_t maxStrobeValue = 250;
 
 // With four-channel dimmers, it can be convenient to leave the fourth channel
 // unused so that each dimmer controls one tri-color lamp arrangement.
-#define SKIP_DIMMER_FOURTH_CHANNEL
+//#define SKIP_DIMMER_FOURTH_CHANNEL
 
 
 /***********************
@@ -74,7 +78,7 @@ constexpr uint8_t maxStrobeValue = 250;
  ***********************/
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS (genuine Noric chips only).
-#define DATA_RATE RF24_250KBPS
+#define DATA_RATE RF24_1MBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
 #define CRC_LENGTH RF24_CRC_16
@@ -83,8 +87,8 @@ constexpr uint8_t maxStrobeValue = 250;
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-// Illumicone widgets use channel 84.  IBG widgets use channel 97.
-#define RF_CHANNEL 97
+// Illumicone widgets use channel 84.  IBG widgets used channel 97 in 2018.
+#define RF_CHANNEL 84
 
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
@@ -187,6 +191,7 @@ static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (S
 
 void initRadio()
 {
+  Serial.println(F("Initializing radio..."));    
   radio.begin();
 
   radio.setPALevel(RF_POWER_LEVEL);
@@ -207,13 +212,17 @@ void initRadio()
 #endif
   
   radio.startListening();
+
+  Serial.println(F("Radio initialized."));    
 }
 
 
 void initDmx()
 {
+#ifndef ENABLE_DEBUG_PRINT
   DmxSimple.usePin(DMX_OUTPUT_PIN);
   DmxSimple.maxChannel(DMX_NUM_CHANNELS);
+#endif
 }
 
 
@@ -221,6 +230,8 @@ void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
   Serial.begin(115200);
+  printf_begin();
+  Serial.println(F("Debug print enabled."));    
 #endif
 
   initRadio();
@@ -388,8 +399,11 @@ bool handlePositionVelocityPayload(const PositionVelocityPayload* payload, uint8
 }
 
 
-bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uint8_t payloadSize)
+//bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uint8_t payloadSize)
+bool handleMeasurementVectorPayload(MeasurementVectorPayload* payload, uint8_t payloadSize)
 {
+  if (payload->widgetHeader.id == 12) payload->widgetHeader.id = 3;  // Pretend that Baton is Rainstick
+  
   if (payload->widgetHeader.id < 1 || payload->widgetHeader.id > 4) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.print(F("got MeasurementVectorPayload payload from widget "));
@@ -400,9 +414,9 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
   }
 
 // TODO:  Enable the next two lines and remove the third when Rainstick is running current firmware.
-//  // Rainstick sends everything the tilt widgets send plus a peak-to-peak sound value.
-//  uint8_t numExpectedValues = payload->widgetHeader.id <= 3 ? 13 : 14;
-  uint8_t numExpectedValues = 13;
+  // Rainstick sends everything the tilt widgets send plus a peak-to-peak sound value.
+  uint8_t numExpectedValues = payload->widgetHeader.id <= 3 ? 13 : 14;
+//  uint8_t numExpectedValues = 13;
   uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * numExpectedValues;
   if (payloadSize != expectedPayloadSize) {
 #ifdef ENABLE_DEBUG_PRINT
@@ -463,6 +477,7 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
       break;
 
     case 4:
+    // TODO:  fix the damn comment below
       // Rainstick's pitch is the color selection angle, and its pitch is the color selection angle.
       currentColorAngle = payload->measurements[1] / 10.0;
       currentLampAngle = payload->measurements[2] / 10.0;
@@ -503,6 +518,11 @@ void pollRadio()
 #endif
     return;
   }
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.print(F("got message on pipe "));
+  Serial.println(pipeNum);
+#endif
+
   radio.read(payload, payloadSize);
 
   bool gotMeasurements = false;
@@ -588,6 +608,7 @@ void sendDmx()
   }
 
   // Transmit the DMX channel values.
+#ifndef ENABLE_DEBUG_PRINT
   for (dmxChannelNum = 1; dmxChannelNum <= DMX_NUM_CHANNELS; ++dmxChannelNum) {
     DmxSimple.write(dmxChannelNum, dmxChannelValues[dmxChannelNum]);
 //#ifdef ENABLE_DEBUG_PRINT
@@ -597,6 +618,7 @@ void sendDmx()
 //    Serial.println(dmxChannelValues[dmxChannelNum]);    
 //#endif
   }
+#endif
 }
 
 
@@ -609,7 +631,9 @@ void updateLamps()
         colorChannelIntensities[lampIdx][colorIdx] = LAMP_TEST_INTENSITY;
       }
     }
+#ifndef ENABLE_DEBUG_PRINT
     sendDmx();
+#endif
     return;
   }
 #endif
@@ -699,4 +723,3 @@ void loop()
   wdt_reset();
 #endif
 }
-
