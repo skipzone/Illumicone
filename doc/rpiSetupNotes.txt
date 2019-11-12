@@ -323,6 +323,15 @@ Set up ic-widpatcon on a Raspberry Pi 3 B or 4 using Raspbian Buster Lite
 21.  Follow the instructions in config/patternController.service and
      config/widgetRcvr.service to set up those services.
 
+22.  Set up script to read CPU temperature (RPi 4 only).
+
+    Using visudo, add this line to /etc/sudoers:
+
+        illumicone ALL=(root) NOPASSWD: /home/illumicone/devl/Illumicone/sbin/readCpuTemperature
+
+    Then, add this line to the crontab:
+
+        *  *  *  * *  . $HOME/.profile; sudo $ILLUMICONE_SBIN/readCpuTemperature >> $ILLUMICONE_LOGS/cpuTemperature.log
 
 
 ================================================================================

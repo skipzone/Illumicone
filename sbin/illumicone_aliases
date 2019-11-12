@@ -80,3 +80,6 @@ alias vimwr3d='vim $ILLUMICONE_LOGS/widgetRcvr3_data.log'
 alias tailtemp='tail -40 $ILLUMICONE_LOGS/temperature.log'
 alias vimtemp='vim $ILLUMICONE_LOGS/temperature.log'
 
+alias tailcputemp='tail -40 $ILLUMICONE_LOGS/cpuTemperature.log'
+alias vimcputemp='vim $ILLUMICONE_LOGS/cpuTemperature.log'
+
