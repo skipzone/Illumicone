@@ -99,7 +99,7 @@ authentication method is incompatible with macOS's built-in VNC viewer).
 
 
 9.  Using your text editor of preference, add these lines to the end of
-    the ~/.bashrc file:
+    the ~/.profile file:
 
     # Set up Illumicone paths.
     export ILLUMICONE_BIN="$HOME/bin"
