@@ -48,6 +48,9 @@ What you will need:
     sudo apt-get upgrade
     sudo reboot
 
+    TODO:  The update will work if you let the thing sit long enough to set
+    the clock to the current time.
+
 
 5.  Click on the raspberry in the upper left corner, hover over Preferences,
     then click on Raspberry Pi Configuration.
