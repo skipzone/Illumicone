@@ -93,7 +93,7 @@ authentication method is incompatible with macOS's built-in VNC viewer).
     prompt:
 
     sudo adduser <username>
-    sudo usermod -aG sudo,dialout,spi,gpio <username>
+    sudo usermod -aG sudo,adm,dialout,spi,gpio <username>
 
 
 8.  Log out (raspberry -> Shutdown -> Logout), then log back in with your
