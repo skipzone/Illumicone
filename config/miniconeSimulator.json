@@ -29,12 +29,12 @@
     "widgetRcvr" : {
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 1000,
-        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
+        "_include_file_widgetRadio" : "widgetRadio_ch97.json"
     },
     "widgetRcvr3" : {
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 1000,
-        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
+        "_include_file_widgetRadio" : "widgetRadio_ch97.json"
     },
 
 

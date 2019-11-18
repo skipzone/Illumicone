@@ -38,9 +38,9 @@
 
 union WidgetHeader {
   struct {
-    uint8_t id       : 4;
+    uint8_t id       : 5;
+    uint8_t channel  : 2;
     bool    isActive : 1;
-    uint8_t channel  : 3;
   };
   uint8_t raw;
 };

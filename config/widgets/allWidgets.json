@@ -17,7 +17,7 @@
 
 {
     "widgets" : [
-        {   "name" : "baton",
+        {   "name" : "baton1",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
@@ -36,6 +36,11 @@
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 500
+        },
+        {   "name" : "flower1",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
         },
         {   "name" : "fourPlay42",
             "enabled" : true,

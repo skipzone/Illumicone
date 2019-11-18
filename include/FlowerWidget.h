@@ -18,21 +18,42 @@
 #pragma once
 
 #include "Widget.h"
+#include "WidgetId.h"
 #include "WidgetChannel.h"
 
-class FourPlay43Widget : public Widget
+
+/*
+ * These are the measurements that Flower (an MPU6050-type widget) sends:
+ *     Channel  Value
+ *     -------  -------------
+ *        0     Yaw
+ *        1     Pitch
+ *        2     Roll
+ *        3     GyroX
+ *        4     GyroY
+ *        5     GyroZ
+ *        6     AccelX
+ *        7     AccelY
+ *        8     AccelZ
+ *        9     LinearAccelX
+ *       10     LinearAccelY
+ *       11     LinearAccelZ
+ *       12     Temperature
+*/
+
+class FlowerWidget : public Widget
 {
     public:
+        FlowerWidget(WidgetId id);
+        virtual ~FlowerWidget() {};
 
-        FourPlay43Widget();
-        virtual ~FourPlay43Widget() {};
-
-        FourPlay43Widget(const FourPlay43Widget&) = delete;
-        FourPlay43Widget& operator =(const FourPlay43Widget&) = delete;
+        FlowerWidget(const FlowerWidget&) = delete;
+        FlowerWidget& operator =(const FlowerWidget&) = delete;
 
         void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
+        bool simulatedPositionGoingDown;
 };
 

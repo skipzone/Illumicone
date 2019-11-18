@@ -117,8 +117,8 @@ Log dataLogger;                 // this logs received messages to the _data log
 static volatile bool gotExitSignal;
 static volatile bool gotReinitSignal;
 
-static struct sockaddr_in widgetSockAddr[16];
-static int widgetSock[16];
+static struct sockaddr_in widgetSockAddr[maxWidgets];
+static int widgetSock[maxWidgets];
 
 RF24* radio[maxRadios];
 
@@ -391,8 +391,7 @@ bool openUdpPort(WidgetId widgetId)
     unsigned int widgetIdNumber = widgetIdToInt(widgetId);
     unsigned int portNumber = widgetPortNumberBase + widgetIdNumber;
 
-    logger.logMsg(LOG_INFO, "Creating and binding socket for %s.",
-                  widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+    logger.logMsg(LOG_INFO, "Creating and binding socket for %s.", widgetIdToString(widgetId).c_str());
 
     memset(&widgetSockAddr[widgetIdNumber], 0, sizeof(struct sockaddr_in));
 
@@ -401,8 +400,7 @@ bool openUdpPort(WidgetId widgetId)
     widgetSockAddr[widgetIdNumber].sin_port = htons(0);
 
     if ((widgetSock[widgetIdNumber] = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        logger.logMsg(LOG_ERR, errno, "Failed to create socket for %s.",
-                      widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket for %s.", widgetIdToString(widgetId).c_str());
         return false;
     }
 
@@ -410,7 +408,7 @@ bool openUdpPort(WidgetId widgetId)
                (struct sockaddr *) &widgetSockAddr[widgetIdNumber],
                sizeof(struct sockaddr_in)) < 0)
     {
-        logger.logMsg(LOG_ERR, errno, "bind failed for %s.", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+        logger.logMsg(LOG_ERR, errno, "bind failed for %s.", widgetIdToString(widgetId).c_str());
         return false;
     }
 
@@ -427,11 +425,11 @@ bool closeUdpPort(WidgetId widgetId)
 {
     unsigned int widgetIdNumber = widgetIdToInt(widgetId);
 
-    logger.logMsg(LOG_INFO, "Closing UDP port for %s...", widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+    logger.logMsg(LOG_INFO, "Closing UDP port for %s...", widgetIdToString(widgetId).c_str());
     // TODO 2/3/2018 ross:  make sure this implementation is correct
     if (close(widgetSock[widgetIdNumber]) != 0) {
         logger.logMsg(LOG_ERR, errno, "Unable to close UDP port for %s.",
-                      widgetIdToString(intToWidgetId(widgetIdNumber)).c_str());
+                      widgetIdToString(widgetId).c_str());
         return false;
     }
     return true;
@@ -461,65 +459,6 @@ bool sendUdp(const UdpPayload& payload)
 /********************
  * Payload Handlers *
  ********************/
-
-void handleContortOMaticTouchDataPayload(const ContortOMaticTouchDataPayload* payload)
-{
-    // Send the pad-is-touched bitfield as a position measurement on channel 0.
-    UdpPayload udpPayload;
-    udpPayload.id       = payload->widgetHeader.id;
-    udpPayload.channel  = 0;
-    udpPayload.isActive = payload->widgetHeader.isActive;
-    udpPayload.position = payload->padIsTouchedBitfield;
-    udpPayload.velocity = 0;
-    sendUdp(udpPayload);
-}
-
-
-void handleContortOMaticCalibrationDataPayload(const ContortOMaticCalibrationDataPayload* payload)
-{
-    // The pattern isn't interested in the calibration data.
-    // We just log it here for future reference.
-    unsigned int padNumOffset = payload->setNum == 0 ? 0 : 8;
-    stringstream sstr;
-    for (unsigned int i = 0; i < 8; ++i) {
-        sstr << " " << to_string(i + padNumOffset) << ":" << payload->capSenseReferenceValues[i];
-    }
-    logger.logMsg(LOG_INFO, "Cap sense reference values: %s", sstr.str().c_str());
-}
-
-
-void handleContortOMaticPayload(const CustomPayload* payload, unsigned int payloadSize)
-{
-    switch (payload->widgetHeader.channel) {          // channel is actually payload subtype
-        case 0:
-            if (payloadSize != sizeof(ContortOMaticTouchDataPayload)) {
-                logger.logMsg(LOG_ERR,
-                              "Got ContortOMaticTouchDataPayload payload with size %d, but size %d was expected.",
-                              payloadSize, sizeof(ContortOMaticTouchDataPayload));
-                return;
-            }
-            handleContortOMaticTouchDataPayload(reinterpret_cast<const ContortOMaticTouchDataPayload*>(payload));
-            break;
-
-        case 1:
-            if (payloadSize != sizeof(ContortOMaticCalibrationDataPayload)) {
-                logger.logMsg(LOG_ERR,
-                              "Got ContortOMaticCalibrationDataPayload payload with size %d, but size %d was expected.",
-                              payloadSize, sizeof(ContortOMaticCalibrationDataPayload));
-                return;
-            }
-            handleContortOMaticCalibrationDataPayload(
-                reinterpret_cast<const ContortOMaticCalibrationDataPayload*>(payload));
-            break;
-
-        default:
-            logger.logMsg(LOG_ERR,
-                          "Got ContortOMatic payload on channel %d, "
-                          "but there is no payload subtype assigned to that channel.",
-                          payload->widgetHeader.channel);
-    }
-}
-
 
 void handleStressTestPayload(const StressTestPayload* payload, unsigned int payloadSize, unsigned int radioIdx)
 {
@@ -620,8 +559,9 @@ void handleMeasurementVectorPayload(
                   numMeasurements,
                   sstr.str().c_str());
 
-    // Map the measurements to position measurements on the channel
-    // corresponding to the measurement's position in the array.
+    // Map each measurement to a position measurement on the channel
+    // corresponding to the measurement's position in the array.  The
+    // channel number in the header is ignored.
     for (unsigned int i = 0; i < numMeasurements; ++i) {
         UdpPayload udpPayload;
         udpPayload.id       = payload->widgetHeader.id;
@@ -658,9 +598,12 @@ void handleCustomPayload(const CustomPayload* payload, unsigned int payloadSize,
                   sstr.str().c_str());
 
     switch (intToWidgetId(payload->widgetHeader.id)) {
-        case WidgetId::contortOMatic:
-            handleContortOMaticPayload(payload, payloadSize);
-            break;
+        // At present, there are no widgets that send custom payloads.  When
+        // one is added, call the handler for its specific payload type here.
+        // Example:
+        //case WidgetId::contortOMatic:
+        //    handleContortOMaticPayload(payload, payloadSize);
+        //    break;
         default:
             logger.logMsg(LOG_ERR, "There is no payload handler defined for widget id %d.", payload->widgetHeader.id);
     }
@@ -884,40 +827,26 @@ bool readConfig()
 
 bool openUdpPorts()
 {
-    bool retval =
-           openUdpPort(WidgetId::eye)
-        && openUdpPort(WidgetId::spinnah)
-        && openUdpPort(WidgetId::bells)
-        && openUdpPort(WidgetId::rainstick)
-        && openUdpPort(WidgetId::schroedersPlaything)
-        && openUdpPort(WidgetId::triObelisk)
-        && openUdpPort(WidgetId::boogieBoard)
-        && openUdpPort(WidgetId::pump)
-        && openUdpPort(WidgetId::contortOMatic)
-        && openUdpPort(WidgetId::fourPlay42)
-        && openUdpPort(WidgetId::fourPlay43)
-        && openUdpPort(WidgetId::baton);
-
+    bool retval = true;
+    for (int i = 0; i < maxWidgets; ++i) {
+        WidgetId widgetId = intToWidgetId(i);
+        if (widgetId != WidgetId::reserved && widgetId != WidgetId::invalid) {
+            retval &= openUdpPort(widgetId);
+        }
+    }
     return retval;
 }
 
 
 bool closeUdpPorts()
 {
-    bool retval =
-           closeUdpPort(WidgetId::eye)
-        && closeUdpPort(WidgetId::spinnah)
-        && closeUdpPort(WidgetId::bells)
-        && closeUdpPort(WidgetId::rainstick)
-        && closeUdpPort(WidgetId::schroedersPlaything)
-        && closeUdpPort(WidgetId::triObelisk)
-        && closeUdpPort(WidgetId::boogieBoard)
-        && closeUdpPort(WidgetId::pump)
-        && closeUdpPort(WidgetId::contortOMatic)
-        && closeUdpPort(WidgetId::fourPlay42)
-        && closeUdpPort(WidgetId::fourPlay43)
-        && closeUdpPort(WidgetId::baton);
-
+    bool retval = true;
+    for (int i = 0; i < maxWidgets; ++i) {
+        WidgetId widgetId = intToWidgetId(i);
+        if (widgetId != WidgetId::reserved && widgetId != WidgetId::invalid) {
+            retval &= closeUdpPort(widgetId);
+        }
+    }
     return retval;
 }
 
