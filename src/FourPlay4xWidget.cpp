@@ -15,7 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "FourPlay42Widget.h"
+#include "FourPlay4xWidget.h"
 #include "ConfigReader.h"
 #include "illumiconeWidgetTypes.h"
 #include "WidgetId.h"
@@ -23,8 +23,8 @@
 using namespace std;
 
 
-FourPlay42Widget::FourPlay42Widget()
-    : Widget(WidgetId::fourPlay42, 4)
+FourPlay4xWidget::FourPlay4xWidget(WidgetId id)
+    : Widget(id, 4)
 {
     simulationUpdateIntervalMs[0] = 2;
     simulationUpdateIntervalMs[1] = 2;
@@ -33,7 +33,7 @@ FourPlay42Widget::FourPlay42Widget()
 }
 
 
-void FourPlay42Widget::updateChannelSimulatedMeasurements(unsigned int chIdx)
+void FourPlay4xWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
     channels[chIdx]->getPosition();      // make sure previous velocity has been updated
     int newPosition = (channels[chIdx]->getPreviousPosition() + 1) % 65536;   // scale to 16-bit int from widget

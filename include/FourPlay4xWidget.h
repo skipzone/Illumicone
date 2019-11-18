@@ -18,17 +18,18 @@
 #pragma once
 
 #include "Widget.h"
+#include "WidgetId.h"
 #include "WidgetChannel.h"
 
-class FourPlay42Widget : public Widget
+class FourPlay4xWidget : public Widget
 {
     public:
 
-        FourPlay42Widget();
-        virtual ~FourPlay42Widget() {};
+        FourPlay4xWidget(WidgetId id);
+        virtual ~FourPlay4xWidget() {};
 
-        FourPlay42Widget(const FourPlay42Widget&) = delete;
-        FourPlay42Widget& operator =(const FourPlay42Widget&) = delete;
+        FourPlay4xWidget(const FourPlay4xWidget&) = delete;
+        FourPlay4xWidget& operator =(const FourPlay4xWidget&) = delete;
 
         void updateChannelSimulatedMeasurements(unsigned int chIdx);
 

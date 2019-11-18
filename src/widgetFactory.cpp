@@ -20,8 +20,7 @@
 #include "BellsWidget.h"
 #include "BoogieBoardWidget.h"
 #include "EyeWidget.h"
-#include "FourPlay42Widget.h"
-#include "FourPlay43Widget.h"
+#include "FourPlay4xWidget.h"
 #include "Log.h"
 #include "PumpWidget.h"
 #include "RainstickWidget.h"
@@ -50,9 +49,8 @@ Widget* widgetFactory(WidgetId id) {
         case WidgetId::boogieBoard:
             return new BoogieBoardWidget;
         case WidgetId::fourPlay42:
-            return new FourPlay42Widget;
         case WidgetId::fourPlay43:
-            return new FourPlay43Widget;
+            return new FourPlay4xWidget(id);
         case WidgetId::baton1:
         case WidgetId::baton2:
         case WidgetId::baton3:
