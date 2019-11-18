@@ -29,8 +29,8 @@ using namespace std;
 extern Log logger;
 
 
-BatonWidget::BatonWidget()
-    : Widget(WidgetId::baton, 13)
+BatonWidget::BatonWidget(WidgetId id)
+    : Widget(id, 13)
 {
     // Simulate acceleration.
     simulationUpdateIntervalMs[6] = 10;
