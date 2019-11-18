@@ -78,6 +78,8 @@
             //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_346_FourPlay42.json" },
             //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_traditional_FourPlay42.json" },
 
+            { "_include_file_rings_Flower1" : "patterns/redRing_Flower1.json" },
+
             { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
 
             { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" }
