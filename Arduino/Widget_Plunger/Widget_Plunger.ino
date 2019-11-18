@@ -40,7 +40,7 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 8
+#define WIDGET_ID 6
 #define NUM_CHANNELS 1
 #define ACTIVE_TX_INTERVAL_MS 250L
 #define INACTIVE_TX_INTERVAL_MS 60000L      // should be a multiple of ACTIVE_TX_INTERVAL_MS

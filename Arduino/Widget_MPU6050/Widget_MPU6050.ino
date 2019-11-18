@@ -198,7 +198,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                    // 0 = 1.2
 
 #ifdef BATON
 
-#define WIDGET_ID 12
+#define WIDGET_ID 21
 
 #define ACTIVATE_WITH_MOVEMENT
 
