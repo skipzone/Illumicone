@@ -20,6 +20,7 @@
 #include "BellsWidget.h"
 #include "BoogieBoardWidget.h"
 #include "EyeWidget.h"
+#include "FlowerWidget.h"
 #include "FourPlay4xWidget.h"
 #include "Log.h"
 #include "PumpWidget.h"
@@ -58,6 +59,15 @@ Widget* widgetFactory(WidgetId id) {
         case WidgetId::baton5:
         case WidgetId::baton6:
             return new BatonWidget(id);
+        case WidgetId::flower1:
+        case WidgetId::flower2:
+        case WidgetId::flower3:
+        case WidgetId::flower4:
+        case WidgetId::flower5:
+        case WidgetId::flower6:
+        case WidgetId::flower7:
+        case WidgetId::flower8:
+            return new FlowerWidget(id);
         default:
             logger.logMsg(LOG_ERR, "Unsupported id passed to widgetFactory.");
             return nullptr;
