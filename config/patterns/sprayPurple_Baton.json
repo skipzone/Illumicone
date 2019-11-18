@@ -22,7 +22,7 @@
     "patternClassName" : "ParticlesPattern",
     "inputs" : [
         {   "inputName" : "emitRate",
-            "widgetName" : "baton",
+            "widgetName" : "baton1",
             "channelNumber" : 4,        // gyro Y
             "measurement" : "position"
         }
