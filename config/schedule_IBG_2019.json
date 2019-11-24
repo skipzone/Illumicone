@@ -20,10 +20,6 @@
         {   "description" : "outside event hours shutoff with daytime dry-out",
             "startDateTime" : "22:00:00",
             "endDateTime" : "08:00:00"
-        },
-        {   "description" : "pre-event",
-            "startDateTime" : "2019-11-24 08:00:00",
-            "endDateTime" : "2019-11-26 17:00:00"
         }
     ],
 
@@ -34,7 +30,7 @@
             "quiescentColor" : "192,192,192"
         },
         {   "description" : "go home",
-            "startDateTime" : "21:30:00",
+            "startDateTime" : "21:45:00",
             "endDateTime" : "22:00:00",
             "quiescentColor" : "navy"
         }
