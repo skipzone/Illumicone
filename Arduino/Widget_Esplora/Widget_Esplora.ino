@@ -45,7 +45,7 @@
 //#define PUMP
 
 #if defined(WIDGET_RADIO_TESTER)
-  #define WIDGET_ID 11  // FourPlay-4-3
+  #define WIDGET_ID 9  // FourPlay-4-3
   #define NUM_CHANNELS 4
   #define TX_INTERVAL_MS 100L
   #define STATS_PRINT_INTERVAL_MS 1000L
@@ -54,8 +54,8 @@
   #define PAYLOAD_TYPE StressTestPayload
 
 #elif defined(FOURPLAY)
-  #define WIDGET_ID 10
-  #define ALT_WIDGET_ID 11
+  #define WIDGET_ID 8
+  #define ALT_WIDGET_ID 9
   #define NUM_ENCODERS 4
   #define VELOCITY_DIVISOR 4
   #define ACTIVITY_THRESHOLD 2
@@ -69,7 +69,7 @@
   #define PAYLOAD_TYPE PositionVelocityPayload
 
 #elif defined(PUMP)
-  #define WIDGET_ID 8
+  #define WIDGET_ID 6
   #define TX_INTERVAL_MS 250L
   #define TX_PIPE_ADDRESS "1wdgt"
   #define PAYLOAD_TYPE PositionVelocityPayload
