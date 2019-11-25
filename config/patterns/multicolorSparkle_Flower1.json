@@ -24,7 +24,7 @@
         {   "inputName" : "density",
             "widgetName" : "flower1",
             "channelNumber" : 5,
-            "measurement" : "position"
+            "measurement" : "velocity"
         }
     ],
     "activationThreshold" : 1,
