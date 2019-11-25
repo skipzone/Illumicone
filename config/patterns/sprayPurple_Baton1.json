@@ -15,7 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "sprayPurple_Baton",
+{   "name" : "sprayPurple_Baton1",
     "enabled" : true,
     "priority" : 2,
     "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
