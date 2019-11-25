@@ -47,7 +47,7 @@
 //#define BATON5
 //#define BATON6
 //#define BOOGIEBOARD
-#define FLOWER1
+//#define FLOWER1
 //#define FLOWER2
 //#define FLOWER3
 //#define FLOWER4
@@ -58,7 +58,7 @@
 //#define IBG_TILT_1
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
-//#define RAINSTICK
+#define RAINSTICK
 
 #if defined(BATON1) || defined(BATON2) || defined(BATON3) || defined(BATON4) || defined(BATON5) || defined(BATON6)
 #define BATON
@@ -152,22 +152,22 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 
 // Stagger the transmissions to avoid repeated collisions.
 #if defined(BATON1)
-#define ACTIVE_TX_INTERVAL_MS 41L
+#define ACTIVE_TX_INTERVAL_MS 81L
 #define INACTIVE_TX_INTERVAL_MS 2001L
 #elif defined(BATON2)
-#define ACTIVE_TX_INTERVAL_MS 43L
+#define ACTIVE_TX_INTERVAL_MS 83L
 #define INACTIVE_TX_INTERVAL_MS 2003L
 #elif defined(BATON3)
-#define ACTIVE_TX_INTERVAL_MS 45L
+#define ACTIVE_TX_INTERVAL_MS 85L
 #define INACTIVE_TX_INTERVAL_MS 2005L
 #elif defined(BATON4)
-#define ACTIVE_TX_INTERVAL_MS 47L
+#define ACTIVE_TX_INTERVAL_MS 87L
 #define INACTIVE_TX_INTERVAL_MS 2007L
 #elif defined(BATON5)
-#define ACTIVE_TX_INTERVAL_MS 49L
+#define ACTIVE_TX_INTERVAL_MS 89L
 #define INACTIVE_TX_INTERVAL_MS 2009L
 #elif defined(BATON6)
-#define ACTIVE_TX_INTERVAL_MS 51L
+#define ACTIVE_TX_INTERVAL_MS 91L
 #define INACTIVE_TX_INTERVAL_MS 2011L
 #else
 #error No tx intervals defined for this baton.
@@ -180,7 +180,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 
 // The MPU-6050 is placed in cycle mode, and the processor is put to sleep
 // when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
-#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 20000L
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 60000L
 
 // We use the time elapsed since getting good data from the MPU-6050 to determine
 // if we need to reinitialize the little bastard because he's quit working right.
@@ -503,7 +503,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 
 // The MPU-6050 is placed in cycle mode, and the processor is put to sleep
 // when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
-#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 20000L
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 60000L
 
 // We use the time elapsed since getting good data from the MPU-6050 to determine
 // if we need to reinitialize the little bastard because he's quit working right.
@@ -594,7 +594,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                      // 0 = 1
 
 // The MPU-6050 is placed in cycle mode, and the processor is put to sleep
 // when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
-#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 20000L
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 60000L
 
 // We use the time elapsed since getting good data from the MPU-6050 to determine
 // if we need to reinitialize the little bastard because he's quit working right.
