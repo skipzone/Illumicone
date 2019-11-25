@@ -568,7 +568,7 @@ void handleMeasurementVectorPayload(
         udpPayload.channel  = i;
         udpPayload.isActive = payload->widgetHeader.isActive;
         udpPayload.position = payload->measurements[i];
-        udpPayload.velocity = 0;
+        udpPayload.velocity = payload->measurements[i];
 
         sendUdp(udpPayload);
     }
