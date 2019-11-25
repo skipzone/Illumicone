@@ -23,17 +23,17 @@
     "inputs" : [
         {   "inputName" : "rPosition",
             "widgetName" : "flower3",
-            "channelNumber" : 5,
+            "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "gPosition",
             "widgetName" : "flower3",
-            "channelNumber" : 5,
+            "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "bPosition",
             "widgetName" : "flower3",
-            "channelNumber" : 5,
+            "channelNumber" : 0,
             "measurement" : "position"
         }
     ],
@@ -41,52 +41,52 @@
     "vEnable" : true,
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
     "vConfig" : {
-        "virtualPixelRatio" : 4,
+        "virtualPixelRatio" : 75,
         "widthScaledownFactor" : 1,
         "rConfig" : {
-            "maxSidebandWidth" : 8,     // sideband widths are in the context of virtual pixels
-            "minSidebandWidth" : 8,     // min should be equal to or greater than virtualPixelRatio
+            "maxSidebandWidth" : 225,   // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 225,   // min should be equal to or greater than virtualPixelRatio
             "numStripes" : 3,           // number of stripes is in the context of physical pixels
-            "scaledownFactor" : 10,     // effectively gear down a rotating widget
+            "scaledownFactor" : 1,      // effectively gear down a rotating widget
             "baseIntensity" : 255
         },
         "gConfig" : {
-            "maxSidebandWidth" : 8,
-            "minSidebandWidth" : 8,
+            "maxSidebandWidth" : 225,
+            "minSidebandWidth" : 225,
             "numStripes" : 4,
-            "scaledownFactor" : 15,
+            "scaledownFactor" : 2,
             "baseIntensity" : 255
         },
         "bConfig" : {
-            "maxSidebandWidth" : 8,
-            "minSidebandWidth" : 8,
+            "maxSidebandWidth" : 150,
+            "minSidebandWidth" : 150,
             "numStripes" : 6,
-            "scaledownFactor" : 20,
+            "scaledownFactor" : 3,
             "baseIntensity" : 255
         }
     },
     "hConfig" : {
-        "virtualPixelRatio" : 4,
-        "widthScaledownFactor" : 3,
+        "virtualPixelRatio" : 36,
+        "widthScaledownFactor" : 1,
         "rConfig" : {
-            "maxSidebandWidth" : 16,    // sideband widths are in the context of virtual pixels
-            "minSidebandWidth" : 16,    // min should be equal to or greater than virtualPixelRatio
+            "maxSidebandWidth" : 144,   // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 144,   // min should be equal to or greater than virtualPixelRatio
             "numStripes" : 2,           // number of stripes is in the context of physical pixels
-            "scaledownFactor" : 10,     // effectively gear down a rotating widget
+            "scaledownFactor" : 1,      // effectively gear down a rotating widget
             "baseIntensity" : 255
         },
         "gConfig" : {
-            "maxSidebandWidth" : 16,
-            "minSidebandWidth" : 16,
+            "maxSidebandWidth" : 144,
+            "minSidebandWidth" : 144,
             "numStripes" : 4,
-            "scaledownFactor" : 15,
+            "scaledownFactor" : 2,
             "baseIntensity" : 255
         },
         "bConfig" : {
-            "maxSidebandWidth" : 12,
-            "minSidebandWidth" : 12,
+            "maxSidebandWidth" : 108,
+            "minSidebandWidth" : 108,
             "numStripes" : 6,
-            "scaledownFactor" : 20,
+            "scaledownFactor" : 3,
             "baseIntensity" : 255
         }
     }
