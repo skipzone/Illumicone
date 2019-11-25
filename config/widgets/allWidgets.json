@@ -22,6 +22,31 @@
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
+        {   "name" : "baton2",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "baton3",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "baton4",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "baton5",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "baton6",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
         {   "name" : "bells",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
@@ -38,6 +63,41 @@
             "autoInactiveMs" : 500
         },
         {   "name" : "flower1",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "flower2",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "flower3",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "flower4",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "flower5",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "flower6",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "flower7",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "flower8",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
