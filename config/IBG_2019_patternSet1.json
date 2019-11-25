@@ -1,0 +1,34 @@
+
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "patterns" : [
+
+        { "_include_file_coloredSparkle_flower1" : "patterns/multicolorSparkle_Flower1.json" },
+
+        { "_include_file_ringsAndStripes_flower3" : "patterns/ringsAndStripes_Flower3.json" },
+
+        { "_include_file_sprayWhite_Baton1" : "patterns/sprayWhite_Baton1.json" },
+        { "_include_file_sprayPurple_Baton1" : "patterns/sprayPurple_Baton1.json" },
+        { "_include_file_sprayAqua_Baton1" : "patterns/sprayAqua_Baton1.json" },
+
+        { "_include_file_rain_Rainstick" : "patterns/rain_Rainstick.json" }
+
+    ]
+}
+
