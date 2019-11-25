@@ -32,12 +32,6 @@
  *        3     GyroX
  *        4     GyroY
  *        5     GyroZ
- *        6     AccelX
- *        7     AccelY
- *        8     AccelZ
- *        9     LinearAccelX
- *       10     LinearAccelY
- *       11     LinearAccelZ
  *       12     Temperature
 */
 
