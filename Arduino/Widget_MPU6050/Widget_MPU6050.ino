@@ -47,7 +47,7 @@
 //#define BATON5
 //#define BATON6
 //#define BOOGIEBOARD
-//#define FLOWER1
+#define FLOWER1
 //#define FLOWER2
 //#define FLOWER3
 //#define FLOWER4
@@ -58,7 +58,7 @@
 //#define IBG_TILT_1
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
-#define RAINSTICK
+//#define RAINSTICK
 
 #if defined(BATON1) || defined(BATON2) || defined(BATON3) || defined(BATON4) || defined(BATON5) || defined(BATON6)
 #define BATON
@@ -140,7 +140,7 @@ enum class WidgetMode {
 
 #define ACTIVATE_WITH_MOVEMENT
 
-static constexpr int16_t movementDetectionThreshold = 5;                // tenths of a degree of change in yaw, pitch, or roll
+static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
@@ -203,6 +203,22 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // moving average length for averaging IMU measurements
 #define MA_LENGTH 20
 
+static constexpr uint8_t maSlotYaw = 0;
+static constexpr uint8_t maSlotPitch = 1;
+static constexpr uint8_t maSlotRoll = 2;
+static constexpr uint8_t maSlotGyroX = 3;
+static constexpr uint8_t maSlotGyroY = 4;
+static constexpr uint8_t maSlotGyroZ = 5;
+static constexpr uint8_t maSlotAccelX = 6;
+static constexpr uint8_t maSlotAccelY = 7;
+static constexpr uint8_t maSlotAccelZ = 8;
+static constexpr uint8_t maSlotLinearAccelX = 9;
+static constexpr uint8_t maSlotLinearAccelY = 10;
+static constexpr uint8_t maSlotLinearAccelZ = 11;
+static constexpr uint8_t maSlotTemperature = 12;
+
+static constexpr uint8_t numMaSets = 13;
+
 // ---------- radio configuration ----------
 
 // Nwdgt, where N indicates the payload type (0: stress test; 1: position
@@ -247,7 +263,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 
 #define ACTIVATE_WITH_MOVEMENT
 
-static constexpr int16_t movementDetectionThreshold = 1;                // tenths of a degree of change in yaw, pitch, or roll
+static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
@@ -290,6 +306,22 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 
 // moving average length for averaging IMU measurements
 #define MA_LENGTH 5
+
+static constexpr uint8_t maSlotYaw = 0;
+static constexpr uint8_t maSlotPitch = 1;
+static constexpr uint8_t maSlotRoll = 2;
+static constexpr uint8_t maSlotGyroX = 3;
+static constexpr uint8_t maSlotGyroY = 4;
+static constexpr uint8_t maSlotGyroZ = 5;
+static constexpr uint8_t maSlotAccelX = 6;
+static constexpr uint8_t maSlotAccelY = 7;
+static constexpr uint8_t maSlotAccelZ = 8;
+static constexpr uint8_t maSlotLinearAccelX = 9;
+static constexpr uint8_t maSlotLinearAccelY = 10;
+static constexpr uint8_t maSlotLinearAccelZ = 11;
+static constexpr uint8_t maSlotTemperature = 12;
+
+static constexpr uint8_t numMaSets = 13;
 
 // ---------- radio configuration ----------
 
@@ -353,7 +385,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 
 #define ACTIVATE_WITH_MOVEMENT
 
-static constexpr int16_t movementDetectionThreshold = 5;                // tenths of a degree of change in yaw, pitch, or roll
+static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
@@ -419,7 +451,17 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
 
 // moving average length for averaging IMU measurements
-#define MA_LENGTH 20
+#define MA_LENGTH 1
+
+static constexpr uint8_t maSlotYaw = 0;
+static constexpr uint8_t maSlotPitch = 1;
+static constexpr uint8_t maSlotRoll = 2;
+static constexpr uint8_t maSlotGyroX = 3;
+static constexpr uint8_t maSlotGyroY = 4;
+static constexpr uint8_t maSlotGyroZ = 5;
+static constexpr uint8_t maSlotTemperature = 6;
+
+static constexpr uint8_t numMaSets = 7;
 
 // ---------- radio configuration ----------
 
@@ -473,7 +515,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 
 #define ACTIVATE_WITH_MOVEMENT
 
-static constexpr int16_t movementDetectionThreshold = 5;                // tenths of a degree of change in yaw, pitch, or roll
+static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
@@ -526,6 +568,22 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // moving average length for averaging IMU measurements
 #define MA_LENGTH 20
 
+static constexpr uint8_t maSlotYaw = 0;
+static constexpr uint8_t maSlotPitch = 1;
+static constexpr uint8_t maSlotRoll = 2;
+static constexpr uint8_t maSlotGyroX = 3;
+static constexpr uint8_t maSlotGyroY = 4;
+static constexpr uint8_t maSlotGyroZ = 5;
+static constexpr uint8_t maSlotAccelX = 6;
+static constexpr uint8_t maSlotAccelY = 7;
+static constexpr uint8_t maSlotAccelZ = 8;
+static constexpr uint8_t maSlotLinearAccelX = 9;
+static constexpr uint8_t maSlotLinearAccelY = 10;
+static constexpr uint8_t maSlotLinearAccelZ = 11;
+static constexpr uint8_t maSlotTemperature = 12;
+
+static constexpr uint8_t numMaSets = 13;
+
 // ---------- radio configuration ----------
 
 // Nwdgt, where N indicates the payload type (0: stress test; 1: position
@@ -569,11 +627,10 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #define WIDGET_ID 4
 
 #define ENABLE_SOUND
-
 #define ACTIVATE_WITH_SOUND
 
 static constexpr uint16_t activeSoundThreshold = 100;
-static constexpr int16_t movementDetectionThreshold = 1;                // tenths of a degree change in yaw, pitch, or roll
+static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 0;                // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
@@ -623,6 +680,23 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                      // 0 = 1
 
 // moving average length for averaging sound and IMU measurements
 #define MA_LENGTH 8
+
+static constexpr uint8_t maSlotYaw = 0;
+static constexpr uint8_t maSlotPitch = 1;
+static constexpr uint8_t maSlotRoll = 2;
+static constexpr uint8_t maSlotGyroX = 3;
+static constexpr uint8_t maSlotGyroY = 4;
+static constexpr uint8_t maSlotGyroZ = 5;
+static constexpr uint8_t maSlotAccelX = 6;
+static constexpr uint8_t maSlotAccelY = 7;
+static constexpr uint8_t maSlotAccelZ = 8;
+static constexpr uint8_t maSlotLinearAccelX = 9;
+static constexpr uint8_t maSlotLinearAccelY = 10;
+static constexpr uint8_t maSlotLinearAccelZ = 11;
+static constexpr uint8_t maSlotTemperature = 12;
+static constexpr uint8_t maSlotPpSound = 13;
+
+static constexpr uint8_t numMaSets = 14;
 
 // ---------- radio configuration ----------
 
@@ -698,28 +772,6 @@ static bool isSoundActive;
 #endif
 
 static bool isImuActive;
-
-static constexpr uint8_t maSlotYaw = 0;
-static constexpr uint8_t maSlotPitch = 1;
-static constexpr uint8_t maSlotRoll = 2;
-static constexpr uint8_t maSlotGyroX = 3;
-static constexpr uint8_t maSlotGyroY = 4;
-static constexpr uint8_t maSlotGyroZ = 5;
-static constexpr uint8_t maSlotAccelX = 6;
-static constexpr uint8_t maSlotAccelY = 7;
-static constexpr uint8_t maSlotAccelZ = 8;
-static constexpr uint8_t maSlotLinearAccelX = 9;
-static constexpr uint8_t maSlotLinearAccelY = 10;
-static constexpr uint8_t maSlotLinearAccelZ = 11;
-static constexpr uint8_t maSlotTemperature = 12;
-#ifdef ENABLE_SOUND
-static constexpr uint8_t maSlotPpSound = 13;
-static constexpr uint8_t numMaSets = 14;
-#else
-static constexpr uint8_t numMaSets = 13;
-#endif
-static constexpr uint8_t firstYprMaSlot = maSlotYaw;
-static constexpr uint8_t lastYprMaSlot = maSlotRoll;
 
 static int16_t maValues[numMaSets][MA_LENGTH];
 static int32_t maSums[numMaSets];
@@ -1293,7 +1345,8 @@ void gatherMotionMeasurements(uint32_t now)
     mpu6050.dmpGetLinearAccel(&linearAccel, &accel, &gravity);
 
     // The unit for yaw, pitch, and roll measurements is tenths of a degree.
-    updateMovingAverage(maSlotYaw  , ypr[0] * (float) 1800 / M_PI);
+    // Yaw is normalized to 0-359.9 degrees.
+    updateMovingAverage(maSlotYaw  , (ypr[0] >= 0 ? ypr[0] : ypr[0] + 2 * M_PI) * (float) 1800 / M_PI);
     updateMovingAverage(maSlotPitch, ypr[1] * (float) 1800 / M_PI);
     updateMovingAverage(maSlotRoll , ypr[2] * (float) 1800 / M_PI);
 
@@ -1301,13 +1354,17 @@ void gatherMotionMeasurements(uint32_t now)
     updateMovingAverage(maSlotGyroY, gyro.y);
     updateMovingAverage(maSlotGyroZ, gyro.z);
 
+#ifdef maSlotAccelX
     updateMovingAverage(maSlotAccelX, accel.x);
     updateMovingAverage(maSlotAccelY, accel.y);
     updateMovingAverage(maSlotAccelZ, accel.z);
+#endif
 
+#ifdef maSlotLinearAccelX
     updateMovingAverage(maSlotLinearAccelX, linearAccel.x);
     updateMovingAverage(maSlotLinearAccelY, linearAccel.y);
     updateMovingAverage(maSlotLinearAccelZ, linearAccel.z);
+#endif
 
     // If we got any non-zero quaternion or gyro data (which come directly
     // from the packet), communication with the MPU-6050 is probably working.
@@ -1317,14 +1374,16 @@ void gatherMotionMeasurements(uint32_t now)
       lastSuccessfulMpu6050ReadMs = now;
     }
 
-  isImuActive = false;
-  for (uint8_t i = firstYprMaSlot; i < lastYprMaSlot; ++i) {
-    if (detectMovingAverageChange(i, movementDetectionThreshold)) {
+    if ((abs(getMovingAverage(maSlotGyroX)) > movementDetectionThreshold)
+        || (abs(getMovingAverage(maSlotGyroY)) > movementDetectionThreshold)
+        || (abs(getMovingAverage(maSlotGyroZ)) > movementDetectionThreshold))
+    {
       isImuActive = true;
       lastMotionDetectedMs = now;
-      break;
     }
-  }
+    else {
+      isImuActive = false;
+    }
 
 //#ifdef ENABLE_DEBUG_PRINT
 //      // Careful:  We might not be able to keep up if this debug print is enabled.
@@ -1618,7 +1677,6 @@ void loop()
   }
 #endif
 
-  // TODO:  activity indicator depends on which actual widget this is so make configurable
   bool isActive = false;
 #if defined(ACTIVATE_WITH_MOVEMENT)
   isActive |= isImuActive;
