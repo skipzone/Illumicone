@@ -140,7 +140,7 @@ enum class WidgetMode {
 
 #define ACTIVATE_WITH_MOVEMENT
 
-static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
+static constexpr int16_t movementDetectionThreshold = 10;               // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
@@ -263,7 +263,7 @@ static constexpr uint8_t numMaSets = 13;
 
 #define ACTIVATE_WITH_MOVEMENT
 
-static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
+static constexpr int16_t movementDetectionThreshold = 10;               // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
@@ -385,7 +385,7 @@ static constexpr uint8_t numMaSets = 13;
 
 #define ACTIVATE_WITH_MOVEMENT
 
-static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
+static constexpr int16_t movementDetectionThreshold = 5;                // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
@@ -515,7 +515,7 @@ static constexpr uint8_t numMaSets = 7;
 
 #define ACTIVATE_WITH_MOVEMENT
 
-static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
+static constexpr int16_t movementDetectionThreshold = 10;               // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
@@ -630,7 +630,7 @@ static constexpr uint8_t numMaSets = 13;
 #define ACTIVATE_WITH_SOUND
 
 static constexpr uint16_t activeSoundThreshold = 100;
-static constexpr int16_t movementDetectionThreshold = 15;               // widget is active if gyro rotational speed > threshold
+static constexpr int16_t movementDetectionThreshold = 10;               // widget is active if gyro rotational speed > threshold
 static constexpr uint32_t inactiveTransitionDelayMs = 0;                // delay between inactivity detection and going inactive
 
 static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
