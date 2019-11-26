@@ -45,31 +45,7 @@
         ],
 
         "patterns" : [
-            //{ "_include_file_coloredSparkles_Baton" : "patterns/coloredSparkles_Baton.json" },
-            { "_include_file_coloredSparkles_Bells" : "patterns/coloredSparkles_Bells.json" },
-            //{ "_include_file_coloredSparkles_FourPlay42" : "patterns/coloredSparkles_FourPlay42.json" },
-            { "_include_file_multicolorSparkle_Spinnah" : "patterns/multicolorSparkle_Spinnah.json" },
-
-            { "_include_file_coloredSprays_Baton" : "patterns/coloredSprays_Baton.json" },
-            //{ "_include_file_coloredSprays_Bells" : "patterns/coloredSprays_Bells.json" },
-
-            { "_include_file_eyeFlash" : "patterns/eyeFlash.json" },
-
-            { "_include_file_fillAndBurst_Pump" : "patterns/fillAndBurst_Pump.json" },
-
-            { "_include_file_rain_Rainstick" : "patterns/rain_Rainstick.json" },
-
-            //{ "_include_file_rings_FourPlay43" : "patterns/rings_346_FourPlay43.json" },
-            //{ "_include_file_rings_FourPlay43" : "patterns/rings_traditional_FourPlay43.json" },
-            { "_include_file_ringsAndStripes_FourPlay42" : "patterns/ringsAndStripes_trippy_FourPlay42.json" },
-            //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_346_FourPlay42.json" },
-            //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_traditional_FourPlay42.json" },
-
-            { "_include_file_rings_Flower1" : "patterns/redRing_Flower1.json" },
-
-            { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
-
-            { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" }
+            { "_include_file_patterns" : "IBG_2019_patternSet1.json" }
         ]
     }
 }
