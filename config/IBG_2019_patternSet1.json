@@ -19,9 +19,8 @@
 {
     "patterns" : [
 
-        { "_include_file_coloredSparkle_flower1" : "patterns/multicolorSparkle_Flower1.json" },
-
-        { "_include_file_ringsAndStripes_flower3" : "patterns/ringsAndStripes_Flower3.json" },
+        { "_include_file_ringsAndStripes_flower2" : "patterns/ringsAndStripes_Flower2.json" },
+        { "_include_file_coloredSparkle_flower3" : "patterns/multicolorSparkle_Flower3.json" },
 
         { "_include_file_sprayWhite_Baton1" : "patterns/sprayWhite_Baton1.json" },
         { "_include_file_sprayPurple_Baton1" : "patterns/sprayPurple_Baton1.json" },

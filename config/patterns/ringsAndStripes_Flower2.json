@@ -22,17 +22,17 @@
     "patternClassName" : "RgbStripePattern",
     "inputs" : [
         {   "inputName" : "rPosition",
-            "widgetName" : "flower3",
+            "widgetName" : "flower2",
             "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "gPosition",
-            "widgetName" : "flower3",
+            "widgetName" : "flower2",
             "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "bPosition",
-            "widgetName" : "flower3",
+            "widgetName" : "flower2",
             "channelNumber" : 0,
             "measurement" : "position"
         }
