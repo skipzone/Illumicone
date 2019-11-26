@@ -7,6 +7,9 @@
  * based on OctoFlashy rev. 2019-11-09               *
  *****************************************************/
 
+// TODO:  turn on built-in LED when widget is active
+// TODO:  turn on all lamps when widget is inactive
+// TODO:  fade lights down when widget becomes active, fade up when it goes inactive
 
 /***********
  * Options *
@@ -45,11 +48,13 @@
 #define LAMP_TEST_ACTIVE LOW
 #define LAMP_TEST_INTENSITY 255
 
+// TODO:  change to 20 for the garden
+#define DMX_NUM_CHANNELS 27
 #define DMX_TX_INTERVAL_MS 33L
 
-#define NUM_LAMPS 5
+#define NUM_LAMPS 4
 
-#define LAMP_MIN_INTENSITY 64
+#define LAMP_MIN_INTENSITY 32
 #define LAMP_MAX_INTENSITY 255
 
 
@@ -67,35 +72,26 @@
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-// Illumicone widgets use channel 84.  IBG widgets used channel 97 in 2018.
-#define RF_CHANNEL 84
+// Illumicone widgets use channel 97.
+#define RF_CHANNEL 97
 
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
 constexpr uint8_t readPipeAddresses[][6] = {"0wdgt", "1wdgt", "2wdgt", "3wdgt", "4wdgt", "5wdgt"};
 constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 
-#define ACK_WIDGET_PACKETS false
+// Probably no need to ever set auto acknowledgement to false because the sender
+// can control whether or not acks are sent by using the NO_ACK bit.
+#define ACK_WIDGET_PACKETS true
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
 
+// 250 us additional delay multiplier (0-15)
+#define TX_RETRY_DELAY_MULTIPLIER 15
 
-/*************************
- * Don't mess with these *
- *************************/
-
-#define DMX_NUM_CHANNELS_PER_LAMP 3
-#define DMX_NUM_CHANNELS (NUM_LAMPS * DMX_NUM_CHANNELS_PER_LAMP)
-
-// Let the scale8 function stolen from the FastLED library use assembly code if we're on an AVR chip.
-#if defined(__AVR__)
-#define SCALE8_AVRASM 1
-#else
-#define SCALE8_C 1
-#endif
-typedef uint8_t fract8;   ///< ANSI: unsigned short _Fract
-#define LIB8STATIC_ALWAYS_INLINE __attribute__ ((always_inline)) static inline
+// max retries (0-15)
+#define TX_MAX_RETRIES 15
 
 
 /**********************************************************
@@ -104,9 +100,9 @@ typedef uint8_t fract8;   ///< ANSI: unsigned short _Fract
 
 union WidgetHeader {
   struct {
-    uint8_t id       : 4;
+    uint8_t id       : 5;
+    uint8_t channel  : 2;
     bool    isActive : 1;
-    uint8_t channel  : 3;
   };
   uint8_t raw;
 };
@@ -159,7 +155,7 @@ void initRadio()
   radio.begin();
 
   radio.setPALevel(RF_POWER_LEVEL);
-  //radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
+  radio.setRetries(TX_RETRY_DELAY_MULTIPLIER, TX_MAX_RETRIES);
   radio.setDataRate(DATA_RATE);
   radio.setChannel(RF_CHANNEL);
   radio.setAutoAck(ACK_WIDGET_PACKETS);
@@ -215,67 +211,6 @@ void setup()
 }
 
 
-// scale8 function shamelessly stolen from FastLED library.
-//
-///  scale one byte by a second one, which is treated as
-///  the numerator of a fraction whose denominator is 256
-///  In other words, it computes i * (scale / 256)
-///  4 clocks AVR with MUL, 2 clocks ARM
-LIB8STATIC_ALWAYS_INLINE uint8_t scale8(uint8_t i, fract8 scale)
-{
-#if SCALE8_C == 1
-    return (((uint16_t)i) * (1+(uint16_t)(scale))) >> 8;
-#elif SCALE8_AVRASM == 1
-#if defined(LIB8_ATTINY)
-    uint8_t work=i;
-    uint8_t cnt=0x80;
-    asm volatile(
-        "  inc %[scale]                 \n\t"
-        "  breq DONE_%=                 \n\t"
-        "  clr %[work]                  \n\t"
-        "LOOP_%=:                       \n\t"
-        /*"  sbrc %[scale], 0             \n\t"
-        "  add %[work], %[i]            \n\t"
-        "  ror %[work]                  \n\t"
-        "  lsr %[scale]                 \n\t"
-        "  clc                          \n\t"*/
-        "  sbrc %[scale], 0             \n\t"
-        "  add %[work], %[i]            \n\t"
-        "  ror %[work]                  \n\t"
-        "  lsr %[scale]                 \n\t"
-        "  lsr %[cnt]                   \n\t"
-        "brcc LOOP_%=                   \n\t"
-        "DONE_%=:                       \n\t"
-        : [work] "+r" (work), [cnt] "+r" (cnt)
-        : [scale] "r" (scale), [i] "r" (i)
-        :
-      );
-    return work;
-#else
-    asm volatile(
-        // Multiply 8-bit i * 8-bit scale, giving 16-bit r1,r0
-        "mul %0, %1          \n\t"
-        // Add i to r0, possibly setting the carry flag
-        "add r0, %0         \n\t"
-        // load the immediate 0 into i (note, this does _not_ touch any flags)
-        "ldi %0, 0x00       \n\t"
-        // walk and chew gum at the same time
-        "adc %0, r1          \n\t"
-         "clr __zero_reg__    \n\t"
-
-         : "+a" (i)      /* writes to i */
-         : "a"  (scale)  /* uses scale */
-         : "r0", "r1"    /* clobbers r0, r1 */ );
-
-    /* Return the result */
-    return i;
-#endif
-#else
-#error "No implementation for scale8 available."
-#endif
-}
-
-
 bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uint8_t payloadSize)
 {
   if (payload->widgetHeader.id < 11 || payload->widgetHeader.id > 18) {
@@ -323,11 +258,11 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
     case 17:
     case 18:
       // yaw (0-3599 tenths of a degree) represents the rotation angle
-      currentRotationAngle = ((float) payload->measurements[1]) / 10.0;
+      currentRotationAngle = ((float) payload->measurements[0]) / 10.0;
 #ifdef ENABLE_DEBUG_PRINT
-      Serial.print(F("got pitch "));
+      Serial.print(F("got yaw "));
       Serial.print(currentRotationAngle);
-      Serial.println(F(" for lamp angle from widget 1"));
+      Serial.println(F(" for rotation angle from widget 1"));
 #endif
       break;
   }
