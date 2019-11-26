@@ -226,20 +226,35 @@ bool RgbStripePattern::update()
 {
     isActive = false;
     bool gotPositionOrWidthUpdate = false;
+    int rawPosition;
     unsigned int nowMs = getNowMs();
 
     for (int iColor = 0; iColor < numColors; ++iColor) {
         if (positionChannel[iColor] != nullptr) {
-            if (positionChannel[iColor]->getIsActive()) {
-                isActive = true;
-                if (positionChannel[iColor]->getHasNewPositionMeasurement()) {
-                    gotPositionOrWidthUpdate = true;
-                    int rawPosition = positionChannel[iColor]->getPosition();
-                    for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
-                        if (orientationIsEnabled[iOrient]) {
-                            stripeVPos[iOrient][iColor] =
-                                ((unsigned int) rawPosition) / scaledownFactor[iOrient][iColor]
-                                % numVPixelsForOrientation[iOrient];
+            // Quick and dirty hack to allow other channels to share channel 0's data.
+            if (isActive && gotPositionOrWidthUpdate
+                && iColor != 0 && positionChannel[iColor] == positionChannel[0])
+            {
+                for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
+                    if (orientationIsEnabled[iOrient]) {
+                        stripeVPos[iOrient][iColor] =
+                            ((unsigned int) rawPosition) / scaledownFactor[iOrient][iColor]
+                            % numVPixelsForOrientation[iOrient];
+                    }
+                }
+            }
+            else {
+                if (positionChannel[iColor]->getIsActive()) {
+                    isActive = true;
+                    if (positionChannel[iColor]->getHasNewPositionMeasurement()) {
+                        gotPositionOrWidthUpdate = true;
+                        rawPosition = positionChannel[iColor]->getPosition();
+                        for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
+                            if (orientationIsEnabled[iOrient]) {
+                                stripeVPos[iOrient][iColor] =
+                                    ((unsigned int) rawPosition) / scaledownFactor[iOrient][iColor]
+                                    % numVPixelsForOrientation[iOrient];
+                            }
                         }
                     }
                 }
