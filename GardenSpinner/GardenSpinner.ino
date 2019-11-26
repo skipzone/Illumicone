@@ -10,6 +10,7 @@
 // TODO:  turn on built-in LED when widget is active
 // TODO:  turn on all lamps when widget is inactive
 // TODO:  fade lights down when widget becomes active, fade up when it goes inactive
+// TODO:  auto-inactive timeout
 
 /***********
  * Options *
@@ -17,6 +18,7 @@
 
 #define ENABLE_WATCHDOG
 //#define ENABLE_DEBUG_PRINT
+#define ENABLE_SIMULATED_MEASUREMENTS
 
 
 /************
@@ -54,8 +56,12 @@
 
 #define NUM_LAMPS 4
 
-#define LAMP_MIN_INTENSITY 32
+#define LAMP_MIN_INTENSITY 48
 #define LAMP_MAX_INTENSITY 255
+#define ENABLE_GAMMA_CORRECTION
+
+#define SIMULATED_MEASUREMENT_UPDATE_INTERVAL_MS 5
+#define SIMULATED_MEASUREMENT_STEP 1
 
 
 /***********************
@@ -134,13 +140,46 @@ struct CustomPayload {
 };
 
 
+/***********************
+ * Types and Constants *
+ ***********************/
+// gamma correction for human-eye perception of WS2812 RGB LED brightness
+// (from http://rgb-123.com/ws2812-color-output/ on 3 April 2014).
+// Hopefully, will work well for single-color LED light strings.
+uint8_t g_gamma[] = {
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,
+    2,  2,  2,  3,  3,  3,  3,  3,  4,  4,  4,  4,  5,  5,  5,  5,
+    6,  6,  6,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10, 10, 11, 11,
+   11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18,
+   19, 19, 20, 21, 21, 22, 22, 23, 23, 24, 25, 25, 26, 27, 27, 28,
+   29, 29, 30, 31, 31, 32, 33, 34, 34, 35, 36, 37, 37, 38, 39, 40,
+   40, 41, 42, 43, 44, 45, 46, 46, 47, 48, 49, 50, 51, 52, 53, 54,
+   55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+   71, 72, 73, 74, 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 88, 89,
+   90, 91, 93, 94, 95, 96, 98, 99,100,102,103,104,106,107,109,110,
+  111,113,114,116,117,119,120,121,123,124,126,128,129,131,132,134,
+  135,137,138,140,142,143,145,146,148,150,151,153,155,157,158,160,
+  162,163,165,167,169,170,172,174,176,178,179,181,183,185,187,189,
+  191,193,194,196,198,200,202,204,206,208,210,212,214,216,218,220,
+  222,224,227,229,231,233,235,237,239,241,244,246,248,250,252,255
+};
+
+#ifdef ENABLE_GAMMA_CORRECTION
+  #define GAMMA(x) (g_gamma[x])
+#else
+  #define GAMMA(x) (x)
+#endif
+
+
 /***********
  * Globals *
  ***********/
 
+static bool widgetIsActive;
 static float currentRotationAngle;
 
-static int lampIntensities[NUM_LAMPS + 1];      // +1 because the last element is a virtual lamp that facilitates wraparound
+static uint8_t lampIntensities[NUM_LAMPS + 1];      // +1 because the last element is a virtual lamp that facilitates wraparound
 
 static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
@@ -222,7 +261,7 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
     return false;
   }
 
-  uint8_t numExpectedValues = 7         // flower widgets send ypr, gyro xyz, and temperature
+  uint8_t numExpectedValues = 7;          // flower widgets send ypr, gyro xyz, and temperature
   uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * numExpectedValues;
   if (payloadSize != expectedPayloadSize) {
 #ifdef ENABLE_DEBUG_PRINT
@@ -244,6 +283,7 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
     gotAllZeroData = payload->measurements[0] == 0;
   }
   if (gotAllZeroData) {
+    widgetIsActive = false;
     return false;
   }
   
@@ -257,13 +297,19 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
     case 16:
     case 17:
     case 18:
-      // yaw (0-3599 tenths of a degree) represents the rotation angle
-      currentRotationAngle = ((float) payload->measurements[0]) / 10.0;
+      if (payload->widgetHeader.isActive) {
+        widgetIsActive = true;
+        // yaw (0-3599 tenths of a degree) represents the rotation angle
+        currentRotationAngle = ((float) payload->measurements[0]) / 10.0;
 #ifdef ENABLE_DEBUG_PRINT
-      Serial.print(F("got yaw "));
-      Serial.print(currentRotationAngle);
-      Serial.println(F(" for rotation angle from widget 1"));
+        Serial.print(F("got yaw "));
+        Serial.print(currentRotationAngle);
+        Serial.println(F(" for rotation angle from widget 1"));
 #endif
+      }
+      else {
+        widgetIsActive = false;
+      }
       break;
   }
   
@@ -329,14 +375,23 @@ void sendDmx()
 
   for (uint8_t i = 1; i <= DMX_NUM_CHANNELS; dmxChannelValues[i++] = 0);
 
-  dmxChannelValue[ 1] = lampIntensities[0] + lampIntensities[5];    // add virtual lamp for wraparound
-  dmxChannelValue[ 4] = lampIntensities[1];
-  dmxChannelValue[ 7] = lampIntensities[2];
-  dmxChannelValue[10] = lampIntensities[3];
+  dmxChannelValues[ 1] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
+  dmxChannelValues[ 4] = GAMMA(lampIntensities[1]);
+  dmxChannelValues[ 7] = GAMMA(lampIntensities[2]);
+  dmxChannelValues[10] = GAMMA(lampIntensities[3]);
+
+  dmxChannelValues[26] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
+  dmxChannelValues[23] = GAMMA(lampIntensities[1]);
+  dmxChannelValues[20] = GAMMA(lampIntensities[2]);
+  dmxChannelValues[17] = GAMMA(lampIntensities[3]);
+
+  dmxChannelValues[13] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
+  dmxChannelValues[14] = GAMMA(lampIntensities[1]);
+  dmxChannelValues[15] = GAMMA(lampIntensities[2]);
 
   // Transmit the DMX channel values.
 #ifndef ENABLE_DEBUG_PRINT
-  for (dmxChannelNum = 1; dmxChannelNum <= DMX_NUM_CHANNELS; ++dmxChannelNum) {
+  for (uint8_t dmxChannelNum = 1; dmxChannelNum <= DMX_NUM_CHANNELS; ++dmxChannelNum) {
     DmxSimple.write(dmxChannelNum, dmxChannelValues[dmxChannelNum]);
 //#ifdef ENABLE_DEBUG_PRINT
 //    Serial.print(F("sent DMX ch "));
@@ -356,19 +411,29 @@ void updateLamps()
     for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
       lampIntensities[lampIdx] = LAMP_TEST_INTENSITY;
     }
-    lampIntensities[lampIdx] = 0;       // turn off the virtual lamp because no wraparound needed
-#ifndef ENABLE_DEBUG_PRINT
+    lampIntensities[NUM_LAMPS] = 0;     // turn off the virtual lamp because no wraparound needed
     sendDmx();
-#endif
     return;
   }
 #endif
 
-  constexpr float lampRotationStepAngle = 360.0 / (float) (NUM_LAMPS - 1);
-
-  for (uint8_t i = 0; i <= NUM_LAMPS; ++i) {
-    lampIntensities[i] = LAMP_MIN_INTENSITY;
+  if (!widgetIsActive) {
+    uint8_t lampIdx;
+    for (lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
+      lampIntensities[lampIdx] = LAMP_MAX_INTENSITY;
+    }
+    lampIntensities[lampIdx] = 0;       // turn off the virtual lamp because no wraparound needed
+    sendDmx();
+    return;
   }
+
+  constexpr float lampRotationStepAngle = 360.0 / (float) NUM_LAMPS;
+
+  for (uint8_t lampIdx = 0; lampIdx <= NUM_LAMPS - 1; ++lampIdx) {
+    lampIntensities[lampIdx] = LAMP_MIN_INTENSITY;
+  }
+  // The first lamp already has the minimum intensity, so the virtual lamp doesn't need it.
+  lampIntensities[NUM_LAMPS] = 0;
 
   // Fade across the lamps based on lamp selection angle.  The trick here is
   // that there are no more than two lamps illuminated at a time.  Fading across
@@ -377,11 +442,6 @@ void updateLamps()
   // just pretend the angle is 0.
   int fadeDownLamp = currentRotationAngle >= 0 && currentRotationAngle < 360 ? currentRotationAngle / lampRotationStepAngle : 0;
   int fadeUpLamp = fadeDownLamp + 1;
-// TODO:  the math says we shouldn't need this as long as the widget doesn't send shit data
-//  // Fix up fadeDownLamp if measurement is maxLampAngleDegrees degrees or more.
-//  if (fadeDownLamp >= NUM_LAMPS - 1) {
-//      fadeDownLamp = NUM_LAMPS - 2;
-//  }
   lampIntensities[fadeDownLamp] =
     map(currentRotationAngle,
         lampRotationStepAngle * fadeDownLamp, lampRotationStepAngle * (fadeUpLamp),
@@ -390,6 +450,11 @@ void updateLamps()
     map(currentRotationAngle,
         lampRotationStepAngle * fadeDownLamp, lampRotationStepAngle * (fadeUpLamp),
         LAMP_MIN_INTENSITY, LAMP_MAX_INTENSITY);
+  // When the virtual lamp is fading up, we're actually wrapping around to
+  // the first lamp, so prevent the minimum intensity from affecting it.
+  if (fadeUpLamp == NUM_LAMPS) {
+    lampIntensities[0] = 0;
+  }
 
   sendDmx();
 }
@@ -400,6 +465,18 @@ void loop()
   static int32_t lastDmxTxMs;
 
   uint32_t now = millis();
+
+#ifdef ENABLE_SIMULATED_MEASUREMENTS
+  static int32_t lastMeasmtIncMs;
+  if (now - lastMeasmtIncMs >= SIMULATED_MEASUREMENT_UPDATE_INTERVAL_MS) {
+    lastMeasmtIncMs = now;
+    currentRotationAngle += SIMULATED_MEASUREMENT_STEP;
+    if (currentRotationAngle >= 360.0) {
+      currentRotationAngle -= 360.0;
+    }
+    widgetIsActive = true;
+  }
+#endif
 
   pollRadio();
 
