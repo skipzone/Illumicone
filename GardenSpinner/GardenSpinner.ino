@@ -47,19 +47,10 @@
 
 #define DMX_TX_INTERVAL_MS 33L
 
-// Restrict color and lamp selection angles to avoid gimbal lock.
-constexpr float maxColorAngleDegrees = 45;
-constexpr float maxLampAngleDegrees = 45;
-
-#define NUM_LAMPS 9
+#define NUM_LAMPS 5
 
 #define LAMP_MIN_INTENSITY 64
-
-// With RGB lamps, enable red-green-blue-red wraparound as widget value
-// varies from one extreme to another.  (Without wraparound, the lamp
-// color would be red at one extreme and blue at the other, with no way
-// to go from blue through violet and magenta back to red.)
-//#define ENABLE_COLOR_WRAPAROUND
+#define LAMP_MAX_INTENSITY 255
 
 
 /***********************
@@ -93,16 +84,6 @@ constexpr int numReadPipes = sizeof(readPipeAddresses) / (sizeof(uint8_t) * 6);
 /*************************
  * Don't mess with these *
  *************************/
-
-#ifdef ENABLE_COLOR_WRAPAROUND
-  // With RGB lamps, we want to fade from red to green to blue then back to red as
-  // the corresponding value from the widget goes from one extreme to the other.
-  // To facilitate that, we track four color intensities, with both the first and
-  // last representing the red intensity.
-  #define NUM_COLORS_PER_LAMP 4
-#else
-  #define NUM_COLORS_PER_LAMP 3
-#endif
 
 #define DMX_NUM_CHANNELS_PER_LAMP 3
 #define DMX_NUM_CHANNELS (NUM_LAMPS * DMX_NUM_CHANNELS_PER_LAMP)
@@ -161,11 +142,9 @@ struct CustomPayload {
  * Globals *
  ***********/
 
-static double currentColorAngle;
-static double currentLampAngle;
-static int16_t currentPpSound;
+static float currentRotationAngle;
 
-static int colorChannelIntensities[NUM_LAMPS][NUM_COLORS_PER_LAMP];
+static int lampIntensities[NUM_LAMPS + 1];      // +1 because the last element is a virtual lamp that facilitates wraparound
 
 static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
@@ -343,21 +322,12 @@ bool handleMeasurementVectorPayload(const MeasurementVectorPayload* payload, uin
     case 16:
     case 17:
     case 18:
-      // yaw (0-3599 tenths of a degree) is the lamp angle
-      currentLampAngle = payload->measurements[1] / 10.0;
+      // yaw (0-3599 tenths of a degree) represents the rotation angle
+      currentRotationAngle = ((float) payload->measurements[1]) / 10.0;
 #ifdef ENABLE_DEBUG_PRINT
       Serial.print(F("got pitch "));
-      Serial.print(currentLampAngle);
+      Serial.print(currentRotationAngle);
       Serial.println(F(" for lamp angle from widget 1"));
-#endif
-      break;
-
-      // yaw (0-3599 tenths of a degree) is the color angle
-      currentColorAngle = payload->measurements[1] / 10.0;
-#ifdef ENABLE_DEBUG_PRINT
-      Serial.print(F("got pitch "));
-      Serial.print(currentColorAngle);
-      Serial.println(F(" for color angle from widget 2"));
 #endif
       break;
   }
@@ -409,12 +379,8 @@ void pollRadio()
 
 #ifdef ENABLE_DEBUG_PRINT
   if (gotMeasurements) {
-    Serial.print(F(" currentColorAngle="));
-    Serial.print(currentColorAngle);
-    Serial.print(F(" currentLampAngle="));
-    Serial.print(currentLampAngle);
-    Serial.print(F(" currentPpSound="));
-    Serial.println(currentPpSound);
+    Serial.print(F(" currentRotationAngle="));
+    Serial.print(currentRotationAngle);
   }
 #endif
 }
@@ -422,26 +388,16 @@ void pollRadio()
 
 void sendDmx()
 {
+  // Allocate the array one larger than the number of channels
+  // to facilitate 1-based indexing.  Element zero is not used.
   uint8_t dmxChannelValues[DMX_NUM_CHANNELS + 1];
 
-  uint16_t dmxChannelNum = 1;
-  for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
+  for (uint8_t i = 1; i <= DMX_NUM_CHANNELS; dmxChannelValues[i++] = 0);
 
-    // TODO:  probably do channel mapping here
-
-#if (NUM_COLORS_PER_LAMP == 4)
-    dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][0] + colorChannelIntensities[lampIdx][3];
-#else
-    dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][0];
-#endif
-    dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][1];
-    dmxChannelValues[dmxChannelNum++] = colorChannelIntensities[lampIdx][2];      
-  }
-
-  // Send zeros to any unused channels.
-  while (dmxChannelNum <= DMX_NUM_CHANNELS) {
-    dmxChannelValues[dmxChannelNum++] = 0;
-  }
+  dmxChannelValue[ 1] = lampIntensities[0] + lampIntensities[5];    // add virtual lamp for wraparound
+  dmxChannelValue[ 4] = lampIntensities[1];
+  dmxChannelValue[ 7] = lampIntensities[2];
+  dmxChannelValue[10] = lampIntensities[3];
 
   // Transmit the DMX channel values.
 #ifndef ENABLE_DEBUG_PRINT
@@ -463,10 +419,9 @@ void updateLamps()
 #ifdef LAMP_TEST_PIN
   if (digitalRead(LAMP_TEST_PIN) == LAMP_TEST_ACTIVE) {
     for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
-      for (uint8_t colorIdx = 0; colorIdx < 3; ++colorIdx) {
-        colorChannelIntensities[lampIdx][colorIdx] = LAMP_TEST_INTENSITY;
-      }
+      lampIntensities[lampIdx] = LAMP_TEST_INTENSITY;
     }
+    lampIntensities[lampIdx] = 0;       // turn off the virtual lamp because no wraparound needed
 #ifndef ENABLE_DEBUG_PRINT
     sendDmx();
 #endif
@@ -474,75 +429,32 @@ void updateLamps()
   }
 #endif
 
-  constexpr float colorAngleStep = maxColorAngleDegrees * 2 / (NUM_COLORS_PER_LAMP - 1);
-  constexpr float lampAngleStep = maxLampAngleDegrees * 2 / (NUM_LAMPS - 1);
+  constexpr float lampRotationStepAngle = 360.0 / (float) (NUM_LAMPS - 1);
 
-  int colorIntensities[NUM_COLORS_PER_LAMP];
-  for (uint8_t i = 0; i < NUM_COLORS_PER_LAMP; ++i) {
-    colorIntensities[i] = 0;
-  }
-
-  int lampIntensities[NUM_LAMPS];
-  for (uint8_t i = 0; i < NUM_LAMPS; ++i) {
+  for (uint8_t i = 0; i <= NUM_LAMPS; ++i) {
     lampIntensities[i] = LAMP_MIN_INTENSITY;
   }
 
-  // Normalize and restrict color and lamp selection angles to [0, max___Degrees*2] degrees.
-  float normalizedColorAngle;
-  if (currentColorAngle <= - maxColorAngleDegrees) {
-    normalizedColorAngle = 0;
-  }
-  else if (currentColorAngle >= maxColorAngleDegrees) {
-    normalizedColorAngle = maxColorAngleDegrees * 2.0;
-  }
-  else {
-    normalizedColorAngle = currentColorAngle + maxColorAngleDegrees;
-  }
-  float normalizedLampAngle;
-  if (currentLampAngle <= - maxLampAngleDegrees) {
-    normalizedLampAngle = 0;
-  }
-  else if (currentLampAngle >= maxLampAngleDegrees) {
-    normalizedLampAngle = maxLampAngleDegrees * 2.0;
-  }
-  else {
-    normalizedLampAngle = currentLampAngle + maxLampAngleDegrees;
-  }
-
-  // Fade across the colors based on color selection angle.
-  int colorSection = floor(normalizedColorAngle / colorAngleStep);
-  // Fix up colorSection if measurement is maxColorAngleDegrees degrees or more.
-  if (colorSection >= NUM_COLORS_PER_LAMP - 1) {
-      colorSection = NUM_COLORS_PER_LAMP - 2;
-  }
-  colorIntensities[colorSection] =
-    map(normalizedColorAngle, colorAngleStep * colorSection, colorAngleStep * (colorSection + 1), 255, 0);
-  colorIntensities[colorSection + 1] =
-    map(normalizedColorAngle, colorAngleStep * colorSection, colorAngleStep * (colorSection + 1), 0, 255);
-
-  // The trick here is that there are no more than two lamps illuminated at a time.
-  // Fading across pairs of lamps in succession gives the illusion of movement.
-
-  // TODO:  The trees and OctoFlashy were linear arrangements.  For a circular arrangement,
-  //        we need to fade between the first and last lamp.
-
-  // Fade across the lamps based on lamp selection angle.
-  int lampSection = floor(normalizedLampAngle / lampAngleStep);
-  // Fix up lampSection if measurement is maxLampAngleDegrees degrees or more.
-  if (lampSection >= NUM_LAMPS - 1) {
-      lampSection = NUM_LAMPS - 2;
-  }
-  lampIntensities[lampSection] =
-    map(normalizedLampAngle, lampAngleStep * lampSection, lampAngleStep * (lampSection + 1), 255, LAMP_MIN_INTENSITY);
-  lampIntensities[lampSection + 1] =
-    map(normalizedLampAngle, lampAngleStep * lampSection, lampAngleStep * (lampSection + 1), LAMP_MIN_INTENSITY, 255);
-
-  // For each lamp, scale the intensity of its colors by the corresponding color intensity.
-  for (uint8_t lampIdx = 0; lampIdx < NUM_LAMPS; ++lampIdx) {
-    for (uint8_t colorIdx = 0; colorIdx < NUM_COLORS_PER_LAMP; ++colorIdx) {
-      colorChannelIntensities[lampIdx][colorIdx] = scale8(lampIntensities[lampIdx], colorIntensities[colorIdx]);
-    }
-  }
+  // Fade across the lamps based on lamp selection angle.  The trick here is
+  // that there are no more than two lamps illuminated at a time.  Fading across
+  // pairs of lamps in succession gives the illusion of movement.  currentRotationAngle is
+  // supposed to be 0 to 359.9 degrees.  If the widget sent crap data, we will
+  // just pretend the angle is 0.
+  int fadeDownLamp = currentRotationAngle >= 0 && currentRotationAngle < 360 ? currentRotationAngle / lampRotationStepAngle : 0;
+  int fadeUpLamp = fadeDownLamp + 1;
+// TODO:  the math says we shouldn't need this as long as the widget doesn't send shit data
+//  // Fix up fadeDownLamp if measurement is maxLampAngleDegrees degrees or more.
+//  if (fadeDownLamp >= NUM_LAMPS - 1) {
+//      fadeDownLamp = NUM_LAMPS - 2;
+//  }
+  lampIntensities[fadeDownLamp] =
+    map(currentRotationAngle,
+        lampRotationStepAngle * fadeDownLamp, lampRotationStepAngle * (fadeUpLamp),
+        LAMP_MAX_INTENSITY, LAMP_MIN_INTENSITY);
+  lampIntensities[fadeUpLamp] =
+    map(currentRotationAngle,
+        lampRotationStepAngle * fadeDownLamp, lampRotationStepAngle * (fadeUpLamp),
+        LAMP_MIN_INTENSITY, LAMP_MAX_INTENSITY);
 
   sendDmx();
 }
