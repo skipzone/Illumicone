@@ -18,20 +18,25 @@
 {
     "shutoffPeriods" : [
         {   "description" : "outside event hours shutoff with daytime dry-out",
-            "startDateTime" : "22:00:00",
+            "startDateTime" : "21:00:00",
             "endDateTime" : "08:00:00"
         }
     ],
 
     "quiescentPeriods" : [
+//        {   "description" : "daytime dry-out early off",
+//            "startDateTime" : "2019-11-26 08:00:00",
+//            "endDateTime" : "2019-11-26 16:00:00",
+//            "quiescentColor" : "192,192,192"
+//        },
         {   "description" : "daytime dry-out",
             "startDateTime" : "08:00:00",
             "endDateTime" : "17:00:00",
             "quiescentColor" : "192,192,192"
         },
         {   "description" : "go home",
-            "startDateTime" : "21:45:00",
-            "endDateTime" : "22:00:00",
+            "startDateTime" : "20:45:00",
+            "endDateTime" : "21:00:00",
             "quiescentColor" : "navy"
         }
     ]
