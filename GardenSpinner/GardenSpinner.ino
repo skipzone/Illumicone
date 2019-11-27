@@ -19,6 +19,7 @@
 #define ENABLE_WATCHDOG
 //#define ENABLE_DEBUG_PRINT
 //#define ENABLE_SIMULATED_MEASUREMENTS
+#define USE_ROSE_GARDEN_2019_MAPPING
 
 
 /************
@@ -56,11 +57,11 @@
 
 #define NUM_LAMPS 4
 
-#define LAMP_MIN_INTENSITY 48
+#define LAMP_MIN_INTENSITY 64
 #define LAMP_MAX_INTENSITY 255
-#define ENABLE_GAMMA_CORRECTION
+//#define ENABLE_GAMMA_CORRECTION
 
-#define SIMULATED_MEASUREMENT_UPDATE_INTERVAL_MS 5
+#define SIMULATED_MEASUREMENT_UPDATE_INTERVAL_MS 15
 #define SIMULATED_MEASUREMENT_STEP 1
 
 
@@ -375,6 +376,27 @@ void sendDmx()
 
   for (uint8_t i = 1; i <= DMX_NUM_CHANNELS; dmxChannelValues[i++] = 0);
 
+#ifdef USE_ROSE_GARDEN_2019_MAPPING
+
+  // yellow, outer ring (1, 18, 17, 2)
+  dmxChannelValues[ 1] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
+  dmxChannelValues[18] = GAMMA(lampIntensities[1]);
+  dmxChannelValues[17] = GAMMA(lampIntensities[2]);
+  dmxChannelValues[ 2] = GAMMA(lampIntensities[3]);
+
+  // pink, inside ring (6, 14, 13, 5)
+  dmxChannelValues[13] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
+  dmxChannelValues[ 5] = GAMMA(lampIntensities[1]);
+  dmxChannelValues[ 6] = GAMMA(lampIntensities[2]);
+  dmxChannelValues[14] = GAMMA(lampIntensities[3]);
+
+  // white, pink, yellow center tree
+  dmxChannelValues[ 9] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
+  dmxChannelValues[10] = GAMMA(lampIntensities[1]);
+  dmxChannelValues[12] = GAMMA(lampIntensities[2]);
+
+#else
+
   dmxChannelValues[ 1] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
   dmxChannelValues[ 4] = GAMMA(lampIntensities[1]);
   dmxChannelValues[ 7] = GAMMA(lampIntensities[2]);
@@ -388,6 +410,8 @@ void sendDmx()
   dmxChannelValues[13] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
   dmxChannelValues[14] = GAMMA(lampIntensities[1]);
   dmxChannelValues[15] = GAMMA(lampIntensities[2]);
+
+#endif
 
   // Transmit the DMX channel values.
 #ifndef ENABLE_DEBUG_PRINT
