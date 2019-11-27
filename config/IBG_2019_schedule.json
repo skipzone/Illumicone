@@ -20,6 +20,10 @@
         {   "description" : "outside event hours shutoff with daytime dry-out",
             "startDateTime" : "21:00:00",
             "endDateTime" : "08:00:00"
+        },
+        {   "description" : "Wed. before event opening",
+            "startDateTime" : "2019-11-27 17:00:00",
+            "endDateTime" : "2018-11-27 21:00:00"
         }
     ],
 
