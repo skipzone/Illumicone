@@ -17,8 +17,8 @@
 
 {   "name" : "ringsAndStripes_Flower3",
     "enabled" : true,
-    "priority" : 6,
-    "opacity" : 25,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "priority" : 8,
+    "opacity" : 5,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "RgbStripePattern",
     "inputs" : [
         {   "inputName" : "rPosition",
