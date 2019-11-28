@@ -47,9 +47,9 @@
 //#define BATON5
 //#define BATON6
 //#define BOOGIEBOARD
-#define FLOWER1
+//#define FLOWER1
 //#define FLOWER2
-//#define FLOWER3
+#define FLOWER3
 //#define FLOWER4
 //#define FLOWER5
 //#define FLOWER6
@@ -446,6 +446,9 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 //#define IMU_NORMAL_INDICATOR_LED_ON HIGH
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
+#if defined(FLOWER3) || defined(FLOWER4) || defined(FLOWER5) || defined(FLOWER6) || defined(FLOWER7) || defined(FLOWER8)
+#define VIBRATION_SENSOR_PIN 3
+#endif
 #define RADIO_CE_PIN 9
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
