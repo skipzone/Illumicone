@@ -44,50 +44,50 @@
         "virtualPixelRatio" : 75,
         "widthScaledownFactor" : 1,
         "rConfig" : {
-            "maxSidebandWidth" : 225,   // sideband widths are in the context of virtual pixels
-            "minSidebandWidth" : 225,   // min should be equal to or greater than virtualPixelRatio
+            "maxSidebandWidth" : 150,   // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 150,   // min should be equal to or greater than virtualPixelRatio
             "numStripes" : 3,           // number of stripes is in the context of physical pixels
             "scaledownFactor" : 1,      // effectively gear down a rotating widget
-            "baseIntensity" : 255
+            "baseIntensity" : 128
         },
         "gConfig" : {
-            "maxSidebandWidth" : 225,
-            "minSidebandWidth" : 225,
-            "numStripes" : 4,
-            "scaledownFactor" : 2,
-            "baseIntensity" : 255
-        },
-        "bConfig" : {
             "maxSidebandWidth" : 150,
             "minSidebandWidth" : 150,
+            "numStripes" : 4,
+            "scaledownFactor" : 2,
+            "baseIntensity" : 128
+        },
+        "bConfig" : {
+            "maxSidebandWidth" : 100,
+            "minSidebandWidth" : 100,
             "numStripes" : 6,
             "scaledownFactor" : 3,
-            "baseIntensity" : 255
+            "baseIntensity" : 128
         }
     },
     "hConfig" : {
         "virtualPixelRatio" : 36,
         "widthScaledownFactor" : 1,
         "rConfig" : {
-            "maxSidebandWidth" : 144,   // sideband widths are in the context of virtual pixels
-            "minSidebandWidth" : 144,   // min should be equal to or greater than virtualPixelRatio
+            "maxSidebandWidth" : 120,   // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 120,   // min should be equal to or greater than virtualPixelRatio
             "numStripes" : 2,           // number of stripes is in the context of physical pixels
             "scaledownFactor" : 1,      // effectively gear down a rotating widget
-            "baseIntensity" : 255
+            "baseIntensity" : 128
         },
         "gConfig" : {
-            "maxSidebandWidth" : 144,
-            "minSidebandWidth" : 144,
+            "maxSidebandWidth" : 120,
+            "minSidebandWidth" : 120,
             "numStripes" : 4,
             "scaledownFactor" : 2,
-            "baseIntensity" : 255
+            "baseIntensity" : 128
         },
         "bConfig" : {
-            "maxSidebandWidth" : 108,
-            "minSidebandWidth" : 108,
+            "maxSidebandWidth" : 100,
+            "minSidebandWidth" : 100,
             "numStripes" : 6,
             "scaledownFactor" : 3,
-            "baseIntensity" : 255
+            "baseIntensity" : 128
         }
     }
 }
