@@ -28,7 +28,7 @@
 
     "widgetRcvr" : {
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
-        "radioPollingLoopSleepIntervalUs" : 1000,
+        "radioPollingLoopSleepIntervalUs" : 500,
         "radios" : [
             { "_include_file_widgetRadio" : "widgetRadio_ch97.json" }
         ]
