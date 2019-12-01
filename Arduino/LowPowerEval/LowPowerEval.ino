@@ -40,6 +40,7 @@
  * Includes *
  ************/
 
+#include <avr/power.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 
@@ -54,11 +55,11 @@
  * Configuration *
  *****************/
 
-//#define DISABLE_ADC
-//#define DISABLE_UART
+#define DISABLE_ADC
+#define DISABLE_UART
 
-constexpr uint32_t shortOpStateChangeIntervalMs = 10000;
-constexpr uint32_t longOpStateChangeIntervalMs = 60000;
+constexpr uint32_t opStateChangeIntervalMs = 5000;
+constexpr uint32_t approximateStandbyIntervalMs = 30000;
 
 constexpr uint8_t interruptPin = 3;
 
@@ -72,7 +73,7 @@ constexpr uint8_t led2HighIntensity = 255;
 
 #define WIDGET_ID 0
 
-#define ACTIVE_TX_INTERVAL_MS 50L
+#define ACTIVE_TX_INTERVAL_MS 100L
 #define INACTIVE_TX_INTERVAL_MS 500L
 // In standby mode, we'll transmit a packet with zero-valued data approximately
 // every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
@@ -122,13 +123,13 @@ enum class OperatingState {
   WIDGET_INACTIVE_LED1_OFF,
   WIDGET_INACTIVE_LED1_ON_START,
   WIDGET_INACTIVE_LED1_ON,
-  WIDGET_INACTIVE_LED2_25PCT_START,
+  WIDGET_INACTIVE_LED2_10PCT_START,
+  WIDGET_INACTIVE_LED2_10PCT,
   WIDGET_INACTIVE_LED2_25PCT,
   WIDGET_INACTIVE_LED2_50PCT,
-  WIDGET_INACTIVE_LED2_75PCT,
   WIDGET_INACTIVE_LED2_100PCT,
   WIDGET_STANDBY_START,
-  WIDGET_STANDBY,
+  WIDGET_STANDBY_END,
 };
 
 enum class WidgetMode {
@@ -222,7 +223,10 @@ bool widgetWake()
       // Let the pattern controller know we're still alive.
       sendMeasurements(now);
     }
-    return false;
+    // Stay awake if it is time to change operating state.
+    remainingOpStateChangeMs -= 8000L;
+    nextOpStateChangeMs = now + remainingOpStateChangeMs;
+    return ((int32_t) (now - nextOpStateChangeMs) >= 0) ? true : false;
   }
 
   gotPinInterrupt = false;
@@ -233,7 +237,7 @@ bool widgetWake()
 
   // Reinitialize all the time trackers because the ms timer has been off.
   nextTxMs = now;
-  nextOpStateChangeMs = now + remainingOpStateChangeMs;
+  nextOpStateChangeMs = now;
 
   return true;
 }
@@ -327,6 +331,23 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
 }
 
 
+void sendMeasurements(uint32_t now)
+{
+#ifdef ENABLE_RADIO
+  if (!radio.write(&payload, sizeof(payload), !WANT_ACK)) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("tx failed."));
+#endif
+  }
+#else
+  // Simulate the radio's load.
+  digitalWrite(pinLed1, led1On);
+  delay(1);
+  digitalWrite(pinLed1, led1Off);
+#endif
+}
+
+
 /******************
  * Initialization *
  ******************/
@@ -386,18 +407,6 @@ void setup()
 }
 
 
-void sendMeasurements(uint32_t now)
-{
-#ifdef ENABLE_RADIO
-  if (!radio.write(&payload, sizeof(payload), !WANT_ACK)) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("tx failed."));
-#endif      
-  }
-#endif
-}
-
-
 void loop()
 {
   static int32_t lastOpStateChangeMs;
@@ -411,7 +420,7 @@ void loop()
       doTx = true;
       setWidgetMode(WidgetMode::active, now);
       opState = OperatingState::WIDGET_ACTIVE;
-      nextOpStateChangeMs = now + shortOpStateChangeIntervalMs;
+      nextOpStateChangeMs = now + opStateChangeIntervalMs;
       break;
 
     case OperatingState::WIDGET_ACTIVE:
@@ -423,7 +432,7 @@ void loop()
     case OperatingState::WIDGET_INACTIVE_LED1_OFF_START:
       setWidgetMode(WidgetMode::inactive, now);
       opState = OperatingState::WIDGET_INACTIVE_LED1_OFF;
-      nextOpStateChangeMs = now + shortOpStateChangeIntervalMs;
+      nextOpStateChangeMs = now + opStateChangeIntervalMs;
       break;
 
     case OperatingState::WIDGET_INACTIVE_LED1_OFF:
@@ -436,28 +445,36 @@ void loop()
       if (pinLed1 != 0) {
         digitalWrite(pinLed1, led1On);
         opState = OperatingState::WIDGET_INACTIVE_LED1_ON;
-        nextOpStateChangeMs = now + shortOpStateChangeIntervalMs;
+        nextOpStateChangeMs = now + opStateChangeIntervalMs;
       }
       else {
-        opState = OperatingState::WIDGET_INACTIVE_LED2_25PCT_START;
+        opState = OperatingState::WIDGET_INACTIVE_LED2_10PCT_START;
       }
       break;
 
     case OperatingState::WIDGET_INACTIVE_LED1_ON:
       if ((int32_t) (now - nextOpStateChangeMs) >= 0) {
         digitalWrite(pinLed1, led1Off);
-        opState = OperatingState::WIDGET_INACTIVE_LED2_25PCT_START;
+        opState = OperatingState::WIDGET_INACTIVE_LED2_10PCT_START;
       }
       break;
 
-    case OperatingState::WIDGET_INACTIVE_LED2_25PCT_START:
+    case OperatingState::WIDGET_INACTIVE_LED2_10PCT_START:
       if (pinLed2Pwm != 0) {
-        analogWrite(pinLed2Pwm, map(25, 0, 100, led2LowIntensity, led2HighIntensity));
-        nextOpStateChangeMs = now + shortOpStateChangeIntervalMs;
-        opState = OperatingState::WIDGET_INACTIVE_LED2_25PCT;
+        analogWrite(pinLed2Pwm, map(10, 0, 100, led2LowIntensity, led2HighIntensity));
+        nextOpStateChangeMs = now + opStateChangeIntervalMs;
+        opState = OperatingState::WIDGET_INACTIVE_LED2_10PCT;
       }
       else {
         opState = OperatingState::WIDGET_STANDBY_START;
+      }
+      break;
+
+    case OperatingState::WIDGET_INACTIVE_LED2_10PCT:
+      if ((int32_t) (now - nextOpStateChangeMs) >= 0) {
+        analogWrite(pinLed2Pwm, map(25, 0, 100, led2LowIntensity, led2HighIntensity));
+        opState = OperatingState::WIDGET_INACTIVE_LED2_25PCT;
+        nextOpStateChangeMs = now + opStateChangeIntervalMs;
       }
       break;
 
@@ -465,23 +482,15 @@ void loop()
       if ((int32_t) (now - nextOpStateChangeMs) >= 0) {
         analogWrite(pinLed2Pwm, map(50, 0, 100, led2LowIntensity, led2HighIntensity));
         opState = OperatingState::WIDGET_INACTIVE_LED2_50PCT;
-        nextOpStateChangeMs = now + shortOpStateChangeIntervalMs;
+        nextOpStateChangeMs = now + opStateChangeIntervalMs;
       }
       break;
 
     case OperatingState::WIDGET_INACTIVE_LED2_50PCT:
       if ((int32_t) (now - nextOpStateChangeMs) >= 0) {
-        analogWrite(pinLed2Pwm, map(75, 0, 100, led2LowIntensity, led2HighIntensity));
-        opState = OperatingState::WIDGET_INACTIVE_LED2_75PCT;
-        nextOpStateChangeMs = now + shortOpStateChangeIntervalMs;
-      }
-      break;
-
-    case OperatingState::WIDGET_INACTIVE_LED2_75PCT:
-      if ((int32_t) (now - nextOpStateChangeMs) >= 0) {
         analogWrite(pinLed2Pwm, map(100, 0, 100, led2LowIntensity, led2HighIntensity));
         opState = OperatingState::WIDGET_INACTIVE_LED2_100PCT;
-        nextOpStateChangeMs = now + shortOpStateChangeIntervalMs;
+        nextOpStateChangeMs = now + opStateChangeIntervalMs;
       }
       break;
 
@@ -494,15 +503,14 @@ void loop()
 
     case OperatingState::WIDGET_STANDBY_START:
       doTx = false;
+      opState = OperatingState::WIDGET_STANDBY_END;
+      nextOpStateChangeMs = now + approximateStandbyIntervalMs;
+      // setWidgetMode won't return until it it is time to wake up (and we've woken up).
       setWidgetMode(WidgetMode::standby, now);
-      opState = OperatingState::WIDGET_STANDBY;
-      nextOpStateChangeMs = now + longOpStateChangeIntervalMs;
       break;
 
-    case OperatingState::WIDGET_STANDBY:
-      if ((int32_t) (now - nextOpStateChangeMs) >= 0) {
-        opState = OperatingState::WIDGET_ACTIVE_START;
-      }
+    case OperatingState::WIDGET_STANDBY_END:
+      opState = OperatingState::WIDGET_ACTIVE_START;
       break;
   }
 
