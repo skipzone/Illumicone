@@ -1,7 +1,7 @@
 **** work in progress ****
 
 Set up a development system using a Raspberry Pi 4
-(updated 03 Nov. 2019)
+(updated 01 Dec. 2019)
 
 You should be comfortable working in a terminal window.
 
@@ -10,6 +10,11 @@ What you will need:
     - Raspberry Pi 4 Model B with 2 GB or 4 GB of RAM (4 GB recommended)
     - 3-amp (minimum) power supply with USB-C connector
     - USB-C to USB-C cable if the power supply does not have an attached cable
+      Note:  Due to a hardware design problem, the RPi 4 has a hardware bug that
+      makes it incompatible with electronically marked cables.  Older USB-C
+      cables that are for power only or USB 2.0 speeds should work ok.  See this
+      article for details and a list of compatible cables:
+      https://www.tomshardware.com/news/raspberry-pi-4-usb-c-cables-that-work,39869.html
     - micro-HDMI-to-HDMI cable
     - HDMI monitor
     - USB keyboard
@@ -219,12 +224,17 @@ authentication method is incompatible with macOS's built-in VNC viewer).
 
 16. Install the required Arduino libraries.
 
+    RBD_Button by Alex Taujenis
+    RBD_Timer by Alex Taujenis
     RF24 by TMRh20
+    VL53L1X by Pololu
+
         In the Arduino IDE:
-            Go to Tools/Manage Libraries.
-            Search for RF24.
-            Scroll down to RF24 by TMRh20.
-            Click on Install.
+            a.  Go to Tools/Manage Libraries.
+            b.  Enter the library name (RF24, VL53L1X, etc.) in the search field.
+            c.  In the list that is displayed, find the specified library.  Be
+                sure the "by" part matches.
+            d.  Click on Install.
 
     I2Cdev and MPU6050 by jrowberg
         cd ~/devl
