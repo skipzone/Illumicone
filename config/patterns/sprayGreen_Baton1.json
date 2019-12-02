@@ -23,7 +23,7 @@
     "inputs" : [
         {   "inputName" : "emitRate",
             "widgetName" : "baton1",
-            "channelNumber" : 3,        // gyro X
+            "channelNumber" : 4,        // gyro X
             "measurement" : "position"
         }
     ],
