@@ -41,7 +41,7 @@
  **********************************************/
 
 //#define BATON1
-//#define BATON2
+#define BATON2
 //#define BATON3
 //#define BATON4
 //#define BATON5
@@ -49,7 +49,7 @@
 //#define BOOGIEBOARD
 //#define FLOWER1
 //#define FLOWER2
-#define FLOWER3
+//#define FLOWER3
 //#define FLOWER4
 //#define FLOWER5
 //#define FLOWER6
@@ -124,16 +124,22 @@ enum class WidgetMode {
 
 #if defined(BATON1)
 #define WIDGET_ID 21
+static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON2)
 #define WIDGET_ID 22
+static constexpr bool skipDeviceIdCheck = true;
 #elif defined(BATON3)
 #define WIDGET_ID 23
+static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON4)
 #define WIDGET_ID 24
+static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON5)
 #define WIDGET_ID 25
+static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON6)
 #define WIDGET_ID 26
+static constexpr bool skipDeviceIdCheck = false;
 #else
 #error No widget id defined for this baton.
 #endif
@@ -200,6 +206,10 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
 
+#if defined(BATON2)
+#define VIBRATION_SENSOR_PIN 3
+#endif
+
 // moving average length for averaging IMU measurements
 #define MA_LENGTH 20
 
@@ -218,6 +228,9 @@ static constexpr uint8_t maSlotLinearAccelZ = 11;
 static constexpr uint8_t maSlotTemperature = 12;
 
 static constexpr uint8_t numMaSets = 13;
+
+#define INCLUDE_ACCEL_DATA
+#define INCLUDE_LINEAR_ACCEL_DATA
 
 // ---------- radio configuration ----------
 
@@ -260,6 +273,8 @@ static constexpr uint8_t numMaSets = 13;
 #ifdef BOOGIEBOARD
 
 #define WIDGET_ID 7
+
+static constexpr bool skipDeviceIdCheck = false;
 
 #define ACTIVATE_WITH_MOVEMENT
 
@@ -323,6 +338,9 @@ static constexpr uint8_t maSlotTemperature = 12;
 
 static constexpr uint8_t numMaSets = 13;
 
+#define INCLUDE_ACCEL_DATA
+#define INCLUDE_LINEAR_ACCEL_DATA
+
 // ---------- radio configuration ----------
 
 // Nwdgt, where N indicates the payload type (0: stress test; 1: position
@@ -382,6 +400,8 @@ static constexpr uint8_t numMaSets = 13;
 #else
 #error No widget id defined for this flower.
 #endif
+
+static constexpr bool skipDeviceIdCheck = false;
 
 #define ACTIVATE_WITH_MOVEMENT
 
@@ -516,6 +536,8 @@ static constexpr uint8_t numMaSets = 7;
 #error No widget id defined for this tilt widget.
 #endif
 
+static constexpr bool skipDeviceIdCheck = false;
+
 #define ACTIVATE_WITH_MOVEMENT
 
 static constexpr int16_t movementDetectionThreshold = 10;               // widget is active if gyro rotational speed > threshold
@@ -587,6 +609,9 @@ static constexpr uint8_t maSlotTemperature = 12;
 
 static constexpr uint8_t numMaSets = 13;
 
+#define INCLUDE_ACCEL_DATA
+#define INCLUDE_LINEAR_ACCEL_DATA
+
 // ---------- radio configuration ----------
 
 // Nwdgt, where N indicates the payload type (0: stress test; 1: position
@@ -628,6 +653,8 @@ static constexpr uint8_t numMaSets = 13;
 #ifdef RAINSTICK
 
 #define WIDGET_ID 4
+
+static constexpr bool skipDeviceIdCheck = false;
 
 #define ENABLE_SOUND
 #define ACTIVATE_WITH_SOUND
@@ -700,6 +727,9 @@ static constexpr uint8_t maSlotTemperature = 12;
 static constexpr uint8_t maSlotPpSound = 13;
 
 static constexpr uint8_t numMaSets = 14;
+
+#define INCLUDE_ACCEL_DATA
+#define INCLUDE_LINEAR_ACCEL_DATA
 
 // ---------- radio configuration ----------
 
@@ -1087,7 +1117,8 @@ void initMpu6050()
 #ifdef ENABLE_DEBUG_PRINT
   Serial.println(F("Testing MPU6050 connection..."));
 #endif
-  if (mpu6050.testConnection()) {
+  if (skipDeviceIdCheck || mpu6050.testConnection()) {
+//  if (true) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("MPU6050 connection successful.  Initializing DMP..."));
 #endif
@@ -1357,13 +1388,13 @@ void gatherMotionMeasurements(uint32_t now)
     updateMovingAverage(maSlotGyroY, gyro.y);
     updateMovingAverage(maSlotGyroZ, gyro.z);
 
-#ifdef maSlotAccelX
+#ifdef INCLUDE_ACCEL_DATA
     updateMovingAverage(maSlotAccelX, accel.x);
     updateMovingAverage(maSlotAccelY, accel.y);
     updateMovingAverage(maSlotAccelZ, accel.z);
 #endif
 
-#ifdef maSlotLinearAccelX
+#ifdef INCLUDE_LINEAR_ACCEL_DATA
     updateMovingAverage(maSlotLinearAccelX, linearAccel.x);
     updateMovingAverage(maSlotLinearAccelY, linearAccel.y);
     updateMovingAverage(maSlotLinearAccelZ, linearAccel.z);
