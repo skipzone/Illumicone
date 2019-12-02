@@ -32,7 +32,7 @@
  * Options *
  ***********/
 
-//#define ENABLE_RADIO
+#define ENABLE_RADIO
 //#define ENABLE_DEBUG_PRINT
 
 
@@ -63,7 +63,7 @@ constexpr uint32_t approximateStandbyIntervalMs = 30000;
 
 constexpr uint8_t interruptPin = 3;
 
-constexpr uint8_t pinLed1 = LED_BUILTIN;    // 0 to disable
+constexpr uint8_t pinLed1 = 0;              // 0 to disable
 constexpr uint8_t led1On = HIGH;
 constexpr uint8_t led1Off = LOW;
 
@@ -91,7 +91,7 @@ constexpr uint8_t led2HighIntensity = 255;
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
-#define WANT_ACK FALSE
+#define WANT_ACK false
 #define TX_RETRY_DELAY_MULTIPLIER 0     // use widget-specific values below when getting acks
 #define TX_MAX_RETRIES 0                // use 15 when getting acks
 
@@ -340,10 +340,12 @@ void sendMeasurements(uint32_t now)
 #endif
   }
 #else
-  // Simulate the radio's load.
-  digitalWrite(pinLed1, led1On);
-  delay(1);
-  digitalWrite(pinLed1, led1Off);
+  if (pinLed1 != 0) {
+    // Simulate the radio's load.
+    digitalWrite(pinLed1, led1On);
+    delay(1);
+    digitalWrite(pinLed1, led1Off);
+  }
 #endif
 }
 
