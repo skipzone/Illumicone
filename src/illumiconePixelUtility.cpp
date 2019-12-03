@@ -114,6 +114,9 @@ bool stringToHsvPixel(const string& hsvString, HsvPixel& hsvPixel)
     else if (hsvString == "blue") {
         hsvPixel.setHSV(HUE_BLUE, 255, 255);
     }
+    else if (hsvString == "gold") {
+        hsvPixel.setHSV((HUE_YELLOW + HUE_ORANGE) / 2, 128, 255);
+    }
     else if (hsvString == "green") {
         hsvPixel.setHSV(HUE_GREEN, 255, 255);
     }
@@ -139,9 +142,7 @@ bool stringToHsvPixel(const string& hsvString, HsvPixel& hsvPixel)
         hsvPixel.setHSV(HUE_YELLOW, 255, 255);
     }
     // Use rgb->hsv mapping for undefined HUE_xxx colors (even though they look like shit).
-    else if (hsvString == "gold" || hsvString == "magenta" || hsvString == "navy"
-             || hsvString == "rainstickBlue" || hsvString == "teal" || hsvString == "violet")
-    {
+    else if (hsvString == "magenta" || hsvString == "navy" || hsvString == "rainstickBlue" || hsvString == "teal" || hsvString == "violet") {
         RgbPixel rgbPixel;
         stringToRgbPixel(hsvString, rgbPixel);
         rgb2hsv(rgbPixel, hsvPixel);
