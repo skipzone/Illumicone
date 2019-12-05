@@ -127,7 +127,7 @@ enum class WidgetMode {
 static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON2)
 #define WIDGET_ID 22
-static constexpr bool skipDeviceIdCheck = true;
+static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON3)
 #define WIDGET_ID 23
 static constexpr bool skipDeviceIdCheck = false;
@@ -1107,67 +1107,75 @@ void initLcd()
 }
 
 
-void initMpu6050()
+bool initMpu6050()
 {
+  if (!skipDeviceIdCheck) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("Testing MPU6050 connection..."));
+#endif
+    if (!mpu6050.testConnection()) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("MPU6050 connection failed."));
+#endif
+    return false;
+  }
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("MPU6050 connection successful."));
+#endif
+  }
+
 #ifdef ENABLE_DEBUG_PRINT
   Serial.println(F("Initializing MPU6050..."));
 #endif
   mpu6050.initialize();
 
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("Testing MPU6050 connection..."));
+  Serial.println(F("Initializing DMP..."));
 #endif
-  if (skipDeviceIdCheck || mpu6050.testConnection()) {
-//  if (true) {
+  uint8_t devStatus = mpu6050.dmpInitialize();
+  if (devStatus != 0) {
+    // Well, shit.
+    // 1 = initial memory load failed (most likely)
+    // 2 = DMP configuration updates failed
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.println(F("MPU6050 connection successful.  Initializing DMP..."));
+    Serial.print(F("*** DMP Initialization failed.  devStatus="));
+    Serial.println(devStatus);
 #endif
-    uint8_t devStatus = mpu6050.dmpInitialize();
-    if (devStatus == 0) {
-
-      // supply your own gyro offsets here, scaled for min sensitivity
-      // TODO 2/28/2018 ross:  What do we do about this?  Every widget could be different.
-      //mpu6050.setXGyroOffset(220);
-      //mpu6050.setYGyroOffset(76);
-      //mpu6050.setZGyroOffset(-85);
-      //mpu6050.setZAccelOffset(1788); // 1688 factory default for my test chip
-
-#ifdef ENABLE_DEBUG_PRINT
-      Serial.println(F("Enabling interrupt..."));
-#endif
-      pinMode(IMU_INTERRUPT_PIN, INPUT);
-      attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), handleMpu6050Interrupt, RISING);
-
-      // Get expected DMP packet size, and make sure packetBuffer is large enough.
-      packetSize = mpu6050.dmpGetFIFOPacketSize();
-      if (sizeof(packetBuffer) >= packetSize) {
-#ifdef ENABLE_DEBUG_PRINT
-        Serial.println(F("DMP ready."));
-#endif
-        setMpu6050Mode(Mpu6050Mode::normal, millis());
-      }
-      else {
-        Serial.print(F("*** FIFO packet size "));
-        Serial.print(packetSize);
-        Serial.print(F(" is larger than packetBuffer size "));
-        Serial.println(sizeof(packetBuffer));
-      }
-    }
-    else {
-      // Well, shit.
-      // 1 = initial memory load failed (most likely)
-      // 2 = DMP configuration updates failed
-#ifdef ENABLE_DEBUG_PRINT
-      Serial.print(F("*** DMP Initialization failed.  devStatus="));
-      Serial.println(devStatus);
-#endif
-    }
+    return false;
   }
-  else {
+
+  // Get expected DMP packet size, and make sure packetBuffer is large enough.
+  packetSize = mpu6050.dmpGetFIFOPacketSize();
+  if (sizeof(packetBuffer) < packetSize) {
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.println(F("MPU6050 connection failed."));
+    Serial.print(F("*** FIFO packet size "));
+    Serial.print(packetSize);
+    Serial.print(F(" is larger than packetBuffer size "));
+    Serial.println(sizeof(packetBuffer));
 #endif
+    return false;
   }
+
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.println(F("DMP ready."));
+#endif
+
+  // supply your own gyro offsets here, scaled for min sensitivity
+  // TODO 2/28/2018 ross:  What do we do about this?  Every widget could be different.
+  //mpu6050.setXGyroOffset(220);
+  //mpu6050.setYGyroOffset(76);
+  //mpu6050.setZGyroOffset(-85);
+  //mpu6050.setZAccelOffset(1788); // 1688 factory default for my test chip
+
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.println(F("Enabling interrupt..."));
+#endif
+  pinMode(IMU_INTERRUPT_PIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT_PIN), handleMpu6050Interrupt, RISING);
+
+  setMpu6050Mode(Mpu6050Mode::normal, millis());
+
+  return true;
 }
 
 
@@ -1179,6 +1187,7 @@ void initVibrationSensor()
   attachInterrupt(digitalPinToInterrupt(VIBRATION_SENSOR_PIN), handleVibrationSensorInterrupt, CHANGE);
 #endif  
 }
+
 
 void setup()
 {
