@@ -115,7 +115,7 @@ bool stringToHsvPixel(const string& hsvString, HsvPixel& hsvPixel)
         hsvPixel.setHSV(HUE_BLUE, 255, 255);
     }
     else if (hsvString == "gold") {
-        hsvPixel.setHSV((HUE_YELLOW + HUE_ORANGE) / 2, 128, 255);
+        hsvPixel.setHSV(40, 160, 255);  // 1/4th the way from orange toward yellow
     }
     else if (hsvString == "green") {
         hsvPixel.setHSV(HUE_GREEN, 255, 255);
