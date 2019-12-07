@@ -104,7 +104,7 @@ static uint8_t wasActiveCountdown;
 void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.begin(57600);
+  Serial.begin(115200);
   printf_begin();
 #endif
 
@@ -157,15 +157,17 @@ void loop() {
     sensor.read();
   
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.print("range: ");
-    Serial.print(sensor.ranging_data.range_mm);
-    Serial.print("\tstatus: ");
-    Serial.print(VL53L1X::rangeStatusToString(sensor.ranging_data.range_status));
-    Serial.print("\tpeak signal: ");
-    Serial.print(sensor.ranging_data.peak_signal_count_rate_MCPS);
-    Serial.print("\tambient: ");
-    Serial.print(sensor.ranging_data.ambient_count_rate_MCPS);
-    Serial.println();
+    if (sensor.ranging_data.range_status == VL53L1X::RangeValid) {
+      Serial.print("range: ");
+      Serial.print(sensor.ranging_data.range_mm);
+      Serial.print("\tstatus: ");
+      Serial.print(VL53L1X::rangeStatusToString(sensor.ranging_data.range_status));
+      Serial.print("\tpeak signal: ");
+      Serial.print(sensor.ranging_data.peak_signal_count_rate_MCPS);
+      Serial.print("\tambient: ");
+      Serial.print(sensor.ranging_data.ambient_count_rate_MCPS);
+      Serial.println();
+  }
 #endif
 
     // If we're inactive, don't average because we want to react as fast as
@@ -206,4 +208,3 @@ void loop() {
   }
 
 }
-
