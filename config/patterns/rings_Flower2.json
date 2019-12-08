@@ -15,7 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "ringsAndStripes_Flower2",
+{   "name" : "rings_Flower2",
     "enabled" : true,
     "priority" : 8,
     "opacity" : 5,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
@@ -38,8 +38,9 @@
         }
     ],
     "hEnable" : true,
-    "vEnable" : true,
+    "vEnable" : false,
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
+/*
     "vConfig" : {
         "virtualPixelRatio" : 75,
         "widthScaledownFactor" : 1,
@@ -65,6 +66,7 @@
             "baseIntensity" : 128
         }
     },
+*/
     "hConfig" : {
         "virtualPixelRatio" : 36,
         "widthScaledownFactor" : 1,

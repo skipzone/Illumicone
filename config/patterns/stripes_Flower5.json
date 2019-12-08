@@ -15,29 +15,29 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "ringsAndStripes_Flower2",
+{   "name" : "stripes_Flower5",
     "enabled" : true,
     "priority" : 8,
     "opacity" : 5,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "RgbStripePattern",
     "inputs" : [
         {   "inputName" : "rPosition",
-            "widgetName" : "flower2",
+            "widgetName" : "flower5",
             "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "gPosition",
-            "widgetName" : "flower2",
+            "widgetName" : "flower5",
             "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "bPosition",
-            "widgetName" : "flower2",
+            "widgetName" : "flower5",
             "channelNumber" : 0,
             "measurement" : "position"
         }
     ],
-    "hEnable" : true,
+    "hEnable" : false,
     "vEnable" : true,
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
     "vConfig" : {
@@ -64,7 +64,8 @@
             "scaledownFactor" : 3,
             "baseIntensity" : 128
         }
-    },
+    }   //,
+/*
     "hConfig" : {
         "virtualPixelRatio" : 36,
         "widthScaledownFactor" : 1,
@@ -90,5 +91,6 @@
             "baseIntensity" : 128
         }
     }
+*/
 }
 

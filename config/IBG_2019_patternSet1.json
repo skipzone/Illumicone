@@ -18,7 +18,9 @@
 {
     "patterns" : [
 
-        { "_include_file_ringsAndStripes_flower2" : "patterns/ringsAndStripes_Flower2.json" },
+        //{ "_include_file_ringsAndStripes_flower2" : "patterns/ringsAndStripes_Flower2.json" },
+        { "_include_file_rings_flower2" : "patterns/rings_Flower2.json" },
+        { "_include_file_Stripes_flower5" : "patterns/stripes_Flower5.json" },
         { "_include_file_coloredSparkle_flower3" : "patterns/multicolorSparkle_Flower3.json" },
         { "_include_file_sparkleMagentaAqua_flower4" : "patterns/sparkleMagentaAqua_Flower4.json" },
 
