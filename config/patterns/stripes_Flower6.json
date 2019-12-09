@@ -15,24 +15,24 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "stripes_Flower5",
+{   "name" : "stripes_Flower6",
     "enabled" : true,
     "priority" : 8,
     "opacity" : 5,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "RgbStripePattern",
     "inputs" : [
         {   "inputName" : "rPosition",
-            "widgetName" : "flower5",
+            "widgetName" : "flower6",
             "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "gPosition",
-            "widgetName" : "flower5",
+            "widgetName" : "flower6",
             "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "bPosition",
-            "widgetName" : "flower5",
+            "widgetName" : "flower6",
             "channelNumber" : 0,
             "measurement" : "position"
         }
