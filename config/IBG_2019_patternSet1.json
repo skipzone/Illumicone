@@ -21,8 +21,8 @@
         //{ "_include_file_ringsAndStripes_flower2" : "patterns/ringsAndStripes_Flower2.json" },
         { "_include_file_rings_flower2" : "patterns/rings_Flower2.json" },
         { "_include_file_coloredSparkle_flower3" : "patterns/multicolorSparkle_Flower3.json" },
-        { "_include_file_Stripes_flower4" : "patterns/stripes_Flower4.json" },
-        { "_include_file_sparkleMagentaAqua_flower5" : "patterns/sparkleMagentaAqua_Flower5.json" },
+        { "_include_file_sparkleMagentaAqua_flower4" : "patterns/sparkleMagentaAqua_Flower4.json" },
+        { "_include_file_Stripes_flower6" : "patterns/stripes_Flower6.json" },
 
         { "_include_file_sprayRed_Baton1" : "patterns/sprayRed_Baton1.json" },
         { "_include_file_sprayGreen_Baton1" : "patterns/sprayGreen_Baton1.json" },
