@@ -18,7 +18,7 @@
 
 #define ENABLE_WATCHDOG
 //#define ENABLE_DEBUG_PRINT
-//#define ENABLE_SIMULATED_MEASUREMENTS
+#define ENABLE_SIMULATED_MEASUREMENTS
 #define USE_ROSE_GARDEN_2019_MAPPING
 
 
@@ -51,11 +51,18 @@
 #define LAMP_TEST_ACTIVE LOW
 #define LAMP_TEST_INTENSITY 255
 
-// TODO:  change to 20 for the garden
+#ifdef USE_ROSE_GARDEN_2019_MAPPING
+#define DMX_NUM_CHANNELS 20
+#else
 #define DMX_NUM_CHANNELS 27
+#endif
 #define DMX_TX_INTERVAL_MS 33L
 
+#ifdef USE_ROSE_GARDEN_2019_MAPPING
+#define NUM_LAMPS 20
+#else
 #define NUM_LAMPS 4
+#endif
 
 #define LAMP_MIN_INTENSITY 64
 #define LAMP_MAX_INTENSITY 255
@@ -379,35 +386,40 @@ void sendDmx()
 #ifdef USE_ROSE_GARDEN_2019_MAPPING
 
   // yellow, outer ring (1, 18, 17, 2)
-  dmxChannelValues[ 1] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
-  dmxChannelValues[18] = GAMMA(lampIntensities[1]);
-  dmxChannelValues[17] = GAMMA(lampIntensities[2]);
-  dmxChannelValues[ 2] = GAMMA(lampIntensities[3]);
-
-  // pink, inside ring (6, 14, 13, 5)
-  dmxChannelValues[13] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
-  dmxChannelValues[ 5] = GAMMA(lampIntensities[1]);
-  dmxChannelValues[ 6] = GAMMA(lampIntensities[2]);
-  dmxChannelValues[14] = GAMMA(lampIntensities[3]);
-
-  // white, pink, yellow center tree
-  dmxChannelValues[ 9] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
-  dmxChannelValues[10] = GAMMA(lampIntensities[1]);
-  dmxChannelValues[12] = GAMMA(lampIntensities[2]);
+  dmxChannelValues[ 1] = GAMMA(lampIntensities[ 0] + lampIntensities[NUM_LAMPS]);  // add virtual lamp for wraparound
+  dmxChannelValues[ 2] = GAMMA(lampIntensities[ 1]);
+  dmxChannelValues[ 3] = GAMMA(lampIntensities[ 2]);
+  dmxChannelValues[ 4] = GAMMA(lampIntensities[ 3]);
+  dmxChannelValues[ 5] = GAMMA(lampIntensities[ 4]);
+  dmxChannelValues[ 6] = GAMMA(lampIntensities[ 5]);
+  dmxChannelValues[ 7] = GAMMA(lampIntensities[ 6]);
+  dmxChannelValues[ 8] = GAMMA(lampIntensities[ 7]);
+  dmxChannelValues[ 9] = GAMMA(lampIntensities[ 8]);
+  dmxChannelValues[10] = GAMMA(lampIntensities[ 9]);
+  dmxChannelValues[11] = GAMMA(lampIntensities[10]);
+  dmxChannelValues[12] = GAMMA(lampIntensities[11]);
+  dmxChannelValues[13] = GAMMA(lampIntensities[12]);
+  dmxChannelValues[14] = GAMMA(lampIntensities[13]);
+  dmxChannelValues[15] = GAMMA(lampIntensities[14]);
+  dmxChannelValues[16] = GAMMA(lampIntensities[15]);
+  dmxChannelValues[17] = GAMMA(lampIntensities[16]);
+  dmxChannelValues[18] = GAMMA(lampIntensities[17]);
+  dmxChannelValues[19] = GAMMA(lampIntensities[18]);
+  dmxChannelValues[20] = GAMMA(lampIntensities[19]);
 
 #else
 
-  dmxChannelValues[ 1] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
+  dmxChannelValues[ 1] = GAMMA(lampIntensities[0] + lampIntensities[NUM_LAMPS]);    // add virtual lamp for wraparound
   dmxChannelValues[ 4] = GAMMA(lampIntensities[1]);
   dmxChannelValues[ 7] = GAMMA(lampIntensities[2]);
   dmxChannelValues[10] = GAMMA(lampIntensities[3]);
 
-  dmxChannelValues[26] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
+  dmxChannelValues[26] = GAMMA(lampIntensities[0] + lampIntensities[NUM_LAMPS]);    // add virtual lamp for wraparound
   dmxChannelValues[23] = GAMMA(lampIntensities[1]);
   dmxChannelValues[20] = GAMMA(lampIntensities[2]);
   dmxChannelValues[17] = GAMMA(lampIntensities[3]);
 
-  dmxChannelValues[13] = GAMMA(lampIntensities[0] + lampIntensities[4]);    // add virtual lamp for wraparound
+  dmxChannelValues[13] = GAMMA(lampIntensities[0] + lampIntensities[NUM_LAMPS]);    // add virtual lamp for wraparound
   dmxChannelValues[14] = GAMMA(lampIntensities[1]);
   dmxChannelValues[15] = GAMMA(lampIntensities[2]);
 
