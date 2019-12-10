@@ -25,7 +25,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 
 #include "illumiconeWidget.h"
@@ -42,13 +42,12 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 3
+#define WIDGET_ID 27
 #define NUM_CHANNELS 1
-#define ACTIVE_TX_INTERVAL_MS 250L
+#define ACTIVE_TX_INTERVAL_MS 50L
 #define INACTIVE_TX_INTERVAL_MS 1000L      // should be a multiple of ACTIVE_TX_INTERVAL_MS
-#define SAMPLE_INTERVAL_MS 10L
+#define SAMPLE_INTERVAL_MS 100L
 
-constexpr uint16_t activePressureThreshold = 120;
 constexpr uint8_t numInactiveSendTries = 5; // when going inactive, transmit that fact this many times at the active rate
 
 // ---------- radio configuration ----------
@@ -95,6 +94,7 @@ PositionVelocityPayload payload;
 
 static bool isActive;
 static uint8_t wasActiveCountdown;
+static uint16_t currentDistanceMm;
 
 
 /******************
@@ -146,55 +146,17 @@ void loop() {
 
   static int32_t lastTxMs;
   static int32_t lastSampleMs;
-  static uint16_t numSamples;
-  static int32_t distanceMeasmtSum;
 
   uint32_t now = millis();
 
-  if (now - lastSampleMs >= SAMPLE_INTERVAL_MS) {
-    lastSampleMs = now;
-
-    sensor.read();
-  
-#ifdef ENABLE_DEBUG_PRINT
-    if (sensor.ranging_data.range_status == VL53L1X::RangeValid) {
-      Serial.print("range: ");
-      Serial.print(sensor.ranging_data.range_mm);
-      Serial.print("\tstatus: ");
-      Serial.print(VL53L1X::rangeStatusToString(sensor.ranging_data.range_status));
-      Serial.print("\tpeak signal: ");
-      Serial.print(sensor.ranging_data.peak_signal_count_rate_MCPS);
-      Serial.print("\tambient: ");
-      Serial.print(sensor.ranging_data.ambient_count_rate_MCPS);
-      Serial.println();
-  }
-#endif
-
-    // If we're inactive, don't average because we want to react as fast as
-    // possible to pumping.  Hopefully, noise won't poke above the threshold.
-    if (!isActive) {
-      numSamples = 1;
-      distanceMeasmtSum = sensor.ranging_data.range_mm;
-    }
-    else {
-      ++numSamples;
-      distanceMeasmtSum += sensor.ranging_data.range_mm;
-    }
-  }
-
-  if (numSamples > 0 && now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {
-    int16_t avgDistance = distanceMeasmtSum / numSamples;
-    isActive = avgDistance > activePressureThreshold;
+  if (now - lastTxMs >= ACTIVE_TX_INTERVAL_MS) {
     if (isActive || wasActiveCountdown > 0 || now - lastTxMs >= INACTIVE_TX_INTERVAL_MS) {
       lastTxMs = now;
 
-      payload.position = avgDistance;
-      payload.velocity = numSamples;
+      payload.position = currentDistanceMm;
+      payload.velocity = 0;
       payload.widgetHeader.isActive = isActive;
       radio.write(&payload, sizeof(payload), !WANT_ACK);
-
-      numSamples = 0;
-      distanceMeasmtSum = 0L;
 
       if (isActive) {
         wasActiveCountdown = numInactiveSendTries;
@@ -204,6 +166,29 @@ void loop() {
           --wasActiveCountdown;
         }
       }
+    }
+  }
+
+  if (now - lastSampleMs >= SAMPLE_INTERVAL_MS) {
+    lastSampleMs = now;
+    sensor.read();
+    if (sensor.ranging_data.range_status == VL53L1X::RangeValid) {
+      isActive = true;
+      currentDistanceMm = sensor.ranging_data.range_mm;
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.print("range: ");
+      Serial.print(sensor.ranging_data.range_mm);
+      Serial.print("\tstatus: ");
+      Serial.print(VL53L1X::rangeStatusToString(sensor.ranging_data.range_status));
+      Serial.print("\tpeak signal: ");
+      Serial.print(sensor.ranging_data.peak_signal_count_rate_MCPS);
+      Serial.print("\tambient: ");
+      Serial.print(sensor.ranging_data.ambient_count_rate_MCPS);
+      Serial.println();
+#endif
+    }
+    else {
+      isActive = false;
     }
   }
 
