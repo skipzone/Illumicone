@@ -30,8 +30,7 @@
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 500,
         "radios" : [
-            { "_include_file_widgetRadio" : "widgetRadio_ch97.json" },
-            { "_include_file_widgetRadio" : "widgetRadio_ch76.json" }
+            { "_include_file_widgetRadio" : "widgetRadio_ch97.json" }
         ]
     },
 
@@ -82,7 +81,9 @@
 
             { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
 
-            { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" }
+            { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" },
+
+            { "_include_file_whiteSparkle_Lidar1" : "patterns/whiteSparkle_Lidar1.json" }
         ]
     }
 }
