@@ -74,7 +74,7 @@ What you will need:
     e.  Enable SPI (required by the RF24 module).
 
 
-5a. Set the VNC password.  (Allows connection from macOS's built-in VNC viewer.)
+6.  Set the VNC password.  (Allows connection from macOS's built-in VNC viewer.)
 
     a.  Click on the VNC icon in the upper right-hand corner of the desktop.
         The VNC Server window should open.
@@ -100,7 +100,7 @@ What you will need:
     j.  Close the VNC Server window.
     
 
-6.  Install the required and nice-to-have useful software.  Use the Add / Remove
+7.  Install the required and nice-to-have useful software.  Use the Add / Remove
     Software option on the raspberry -> Preferences menu.  You can use the
     search feature to locate each package listed below.
 
@@ -114,7 +114,7 @@ What you will need:
     freeglut3-dev (for openpixelcontrol)
 
 
-7.  Create your user account, and add it to the sudo group.  Open a terminal
+8.  Create your user account, and add it to the sudo group.  Open a terminal
     window by clicking on the terminal-prompt-looking icon in the launcher bar
     at the top left of the screen.  Then, enter these commands at the command
     prompt:
@@ -123,13 +123,13 @@ What you will need:
     sudo usermod -aG sudo,adm,dialout,spi,gpio <username>
 
 
-8.  Log out (raspberry -> Shutdown -> Logout), then log back in with your
+9.  Log out (raspberry -> Shutdown -> Logout), then log back in with your
     username.  Open another terminal window for entering commands in subsequent
     steps.
 
 
-9.  Using your text editor of preference, add these lines to the end of
-    the ~/.profile file:
+10. Using your text editor of preference, add these lines to the end of
+    the ~/.profile and ~/.bashrc files:
 
     # Set up Illumicone paths.
     export ILLUMICONE_BIN="$HOME/bin"
@@ -140,7 +140,7 @@ What you will need:
     PATH="$ILLUMICONE_BIN:$ILLUMICONE_SBIN:$PATH"
 
 
-10. Set up the Illumicone development environment.
+11. Set up the Illumicone development environment.
 
     git config --global user.email <your e-mail address>
     git config --global user.name <your username>
@@ -158,7 +158,7 @@ What you will need:
     cp devl/Illumicone/sbin/illumicone_aliases .illumicone_aliases
 
 
-11. Install RF24 using tmrh20's fork of RF24 on Github.  This is the same one we
+12. Install RF24 using tmrh20's fork of RF24 on Github.  This is the same one we
     use for the widget Arduinos.  You will need RF24 to build the Illumicone
     programs even if you don't plan on connecting an nRF24L01+ module to receive
     widget data.
@@ -171,20 +171,20 @@ What you will need:
     sudo make install
 
 
-12. Build the Illumicone programs.
+13. Build the Illumicone programs.
 
     cd ~/devl/Illumicone/src
     make
 
 
-13. Set up the Illumicone simulation configuration.
+14. Set up the Illumicone simulation configuration.
 
     cd ~/devl/Illumicone/config
-    ln -s $HOME/devl/Illumicone/config/network_localSimulator.json network_active.json
-    ln -s $HOME/devl/Illumicone/config/simulator.json activeConfig.json
+    ln -s $ILLUMICONE_CONFIG/network_localSimulator.json network_active.json
+    ln -s $ILLUMICONE_CONFIG/simulator.json activeConfig.json
 
 
-14. Install openpixelcontrol, which provides the on-screen simulator display of
+15. Install openpixelcontrol, which provides the on-screen simulator display of
     Illumicone's pixels.
 
     cd ~/devl
@@ -194,7 +194,7 @@ What you will need:
     cp bin/gl_server ~/bin
 
 
-15. Test the Illumicone simulation tools and environment.
+16. Test the Illumicone simulation tools and environment.
 
     cd ~/devl
     startSimulatorGlServer
@@ -214,7 +214,8 @@ What you will need:
     gl_server puts itself in the background.  Press <enter> in the terminal
     window to see a prompt again.
 
-    patternController
+    cd ~/devl/Illumicone/src
+    ./pc
 
     You should see the magenta safety lights at the top and bottom of
     Illumicone turn on.
@@ -222,6 +223,7 @@ What you will need:
     Open a second terminal window, then start the widget data playback
     program.
 
+    cd
     widgetPlayback.py devl/Illumicone/testData/rainstick.log
 
     You should now see colored raindrops cascading down Illumicone.
@@ -231,7 +233,7 @@ What you will need:
     X in the upper right-hand corner of the OPC window.
 
 
-16. Install the Arduino IDE.  (Download from arduino.cc rather than installing
+17. Install the Arduino IDE.  (Download from arduino.cc rather than installing
     via Add / Remove Software in order to get a current version.)
 
     cd
@@ -244,7 +246,7 @@ What you will need:
     For more information:  https://www.arduino.cc/en/Guide/Linux
 
 
-16. Install the required Arduino libraries.
+18. Install the required Arduino libraries.
 
     RBD_Button by Alex Taujenis
     RBD_Timer by Alex Taujenis
@@ -271,7 +273,7 @@ What you will need:
 =-=-=-= resume here
 
 
-9.  Set up I2C.
+19. Set up I2C.
 
     sudo apt-get install python-smbus i2c-tools
 
