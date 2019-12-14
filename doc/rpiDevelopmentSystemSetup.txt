@@ -74,9 +74,31 @@ What you will need:
     e.  Enable SPI (required by the RF24 module).
 
 
-=-=-=-=-= TODO:  Add a step for setting the VNC password (because the fancy
-authentication method is incompatible with macOS's built-in VNC viewer).
+5a. Set the VNC password.  (Allows connection from macOS's built-in VNC viewer.)
 
+    a.  Click on the VNC icon in the upper right-hand corner of the desktop.
+        The VNC Server window should open.
+
+    b.  Click on the menu icon (a box with horizontal lines) in the upper
+        right-hand corner of the VNC Server window.
+
+    c.  Click on Options.
+
+    d.  Dismiss the "Granted permissions without asking for password" message
+        if it appears.
+
+    e.  Select Security in the list.
+
+    f.  Change Authentication to VNC password.
+
+    g.  Click Apply.
+
+    h.  Set a password as prompted.
+
+    i.  Click OK.
+
+    j.  Close the VNC Server window.
+    
 
 6.  Install the required and nice-to-have useful software.  Use the Add / Remove
     Software option on the raspberry -> Preferences menu.  You can use the
