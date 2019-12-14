@@ -58,7 +58,7 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
         case 17:
             return WidgetId::flower7;
         case 18:
-            return WidgetId::flower8;
+            return WidgetId::invalid;
         case 19:
             return WidgetId::invalid;
         case 20:
@@ -76,7 +76,7 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
         case 26:
             return WidgetId::baton6;
         case 27:
-            return WidgetId::invalid;
+            return WidgetId::lidar1;
         case 28:
             return WidgetId::invalid;
         case 29:
@@ -131,8 +131,8 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 16;
         case WidgetId::flower7:
             return 17;
-        case WidgetId::flower8:
-            return 18;
+        //case WidgetId:::
+        //    return 18;
         //case WidgetId:::
         //    return 19;
         //case WidgetId:::
@@ -149,8 +149,8 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 25;
         case WidgetId::baton6:
             return 26;
-        //case WidgetId:::
-        //    return 27;
+        case WidgetId::lidar1:
+            return 27;
         //case WidgetId:::
         //    return 28;
         //case WidgetId:::
@@ -203,8 +203,6 @@ std::string widgetIdToString(WidgetId widgetId)
             return "flower6";
         case WidgetId::flower7:
             return "flower7";
-        case WidgetId::flower8:
-            return "flower8";
         case WidgetId::baton1:
             return "baton1";
         case WidgetId::baton2:
@@ -217,6 +215,8 @@ std::string widgetIdToString(WidgetId widgetId)
             return "baton5";
         case WidgetId::baton6:
             return "baton6";
+        case WidgetId::lidar1:
+            return "lidar1";
         case WidgetId::invalid:
             return "invalid";
     }

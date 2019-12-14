@@ -92,8 +92,8 @@ jsonTester: jsonTester.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumicone
 logTest: logTest.o hsv2rgb.o Log.o illumiconeUtility.o
 
 patternController: patternController.o AnnoyingFlashingPattern.o BatonWidget.o BellsWidget.o BoogieBoardWidget.o ConfigReader.o \
-                   EyeWidget.o FillAndBurstPattern.o FlowerWidget.o FourPlay4xWidget.o \
-                   HorizontalStripePattern.o IndicatorRegion.o IndicatorRegionsPattern.o Log.o MidiActivatedRegionsPattern.o \
+                   EyeWidget.o FillAndBurstPattern.o FlowerWidget.o FourPlay4xWidget.o HorizontalStripePattern.o \
+                   IndicatorRegion.o IndicatorRegionsPattern.o LidarWidget.o Log.o MidiActivatedRegionsPattern.o \
                    ParticlesPattern.o Pattern.o PumpWidget.o QueuedWidgetChannel.o RainbowExplosionPattern.o RainstickWidget.o \
                    RgbStripePattern.o RgbVerticalPattern.o SchroedersPlaythingWidget.o SimpleBlockIndicator.o SparklePattern.o \
 				   SpinnahWidget.o SpinnerPattern.o SpiralPattern.o SwitchActivatedRegionsPattern.o Widget.o \

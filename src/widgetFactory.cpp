@@ -22,6 +22,7 @@
 #include "EyeWidget.h"
 #include "FlowerWidget.h"
 #include "FourPlay4xWidget.h"
+#include "LidarWidget.h"
 #include "Log.h"
 #include "PumpWidget.h"
 #include "RainstickWidget.h"
@@ -66,8 +67,9 @@ Widget* widgetFactory(WidgetId id) {
         case WidgetId::flower5:
         case WidgetId::flower6:
         case WidgetId::flower7:
-        case WidgetId::flower8:
             return new FlowerWidget(id);
+        case WidgetId::lidar1:
+            return new LidarWidget(id);
         default:
             logger.logMsg(LOG_ERR, "Unsupported id passed to widgetFactory.");
             return nullptr;

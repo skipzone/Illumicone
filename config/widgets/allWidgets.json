@@ -97,11 +97,6 @@
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
-        {   "name" : "flower8",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
         {   "name" : "fourPlay42",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
@@ -111,6 +106,11 @@
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
+        },
+        {   "name" : "lidar1",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 500
         },
         {   "name" : "pump",
             "enabled" : true,
