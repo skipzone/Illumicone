@@ -18,7 +18,7 @@
 {   "name" : "stripes_Flower6",
     "enabled" : true,
     "priority" : 8,
-    "opacity" : 5,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "opacity" : 50,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "RgbStripePattern",
     "inputs" : [
         {   "inputName" : "rPosition",
@@ -48,21 +48,21 @@
             "minSidebandWidth" : 150,   // min should be equal to or greater than virtualPixelRatio
             "numStripes" : 2,           // number of stripes is in the context of physical pixels
             "scaledownFactor" : 3,      // effectively gear down a rotating widget
-            "baseIntensity" : 128
+            "baseIntensity" : 255
         },
         "gConfig" : {
             "maxSidebandWidth" : 150,
             "minSidebandWidth" : 150,
             "numStripes" : 3,
             "scaledownFactor" : 2,
-            "baseIntensity" : 128
+            "baseIntensity" : 255
         },
         "bConfig" : {
             "maxSidebandWidth" : 100,
             "minSidebandWidth" : 100,
             "numStripes" : 4,
             "scaledownFactor" : 1,
-            "baseIntensity" : 128
+            "baseIntensity" : 255
         }
     }
 }
