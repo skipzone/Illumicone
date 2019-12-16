@@ -151,17 +151,17 @@ WantedBy=multi-user.target
 
 Tell systemd that we changed something.
 
-systemctl daemon-reload
+sudo systemctl daemon-reload
 
 
 Start the service.
 
-systemctl start autossh-tunnel.service
+sudo systemctl start autossh-tunnel.service
 
 
 Enable the service startup at boot time.
 
-systemctl enable autossh-tunnel.service
+sudo systemctl enable autossh-tunnel.service
 
 
 
@@ -176,7 +176,7 @@ sudo lsof -i -n | grep ssh
 
 autossh-tunnel.service troubleshooting commands:
 
-systemctl status autossh-tunnel.service
+sudo systemctl status autossh-tunnel.service
 sudo journalctl -xe
 
 
