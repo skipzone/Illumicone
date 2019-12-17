@@ -41,7 +41,7 @@
  **********************************************/
 
 //#define BATON1
-#define BATON2
+//#define BATON2
 //#define BATON3
 //#define BATON4
 //#define BATON5
@@ -51,10 +51,9 @@
 //#define FLOWER2
 //#define FLOWER3
 //#define FLOWER4
-//#define FLOWER5
+#define FLOWER5
 //#define FLOWER6
 //#define FLOWER7
-//#define FLOWER8
 //#define IBG_TILT_1
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
@@ -65,7 +64,7 @@
 #endif
 
 #if defined(FLOWER1) || defined(FLOWER2) || defined(FLOWER3) || defined(FLOWER4) || \
-    defined(FLOWER5) || defined(FLOWER6) || defined(FLOWER7) || defined(FLOWER8)
+    defined(FLOWER5) || defined(FLOWER6) || defined(FLOWER7)
 #define FLOWER
 #endif
 
@@ -395,8 +394,6 @@ static constexpr uint8_t numMaSets = 13;
 #define WIDGET_ID 16
 #elif defined(FLOWER7)
 #define WIDGET_ID 17
-#elif defined(FLOWER8)
-#define WIDGET_ID 18
 #else
 #error No widget id defined for this flower.
 #endif
@@ -436,9 +433,6 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #elif defined(FLOWER7)
 #define ACTIVE_TX_INTERVAL_MS 37L
 #define INACTIVE_TX_INTERVAL_MS 3007L
-#elif defined(FLOWER8)
-#define ACTIVE_TX_INTERVAL_MS 38L
-#define INACTIVE_TX_INTERVAL_MS 3008L
 #else
 #error No tx intervals defined for this flower.
 #endif
@@ -466,7 +460,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 //#define IMU_NORMAL_INDICATOR_LED_ON HIGH
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
-#if defined(FLOWER3) || defined(FLOWER4) || defined(FLOWER5) || defined(FLOWER6) || defined(FLOWER7) || defined(FLOWER8)
+#if defined(FLOWER3) || defined(FLOWER4) || defined(FLOWER5) || defined(FLOWER6) || defined(FLOWER7)
 #define VIBRATION_SENSOR_PIN 3
 #endif
 #define RADIO_CE_PIN 9
