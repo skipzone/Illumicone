@@ -5,7 +5,9 @@
 # 
 # m h dom mon dow   command
 
-  *  *  *  * *  . $HOME/.profile; $ILLUMICONE_SBIN/readDS18B20Temperature >> $ILLUMICONE_LOGS/temperature.log
+#  *  *  *  * *  . $HOME/.profile; $ILLUMICONE_SBIN/readDS18B20Temperature >> $ILLUMICONE_LOGS/temperature.log
+
+#  *  *  *  * *  . $HOME/.profile; sudo $ILLUMICONE_SBIN/readCpuTemperature >> $ILLUMICONE_LOGS/cpuTemperature.log
 
 # Scheduled playback for an otherwise inactive cone.
 #  0 18  3  3 *  . $HOME/.profile; $ILLUMICONE_SBIN/widgetPlayback.py $ILLUMICONE_LOGS/widat_illumibrate2019_cropped.log >> $ILLUMICONE_LOGS/widgetPlayback.log 2>&1
