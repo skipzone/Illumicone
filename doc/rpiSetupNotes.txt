@@ -315,23 +315,31 @@ Set up ic-widpatcon on a Raspberry Pi 3 B or 4 using Raspbian Buster Lite
         static domain_name_servers=208.67.222.222 192.168.69.1
         metric 300
 
+
 20.  Set up illumicone's crontab.
 
     crontab ~/devl/Illumicone/config/widpatcon_crontab
 
 
-21.  Follow the instructions in config/patternController.service and
-     config/widgetRcvr.service to set up those services.
+21.  If using the Sunfounder PCF8563 RTC module with DS18B20 temperature sensor,
+     enable this line in the crontab:
 
-22.  Set up script to read CPU temperature (RPi 4 only).
+         *  *  *  * *  . $HOME/.profile; $ILLUMICONE_SBIN/readDS18B20Temperature >> $ILLUMICONE_LOGS/temperature.log
+
+
+22.  Set up the script to read CPU temperature (RPi 4 only).
 
     Using visudo, add this line to /etc/sudoers:
 
         illumicone ALL=(root) NOPASSWD: /home/illumicone/devl/Illumicone/sbin/readCpuTemperature
 
-    Then, add this line to the crontab:
+    Then, enable this line in the crontab:
 
         *  *  *  * *  . $HOME/.profile; sudo $ILLUMICONE_SBIN/readCpuTemperature >> $ILLUMICONE_LOGS/cpuTemperature.log
+
+
+23.  Follow the instructions in config/patternController.service and
+     config/widgetRcvr.service to set up those services.
 
 
 ================================================================================
