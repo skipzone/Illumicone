@@ -66,6 +66,19 @@ def readLogFile(logFileName):
     return x, y
 
 
+def doPlot(x, y):
+
+    plt.plot(x, y)
+    plt.gcf().autofmt_xdate()
+    myFmt = matplotlib.dates.DateFormatter('%d %b %H:%M')
+    plt.gca().xaxis.set_major_formatter(myFmt)
+    plt.title(r'Raspberry Pi 4 CPU Temperature')
+    plt.xlabel(r'Date & Time');
+    plt.ylabel(r'CPU Temperature ($\degree$F)')
+
+    plt.show()
+
+
 def usage():
     print('Usage:  plotCpuTemperature.py log_file_name')
     return
@@ -83,16 +96,7 @@ def main(argv):
         return 1
 
     x, y = readLogFile(inputFileName)
-
-    plt.plot(x, y)
-    plt.gcf().autofmt_xdate()
-    myFmt = matplotlib.dates.DateFormatter('%d %b %H:%M')
-    plt.gca().xaxis.set_major_formatter(myFmt)
-    plt.title('Raspberry Pi 4 CPU Temperature')
-    plt.xlabel('Date & Time');
-    plt.ylabel('CPU Temperature (degrees F)')
-
-    plt.show()
+    doPlot(x, y)
 
     return 0
 
