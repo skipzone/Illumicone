@@ -103,14 +103,17 @@ def processLogFile(logFileName):
     timestampPattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}):  '
 
     # 2016-09-01 23:58:31.124:  pv: id=10 a=0 ch=0 p=178 v=0
-    pvPayloadPattern = timestampPattern + r'pv: id=(\d+) a=(\d+) ch=(\d+) p=(-?\d+) v=(-?\d+)$'
+    # 2016-09-01 23:58:31.124:  pv: r=0 id=10 a=0 ch=0 p=178 v=0
+    pvPayloadPattern = timestampPattern + r'pv: (r=(\d+) )?id=(\d+) a=(\d+) ch=(\d+) p=(-?\d+) v=(-?\d+)$'
 
     # 2016-09-01 23:58:31.124:  mvec: id=7 a=0 ch=0 n=3 1 2 3
-    ##mvecPayloadPattern = r'mvec: id=(\d+) a=(\d+) ch=(\d+) n=(\d+)(\s+-?\d+)+$'
-    mvecPayloadPattern = timestampPattern + r'mvec: id=(\d+) a=(\d+) ch=(\d+) n=(\d+)((?:\s+-?\d+)+)$'
+    # 2019-12-15 17:31:36.743:  mvec: r=0 id=4 a=1 ch=0 n=14      18    236     65     24  -3975   -131   1497      0    255
+    mvecPayloadPattern = timestampPattern + r'mvec: (r=(\d+))? id=(\d+) a=(\d+) ch=(\d+) n=(\d+)((?:\s+-?\d+)+)$'
 
     # 2016-09-01 23:58:31.124:  custom: id=7 a=0 ch=0 bufLen=3 0x01 0x02 0x03
-    customPayloadPattern = timestampPattern + r'custom: id=(\d+) a=(\d+) ch=(\d+) bufLen=(\d+)((?:\s+0x[0-9a-fA-F]{2})+)$'
+    # 2016-09-01 23:58:31.124:  custom: r=0 id=7 a=0 ch=0 bufLen=3 0x01 0x02 0x03
+    customPayloadPattern = \
+        timestampPattern + r'custom: (r=(\d+))? id=(\d+) a=(\d+) ch=(\d+) bufLen=(\d+)((?:\s+0x[0-9a-fA-F]{2})+)$'
 
     lineCount = 0
 
@@ -126,24 +129,26 @@ def processLogFile(logFileName):
                 if m is not None:
                     widgetData = {
                         'timestamp' : m.group(1),
-                        'widgetId' : int(m.group(2)),
-                        'isActive' : int(m.group(3)),
-                        'channel' : int(m.group(4)),
-                        'position' : int(m.group(5)),
-                        'velocity' : int(m.group(6)) }
+                        'radio' : int(m.group(3)) if m.group(3) else 0,
+                        'widgetId' : int(m.group(4)),
+                        'isActive' : int(m.group(5)),
+                        'channel' : int(m.group(6)),
+                        'position' : int(m.group(7)),
+                        'velocity' : int(m.group(8)) }
                     sendPv(widgetData)
                     next
 
                 m = re.search(mvecPayloadPattern, line)
                 if m is not None:
-                    numMeasurements = int(m.group(5))
-                    measurements = [int(measmt) for measmt in m.group(6).split()]
+                    numMeasurements = int(m.group(7))
+                    measurements = [int(measmt) for measmt in m.group(8).split()]
                     if (len(measurements) == numMeasurements):
                         widgetData = {
                             'timestamp' : m.group(1),
-                            'widgetId' : int(m.group(2)),
-                            'isActive' : int(m.group(3)),
-                            'channel' : int(m.group(4)),
+                            'radio' : int(m.group(3)) if m.group(3) else 0,
+                            'widgetId' : int(m.group(4)),
+                            'isActive' : int(m.group(5)),
+                            'channel' : int(m.group(6)),
                             'measurements' : measurements }
                         sendMvec(widgetData)
                     else:
@@ -152,15 +157,16 @@ def processLogFile(logFileName):
 
                 m = re.search(customPayloadPattern, line)
                 if m is not None:
-                    payloadLength = int(m.group(5))
-                    hexBytes = [h for h in m.group(6).split()]
+                    payloadLength = int(m.group(7))
+                    hexBytes = [h for h in m.group(8).split()]
                     if (len(hexBytes) / 4 == payloadLength):
                         widgetData = {
                             'timestamp' : m.group(1),
-                            'widgetId' : int(m.group(2)),
-                            'isActive' : int(m.group(3)),
-                            'channel' : int(m.group(4)),
-                            'payloadLength' : int(m.group(5)),
+                            'radio' : int(m.group(3)) if m.group(3) else 0,
+                            'widgetId' : int(m.group(4)),
+                            'isActive' : int(m.group(5)),
+                            'channel' : int(m.group(6)),
+                            'payloadLength' : payloadLength,
                             'hexBytes' : hexBytes }
                         sendCustom(widgetData)
                     else:
