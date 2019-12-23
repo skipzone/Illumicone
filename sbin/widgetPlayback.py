@@ -25,6 +25,7 @@
 '''
 
 
+import argparse
 from datetime import datetime, timedelta
 import os
 import re
@@ -33,9 +34,11 @@ from struct import *
 import sys
 from time import sleep
 
+defaultPatconIpAddress = '127.0.0.1'
+
+patconIpAddress = None
 
 # TODO:  get these from command line
-patconIpAddress = '127.0.0.1'   #'192.168.198.72'  #'127.0.0.1'   #'192.168.69.103'
 widgetPortNumberBase = 4200
 timeCompressionThresholdSeconds = 5
 
@@ -189,19 +192,23 @@ def usage():
 def main(argv):
 
     global clientSock
+    global patconIpAddress
 
-    if len(argv) <> 2:
-        usage()
-        return 2
+    ap = argparse.ArgumentParser(description='This program replays widgetRcvr data logs and sends the recorded widget messages to patternController.')
 
-    inputFileName = argv[1]
-    if not os.path.exists(inputFileName):
-        sys.stderr.write('File {0} does not exist.\n'.format(inputFileName))
+    ap.add_argument('inputFileName', action='store', help='widgetRcvr data log file name')
+    ap.add_argument("-p", "--patcon-ip-address", nargs='?', default=defaultPatconIpAddress, help='IP address of host running patternController', dest='patconIpAddress')
+    args = ap.parse_args()
+
+    patconIpAddress = args.patconIpAddress
+    
+    if not os.path.exists(args.inputFileName):
+        sys.stderr.write('File {0} does not exist.\n'.format(args.inputFileName))
         return 1
 
     clientSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    processLogFile(inputFileName)
+    processLogFile(args.inputFileName)
 
     return 0
 
