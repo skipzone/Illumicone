@@ -34,13 +34,15 @@ from struct import *
 import sys
 from time import sleep
 
+# defaults for command-line options
 defaultPatconIpAddress = '127.0.0.1'
+defaultWidgetPortNumberBase = 4200
+defaultTimeCompressionThresholdSeconds = 5
 
+# command-line options
 patconIpAddress = None
-
-# TODO:  get these from command line
-widgetPortNumberBase = 4200
-timeCompressionThresholdSeconds = 5
+widgetPortNumberBase = None
+timeCompressionThresholdSeconds = None
 
 lineCount = 0
 lastTimestamp = None
@@ -193,15 +195,22 @@ def main(argv):
 
     global clientSock
     global patconIpAddress
+    global widgetPortNumberBase
+    global timeCompressionThresholdSeconds
 
     ap = argparse.ArgumentParser(description='This program replays widgetRcvr data logs and sends the recorded widget messages to patternController.')
 
     ap.add_argument('inputFileName', action='store', help='widgetRcvr data log file name')
     ap.add_argument("-p", "--patcon-ip-address", nargs='?', default=defaultPatconIpAddress, help='IP address of host running patternController', dest='patconIpAddress')
+    ap.add_argument("-b", "--widget-port-base", nargs='?', default=defaultWidgetPortNumberBase, type=int, help='Port number associated with widget 0.', dest='widgetPortNumberBase')
+    ap.add_argument("-t", "--time-compression-threshold", nargs='?', default=defaultTimeCompressionThresholdSeconds, type=int, help='Skip to next active widget data message after this many seconds of inactivity.', dest='timeCompressionThresholdSeconds')
+
     args = ap.parse_args()
 
     patconIpAddress = args.patconIpAddress
-    
+    widgetPortNumberBase = args.widgetPortNumberBase
+    timeCompressionThresholdSeconds = args.timeCompressionThresholdSeconds
+
     if not os.path.exists(args.inputFileName):
         sys.stderr.write('File {0} does not exist.\n'.format(args.inputFileName))
         return 1
