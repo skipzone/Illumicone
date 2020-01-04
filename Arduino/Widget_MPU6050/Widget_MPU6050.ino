@@ -40,7 +40,7 @@
  * A specific target widget is selected here. *
  **********************************************/
 
-//#define BATON1
+#define BATON1
 //#define BATON2
 //#define BATON3
 //#define BATON4
@@ -51,7 +51,7 @@
 //#define FLOWER2
 //#define FLOWER3
 //#define FLOWER4
-#define FLOWER5
+//#define FLOWER5
 //#define FLOWER6
 //#define FLOWER7
 //#define IBG_TILT_1
@@ -60,12 +60,12 @@
 //#define RAINSTICK
 
 #if defined(BATON1) || defined(BATON2) || defined(BATON3) || defined(BATON4) || defined(BATON5) || defined(BATON6)
-#define BATON
+  #define BATON
 #endif
 
 #if defined(FLOWER1) || defined(FLOWER2) || defined(FLOWER3) || defined(FLOWER4) || \
     defined(FLOWER5) || defined(FLOWER6) || defined(FLOWER7)
-#define FLOWER
+  #define FLOWER
 #endif
 
 
@@ -122,25 +122,25 @@ enum class WidgetMode {
 #ifdef BATON
 
 #if defined(BATON1)
-#define WIDGET_ID 21
-static constexpr bool skipDeviceIdCheck = false;
+  #define WIDGET_ID 21
+  static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON2)
-#define WIDGET_ID 22
-static constexpr bool skipDeviceIdCheck = false;
+  #define WIDGET_ID 22
+  static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON3)
-#define WIDGET_ID 23
-static constexpr bool skipDeviceIdCheck = false;
+  #define WIDGET_ID 23
+  static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON4)
-#define WIDGET_ID 24
-static constexpr bool skipDeviceIdCheck = false;
+  #define WIDGET_ID 24
+  static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON5)
-#define WIDGET_ID 25
-static constexpr bool skipDeviceIdCheck = false;
+  #define WIDGET_ID 25
+  static constexpr bool skipDeviceIdCheck = false;
 #elif defined(BATON6)
-#define WIDGET_ID 26
-static constexpr bool skipDeviceIdCheck = false;
+  #define WIDGET_ID 26
+  static constexpr bool skipDeviceIdCheck = false;
 #else
-#error No widget id defined for this baton.
+  #error No widget id defined for this baton.
 #endif
 
 #define ACTIVATE_WITH_MOVEMENT
@@ -157,25 +157,25 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 
 // Stagger the transmissions to avoid repeated collisions.
 #if defined(BATON1)
-#define ACTIVE_TX_INTERVAL_MS 81L
-#define INACTIVE_TX_INTERVAL_MS 2001L
+  #define ACTIVE_TX_INTERVAL_MS 81L
+  #define INACTIVE_TX_INTERVAL_MS 2001L
 #elif defined(BATON2)
-#define ACTIVE_TX_INTERVAL_MS 83L
-#define INACTIVE_TX_INTERVAL_MS 2003L
+  #define ACTIVE_TX_INTERVAL_MS 83L
+  #define INACTIVE_TX_INTERVAL_MS 2003L
 #elif defined(BATON3)
-#define ACTIVE_TX_INTERVAL_MS 85L
-#define INACTIVE_TX_INTERVAL_MS 2005L
+  #define ACTIVE_TX_INTERVAL_MS 85L
+  #define INACTIVE_TX_INTERVAL_MS 2005L
 #elif defined(BATON4)
-#define ACTIVE_TX_INTERVAL_MS 87L
-#define INACTIVE_TX_INTERVAL_MS 2007L
+  #define ACTIVE_TX_INTERVAL_MS 87L
+  #define INACTIVE_TX_INTERVAL_MS 2007L
 #elif defined(BATON5)
-#define ACTIVE_TX_INTERVAL_MS 89L
-#define INACTIVE_TX_INTERVAL_MS 2009L
+  #define ACTIVE_TX_INTERVAL_MS 89L
+  #define INACTIVE_TX_INTERVAL_MS 2009L
 #elif defined(BATON6)
-#define ACTIVE_TX_INTERVAL_MS 91L
-#define INACTIVE_TX_INTERVAL_MS 2011L
+  #define ACTIVE_TX_INTERVAL_MS 91L
+  #define INACTIVE_TX_INTERVAL_MS 2011L
 #else
-#error No tx intervals defined for this baton.
+  #error No tx intervals defined for this baton.
 #endif
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
@@ -205,8 +205,8 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
 
-#if defined(BATON2)
-#define VIBRATION_SENSOR_PIN 3
+#ifndef BATON1
+  #define VIBRATION_SENSOR_PIN 3
 #endif
 
 // moving average length for averaging IMU measurements
@@ -241,10 +241,24 @@ static constexpr uint8_t numMaSets = 13;
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
-// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
-#define WANT_ACK false
-#define TX_RETRY_DELAY_MULTIPLIER 0
-#define TX_MAX_RETRIES 0
+// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
+#define WANT_ACK true
+#if defined(BATON1)
+  #define TX_RETRY_DELAY_MULTIPLIER 13
+#elif defined(BATON2)
+  #define TX_RETRY_DELAY_MULTIPLIER 11
+#elif defined(BATON3)
+  #define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(BATON4)
+  #define TX_RETRY_DELAY_MULTIPLIER 5
+#elif defined(BATON5)
+  #define TX_RETRY_DELAY_MULTIPLIER 3
+#elif defined(BATON6)
+  #define TX_RETRY_DELAY_MULTIPLIER 2
+#else
+  #error No TX_RETRY_DELAY_MULTIPLIER defined for this baton.
+#endif
+#define TX_MAX_RETRIES 15   // use 15 (the maximum) when expecting acks
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
@@ -350,7 +364,7 @@ static constexpr uint8_t numMaSets = 13;
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
-// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
+// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
 #define WANT_ACK false
 #define TX_RETRY_DELAY_MULTIPLIER 0
 #define TX_MAX_RETRIES 0
@@ -381,21 +395,21 @@ static constexpr uint8_t numMaSets = 13;
 #ifdef FLOWER
 
 #if defined(FLOWER1)
-#define WIDGET_ID 11
+  #define WIDGET_ID 11
 #elif defined(FLOWER2)
-#define WIDGET_ID 12
+  #define WIDGET_ID 12
 #elif defined(FLOWER3)
-#define WIDGET_ID 13
+  #define WIDGET_ID 13
 #elif defined(FLOWER4)
-#define WIDGET_ID 14
+  #define WIDGET_ID 14
 #elif defined(FLOWER5)
-#define WIDGET_ID 15
+  #define WIDGET_ID 15
 #elif defined(FLOWER6)
-#define WIDGET_ID 16
+  #define WIDGET_ID 16
 #elif defined(FLOWER7)
-#define WIDGET_ID 17
+  #define WIDGET_ID 17
 #else
-#error No widget id defined for this flower.
+  #error No widget id defined for this flower.
 #endif
 
 static constexpr bool skipDeviceIdCheck = false;
@@ -413,28 +427,28 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
 
 #if defined(FLOWER1)
-#define ACTIVE_TX_INTERVAL_MS 31L
-#define INACTIVE_TX_INTERVAL_MS 3001L
+  #define ACTIVE_TX_INTERVAL_MS 31L
+  #define INACTIVE_TX_INTERVAL_MS 3001L
 #elif defined(FLOWER2)
-#define ACTIVE_TX_INTERVAL_MS 32L
-#define INACTIVE_TX_INTERVAL_MS 3002L
+  #define ACTIVE_TX_INTERVAL_MS 32L
+  #define INACTIVE_TX_INTERVAL_MS 3002L
 #elif defined(FLOWER3)
-#define ACTIVE_TX_INTERVAL_MS 33L
-#define INACTIVE_TX_INTERVAL_MS 3003L
+  #define ACTIVE_TX_INTERVAL_MS 33L
+  #define INACTIVE_TX_INTERVAL_MS 3003L
 #elif defined(FLOWER4)
-#define ACTIVE_TX_INTERVAL_MS 34L
-#define INACTIVE_TX_INTERVAL_MS 3004L
+  #define ACTIVE_TX_INTERVAL_MS 34L
+  #define INACTIVE_TX_INTERVAL_MS 3004L
 #elif defined(FLOWER5)
-#define ACTIVE_TX_INTERVAL_MS 35L
-#define INACTIVE_TX_INTERVAL_MS 3005L
+  #define ACTIVE_TX_INTERVAL_MS 35L
+  #define INACTIVE_TX_INTERVAL_MS 3005L
 #elif defined(FLOWER6)
-#define ACTIVE_TX_INTERVAL_MS 36L
-#define INACTIVE_TX_INTERVAL_MS 3006L
+  #define ACTIVE_TX_INTERVAL_MS 36L
+  #define INACTIVE_TX_INTERVAL_MS 3006L
 #elif defined(FLOWER7)
-#define ACTIVE_TX_INTERVAL_MS 37L
-#define INACTIVE_TX_INTERVAL_MS 3007L
+  #define ACTIVE_TX_INTERVAL_MS 37L
+  #define INACTIVE_TX_INTERVAL_MS 3007L
 #else
-#error No tx intervals defined for this flower.
+  #error No tx intervals defined for this flower.
 #endif
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
@@ -490,7 +504,7 @@ static constexpr uint8_t numMaSets = 7;
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
-// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
+// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
 #define WANT_ACK false
 #define TX_RETRY_DELAY_MULTIPLIER 0
 #define TX_MAX_RETRIES 0
@@ -521,13 +535,13 @@ static constexpr uint8_t numMaSets = 7;
 #if defined(IBG_TILT_1) || defined(IBG_TILT_2) || defined(IBG_TILT_TEST)
 
 #if defined(IBG_TILT_1)
-#define WIDGET_ID 1
+  #define WIDGET_ID 1
 #elif defined(IBG_TILT_2)
-#define WIDGET_ID 2
+  #define WIDGET_ID 2
 #elif defined(IBG_TILT_TEST)
-#define WIDGET_ID 3
+  #define WIDGET_ID 3
 #else
-#error No widget id defined for this tilt widget.
+  #error No widget id defined for this tilt widget.
 #endif
 
 static constexpr bool skipDeviceIdCheck = false;
@@ -547,14 +561,14 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // Use a different transmit interval for each of the widgets so that their
 // transmissions are staggered, thus (hopefully) reducing collisions.
 #if defined(IBG_TILT_1)
-#define ACTIVE_TX_INTERVAL_MS 23L
-#define INACTIVE_TX_INTERVAL_MS 200L
+  #define ACTIVE_TX_INTERVAL_MS 23L
+  #define INACTIVE_TX_INTERVAL_MS 200L
 #elif defined(IBG_TILT_2)
-#define ACTIVE_TX_INTERVAL_MS 29L
-#define INACTIVE_TX_INTERVAL_MS 210L
+  #define ACTIVE_TX_INTERVAL_MS 29L
+  #define INACTIVE_TX_INTERVAL_MS 210L
 #elif defined(IBG_TILT_TEST)
-#define ACTIVE_TX_INTERVAL_MS 37L
-#define INACTIVE_TX_INTERVAL_MS 220L
+  #define ACTIVE_TX_INTERVAL_MS 37L
+  #define INACTIVE_TX_INTERVAL_MS 220L
 #endif
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
@@ -616,7 +630,7 @@ static constexpr uint8_t numMaSets = 13;
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
-// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
+// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
 #define WANT_ACK false
 #define TX_RETRY_DELAY_MULTIPLIER 0
 #define TX_MAX_RETRIES 0
@@ -735,7 +749,7 @@ static constexpr uint8_t numMaSets = 14;
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
-// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
+// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
 #define WANT_ACK false
 #define TX_RETRY_DELAY_MULTIPLIER 0     // use 5 when getting acks
 #define TX_MAX_RETRIES 0                // use 15 when getting acks
