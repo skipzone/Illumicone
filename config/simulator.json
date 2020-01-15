@@ -28,16 +28,18 @@
 
     "widgetRcvr" : {
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
-        "radioPollingLoopSleepIntervalUs" : 1000,
-
-        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
+        "radioPollingLoopSleepIntervalUs" : 500,
+        "radios" : [
+            { "_include_file_widgetRadio" : "widgetRadio_ch97.json" }
+        ]
     },
 
     "widgetRcvr3" : {
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 1000,
-
-        "_include_file_widgetRadio" : "widgetRadio_ch84.json"
+        "radios" : [
+            { "_include_file_widgetRadio" : "widgetRadio_ch97.json" }
+        ]
     },
 
 
@@ -60,7 +62,7 @@
             //{ "_include_file_coloredSparkles_FourPlay42" : "patterns/coloredSparkles_FourPlay42.json" },
             { "_include_file_multicolorSparkle_Spinnah" : "patterns/multicolorSparkle_Spinnah.json" },
 
-            { "_include_file_coloredSprays_Baton" : "patterns/coloredSprays_Baton.json" },
+            { "_include_file_coloredSprays_Baton1" : "patterns/coloredSprays_Baton1.json" },
             //{ "_include_file_coloredSprays_Bells" : "patterns/coloredSprays_Bells.json" },
 
             { "_include_file_eyeFlash" : "patterns/eyeFlash.json" },
@@ -75,9 +77,13 @@
             //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_346_FourPlay42.json" },
             //{ "_include_file_stripes_FourPlay42" : "patterns/stripes_traditional_FourPlay42.json" },
 
+            { "_include_file_rings_Flower1" : "patterns/redRing_Flower1.json" },
+
             { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
 
-            { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" }
+            { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" },
+
+            { "_include_file_whiteSparkle_Lidar1" : "patterns/whiteSparkle_Lidar1.json" }
         ]
     }
 }

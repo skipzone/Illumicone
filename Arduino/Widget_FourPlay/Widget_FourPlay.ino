@@ -59,21 +59,15 @@ enum class WidgetMode {
  ************************/
 
 #define SPINNAH
-//#define FOURPLAY
 //#define FOURPLAY_4_2
 //#define FOURPLAY_4_3
-//#define TRIOBELISK
 
 #if defined(SPINNAH)
   #define WIDGET_ID 2
-#elif defined(FOURPLAY)
-  #define WIDGET_ID 9
 #elif defined(FOURPLAY_4_2)
-  #define WIDGET_ID 10
+  #define WIDGET_ID 8
 #elif defined(FOURPLAY_4_3)
-  #define WIDGET_ID 11
-#elif defined(TRIOBELISK)
-  #define WIDGET_ID 6
+  #define WIDGET_ID 9
 #endif
 
 #if defined(SPINNAH)
@@ -86,21 +80,7 @@ enum class WidgetMode {
   //#define TX_FAILURE_LED_OFF LOW
   #define ENCODER_0_A_PIN 2
   #define ENCODER_0_B_PIN 3
-#elif defined(TRIOBELISK)
-  #define NUM_ENCODERS 3
-  #define ACTIVE_TX_INTERVAL_MS 10L
-  #define INACTIVE_TX_INTERVAL_MS 2000L
-  #define INACTIVITY_TIMEOUT_FOR_SLEEP_MS 10000L
-  //#define TX_FAILURE_LED_PIN 2
-  //#define TX_FAILURE_LED_ON HIGH
-  //#define TX_FAILURE_LED_OFF LOW
-  #define ENCODER_0_A_PIN 2
-  #define ENCODER_0_B_PIN 3
-  #define ENCODER_1_A_PIN 4
-  #define ENCODER_1_B_PIN 5
-  #define ENCODER_2_A_PIN 6
-  #define ENCODER_2_B_PIN 7
-#else
+#elif defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
   #define NUM_ENCODERS 4
   #define ACTIVE_TX_INTERVAL_MS 10L
   #define INACTIVE_TX_INTERVAL_MS 2000L
@@ -125,14 +105,12 @@ enum class WidgetMode {
 
 #define RPM_UPDATE_INTERVAL_MS 250L
 
-#if defined(SPINNAH) || defined(FOURPLAY)
+#if defined(SPINNAH)
   // bicycle wheels
   #define NUM_STEPS_PER_REV 36
 #elif defined(FOURPLAY_4_2) || defined(FOURPLAY_4_3)
   // them cool little spoked wheels that someone left out back
   #define NUM_STEPS_PER_REV 20
-#elif defined(TRIOBELISK)
-  #define NUM_STEPS_PER_REV 24
 #endif
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
@@ -157,14 +135,10 @@ enum class WidgetMode {
 // Use these when getting acks:
 #if defined(SPINNAH)
 #define TX_RETRY_DELAY_MULTIPLIER 11
-#elif defined(FOURPLAY)
-#define TX_RETRY_DELAY_MULTIPLIER 15
 #elif defined(FOURPLAY_4_2)
 #define TX_RETRY_DELAY_MULTIPLIER 7
 #elif defined(FOURPLAY_4_3)
 #define TX_RETRY_DELAY_MULTIPLIER 4
-#elif defined(TRIOBELISK)
-#define TX_RETRY_DELAY_MULTIPLIER 6
 #endif
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
@@ -178,7 +152,7 @@ enum class WidgetMode {
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 84
+#define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX

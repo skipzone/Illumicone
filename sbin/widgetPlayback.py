@@ -25,6 +25,7 @@
 '''
 
 
+import argparse
 from datetime import datetime, timedelta
 import os
 import re
@@ -33,11 +34,15 @@ from struct import *
 import sys
 from time import sleep
 
+# defaults for command-line options
+defaultPatconIpAddress = '127.0.0.1'
+defaultWidgetPortNumberBase = 4200
+defaultTimeCompressionThresholdSeconds = 5
 
-# TODO:  get these from command line
-patconIpAddress = '127.0.0.1'   #'192.168.198.72'  #'127.0.0.1'   #'192.168.69.103'
-widgetPortNumberBase = 4200
-timeCompressionThresholdSeconds = 5
+# command-line options
+patconIpAddress = None
+widgetPortNumberBase = None
+timeCompressionThresholdSeconds = None
 
 lineCount = 0
 lastTimestamp = None
@@ -103,14 +108,17 @@ def processLogFile(logFileName):
     timestampPattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}):  '
 
     # 2016-09-01 23:58:31.124:  pv: id=10 a=0 ch=0 p=178 v=0
-    pvPayloadPattern = timestampPattern + r'pv: id=(\d+) a=(\d+) ch=(\d+) p=(-?\d+) v=(-?\d+)$'
+    # 2016-09-01 23:58:31.124:  pv: r=0 id=10 a=0 ch=0 p=178 v=0
+    pvPayloadPattern = timestampPattern + r'pv: (r=(\d+) )?id=(\d+) a=(\d+) ch=(\d+) p=(-?\d+) v=(-?\d+)$'
 
     # 2016-09-01 23:58:31.124:  mvec: id=7 a=0 ch=0 n=3 1 2 3
-    ##mvecPayloadPattern = r'mvec: id=(\d+) a=(\d+) ch=(\d+) n=(\d+)(\s+-?\d+)+$'
-    mvecPayloadPattern = timestampPattern + r'mvec: id=(\d+) a=(\d+) ch=(\d+) n=(\d+)((?:\s+-?\d+)+)$'
+    # 2019-12-15 17:31:36.743:  mvec: r=0 id=4 a=1 ch=0 n=14      18    236     65     24  -3975   -131   1497      0    255
+    mvecPayloadPattern = timestampPattern + r'mvec: (r=(\d+))? id=(\d+) a=(\d+) ch=(\d+) n=(\d+)((?:\s+-?\d+)+)$'
 
     # 2016-09-01 23:58:31.124:  custom: id=7 a=0 ch=0 bufLen=3 0x01 0x02 0x03
-    customPayloadPattern = timestampPattern + r'custom: id=(\d+) a=(\d+) ch=(\d+) bufLen=(\d+)((?:\s+0x[0-9a-fA-F]{2})+)$'
+    # 2016-09-01 23:58:31.124:  custom: r=0 id=7 a=0 ch=0 bufLen=3 0x01 0x02 0x03
+    customPayloadPattern = \
+        timestampPattern + r'custom: (r=(\d+))? id=(\d+) a=(\d+) ch=(\d+) bufLen=(\d+)((?:\s+0x[0-9a-fA-F]{2})+)$'
 
     lineCount = 0
 
@@ -126,24 +134,26 @@ def processLogFile(logFileName):
                 if m is not None:
                     widgetData = {
                         'timestamp' : m.group(1),
-                        'widgetId' : int(m.group(2)),
-                        'isActive' : int(m.group(3)),
-                        'channel' : int(m.group(4)),
-                        'position' : int(m.group(5)),
-                        'velocity' : int(m.group(6)) }
+                        'radio' : int(m.group(3)) if m.group(3) else 0,
+                        'widgetId' : int(m.group(4)),
+                        'isActive' : int(m.group(5)),
+                        'channel' : int(m.group(6)),
+                        'position' : int(m.group(7)),
+                        'velocity' : int(m.group(8)) }
                     sendPv(widgetData)
                     next
 
                 m = re.search(mvecPayloadPattern, line)
                 if m is not None:
-                    numMeasurements = int(m.group(5))
-                    measurements = [int(measmt) for measmt in m.group(6).split()]
+                    numMeasurements = int(m.group(7))
+                    measurements = [int(measmt) for measmt in m.group(8).split()]
                     if (len(measurements) == numMeasurements):
                         widgetData = {
                             'timestamp' : m.group(1),
-                            'widgetId' : int(m.group(2)),
-                            'isActive' : int(m.group(3)),
-                            'channel' : int(m.group(4)),
+                            'radio' : int(m.group(3)) if m.group(3) else 0,
+                            'widgetId' : int(m.group(4)),
+                            'isActive' : int(m.group(5)),
+                            'channel' : int(m.group(6)),
                             'measurements' : measurements }
                         sendMvec(widgetData)
                     else:
@@ -152,15 +162,16 @@ def processLogFile(logFileName):
 
                 m = re.search(customPayloadPattern, line)
                 if m is not None:
-                    payloadLength = int(m.group(5))
-                    hexBytes = [h for h in m.group(6).split()]
+                    payloadLength = int(m.group(7))
+                    hexBytes = [h for h in m.group(8).split()]
                     if (len(hexBytes) / 4 == payloadLength):
                         widgetData = {
                             'timestamp' : m.group(1),
-                            'widgetId' : int(m.group(2)),
-                            'isActive' : int(m.group(3)),
-                            'channel' : int(m.group(4)),
-                            'payloadLength' : int(m.group(5)),
+                            'radio' : int(m.group(3)) if m.group(3) else 0,
+                            'widgetId' : int(m.group(4)),
+                            'isActive' : int(m.group(5)),
+                            'channel' : int(m.group(6)),
+                            'payloadLength' : payloadLength,
                             'hexBytes' : hexBytes }
                         sendCustom(widgetData)
                     else:
@@ -183,19 +194,30 @@ def usage():
 def main(argv):
 
     global clientSock
+    global patconIpAddress
+    global widgetPortNumberBase
+    global timeCompressionThresholdSeconds
 
-    if len(argv) <> 2:
-        usage()
-        return 2
+    ap = argparse.ArgumentParser(description='This program replays widgetRcvr data logs and sends the recorded widget messages to patternController.')
 
-    inputFileName = argv[1]
-    if not os.path.exists(inputFileName):
-        sys.stderr.write('File {0} does not exist.\n'.format(inputFileName))
+    ap.add_argument('inputFileName', action='store', help='widgetRcvr data log file name')
+    ap.add_argument("-p", "--patcon-ip-address", nargs='?', default=defaultPatconIpAddress, help='IP address of host running patternController', dest='patconIpAddress')
+    ap.add_argument("-b", "--widget-port-base", nargs='?', default=defaultWidgetPortNumberBase, type=int, help='Port number associated with widget 0.', dest='widgetPortNumberBase')
+    ap.add_argument("-t", "--time-compression-threshold", nargs='?', default=defaultTimeCompressionThresholdSeconds, type=int, help='Skip to next active widget data message after this many seconds of inactivity.', dest='timeCompressionThresholdSeconds')
+
+    args = ap.parse_args()
+
+    patconIpAddress = args.patconIpAddress
+    widgetPortNumberBase = args.widgetPortNumberBase
+    timeCompressionThresholdSeconds = args.timeCompressionThresholdSeconds
+
+    if not os.path.exists(args.inputFileName):
+        sys.stderr.write('File {0} does not exist.\n'.format(args.inputFileName))
         return 1
 
     clientSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    processLogFile(inputFileName)
+    processLogFile(args.inputFileName)
 
     return 0
 

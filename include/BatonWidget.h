@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Widget.h"
+#include "WidgetId.h"
 #include "WidgetChannel.h"
 
 
@@ -43,7 +44,7 @@
 class BatonWidget : public Widget
 {
     public:
-        BatonWidget();
+        BatonWidget(WidgetId id);
         virtual ~BatonWidget() {};
 
         BatonWidget(const BatonWidget&) = delete;

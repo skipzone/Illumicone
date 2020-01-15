@@ -19,6 +19,9 @@
 
 #include <string>
 
+constexpr int maxWidgets = 32;
+
+
 /* Widget Id Assignment
  *
  *  0:  reserved
@@ -27,16 +30,32 @@
  *  3:  Bells (Ray)
  *  4:  Rainstick (Dr. Naked)
  *  5:  Schroeder's Plaything (Ross)
- *  6:  TriObelisk (Phyxx and Dr. Naked)
+ *  6:  Pump (Monte, Dr. Naked; based on Kayla's plunger)
  *  7:  BoogieBoard (Connie)
- *  8:  Pump (Monte, Dr. Naked; based on Kayla's plunger)
- *  9:  Contort-O-Matic (Ray and Mishi)
- * 10:  FourPlay-4-2 (Dr. Naked, Ross)
- * 11:  FourPlay-4-3 (Dr. Naked, Ross)
- * 12:  Baton
- * 13:  unassigned (future Maracas)
- * 14:  unassigned (future Mike)
- * 15:  unassigned
+ *  8:  FourPlay-4-2 (Dr. Naked, Ross)
+ *  9:  FourPlay-4-3 (Dr. Naked, Ross)
+ * 10:  unassigned (reserved for AI mic)
+ * 11:  flower #1
+ * 12:  flower #2
+ * 13:  flower #3
+ * 14:  flower #4
+ * 15:  flower #5
+ * 16:  flower #6
+ * 17:  flower #7
+ * 18:  unassigned
+ * 19:  unassigned (reserved for maraca #1)
+ * 20:  unassigned (reserved for maraca #2)
+ * 21:  Baton #1
+ * 22:  Baton #2
+ * 23:  Baton #3
+ * 24:  Baton #4
+ * 25:  Baton #5
+ * 26:  Baton #6
+ * 27:  Lidar1
+ * 28:  unassigned
+ * 29:  unassigned
+ * 30:  unassigned
+ * 31:  unassigned
  *
  * For stress tests, widget ids are reused as needed because stress-test
  * payloads are handled separately from all other types of payloads.
@@ -49,13 +68,24 @@ enum class WidgetId {
     bells,
     rainstick,
     schroedersPlaything,
-    triObelisk,
-    boogieBoard,
     pump,
-    contortOMatic,
+    boogieBoard,
     fourPlay42,
     fourPlay43,
-    baton,
+    flower1 = 11,
+    flower2,
+    flower3,
+    flower4,
+    flower5,
+    flower6,
+    flower7,
+    baton1 = 21,
+    baton2,
+    baton3,
+    baton4,
+    baton5,
+    baton6,
+    lidar1 = 27,
     invalid = 255
 };
 

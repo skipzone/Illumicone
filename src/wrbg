@@ -1,0 +1,2 @@
+#! /bin/bash
+nohup ./widgetRcvr -c $ILLUMICONE_CONFIG/activeConfig.json -l $ILLUMICONE_LOGS &

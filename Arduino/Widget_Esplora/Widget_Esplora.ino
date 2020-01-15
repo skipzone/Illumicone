@@ -45,7 +45,7 @@
 //#define PUMP
 
 #if defined(WIDGET_RADIO_TESTER)
-  #define WIDGET_ID 11  // FourPlay-4-3
+  #define WIDGET_ID 9  // FourPlay-4-3
   #define NUM_CHANNELS 4
   #define TX_INTERVAL_MS 100L
   #define STATS_PRINT_INTERVAL_MS 1000L
@@ -54,8 +54,8 @@
   #define PAYLOAD_TYPE StressTestPayload
 
 #elif defined(FOURPLAY)
-  #define WIDGET_ID 10
-  #define ALT_WIDGET_ID 11
+  #define WIDGET_ID 8
+  #define ALT_WIDGET_ID 9
   #define NUM_ENCODERS 4
   #define VELOCITY_DIVISOR 4
   #define ACTIVITY_THRESHOLD 2
@@ -69,7 +69,7 @@
   #define PAYLOAD_TYPE PositionVelocityPayload
 
 #elif defined(PUMP)
-  #define WIDGET_ID 8
+  #define WIDGET_ID 6
   #define TX_INTERVAL_MS 250L
   #define TX_PIPE_ADDRESS "1wdgt"
   #define PAYLOAD_TYPE PositionVelocityPayload
@@ -100,7 +100,7 @@
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 80
+#define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX

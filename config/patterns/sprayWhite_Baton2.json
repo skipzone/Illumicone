@@ -1,0 +1,40 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "sprayWhite_Baton2",
+    "enabled" : true,
+    "priority" : 2,
+    "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "ParticlesPattern",
+    "inputs" : [
+        {   "inputName" : "emitRate",
+            "widgetName" : "baton2",
+            "channelNumber" : 3,        // gyro X
+            "measurement" : "position"
+        }
+    ],
+    "emitColorDefault" : "white",
+    "emitIntervalUseMeasmtAbsValue" : true,
+    "emitIntervalMeasmtLow" : 50,
+    "emitIntervalMeasmtHigh" : 300,
+    "emitIntervalLowMs" : 250,
+    "emitIntervalHighMs" : 10,
+    "emitBatchSize" : 15,
+    "emitDirectionIsUp" : true,
+    "particleMoveIntervalMs" : 6
+}
+

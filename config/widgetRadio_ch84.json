@@ -20,6 +20,7 @@
     // ISM: 2400-2500;  ham: 2390-2450
     // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
     //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+    // U.S. allows channels 1-11, Canada allows channels 1-12.
     "rfChannel" : 84,
 
     // Probably no need to ever set auto acknowledgement to false because the sender

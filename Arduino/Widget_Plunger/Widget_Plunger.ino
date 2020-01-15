@@ -40,7 +40,7 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 8
+#define WIDGET_ID 6
 #define NUM_CHANNELS 1
 #define ACTIVE_TX_INTERVAL_MS 250L
 #define INACTIVE_TX_INTERVAL_MS 60000L      // should be a multiple of ACTIVE_TX_INTERVAL_MS
@@ -76,7 +76,7 @@ constexpr uint8_t numInactiveSendTries = 5; // when going inactive, transmit tha
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 84
+#define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX

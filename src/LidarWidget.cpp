@@ -15,24 +15,22 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
 
-#include "Widget.h"
-#include "WidgetChannel.h"
+#include "LidarWidget.h"
+#include "illumiconeWidgetTypes.h"
+#include "Log.h"
+#include "WidgetId.h"
 
-class FourPlay43Widget : public Widget
+using namespace std;
+
+
+extern Log logger;
+
+
+LidarWidget::LidarWidget(WidgetId id)
+    : Widget(id, 1)
 {
-    public:
+    simulationUpdateIntervalMs[0] = 10;
+}
 
-        FourPlay43Widget();
-        virtual ~FourPlay43Widget() {};
-
-        FourPlay43Widget(const FourPlay43Widget&) = delete;
-        FourPlay43Widget& operator =(const FourPlay43Widget&) = delete;
-
-        void updateChannelSimulatedMeasurements(unsigned int chIdx);
-
-    private:
-
-};
 

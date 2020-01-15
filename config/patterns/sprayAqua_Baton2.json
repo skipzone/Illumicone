@@ -15,19 +15,19 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "sprayPurple_Baton",
+{   "name" : "sprayAqua_Baton2",
     "enabled" : true,
     "priority" : 2,
     "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "ParticlesPattern",
     "inputs" : [
         {   "inputName" : "emitRate",
-            "widgetName" : "baton",
-            "channelNumber" : 4,        // gyro Y
+            "widgetName" : "baton2",
+            "channelNumber" : 5,        // gyro Z
             "measurement" : "position"
         }
     ],
-    "emitColorDefault" : "purple",
+    "emitColorDefault" : "aqua",
     "emitIntervalUseMeasmtAbsValue" : true,
     "emitIntervalMeasmtLow" : 50,
     "emitIntervalMeasmtHigh" : 300,
@@ -35,6 +35,6 @@
     "emitIntervalHighMs" : 10,
     "emitBatchSize" : 15,
     "emitDirectionIsUp" : true,
-    "particleMoveIntervalMs" : 18
+    "particleMoveIntervalMs" : 12
 }
 

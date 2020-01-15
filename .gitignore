@@ -6,6 +6,7 @@ unitTests
 widgetRcvr
 *.dSYM
 *.o
+*.pyc
 .*.swp
 *~
 *.DS_Store

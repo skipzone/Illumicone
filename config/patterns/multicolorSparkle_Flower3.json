@@ -15,26 +15,25 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "sprayAqua_Baton",
+{   "name" : "multicolorSparkle_Flower3",
     "enabled" : true,
-    "priority" : 2,
-    "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-    "patternClassName" : "ParticlesPattern",
+    "priority" : 7,
+    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SparklePattern",
     "inputs" : [
-        {   "inputName" : "emitRate",
-            "widgetName" : "baton",
-            "channelNumber" : 5,        // gyro Z
-            "measurement" : "position"
+        {   "inputName" : "density",
+            "widgetName" : "flower3",
+            "channelNumber" : 5,
+            "measurement" : "velocity"
         }
     ],
-    "emitColorDefault" : "aqua",
-    "emitIntervalUseMeasmtAbsValue" : true,
-    "emitIntervalMeasmtLow" : 50,
-    "emitIntervalMeasmtHigh" : 300,
-    "emitIntervalLowMs" : 250,
-    "emitIntervalHighMs" : 10,
-    "emitBatchSize" : 15,
-    "emitDirectionIsUp" : true,
-    "particleMoveIntervalMs" : 12
+    "activationThreshold" : 1,
+    "deactivationThreshold" : 99999,
+    "numGoodMeasurementsForReactivation" : 1,
+    "densityScaledownFactor" : 1000,
+    "useRandomColors" : true,
+    "sparkleChangeIntervalMs" : 50
+    //"forwardSparkleColor" : "magenta",
+    //"reverseSparkleColor" : "green"
 }
 

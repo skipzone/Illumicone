@@ -1,9 +1,6 @@
 #! /bin/bash
-# SunFounder RTC Nano on ic2-widpatcon in old controller box.
-#tempraw=$(cat /sys/bus/w1/devices/28-0416b35037ff/w1_slave | sed -n 's/.*t=\([0-9]\+\)/\1/p')
-# SunFounder RTC Nano on ic-widpatcon in new, weatherproof controller box.
-#tempraw=$(cat /sys/bus/w1/devices/28-0416b33f8bff/w1_slave | sed -n 's/.*t=\([-0-9]\+\)/\1/p'
-tempraw=$(cat /sys/bus/w1/devices/28-0416b33f8bff/w1_slave | sed -n 's/.*t=\(-\?[0-9]\+\)/\1/p' | sed 's/-/_/')
+w1DeviceDir=`ls -1 /sys/bus/w1/devices/ | grep '28-'`
+tempraw=$(cat /sys/bus/w1/devices/$w1DeviceDir/w1_slave | sed -n 's/.*t=\(-\?[0-9]\+\)/\1/p' | sed 's/-/_/')
 tempc=$(dc -e "1 k $tempraw 1000 / n")
 tempf=$(dc -e "1 k $tempraw 1000 / 9 * 5 / 32 + n")
 now=$(date --iso-8601=s)
