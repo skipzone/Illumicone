@@ -139,15 +139,15 @@ void setup()
 
 void sendMeasurements()
 {
-  for (uint8_t i = 0; i < numPots; ++i) {
-    payload.measurements[i] = analogRead(potPins[i]);
-  }
-
   uint16_t switchValue = 0;
   for (uint8_t i = 0; i < numSwitches; ++i) {
     switchValue |= ((digitalRead(switchPins[i]) == LOW) << (numSwitches - 1 - i));
   }
-  payload.measurements[numPots] = (int16_t) switchValue;
+  payload.measurements[0] = (int16_t) switchValue;
+
+  for (uint8_t i = 0; i < numPots; ++i) {
+    payload.measurements[i + 1] = analogRead(potPins[i]);
+  }
 
   payload.widgetHeader.isActive = isActive;
 
@@ -180,4 +180,3 @@ void loop()
     }
   }
 }
-
