@@ -47,8 +47,9 @@
             { "_include_file_coloredSprays_Baton" : "patterns/minicone/coloredSprays_Baton.json" },
             { "_include_file_fillAndBurst_Pump" : "patterns/minicone/fillAndBurst_Pump.json" },
             { "_include_file_rain_Rainstick" : "patterns/minicone/rain_Rainstick.json" },
+            { "_include_file_ringsAndStripes_Flower7" : "patterns/minicone/ringsAndStripes_Flower7.json" },
+            //{ "_include_file_ringsAndStripes_FourPlay43" : "patterns/minicone/ringsAndStripes_trippy_FourPlay42.json" },
             { "_include_file_spring_BoogieBoard" : "patterns/minicone/spring_BoogieBoard.json" },
-            { "_include_file_ringsAndStripes_FourPlay43" : "patterns/minicone/ringsAndStripes_trippy_FourPlay42.json" },
             { "_include_file_whiteSparkle_Lidar1" : "patterns/whiteSparkle_Lidar1.json" }
         ]
     }
