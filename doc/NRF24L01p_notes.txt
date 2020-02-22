@@ -1,0 +1,8 @@
+Notes About the (usually cheapshit) NRF24L01+ Modules
+=====================================================
+
+an exceptionally good thread that covers RF issues, shielding, and the problem
+of having to touch the module in order to get it to transmit
+
+https://hackaday.com/2016/05/31/fixing-the-terrible-range-of-your-cheap-nrf24l01-palna-module/
+
