@@ -381,4 +381,15 @@ Useful Commands and Stuff
     sudo nohup apt-get update --yes > update.out 2>update.err &
     sudo nohup apt-get upgrade --yes > upgrade.out 2>upgrade.err &
 
+* github certificate problem
+
+    If you get this when doing "git pull":
+
+        fatal: unable to access 'https://github.com/skipzone/Illumicone/':
+        server certificate verification failed. CAfile:
+        /etc/ssl/certs/ca-certificates.crt CRLfile: none
+
+    Make sure the system clock is correct.  If that doesn't help, do this:
+
+        sudo apt-get install --reinstall ca-certificates
 
