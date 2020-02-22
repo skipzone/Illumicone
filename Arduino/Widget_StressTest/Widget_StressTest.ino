@@ -25,7 +25,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#define ENABLE_DEBUG_PRINT
+#define ENABLE_DEBUG_PRINT
 
 
 #include "illumiconeWidget.h"
@@ -42,7 +42,7 @@
 #define WIDGET_ID 0
 #define TX_INTERVAL_MS 10L
 #define STATS_PRINT_INTERVAL_MS 5000L
-//#define LED_PIN 2
+#define LED_PIN 5
 
 // ---------- radio configuration ----------
 
@@ -73,7 +73,7 @@
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 97
+#define RF_CHANNEL 80
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
@@ -95,14 +95,22 @@ StressTestPayload payload;
 void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
-  Serial.begin(57600);
+  Serial.begin(115200);
   printf_begin();
+#endif
+
+#ifdef LED_PIN      
+      pinMode(LED_PIN, OUTPUT);
 #endif
 
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
                  TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
                  RF_CHANNEL);
-  
+
+#ifdef ENABLE_DEBUG_PRINT 
+  radio.printDetails();
+#endif
+
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
