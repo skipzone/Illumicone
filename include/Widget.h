@@ -70,6 +70,7 @@ class Widget
         int simulationMinValue[16];
         int simulationMaxValue[16];
         int simulationStep[16];
+        bool simulationUpDown[16];
 
     private:
 
