@@ -36,7 +36,7 @@ extern Log logger;
 
 
 AnnoyingFlashingPattern::AnnoyingFlashingPattern(const std::string& name)
-    : Pattern(name, true)
+    : Pattern(name, true)   // usesHsvModel = true
 {
 };
 

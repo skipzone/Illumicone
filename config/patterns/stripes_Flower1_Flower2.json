@@ -1,0 +1,51 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "stripes_Flower1_Flower2",
+    "enabled" : true,
+    "priority" : 3,
+    "opacity" : 100,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "StripePattern",
+    "inputs" : [
+        {   "inputName" : "position",
+            "widgetName" : "flower1",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        },
+        {   "inputName" : "hueOffset",
+            "widgetName" : "flower2",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
+        //{   "inputName" : "width",
+        //    "widgetName" : "flower2",
+        //    "channelNumber" : 0,
+        //    "measurement" : "position"
+        //}
+    ],
+    "isHorizontal" : false,
+    "defaultHsv" : "pink",              // can use a recognized color name or h,s,v to specify custom hue, sat, and/or value
+    "virtualPixelRatio" : 75,           // 75 * 48 strings = 3600; flower rotation measurements are [0, 3600)
+    "numStripes" : 12,
+    "scaledownFactor" : 1,              // effectively gear down a rotating widget
+    "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
+    "widthScaledownFactor" : 1,
+    "minSidebandWidth" : 100,           // min should be equal to or greater than virtualPixelRatio
+    "maxSidebandWidth" : 100            // sideband widths are in the context of virtual pixels
+
+}
+

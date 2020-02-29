@@ -23,7 +23,7 @@
 
 
 /*
- * These are the measurements that Flower (an MPU6050-type widget) sends:
+ * These are the measurements that Rattle (an MPU6050-type widget) sends:
  *     Channel  Value
  *     -------  -------------
  *        0     Yaw
@@ -32,23 +32,28 @@
  *        3     GyroX
  *        4     GyroY
  *        5     GyroZ
+ *        6     AccelX
+ *        7     AccelY
+ *        8     AccelZ
+ *        9     LinearAccelX
+ *       10     LinearAccelY
+ *       11     LinearAccelZ
  *       12     Temperature
 */
 
-class FlowerWidget : public Widget
+class RattleWidget : public Widget
 {
     public:
-        FlowerWidget(WidgetId id);
-        virtual ~FlowerWidget() {};
+        RattleWidget(WidgetId id);
+        virtual ~RattleWidget() {};
 
-        FlowerWidget(const FlowerWidget&) = delete;
-        FlowerWidget& operator =(const FlowerWidget&) = delete;
+        RattleWidget(const RattleWidget&) = delete;
+        RattleWidget& operator =(const RattleWidget&) = delete;
 
         void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
     private:
 
-        // TODO:  need to replace magic number 16 with a constant such as maxNumSimulatedMeasurements
-        bool simulatedPositionGoingDown[16];
+        bool simulatedPositionGoingDown;
 };
 
