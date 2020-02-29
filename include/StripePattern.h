@@ -49,7 +49,7 @@ class StripePattern : public Pattern {
         std::shared_ptr<WidgetChannel> positionChannel;
         std::shared_ptr<WidgetChannel> widthChannel;
 
-        int stripeVPos;
+        int stripeVirtualPos;
         int widthPos;
 
         int numStripes;
@@ -61,17 +61,17 @@ class StripePattern : public Pattern {
         int maxSidebandWidth;
         int minSidebandWidth;
 
-        uint8_t baseIntensity;
+        HsvPixel stripeHsv;
 
         int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
         bool resetWidth;
         int widthPosOffset;
 
-        // stripeIsHorizontal refers to the orientation of the line(s).  When true, we will
+        // isHorizontal refers to the orientation of the line(s).  When true, we will
         // draw horizontal lines (rings) that move vertically along the strings.  When
         // false, we will draw vertical lines that move horizontally around the cone.
-        bool stripeIsHorizontal;
+        bool isHorizontal;
 
         unsigned int virtualPixelRatio;
 

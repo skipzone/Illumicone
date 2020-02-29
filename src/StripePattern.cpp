@@ -22,7 +22,7 @@
 #include "illumiconeUtility.h"
 #include "Log.h"
 #include "Pattern.h"
-#include "RgbStripePattern.h"
+#include "StripePattern.h"
 #include "Widget.h"
 #include "WidgetChannel.h"
 
@@ -32,9 +32,9 @@ using namespace std;
 extern Log logger;
 
 
-RgbStripePattern::RgbStripePattern(const std::string& name)
-    : Pattern(name)
-    , stripeIsHorizontal(false)
+StripePattern::StripePattern(const std::string& name)
+    : Pattern(name, true)   // usesHsvModel = true
+    , isHorizontal(false)
     , virtualPixelRatio(1)
     , numPixelsInDrawingPlane(numStrings)
     , numVirtualPixelsInDrawingPlane(numStrings)
@@ -42,7 +42,7 @@ RgbStripePattern::RgbStripePattern(const std::string& name)
 }
 
 
-bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
+bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
     // ----- get input channels -----
 
@@ -86,14 +86,17 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     }
     logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
 
-    // TODO:  get stripeIsHorizontal
+    if (!ConfigReader::getBoolValue(patternConfigObject, "isHorizontal", isHorizontal, errMsgSuffix)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, "%s isHorizontal=%d", name.c_str(), isHorizontal);
 
-    if (!ConfigReader::getUnsignedIntValue(patternConfigObj, "virtualPixelRatio", virtualPixelRatio, errMsgSuffix, 1)) {
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "virtualPixelRatio", virtualPixelRatio, errMsgSuffix, 1)) {
         return false;
     }
     logger.logMsg(LOG_INFO, "%s virtualPixelRatio=%d", name.c_str(), virtualPixelRatio);
 
-    if (stripeIsHorizontal) {
+    if (isHorizontal) {
         numPixelsInDrawingPlane = pixelsPerString;
         numVirtualPixelsInDrawingPlane = pixelsPerString * virtualPixelRatio;
     }
@@ -102,16 +105,12 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
         numVirtualPixelsInDrawingPlane = numStrings * virtualPixelRatio;
     }
 
-    if (!ConfigReader::getIntValue(
-        patternConfigObj, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1))
-    {
+    if (!ConfigReader::getIntValue( patternConfigObject, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1)) {
         return false;
     }
     logger.logMsg(LOG_INFO, "%s widthScaledownFactor=%d", name.c_str(), widthScaledownFactor);
 
-    if (!ConfigReader::getIntValue(
-        patternConfigObj, "numStripes", numStripes, errMsgSuffix, 1, numStrings / 2))
-    {
+    if (!ConfigReader::getIntValue( patternConfigObject, "numStripes", numStripes, errMsgSuffix, 1, numStrings / 2)) {
         return false;
     }
     if (numPixelsInDrawingPlane % numStripes != 0) {
@@ -121,15 +120,13 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     logger.logMsg(LOG_INFO, "%s numStripes=%d", name.c_str(), numStripes);
     stripeStep = numPixelsInDrawingPlane / numStripes;
 
-    if (!ConfigReader::getIntValue(
-        patternConfigObj, "scaledownFactor", scaledownFactor, errMsgSuffix, 1))
-    {
+    if (!ConfigReader::getIntValue(patternConfigObject, "scaledownFactor", scaledownFactor, errMsgSuffix, 1)) {
         return false;
     }
     logger.logMsg(LOG_INFO, "%s scaledownFactor=%d", name.c_str(), scaledownFactor);
 
     if (!ConfigReader::getIntValue(
-        patternConfigObj, "minSidebandWidth", minSidebandWidth, errMsgSuffix,
+        patternConfigObject, "minSidebandWidth", minSidebandWidth, errMsgSuffix,
         0, numVirtualPixelsInDrawingPlane / 2))
     {
         return false;
@@ -137,25 +134,22 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     logger.logMsg(LOG_INFO, "%s minSidebandWidth=%d", name.c_str(), minSidebandWidth);
 
     if (!ConfigReader::getIntValue(
-        patternConfigObj, "maxSidebandWidth", maxSidebandWidth, errMsgSuffix,
+        patternConfigObject, "maxSidebandWidth", maxSidebandWidth, errMsgSuffix,
         minSidebandWidth, numVirtualPixelsInDrawingPlane / 2))
     {
         return false;
     }
     logger.logMsg(LOG_INFO, "%s maxSidebandWidth=%d", name.c_str(), maxSidebandWidth);
 
-    unsigned int baseIntensityValue;
-    if (!ConfigReader::getUnsignedIntValue(
-        patternConfigObj, "baseIntensity", baseIntensityValue, errMsgSuffix, 0, 255))
-    {
+    string hsvStr;
+    if (!ConfigReader::getHsvPixelValue(patternConfigObject, "stripeHsv", hsvStr, stripeHsv, errMsgSuffix)) {
         return false;
     }
-    baseIntensity = baseIntensityValue;
-    logger.logMsg(LOG_INFO, "%s baseIntensity=%d", name.c_str(), baseIntensity);
+    logger.logMsg(LOG_INFO, name + " stripeHsv=" + hsvStr);
 
     // ----- initialize object data -----
 
-    stripeVPos = 0;
+    stripeVirtualPos = 0;
     widthPos = minSidebandWidth;
     nextResetWidthMs = 0;
     resetWidth = true;
@@ -164,42 +158,20 @@ bool RgbStripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 }
 
 
-bool RgbStripePattern::update()
+bool StripePattern::update()
 {
     isActive = false;
     bool gotPositionOrWidthUpdate = false;
     int rawPosition;
     unsigned int nowMs = getNowMs();
 
-    for (int iColor = 0; iColor < numColors; ++iColor) {
-        if (positionChannel[iColor] != nullptr) {
-            // Quick and dirty hack to allow other channels to share channel 0's data.
-            if (isActive && gotPositionOrWidthUpdate
-                && iColor != 0 && positionChannel[iColor] == positionChannel[0])
-            {
-                for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
-                    if (orientationIsEnabled[iOrient]) {
-                        stripeVPos =
-                            ((unsigned int) rawPosition) / scaledownFactor
-                            % numVirtualPixelsInDrawingPlane;
-                    }
-                }
-            }
-            else {
-                if (positionChannel[iColor]->getIsActive()) {
-                    isActive = true;
-                    if (positionChannel[iColor]->getHasNewPositionMeasurement()) {
-                        gotPositionOrWidthUpdate = true;
-                        rawPosition = positionChannel[iColor]->getPosition();
-                        for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
-                            if (orientationIsEnabled[iOrient]) {
-                                stripeVPos =
-                                    ((unsigned int) rawPosition) / scaledownFactor
-                                    % numVirtualPixelsInDrawingPlane;
-                            }
-                        }
-                    }
-                }
+    if (positionChannel != nullptr) {
+        if (positionChannel->getIsActive()) {
+            isActive = true;
+            if (positionChannel->getHasNewPositionMeasurement()) {
+                gotPositionOrWidthUpdate = true;
+                rawPosition = positionChannel->getPosition();
+                stripeVirtualPos = ((unsigned int) rawPosition) / scaledownFactor % numVirtualPixelsInDrawingPlane;
             }
         }
     }
@@ -217,29 +189,21 @@ bool RgbStripePattern::update()
                     widthPosOffset = rawWidthPos;
                 }
 
-                for (int iColor = 0; iColor < numColors; ++iColor) {
-                    for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
-                        if (orientationIsEnabled[iOrient]) {
-                            if (maxSidebandWidth > 0) {
-                                int scaledWidthPos = (rawWidthPos - widthPosOffset) / widthScaledownFactor[iOrient];
-                                // This is a triangle wave function where the period is maxSidebandWidth * 2
-                                // and the range is minSidebandWidth to maxSidebandWidth.  We right-shift the
-                                // wave so that the width starts out at minSidebandWidth.
-                                widthPos =
-                                    abs( abs(scaledWidthPos + maxSidebandWidth)
-                                         % (maxSidebandWidth * 2) - maxSidebandWidth )
-                                    + minSidebandWidth;
-                            }
-                            //logger.logMsg(LOG_DEBUG, name
-                            //              + ":  iColor=" + to_string(iColor)
-                            //              + ", iOrient=" + to_string(iOrient)
-                            //              + ", rawWidthPos=" + to_string(rawWidthPos)
-                            //              + ", widthPosOffset=" + to_string(widthPosOffset)
-                            //              + ", scaledWidthPos=" + to_string(scaledWidthPos));
-                            //              + ", widthPos=" + to_string(widthPos));
-                        }
-                    }
+                if (maxSidebandWidth > 0) {
+                    int scaledWidthPos = (rawWidthPos - widthPosOffset) / widthScaledownFactor;
+                    // This is a triangle wave function where the period is maxSidebandWidth * 2
+                    // and the range is minSidebandWidth to maxSidebandWidth.  We right-shift the
+                    // wave so that the width starts out at minSidebandWidth.
+                    widthPos =
+                        abs( abs(scaledWidthPos + maxSidebandWidth)
+                             % (maxSidebandWidth * 2) - maxSidebandWidth )
+                        + minSidebandWidth;
                 }
+                //logger.logMsg(LOG_DEBUG, name
+                //              + ", rawWidthPos=" + to_string(rawWidthPos)
+                //              + ", widthPosOffset=" + to_string(widthPosOffset)
+                //              + ", scaledWidthPos=" + to_string(scaledWidthPos));
+                //              + ", widthPos=" + to_string(widthPos));
             }
         }
     }
@@ -256,96 +220,75 @@ bool RgbStripePattern::update()
         else if (!resetWidth && (int) (nowMs - nextResetWidthMs) >= 0) {
             logger.logMsg(LOG_DEBUG, name + ":  Resetting width.");
             resetWidth = true;
-            for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
-                for (int iColor = 0; iColor < numColors; ++iColor) {
-                    widthPos = minSidebandWidth;
-                }
-            }
+            widthPos = minSidebandWidth;
         }
     }
 
     // Draw the stripes.
     if (gotPositionOrWidthUpdate) {
 
-        clearAllPixels(pixelArray);
+        clearAllPixels(coneStrings);
 
-        for (int iColor = 0; iColor < numColors; ++iColor) {
-            if (positionChannel[iColor] != nullptr) {
-                for (int iOrient = 0; iOrient < numOrientations; ++iOrient) {
-                    if (orientationIsEnabled[iOrient]) {
+        int sidebandWidth = widthPos;
+        float valueSlope = (float) stripeHsv.value / (float) (sidebandWidth + 1);
 
-                    int sidebandWidth = widthPos;
-                    float intensitySlope = (float) baseIntensity / (float) (sidebandWidth + 1);
+        // TODO:  rename these
+        int lowVEl = stripeVirtualPos - sidebandWidth;
+        int highVEl = stripeVirtualPos + sidebandWidth;
 
-                    int lowVEl = stripeVPos - sidebandWidth;
-                    int highVEl = stripeVPos + sidebandWidth;
+        if (isHorizontal) {
 
-                    switch (iOrient) {
+            //logger.logMsg(LOG_DEBUG, name
+            //    + ",  widthPos=" + to_string(widthPos)
+            //    + ",  sidebandWidth=" + to_string(sidebandWidth)
+            //    + ", valueSlope=" + to_string(valueSlope)
+            //    + ", stripeVirtualPos=" + to_string(stripeVirtualPos)
+            //    + ", lowVEl=" + to_string(lowVEl)
+            //    + ", highVEl=" + to_string(highVEl));
 
-                        case vert:
-
-                            //logger.logMsg(LOG_DEBUG, name
-                            //    + " vert:  iColor=" + to_string(iColor)
-                            //    + ",  widthPos=" + to_string(widthPos)
-                            //    + ",  sidebandWidth=" + to_string(sidebandWidth)
-                            //    + ", intensitySlope=" + to_string(intensitySlope)
-                            //    + ", stripeVPos=" + to_string(stripeVPos)
-                            //    + ", lowVEl=" + to_string(lowVEl)
-                            //    + ", highVEl=" + to_string(highVEl));
-
-                            for (int i = lowVEl; i <= highVEl; ++i) {
-                                unsigned int vStringIndex = ((i + numVirtualPixelsInDrawingPlane) % numVirtualPixelsInDrawingPlane);
-                                // If this virtual string corresponds to a physical
-                                // string, we'll draw into the physical string.
-                                if (vStringIndex % virtualPixelRatio == 0) {
-                                    unsigned int stringIndex = vStringIndex / virtualPixelRatio;
-                                    float distanceToCenter = abs(i - stripeVPos);
-                                    uint8_t intensity =
-                                        baseIntensity - (uint8_t) (intensitySlope * distanceToCenter);
-                                    for (int iStripe = 0; iStripe < numStripes; ++iStripe) {
-                                        for (auto&& pixels : pixelArray[stringIndex]) {
-                                            pixels.raw[iColor] = qadd8(pixels.raw[iColor], intensity);
-                                        }
-                                        stringIndex = (stringIndex + stripeStep) % numStrings;
-                                    }
-                                }
-                            }
-
-                            break;
-
-                        case horiz:
-
-                            //logger.logMsg(LOG_DEBUG, name
-                            //    + " horiz:  iColor=" + to_string(iColor)
-                            //    + ",  widthPos=" + to_string(widthPos[iColor])
-                            //    + ",  sidebandWidth=" + to_string(sidebandWidth)
-                            //    + ", intensitySlope=" + to_string(intensitySlope)
-                            //    + ", stripeVPos=" + to_string(stripeVPos)
-                            //    + ", lowVEl=" + to_string(lowVEl)
-                            //    + ", highVEl=" + to_string(highVEl));
-
-                            for (int i = lowVEl; i <= highVEl; ++i) {
-                                unsigned int virtualPixelIdx =
-                                    ((i + numVirtualPixelsInDrawingPlane) % numVirtualPixelsInDrawingPlane);
-                                // If this virtual pixel corresponds to a physical
-                                // pixel, we'll draw into the physical pixels.
-                                if (virtualPixelIdx % virtualPixelRatio == 0) {
-                                    unsigned int pixelIndex = virtualPixelIdx / virtualPixelRatio;
-                                    float distanceToCenter = abs(i - stripeVPos);
-                                    uint8_t intensity =
-                                        baseIntensity - (uint8_t) (intensitySlope * distanceToCenter);
-                                    for (int iStripe = 0; iStripe < numStripes; ++iStripe) {
-                                        for (auto&& stringPixels : pixelArray) {
-                                            stringPixels[pixelIndex].raw[iColor] =
-                                                qadd8(stringPixels[pixelIndex].raw[iColor], intensity);
-                                        }
-                                        pixelIndex = (pixelIndex + stripeStep) % pixelsPerString;
-                                    }
-                                }
-                            }
-
-                            break;
+            for (int i = lowVEl; i <= highVEl; ++i) {
+                unsigned int virtualPixelIdx = ((i + numVirtualPixelsInDrawingPlane) % numVirtualPixelsInDrawingPlane);
+                // If this virtual pixel corresponds to a physical
+                // pixel, we'll draw into the physical pixels.
+                if (virtualPixelIdx % virtualPixelRatio == 0) {
+                    unsigned int pixelIndex = virtualPixelIdx / virtualPixelRatio;
+                    float distanceToCenter = abs(i - stripeVirtualPos);
+                    uint8_t value = stripeHsv.value - (uint8_t) (valueSlope * distanceToCenter);
+                    for (int iStripe = 0; iStripe < numStripes; ++iStripe) {
+                        for (auto&& coneString : coneStrings) {
+                            coneString[pixelIndex] = stripeHsv;
+                            coneString[pixelIndex].value = value;
                         }
+                        pixelIndex = (pixelIndex + stripeStep) % pixelsPerString;
+                    }
+                }
+            }
+
+        }
+        else {
+
+            //logger.logMsg(LOG_DEBUG, name
+            //    + ",  widthPos=" + to_string(widthPos)
+            //    + ",  sidebandWidth=" + to_string(sidebandWidth)
+            //    + ", valueSlope=" + to_string(valueSlope)
+            //    + ", stripeVirtualPos=" + to_string(stripeVirtualPos)
+            //    + ", lowVEl=" + to_string(lowVEl)
+            //    + ", highVEl=" + to_string(highVEl));
+
+            for (int i = lowVEl; i <= highVEl; ++i) {
+                unsigned int virtualStringIdx = ((i + numVirtualPixelsInDrawingPlane) % numVirtualPixelsInDrawingPlane);
+                // If this virtual string corresponds to a physical
+                // string, we'll draw into the physical string.
+                if (virtualStringIdx % virtualPixelRatio == 0) {
+                    unsigned int stringIndex = virtualStringIdx / virtualPixelRatio;
+                    float distanceToCenter = abs(i - stripeVirtualPos);
+                    uint8_t value = stripeHsv.value - (uint8_t) (valueSlope * distanceToCenter);
+                    for (int iStripe = 0; iStripe < numStripes; ++iStripe) {
+                        for (auto&& pixel : coneStrings[stringIndex]) {
+                            pixel = stripeHsv;
+                            pixel.value = value;
+                        }
+                        stringIndex = (stringIndex + stripeStep) % numStrings;
                     }
                 }
             }

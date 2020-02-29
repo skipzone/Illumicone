@@ -35,7 +35,7 @@ extern Log logger;
 
 
 SwitchActivatedRegionsPattern::SwitchActivatedRegionsPattern(const std::string& name)
-    : IndicatorRegionsPattern(name, true)
+    : IndicatorRegionsPattern(name, true)   // usesHsvModel = true
 {
 }
 

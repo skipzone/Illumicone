@@ -96,7 +96,7 @@ patternController: patternController.o AnnoyingFlashingPattern.o BatonWidget.o B
                    IndicatorRegion.o IndicatorRegionsPattern.o LidarWidget.o Log.o MidiActivatedRegionsPattern.o \
                    ParticlesPattern.o Pattern.o PumpWidget.o QueuedWidgetChannel.o RainbowExplosionPattern.o RainstickWidget.o \
                    RgbStripePattern.o RgbVerticalPattern.o SchroedersPlaythingWidget.o SimpleBlockIndicator.o SparklePattern.o \
-				   SpinnahWidget.o SpinnerPattern.o SpiralPattern.o SwitchActivatedRegionsPattern.o Widget.o \
+				   SpinnahWidget.o SpinnerPattern.o SpiralPattern.o StripePattern.o SwitchActivatedRegionsPattern.o Widget.o \
 				   WidgetChannel.o WidgetId.o colorpalettes.o colorutils.o hsv2rgb.o illumiconePixelUtility.o illumiconeUtility.o \
                    indicatorRegionFactory.o json11.o lib8tion.o patternFactory.o widgetFactory.o
 
