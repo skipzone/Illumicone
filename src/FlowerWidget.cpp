@@ -32,10 +32,11 @@ extern Log logger;
 FlowerWidget::FlowerWidget(WidgetId id)
     : Widget(id, 13)
 {
-    // Simulate acceleration.
-    simulationUpdateIntervalMs[6] = 10;
-    simulationUpdateIntervalMs[7] = 15;
-    simulationUpdateIntervalMs[8] = 20;
+    // Simulate yaw (channel 0).
+    simulationUpdateIntervalMs[0] = 5;
+    simulationMinValue[0] = 0;
+    simulationMaxValue[0] = 3599;
+    simulationStep[0] = 2;
 }
 
 
@@ -45,20 +46,19 @@ void FlowerWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
     // updated in case the pattern hasn't read them.
     channels[chIdx]->getPosition();
 
-    int newPosition = channels[chIdx]->getPreviousPosition();
+    int prevPosition = channels[chIdx]->getPreviousPosition();
+    int newPosition;
     if (!simulatedPositionGoingDown) {
-        if (newPosition < 1023) {
-            ++newPosition;
-        }
-        else {
+        newPosition = prevPosition + simulationStep[chIdx];
+        if (newPosition > simulationMaxValue[chIdx]) {
+            newPosition = prevPosition;
             simulatedPositionGoingDown = true;
         }
     }
     else {
-        if (newPosition > 0) {
-            --newPosition;
-        }
-        else {
+        newPosition = prevPosition - simulationStep[chIdx];
+        if (newPosition < simulationMinValue[chIdx]) {
+            newPosition = prevPosition;
             simulatedPositionGoingDown = false;
         }
     }

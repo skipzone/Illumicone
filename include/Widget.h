@@ -67,6 +67,9 @@ class Widget
         // TODO 8/7/2017 ross:  These need to be sized dynamically to agree with the number of channels.
         unsigned int simulationNextUpdateMs[16];
         unsigned int simulationUpdateIntervalMs[16];
+        int simulationMinValue[16];
+        int simulationMaxValue[16];
+        int simulationStep[16];
 
     private:
 
