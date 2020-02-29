@@ -52,7 +52,8 @@
         "_include_file_schedule" : "Illumibrate_2020_schedule.json",
         //"_include_file_schedule" : "schedule_alwaysOn.json",
 
-        "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        //"patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        "patternBlendMethod" : "rgbAdd",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
         "patternRunLoopSleepIntervalUs" : 4000,
 
         "widgets" : [

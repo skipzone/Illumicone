@@ -25,15 +25,14 @@
         //{ "_include_file_sprayAqua_Baton" : "patterns/sprayAqua_Baton1.json" },
 
         { "_include_file_stripes_flowers" : "patterns/stripes_Flower1_Flower2.json" },
-        { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower3_Flower4.json" }
+        { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower3_Flower4.json" },
 
         // throbbing dots, pulsation rate on Rattle1, hue on Flower5
 
         // sparkle band, density on Rattle2, position on Flower6
 
         // temporary until sparkle band and throbbing dots patterns are ready (for flowers 5 and 6)
-        //{ "_include_file_spring_flowers" : "patterns/spring_flowers5and6.json" },
-        //{ "_include_file_greenSparkle_rattle" : "patterns/greenSparkle_Rattle1.json" },
+        { "_include_file_spring_flowers" : "patterns/spring_Flower5_Flower6_Rattle1.json" }
         //{ "_include_file_multicolorSparkle_rattle" : "patterns/multicolorSparkle_Rattle2.json" }
 
     ]

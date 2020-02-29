@@ -17,7 +17,7 @@
 
 {   "name" : "rings_Flower3_Flower4",
     "enabled" : true,
-    "priority" : 1,
+    "priority" : 2,
     "opacity" : 80,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "StripePattern",
     "inputs" : [

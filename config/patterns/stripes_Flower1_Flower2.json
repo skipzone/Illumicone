@@ -17,7 +17,7 @@
 
 {   "name" : "stripes_Flower1_Flower2",
     "enabled" : true,
-    "priority" : 2,
+    "priority" : 3,
     "opacity" : 100,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "StripePattern",
     "inputs" : [
