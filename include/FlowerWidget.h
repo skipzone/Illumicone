@@ -48,6 +48,7 @@ class FlowerWidget : public Widget
 
     private:
 
-        bool simulatedPositionGoingDown;
+        // TODO:  need to replace magic number 16 with a constant such as maxNumSimulatedMeasurements
+        bool simulatedPositionGoingDown[16];
 };
 

@@ -38,6 +38,13 @@ FlowerWidget::FlowerWidget(WidgetId id)
     simulationMaxValue[0] = 3599;
     simulationStep[0] = 2;
     simulationUpDown[0] = false;
+
+    // Simulate z-axis gyro (channel 5).
+    simulationUpdateIntervalMs[5] = 5;
+    simulationMinValue[5] = -7200;
+    simulationMaxValue[5] = 7200;  // degrees per second?
+    simulationStep[5] = 10;
+    simulationUpDown[5] = true;
 }
 
 
@@ -51,12 +58,12 @@ void FlowerWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 
     int prevPosition = channels[chIdx]->getPreviousPosition();
     int newPosition;
-    if (!simulatedPositionGoingDown) {
+    if (!simulatedPositionGoingDown[chIdx]) {
         newPosition = prevPosition + simulationStep[chIdx];
         if (newPosition > simulationMaxValue[chIdx]) {
             if (simulationUpDown[chIdx]) {
                 newPosition = prevPosition;
-                simulatedPositionGoingDown = true;
+                simulatedPositionGoingDown[chIdx] = true;
             }
             else {
                 newPosition = simulationMinValue[chIdx];
@@ -67,7 +74,7 @@ void FlowerWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
         newPosition = prevPosition - simulationStep[chIdx];
         if (newPosition < simulationMinValue[chIdx]) {
             newPosition = prevPosition;
-            simulatedPositionGoingDown = false;
+            simulatedPositionGoingDown[chIdx] = false;
         }
     }
 
