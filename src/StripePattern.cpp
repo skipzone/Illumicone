@@ -64,6 +64,8 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
             recognizedChannel = true;
         }
 
+        // TODO:  add hueOffset
+
         if (recognizedChannel) {
             logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
             if (channelConfig.measurement != "position") {
@@ -81,15 +83,19 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
-    if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
-
     if (!ConfigReader::getBoolValue(patternConfigObject, "isHorizontal", isHorizontal, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, "%s isHorizontal=%d", name.c_str(), isHorizontal);
+
+    // TODO:  change stripeHsv to defaultHsv
+    string hsvStr;
+    if (!ConfigReader::getHsvPixelValue(patternConfigObject, "defaultHsv", hsvStr, stripeHsv, errMsgSuffix)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " stripeHsv=" + hsvStr);
+
+    // TODO:  replace defaultHsv with startingHsv and endingHsv; maybe specify separate default sat and value for sideband gradient
 
     if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "virtualPixelRatio", virtualPixelRatio, errMsgSuffix, 1)) {
         return false;
@@ -104,11 +110,6 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
         numPixelsInDrawingPlane = numStrings;
         numVirtualPixelsInDrawingPlane = numStrings * virtualPixelRatio;
     }
-
-    if (!ConfigReader::getIntValue( patternConfigObject, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, "%s widthScaledownFactor=%d", name.c_str(), widthScaledownFactor);
 
     if (!ConfigReader::getIntValue( patternConfigObject, "numStripes", numStripes, errMsgSuffix, 1, numStrings / 2)) {
         return false;
@@ -125,6 +126,16 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     }
     logger.logMsg(LOG_INFO, "%s scaledownFactor=%d", name.c_str(), scaledownFactor);
 
+    if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
+
+    if (!ConfigReader::getIntValue( patternConfigObject, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, "%s widthScaledownFactor=%d", name.c_str(), widthScaledownFactor);
+
     if (!ConfigReader::getIntValue(
         patternConfigObject, "minSidebandWidth", minSidebandWidth, errMsgSuffix,
         0, numVirtualPixelsInDrawingPlane / 2))
@@ -140,12 +151,6 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
         return false;
     }
     logger.logMsg(LOG_INFO, "%s maxSidebandWidth=%d", name.c_str(), maxSidebandWidth);
-
-    string hsvStr;
-    if (!ConfigReader::getHsvPixelValue(patternConfigObject, "stripeHsv", hsvStr, stripeHsv, errMsgSuffix)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " stripeHsv=" + hsvStr);
 
     // ----- initialize object data -----
 
