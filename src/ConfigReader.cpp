@@ -101,7 +101,7 @@ bool ConfigReader::getFloatValue(const json11::Json& jsonObj,
 
 bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
                                     const std::string& name,
-                                    std::string& rgbStr,
+                                    std::string& hsvStr,
                                     HsvPixel& value,
                                     const std::string& errorMessageSuffix,
                                     bool allowEmptyString,
@@ -113,8 +113,8 @@ bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
         }
         return false;
     }
-    rgbStr = jsonObj[name].string_value();
-    if (rgbStr.empty()) {
+    hsvStr = jsonObj[name].string_value();
+    if (hsvStr.empty()) {
         if (!allowEmptyString) {
             if (!errorMessageSuffix.empty()) {
                 logger.logMsg(LOG_ERR, name + " is empty" + errorMessageSuffix);
@@ -124,7 +124,7 @@ bool ConfigReader::getHsvPixelValue(const json11::Json& jsonObj,
         value = defaultValue;
         return true;
     }
-    if (!stringToHsvPixel(rgbStr, value)) {
+    if (!stringToHsvPixel(hsvStr, value)) {
         if (!errorMessageSuffix.empty()) {
             logger.logMsg(LOG_ERR, name + " is not a valid HSV color" + errorMessageSuffix);
         }

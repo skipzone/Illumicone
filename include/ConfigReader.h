@@ -54,7 +54,7 @@ class ConfigReader
 
         static bool getHsvPixelValue(const json11::Json& jsonObj,
                                      const std::string& name,
-                                     std::string& rgbStr,
+                                     std::string& hsvStr,
                                      HsvPixel& value,
                                      const std::string& errorMessageSuffix = "",
                                      bool allowEmptyString = false,
