@@ -33,15 +33,18 @@ FlowerWidget::FlowerWidget(WidgetId id)
     : Widget(id, 13)
 {
     // Simulate yaw (channel 0).
-    simulationUpdateIntervalMs[0] = 5;
+    simulationUpdateIntervalMs[0] = 1;
     simulationMinValue[0] = 0;
     simulationMaxValue[0] = 3599;
     simulationStep[0] = 2;
+    simulationUpDown[0] = false;
 }
 
 
 void FlowerWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
+    // TODO:  maybe move all this stuff to Widget class as default behavior.
+
     // Make sure previous position and velocity have been
     // updated in case the pattern hasn't read them.
     channels[chIdx]->getPosition();
@@ -51,8 +54,13 @@ void FlowerWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
     if (!simulatedPositionGoingDown) {
         newPosition = prevPosition + simulationStep[chIdx];
         if (newPosition > simulationMaxValue[chIdx]) {
-            newPosition = prevPosition;
-            simulatedPositionGoingDown = true;
+            if (simulationUpDown[chIdx]) {
+                newPosition = prevPosition;
+                simulatedPositionGoingDown = true;
+            }
+            else {
+                newPosition = simulationMinValue[chIdx];
+            }
         }
     }
     else {
