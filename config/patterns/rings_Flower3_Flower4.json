@@ -15,37 +15,37 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "stripes_Flower1_Flower2",
+{   "name" : "rings_Flower3_Flower4",
     "enabled" : true,
-    "priority" : 2,
-    "opacity" : 100,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "priority" : 1,
+    "opacity" : 80,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "StripePattern",
     "inputs" : [
         {   "inputName" : "position",
-            "widgetName" : "flower1",
+            "widgetName" : "flower3",
             "channelNumber" : 0,
             "measurement" : "position"
         },
         {   "inputName" : "hueOffset",
-            "widgetName" : "flower2",
+            "widgetName" : "flower4",
             "channelNumber" : 0,
             "measurement" : "position"
         }
         //{   "inputName" : "width",
-        //    "widgetName" : "flower2",
+        //    "widgetName" : "flower4",
         //    "channelNumber" : 0,
         //    "measurement" : "position"
         //}
     ],
-    "isHorizontal" : false,
-    "defaultHsv" : "pink",              // can use a recognized color name or h,s,v to specify custom hue, sat, and/or value
-    "virtualPixelRatio" : 75,           // 75 * 48 strings = 3600; flower rotation measurements are [0, 3600)
-    "numStripes" : 12,
+    "isHorizontal" : true,
+    "defaultHsv" : "aqua",              // can use a recognized color name or h,s,v to specify custom hue, sat, and/or value
+    "virtualPixelRatio" : 36,           // 36 * 100 pixels per string = 3600; flower rotation measurements are [0, 3600)
+    "numStripes" : 4,
     "scaledownFactor" : 1,              // effectively gear down a rotating widget
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
     "widthScaledownFactor" : 1,
-    "minSidebandWidth" : 100,           // min should be equal to or greater than virtualPixelRatio
-    "maxSidebandWidth" : 100            // sideband widths are in the context of virtual pixels
+    "minSidebandWidth" : 144,           // min should be equal to or greater than virtualPixelRatio
+    "maxSidebandWidth" : 144            // sideband widths are in the context of virtual pixels
 
 }
 
