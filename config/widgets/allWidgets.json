@@ -27,26 +27,6 @@
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
-        {   "name" : "baton3",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
-        {   "name" : "baton4",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
-        {   "name" : "baton5",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
-        {   "name" : "baton6",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
         {   "name" : "bells",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
@@ -118,6 +98,16 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "rainstick",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "rattle1",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "rattle2",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
