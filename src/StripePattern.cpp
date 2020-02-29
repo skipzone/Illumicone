@@ -191,24 +191,25 @@ bool StripePattern::update()
                 int rawWidthPos = widthChannel->getPosition();
                 if (resetWidth) {
                     resetWidth = false;
+                    // Remember what position now corresponds to the minimum width.
                     widthPosOffset = rawWidthPos;
                 }
 
                 if (maxSidebandWidth > 0) {
                     int scaledWidthPos = (rawWidthPos - widthPosOffset) / widthScaledownFactor;
+                    // TODO:  This doesn't work as expected.  widthPos can end up greater than maxSidebandWidth.
                     // This is a triangle wave function where the period is maxSidebandWidth * 2
                     // and the range is minSidebandWidth to maxSidebandWidth.  We right-shift the
                     // wave so that the width starts out at minSidebandWidth.
                     widthPos =
-                        abs( abs(scaledWidthPos + maxSidebandWidth)
-                             % (maxSidebandWidth * 2) - maxSidebandWidth )
+                        abs(abs(scaledWidthPos + maxSidebandWidth) % (maxSidebandWidth * 2) - maxSidebandWidth)
                         + minSidebandWidth;
+                    //logger.logMsg(LOG_DEBUG, name
+                    //              + ", rawWidthPos=" + to_string(rawWidthPos)
+                    //              + ", widthPosOffset=" + to_string(widthPosOffset)
+                    //              + ", scaledWidthPos=" + to_string(scaledWidthPos)
+                    //              + ", widthPos=" + to_string(widthPos));
                 }
-                //logger.logMsg(LOG_DEBUG, name
-                //              + ", rawWidthPos=" + to_string(rawWidthPos)
-                //              + ", widthPosOffset=" + to_string(widthPosOffset)
-                //              + ", scaledWidthPos=" + to_string(scaledWidthPos));
-                //              + ", widthPos=" + to_string(widthPos));
             }
         }
     }
