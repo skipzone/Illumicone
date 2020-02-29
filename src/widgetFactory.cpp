@@ -26,6 +26,7 @@
 #include "Log.h"
 #include "PumpWidget.h"
 #include "RainstickWidget.h"
+#include "RattleWidget.h"
 #include "SchroedersPlaythingWidget.h"
 #include "SpinnahWidget.h"
 #include "widgetFactory.h"
@@ -53,13 +54,6 @@ Widget* widgetFactory(WidgetId id) {
         case WidgetId::fourPlay42:
         case WidgetId::fourPlay43:
             return new FourPlay4xWidget(id);
-        case WidgetId::baton1:
-        case WidgetId::baton2:
-        case WidgetId::baton3:
-        case WidgetId::baton4:
-        case WidgetId::baton5:
-        case WidgetId::baton6:
-            return new BatonWidget(id);
         case WidgetId::flower1:
         case WidgetId::flower2:
         case WidgetId::flower3:
@@ -68,6 +62,12 @@ Widget* widgetFactory(WidgetId id) {
         case WidgetId::flower6:
         case WidgetId::flower7:
             return new FlowerWidget(id);
+        case WidgetId::baton1:
+        case WidgetId::baton2:
+            return new BatonWidget(id);
+        case WidgetId::rattle1:
+        case WidgetId::rattle2:
+            return new RattleWidget(id);
         case WidgetId::lidar1:
             return new LidarWidget(id);
         default:
