@@ -20,6 +20,7 @@
 #include <map>
 #include <memory>
 
+#include "MeasurementMapper.h"
 #include "Pattern.h"
 #include "WidgetId.h"
 
@@ -48,6 +49,13 @@ class StripePattern : public Pattern {
 
         std::shared_ptr<WidgetChannel> positionChannel;
         std::shared_ptr<WidgetChannel> widthChannel;
+        std::shared_ptr<WidgetChannel> hueChannel;
+        std::shared_ptr<WidgetChannel> saturationChannel;
+
+        MeasurementMapper<int, float> hueMeasmtMapper;
+        MeasurementMapper<int, float> saturationMeasmtMapper;
+        MeasurementMapper<int, int> positionMeasmtMapper;
+        MeasurementMapper<int, int> widthMeasmtMapper;
 
         int stripeVirtualPos;
         int widthPos;
@@ -62,6 +70,15 @@ class StripePattern : public Pattern {
         int minSidebandWidth;
 
         HsvPixel stripeHsv;
+
+        float startingHue;
+        float endingHue;
+        float hueFoldbackPct;
+        float hueRepeat;
+        float startingSaturation;
+        float endingSaturation;
+        float saturationFoldbackPct;
+        float saturationRepeat;
 
         int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
@@ -84,5 +101,6 @@ class StripePattern : public Pattern {
         // Similarly, for a horizontal stripe, a vertical drawing plane exists at each string.
         unsigned int numPixelsInDrawingPlane;
         unsigned int numVirtualPixelsInDrawingPlane;
+
 };
 

@@ -64,8 +64,6 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
             recognizedChannel = true;
         }
 
-        // TODO:  add hueOffset
-
         if (recognizedChannel) {
             logger.logMsg(LOG_INFO, name + " using " + channelConfig.widgetChannel->getName() + " for " + channelConfig.inputName);
             if (channelConfig.measurement != "position") {
@@ -80,6 +78,21 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     }
 
     // ----- get pattern configuration -----
+
+    if (rotationChannel != nullptr) {
+        if (!rotationMeasmtMapper.readConfig(patternConfigObject, "rotationMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
+    }
+        MeasurementMapper<int, float> hueMeasmtMapper;
+        MeasurementMapper<int, float> saturationMeasmtMapper;
+        MeasurementMapper<int, int> positionMeasmtMapper;
+        MeasurementMapper<int, int> widthMeasmtMapper;
+
+
+
+        // TODO:  add startingHue, endingHue, hueFoldbackPct, hueRepeat,
+        //        startingSat, endingSat, satFoldbackPct satRepeat -- all floats
 
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
@@ -169,6 +182,19 @@ bool StripePattern::update()
     bool gotPositionOrWidthUpdate = false;
     int rawPosition;
     unsigned int nowMs = getNowMs();
+
+
+/*
+                if (rotationMeasmtMapper.mapMeasurement(rawRotationPos, rotationStepIntervalMs)) {
+                    gotUpdateFromWidget = true;
+                    rotateCounterclockwise = (rawRotationPos >= 0);
+                    //logger.logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
+                    //                  + ", rotateCounterclockwise=" + to_string(rotateCounterclockwise)
+                    //                  + ", rotationStepIntervalMs=" + to_string(rotationStepIntervalMs)
+                    //                  + ", rotationOffset=" + to_string(rotationOffset));
+                }
+*/
+
 
     if (positionChannel != nullptr) {
         if (positionChannel->getIsActive()) {
