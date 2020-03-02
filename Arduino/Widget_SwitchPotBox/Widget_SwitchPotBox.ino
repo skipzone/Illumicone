@@ -71,7 +71,7 @@ constexpr uint8_t ledBluePin = 6;
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-#define DATA_RATE RF24_1MBPS
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
 #define CRC_LENGTH RF24_CRC_16
@@ -84,7 +84,7 @@ constexpr uint8_t ledBluePin = 6;
 #define RF_CHANNEL 80
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
+#define RF_POWER_LEVEL RF24_PA_LOW
 
 
 /***********
