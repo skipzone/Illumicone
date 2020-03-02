@@ -40,7 +40,7 @@
  * A specific target widget is selected here. *
  **********************************************/
 
-#define BATON1
+//#define BATON1
 //#define BATON2
 //#define BATON3
 //#define BATON4
@@ -53,7 +53,7 @@
 //#define FLOWER4
 //#define FLOWER5
 //#define FLOWER6
-//#define FLOWER7
+#define FLOWER7
 //#define IBG_TILT_1
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
@@ -429,24 +429,40 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #if defined(FLOWER1)
   #define ACTIVE_TX_INTERVAL_MS 31L
   #define INACTIVE_TX_INTERVAL_MS 3001L
+  #define RF_CHANNEL 97
+  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER2)
   #define ACTIVE_TX_INTERVAL_MS 32L
   #define INACTIVE_TX_INTERVAL_MS 3002L
+  #define RF_CHANNEL 97
+  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER3)
   #define ACTIVE_TX_INTERVAL_MS 33L
   #define INACTIVE_TX_INTERVAL_MS 3003L
+  #define RF_CHANNEL 97
+  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER4)
   #define ACTIVE_TX_INTERVAL_MS 34L
   #define INACTIVE_TX_INTERVAL_MS 3004L
+  #define RF_CHANNEL 97
+  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER5)
   #define ACTIVE_TX_INTERVAL_MS 35L
   #define INACTIVE_TX_INTERVAL_MS 3005L
+  #define RF_CHANNEL 97
+  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER6)
   #define ACTIVE_TX_INTERVAL_MS 36L
   #define INACTIVE_TX_INTERVAL_MS 3006L
+  #define RF_CHANNEL 97
+  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER7)
-  #define ACTIVE_TX_INTERVAL_MS 37L
+  // Flower7 is in the Fluf Haven at Illumibrate 2020, where it is doing pattern selection duty.
+  //#define ACTIVE_TX_INTERVAL_MS 37L
+  #define ACTIVE_TX_INTERVAL_MS 250L
   #define INACTIVE_TX_INTERVAL_MS 3007L
+  #define RF_CHANNEL 80
+  #define DATA_RATE RF24_250KBPS
 #else
   #error No tx intervals defined for this flower.
 #endif
@@ -511,7 +527,7 @@ static constexpr uint8_t numMaSets = 7;
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-#define DATA_RATE RF24_1MBPS
+// Data rate is flower-specific because Flower7 is on loan to JUMP for the Fluf Haven.
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED.
 #define CRC_LENGTH RF24_CRC_16
@@ -520,7 +536,7 @@ static constexpr uint8_t numMaSets = 7;
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 97
+// Channel is flower-specific because Flower7 is on loan to JUMP for the Fluf Haven.
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
 #define RF_POWER_LEVEL RF24_PA_MAX
