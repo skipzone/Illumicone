@@ -54,7 +54,7 @@ constexpr int maxWidgets = 32;
  * 27:  Lidar1
  * 28:  unassigned
  * 29:  unassigned
- * 30:  unassigned
+ * 30:  unassigned (Electric Garden theremin)
  * 31:  reserved - experimental widget
  *
  * For stress tests, widget ids are reused as needed because stress-test
