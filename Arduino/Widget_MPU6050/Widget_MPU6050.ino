@@ -27,6 +27,7 @@
 
 
 //#define ENABLE_DEBUG_PRINT
+// An LCD display can be used for sensor evaluation and testing.
 //#define ENABLE_LCD_16x2
 //#define ENABLE_LCD_20x4   // TODO:  not supported yet
 
@@ -42,10 +43,6 @@
 
 //#define BATON1
 //#define BATON2
-//#define BATON3
-//#define BATON4
-//#define BATON5
-//#define BATON6
 //#define BOOGIEBOARD
 //#define FLOWER1
 //#define FLOWER2
@@ -53,19 +50,25 @@
 //#define FLOWER4
 //#define FLOWER5
 //#define FLOWER6
-#define FLOWER7
+//#define FLOWER7
 //#define IBG_TILT_1
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
 //#define RAINSTICK
+#define RATTLE1
+//#define RATTLE2
 
-#if defined(BATON1) || defined(BATON2) || defined(BATON3) || defined(BATON4) || defined(BATON5) || defined(BATON6)
+#if defined(BATON1) || defined(BATON2)
   #define BATON
 #endif
 
 #if defined(FLOWER1) || defined(FLOWER2) || defined(FLOWER3) || defined(FLOWER4) || \
     defined(FLOWER5) || defined(FLOWER6) || defined(FLOWER7)
   #define FLOWER
+#endif
+
+#if defined(RATTLE1) || defined(RATTLE2)
+  #define RATTLE
 #endif
 
 
@@ -127,18 +130,6 @@ enum class WidgetMode {
 #elif defined(BATON2)
   #define WIDGET_ID 22
   static constexpr bool skipDeviceIdCheck = false;
-#elif defined(BATON3)
-  #define WIDGET_ID 23
-  static constexpr bool skipDeviceIdCheck = false;
-#elif defined(BATON4)
-  #define WIDGET_ID 24
-  static constexpr bool skipDeviceIdCheck = false;
-#elif defined(BATON5)
-  #define WIDGET_ID 25
-  static constexpr bool skipDeviceIdCheck = false;
-#elif defined(BATON6)
-  #define WIDGET_ID 26
-  static constexpr bool skipDeviceIdCheck = false;
 #else
   #error No widget id defined for this baton.
 #endif
@@ -162,18 +153,6 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #elif defined(BATON2)
   #define ACTIVE_TX_INTERVAL_MS 83L
   #define INACTIVE_TX_INTERVAL_MS 2003L
-#elif defined(BATON3)
-  #define ACTIVE_TX_INTERVAL_MS 85L
-  #define INACTIVE_TX_INTERVAL_MS 2005L
-#elif defined(BATON4)
-  #define ACTIVE_TX_INTERVAL_MS 87L
-  #define INACTIVE_TX_INTERVAL_MS 2007L
-#elif defined(BATON5)
-  #define ACTIVE_TX_INTERVAL_MS 89L
-  #define INACTIVE_TX_INTERVAL_MS 2009L
-#elif defined(BATON6)
-  #define ACTIVE_TX_INTERVAL_MS 91L
-  #define INACTIVE_TX_INTERVAL_MS 2011L
 #else
   #error No tx intervals defined for this baton.
 #endif
@@ -204,10 +183,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #define RADIO_CE_PIN 9
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
-
-#ifndef BATON1
-  #define VIBRATION_SENSOR_PIN 3
-#endif
+#define VIBRATION_SENSOR_PIN 3
 
 // moving average length for averaging IMU measurements
 #define MA_LENGTH 20
@@ -247,14 +223,6 @@ static constexpr uint8_t numMaSets = 13;
   #define TX_RETRY_DELAY_MULTIPLIER 13
 #elif defined(BATON2)
   #define TX_RETRY_DELAY_MULTIPLIER 11
-#elif defined(BATON3)
-  #define TX_RETRY_DELAY_MULTIPLIER 7
-#elif defined(BATON4)
-  #define TX_RETRY_DELAY_MULTIPLIER 5
-#elif defined(BATON5)
-  #define TX_RETRY_DELAY_MULTIPLIER 3
-#elif defined(BATON6)
-  #define TX_RETRY_DELAY_MULTIPLIER 2
 #else
   #error No TX_RETRY_DELAY_MULTIPLIER defined for this baton.
 #endif
@@ -775,6 +743,139 @@ static constexpr uint8_t numMaSets = 14;
 #define DATA_RATE RF24_1MBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
+#define CRC_LENGTH RF24_CRC_16
+
+// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
+// ISM: 2400-2500;  ham: 2390-2450
+// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
+//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+#define RF_CHANNEL 97
+
+// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
+#define RF_POWER_LEVEL RF24_PA_MAX
+
+#endif
+
+
+/*******************************
+ * Rattle Widget Configuration *
+ *******************************/
+
+#ifdef RATTLE
+
+#if defined(RATTLE1)
+  #define WIDGET_ID 23
+  static constexpr bool skipDeviceIdCheck = false;
+#elif defined(RATTLE2)
+  #define WIDGET_ID 24
+  static constexpr bool skipDeviceIdCheck = false;
+#else
+  #error No widget id defined for this rattle.
+#endif
+
+#define ACTIVATE_WITH_MOVEMENT
+
+static constexpr int16_t movementDetectionThreshold = 10;               // widget is active if gyro rotational speed > threshold
+static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
+
+static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
+static constexpr uint8_t mpu6050MotionDetectionCounterDecrement = 1;
+static constexpr uint8_t mpu6050MotionDetectionDuration = 1;            // unit is ms
+static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
+
+#define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
+
+// Stagger the transmissions to avoid repeated collisions.
+#if defined(RATTLE1)
+  #define ACTIVE_TX_INTERVAL_MS 85L
+  #define INACTIVE_TX_INTERVAL_MS 2005L
+#elif defined(RATTLE2)
+  #define ACTIVE_TX_INTERVAL_MS 87L
+  #define INACTIVE_TX_INTERVAL_MS 2007L
+#else
+  #error No tx intervals defined for this rattle.
+#endif
+
+// In standby mode, we'll transmit a packet with zero-valued data approximately
+// every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
+// STANDBY_TX_INTERVAL_S should be a multiple of 8 between 8 and 2040, inclusive.
+#define STANDBY_TX_INTERVAL_S 64
+
+// The MPU-6050 is placed in cycle mode, and the processor is put to sleep
+// when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
+#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 60000L
+
+// We use the time elapsed since getting good data from the MPU-6050 to determine
+// if we need to reinitialize the little bastard because he's quit working right.
+// MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
+// so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
+// not getting good data from it.
+#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+
+//#define TX_INDICATOR_LED_PIN 16
+//#define TX_INDICATOR_LED_ON HIGH
+//#define TX_INDICATOR_LED_OFF LOW
+//#define IMU_NORMAL_INDICATOR_LED_PIN 16
+//#define IMU_NORMAL_INDICATOR_LED_ON HIGH
+//#define IMU_NORMAL_INDICATOR_LED_OFF LOW
+#define IMU_INTERRUPT_PIN 2
+#define RADIO_CE_PIN 9
+#define RADIO_CSN_PIN 10
+// The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
+
+// Rattle1 has an older controller board that doesn't have a vibration sensor.
+#ifndef RATTLE1
+  #define VIBRATION_SENSOR_PIN 3
+#endif
+
+// moving average length for averaging IMU measurements
+#define MA_LENGTH 20
+
+static constexpr uint8_t maSlotYaw = 0;
+static constexpr uint8_t maSlotPitch = 1;
+static constexpr uint8_t maSlotRoll = 2;
+static constexpr uint8_t maSlotGyroX = 3;
+static constexpr uint8_t maSlotGyroY = 4;
+static constexpr uint8_t maSlotGyroZ = 5;
+static constexpr uint8_t maSlotAccelX = 6;
+static constexpr uint8_t maSlotAccelY = 7;
+static constexpr uint8_t maSlotAccelZ = 8;
+static constexpr uint8_t maSlotLinearAccelX = 9;
+static constexpr uint8_t maSlotLinearAccelY = 10;
+static constexpr uint8_t maSlotLinearAccelZ = 11;
+static constexpr uint8_t maSlotTemperature = 12;
+
+static constexpr uint8_t numMaSets = 13;
+
+#define INCLUDE_ACCEL_DATA
+#define INCLUDE_LINEAR_ACCEL_DATA
+
+// ---------- radio configuration ----------
+
+// Nwdgt, where N indicates the payload type (0: stress test; 1: position
+// and velocity; 2: measurement vector; 3,4: undefined; 5: custom)
+#define TX_PIPE_ADDRESS "2wdgt"
+
+// Set WANT_ACK to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
+// to 0 for fire-and-forget.  To enable retries and delivery failure detection,
+// set WANT_ACK to true.  The delay between retries is 250 us multiplied by
+// TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
+// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
+#define WANT_ACK true
+#if defined(RATTLE1)
+  #define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(RATTLE2)
+  #define TX_RETRY_DELAY_MULTIPLIER 5
+#else
+  #error No TX_RETRY_DELAY_MULTIPLIER defined for this rattle.
+#endif
+#define TX_MAX_RETRIES 15   // use 15 (the maximum) when expecting acks
+
+// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
+// works with genuine Nordic Semiconductor chips only, not the counterfeits.)
+#define DATA_RATE RF24_1MBPS
+
+// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED.
 #define CRC_LENGTH RF24_CRC_16
 
 // nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
