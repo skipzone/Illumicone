@@ -55,12 +55,20 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     for (auto&& channelConfig : channelConfigs) {
         bool recognizedChannel = false;
 
-        if (channelConfig.inputName == "width") {
+        if (channelConfig.inputName == "position") {
+            positionChannel = channelConfig.widgetChannel;
+            recognizedChannel = true;
+        }
+        else if (channelConfig.inputName == "width") {
             widthChannel = channelConfig.widgetChannel;
             recognizedChannel = true;
         }
-        else if (channelConfig.inputName == "position") {
-            positionChannel = channelConfig.widgetChannel;
+        else if (channelConfig.inputName == "hue") {
+            hueChannel = channelConfig.widgetChannel;
+            recognizedChannel = true;
+        }
+        else if (channelConfig.inputName == "saturation") {
+            saturationChannel = channelConfig.widgetChannel;
             recognizedChannel = true;
         }
 
@@ -77,38 +85,43 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
         }
     }
 
-    // ----- get pattern configuration -----
 
-    if (rotationChannel != nullptr) {
-        if (!rotationMeasmtMapper.readConfig(patternConfigObject, "rotationMeasurementMapper", errMsgSuffix)) {
+    string errMsgSuffix = " in " + name + " pattern configuration.";
+
+
+    // ----- measurement mapper configuration -----
+
+    if (positionChannel != nullptr) {
+        if (!positionMeasmtMapper.readConfig(patternConfigObject, "positionMeasurementMapper", errMsgSuffix)) {
             return false;
         }
     }
-        MeasurementMapper<int, float> hueMeasmtMapper;
-        MeasurementMapper<int, float> saturationMeasmtMapper;
-        MeasurementMapper<int, int> positionMeasmtMapper;
-        MeasurementMapper<int, int> widthMeasmtMapper;
+
+    if (widthChannel != nullptr) {
+        if (!widthMeasmtMapper.readConfig(patternConfigObject, "widthMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
+    }
+
+    if (hueChannel != nullptr) {
+        if (!hueMeasmtMapper.readConfig(patternConfigObject, "hueMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
+    }
+
+    if (saturationChannel != nullptr) {
+        if (!saturationMeasmtMapper.readConfig(patternConfigObject, "saturationMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
+    }
 
 
-
-        // TODO:  add startingHue, endingHue, hueFoldbackPct, hueRepeat,
-        //        startingSat, endingSat, satFoldbackPct satRepeat -- all floats
-
-    string errMsgSuffix = " in " + name + " pattern configuration.";
+    // ----- layout configuration -----
 
     if (!ConfigReader::getBoolValue(patternConfigObject, "isHorizontal", isHorizontal, errMsgSuffix)) {
         return false;
     }
     logger.logMsg(LOG_INFO, "%s isHorizontal=%d", name.c_str(), isHorizontal);
-
-    // TODO:  change stripeHsv to defaultHsv
-    string hsvStr;
-    if (!ConfigReader::getHsvPixelValue(patternConfigObject, "defaultHsv", hsvStr, stripeHsv, errMsgSuffix)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " stripeHsv=" + hsvStr);
-
-    // TODO:  replace defaultHsv with startingHsv and endingHsv; maybe specify separate default sat and value for sideband gradient
 
     if (!ConfigReader::getUnsignedIntValue(patternConfigObject, "virtualPixelRatio", virtualPixelRatio, errMsgSuffix, 1)) {
         return false;
@@ -134,21 +147,6 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     logger.logMsg(LOG_INFO, "%s numStripes=%d", name.c_str(), numStripes);
     stripeStep = numPixelsInDrawingPlane / numStripes;
 
-    if (!ConfigReader::getIntValue(patternConfigObject, "scaledownFactor", scaledownFactor, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, "%s scaledownFactor=%d", name.c_str(), scaledownFactor);
-
-    if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
-
-    if (!ConfigReader::getIntValue( patternConfigObject, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, "%s widthScaledownFactor=%d", name.c_str(), widthScaledownFactor);
-
     if (!ConfigReader::getIntValue(
         patternConfigObject, "minSidebandWidth", minSidebandWidth, errMsgSuffix,
         0, numVirtualPixelsInDrawingPlane / 2))
@@ -164,6 +162,98 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
         return false;
     }
     logger.logMsg(LOG_INFO, "%s maxSidebandWidth=%d", name.c_str(), maxSidebandWidth);
+
+
+    // ----- hue configuration -----
+
+    if (!ConfigReader::getFloatValue(patternConfigObject, "startingHue", startingHue, errMsgSuffix, 0, 255.0)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " startingHue=" + to_string(startingHue));
+
+    if (!ConfigReader::getFloatValue(patternConfigObject, "endingHue", endingHue, errMsgSuffix, 0, 255.0)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " endingHue=" + to_string(endingHue));
+
+    if (!ConfigReader::getBoolValue(patternConfigObject, "hueDirectionIsBlueToRed", hueDirectionIsBlueToRed)) {
+        hueDirectionIsBlueToRed = (startingHue > endingHue);
+    }
+    logger.logMsg(LOG_INFO, "%s hueDirectionIsBlueToRed=%d", name.c_str(), isHorizontal);
+
+    if (!ConfigReader::getFloatValue(patternConfigObject, "hueFoldbackPct", hueFoldbackPct, errMsgSuffix, 1.0, 99.9)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " hueFoldbackPct=" + to_string(hueFoldbackPct));
+
+    if (!ConfigReader::getUnsignedIntValue(
+        patternConfigObject, "hueRepeat", hueRepeat, errMsgSuffix,
+        1, numVirtualPixelsInDrawingPlane / 2))
+    {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " hueRepeat=" + to_string(hueRepeat));
+
+
+    // ----- saturation configuration -----
+
+    if (!ConfigReader::getFloatValue(patternConfigObject, "startingSaturation", startingSaturation, errMsgSuffix, 0, 255.0)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " startingSaturation=" + to_string(startingSaturation));
+
+    if (!ConfigReader::getFloatValue(patternConfigObject, "endingSaturation", endingSaturation, errMsgSuffix, 0, 255.0)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " endingSaturation=" + to_string(endingSaturation));
+
+    saturationDirectionIsDecreasing = (startingSaturation > endingSaturation);
+
+    if (!ConfigReader::getFloatValue(patternConfigObject, "saturationFoldbackPct", saturationFoldbackPct, errMsgSuffix, 1.0, 99.9)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " saturationFoldbackPct=" + to_string(saturationFoldbackPct));
+
+    if (!ConfigReader::getUnsignedIntValue(
+        patternConfigObject, "saturationRepeat", saturationRepeat, errMsgSuffix,
+        1, numVirtualPixelsInDrawingPlane / 2))
+    {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " saturationRepeat=" + to_string(saturationRepeat));
+
+
+    // TODO:  maybe specify separate sat and value for sideband gradient
+
+
+    // ----- misc. configuration -----
+
+    if (widthChannel != nullptr) {
+        if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
+            return false;
+        }
+        logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
+    }
+
+    // TODO:  replace stripeHsv with dynamic hue and saturation
+    string hsvStr;
+    if (!ConfigReader::getHsvPixelValue(patternConfigObject, "defaultHsv", hsvStr, stripeHsv, errMsgSuffix)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, name + " stripeHsv=" + hsvStr);
+
+    // TODO:  replace scaledown factor with mapper
+    if (!ConfigReader::getIntValue(patternConfigObject, "scaledownFactor", scaledownFactor, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, "%s scaledownFactor=%d", name.c_str(), scaledownFactor);
+
+    // TODO:  replace widthScaledownFactor with mapper
+    if (!ConfigReader::getIntValue( patternConfigObject, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1)) {
+        return false;
+    }
+    logger.logMsg(LOG_INFO, "%s widthScaledownFactor=%d", name.c_str(), widthScaledownFactor);
+
 
     // ----- initialize object data -----
 
@@ -185,6 +275,11 @@ bool StripePattern::update()
 
 
 /*
+        MeasurementMapper<int, float> hueMeasmtMapper;
+        MeasurementMapper<int, float> saturationMeasmtMapper;
+        MeasurementMapper<int, int> positionMeasmtMapper;
+        MeasurementMapper<int, int> widthMeasmtMapper;
+
                 if (rotationMeasmtMapper.mapMeasurement(rawRotationPos, rotationStepIntervalMs)) {
                     gotUpdateFromWidget = true;
                     rotateCounterclockwise = (rawRotationPos >= 0);

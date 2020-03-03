@@ -26,12 +26,17 @@
             "channelNumber" : 0,
             "measurement" : "position"
         },
-        {   "inputName" : "hueOffset",
+        //{   "inputName" : "width",
+        //    "widgetName" : "flower2",
+        //    "channelNumber" : 0,
+        //    "measurement" : "position"
+        //},
+        {   "inputName" : "hue",
             "widgetName" : "flower2",
             "channelNumber" : 0,
             "measurement" : "position"
         }
-        //{   "inputName" : "width",
+        //{   "inputName" : "saturation",
         //    "widgetName" : "flower2",
         //    "channelNumber" : 0,
         //    "measurement" : "position"

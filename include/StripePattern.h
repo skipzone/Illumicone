@@ -73,12 +73,14 @@ class StripePattern : public Pattern {
 
         float startingHue;
         float endingHue;
+        bool hueDirectionIsBlueToRed;
         float hueFoldbackPct;
-        float hueRepeat;
+        unsigned int hueRepeat;
         float startingSaturation;
         float endingSaturation;
+        bool saturationDirectionIsDecreasing;
         float saturationFoldbackPct;
-        float saturationRepeat;
+        unsigned int saturationRepeat;
 
         int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
