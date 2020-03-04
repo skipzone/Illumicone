@@ -150,24 +150,22 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     }
     logger.logMsg(LOG_INFO, name + " endingHue=" + to_string(endingHue));
 
-    hueDirectionIsRedToBlue = (startingHue < endingHue);
-//    if (!ConfigReader::getBoolValue(patternConfigObject, "hueDirectionIsBlueToRed", hueDirectionIsBlueToRed)) {
-//        hueDirectionIsBlueToRed = (startingHue > endingHue);
-//    }
-//    logger.logMsg(LOG_INFO, "%s hueDirectionIsBlueToRed=%d", name.c_str(), isHorizontal);
-
     if (!ConfigReader::getFloatValue(patternConfigObject, "hueFoldbackPct", hueFoldbackPct, errMsgSuffix, 0, 99.9)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " hueFoldbackPct=" + to_string(hueFoldbackPct));
 
-    if (!ConfigReader::getUnsignedIntValue(
+    if (!ConfigReader::getFloatValue(
         patternConfigObject, "hueRepeat", hueRepeat, errMsgSuffix,
         1, numVirtualPixelsInDrawingPlane / 2))
     {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " hueRepeat=" + to_string(hueRepeat));
+
+    hueDirectionIsRedToBlue = (startingHue < endingHue);
+    hueSpan = fabsf(endingHue - startingHue);
+    hueStep = (hueSpan * (float) hueRepeat) / (float) (isHorizontal ? numStrings : pixelsPerString);
 
 
     // ----- saturation configuration -----
@@ -182,20 +180,22 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     }
     logger.logMsg(LOG_INFO, name + " endingSaturation=" + to_string(endingSaturation));
 
-    saturationDirectionIsDecreasing = (startingSaturation > endingSaturation);
-
     if (!ConfigReader::getFloatValue(patternConfigObject, "saturationFoldbackPct", saturationFoldbackPct, errMsgSuffix, 0, 99.9)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " saturationFoldbackPct=" + to_string(saturationFoldbackPct));
 
-    if (!ConfigReader::getUnsignedIntValue(
+    if (!ConfigReader::getFloatValue(
         patternConfigObject, "saturationRepeat", saturationRepeat, errMsgSuffix,
         1, numVirtualPixelsInDrawingPlane / 2))
     {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " saturationRepeat=" + to_string(saturationRepeat));
+
+    saturationDirectionIsDecreasing = (startingSaturation > endingSaturation);
+    saturationSpan = fabsf(endingSaturation - startingSaturation);
+    saturationStep = (saturationSpan * (float) saturationRepeat) / (float) (isHorizontal ? numStrings : pixelsPerString);
 
 
     // TODO:  maybe specify separate sat and value for sideband gradient
@@ -252,6 +252,8 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
     stripeVirtualPos = 0;
     widthPos = minSidebandWidth;
+    hueOffset = startingHue;
+    saturationOffset = startingSaturation;
     nextResetWidthMs = 0;
     resetWidth = true;
 
@@ -259,18 +261,55 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 }
 
 
+void StripePattern::setPixel(unsigned int stringIdx, unsigned int pixelIdx, float& hue, float& sat, uint8_t val)
+{
+    // TODO:  implement hue and saturation foldback
+
+    coneStrings[stringIdx][pixelIdx].h = hue;
+    coneStrings[stringIdx][pixelIdx].s = sat;
+    coneStrings[stringIdx][pixelIdx].v = val;
+
+    if (hueDirectionIsRedToBlue) {
+        hue += hueStep;
+        if (hue > endingHue) {
+            hue -= hueSpan;
+        }
+    }
+    else {
+        hue -= hueStep;
+        if (hue < endingHue) {
+            hue += hueSpan;
+        }
+    }
+
+    if (saturationDirectionIsDecreasing) {
+        sat -= saturationStep;
+        if (sat < endingSaturation) {
+            sat += saturationSpan;
+        }
+    }
+    else {
+        sat += saturationStep;
+        if (sat > endingSaturation) {
+            sat -= saturationSpan;
+        }
+    }
+
+}
+
+
 bool StripePattern::update()
 {
     isActive = false;
     bool gotPositionOrWidthUpdate = false;
-    int rawPosition;
     unsigned int nowMs = getNowMs();
 
+    // Get an updated stripe position, if available.
     if (positionChannel != nullptr) {
         if (positionChannel->getIsActive()) {
             isActive = true;
             if (positionChannel->getHasNewPositionMeasurement()) {
-                rawPosition = positionChannel->getPosition();
+                int rawPosition = positionChannel->getPosition();
                 if (positionMeasmtMapper.mapMeasurement(rawPosition, stripeVirtualPos)) {
                     gotPositionOrWidthUpdate = true;
                     // Make sure stripeVirtualPos is in range even if the mapper destination range is misconfigured.
@@ -334,6 +373,32 @@ bool StripePattern::update()
         }
     }
 
+    // Get an updated hue offset, if available.
+    if (hueChannel != nullptr) {
+        if (hueChannel->getIsActive()) {
+            isActive = true;
+            if (hueChannel->getHasNewPositionMeasurement()) {
+                int rawPosition = hueChannel->getPosition();
+                if (hueMeasmtMapper.mapMeasurement(rawPosition, hueOffset)) {
+                    gotPositionOrWidthUpdate = true;
+                }
+            }
+        }
+    }
+
+    // Get an updated saturation offset, if available.
+    if (saturationChannel != nullptr) {
+        if (saturationChannel->getIsActive()) {
+            isActive = true;
+            if (saturationChannel->getHasNewPositionMeasurement()) {
+                int rawPosition = saturationChannel->getPosition();
+                if (saturationMeasmtMapper.mapMeasurement(rawPosition, saturationOffset)) {
+                    gotPositionOrWidthUpdate = true;
+                }
+            }
+        }
+    }
+
     // Draw the stripes.
     if (gotPositionOrWidthUpdate) {
 
@@ -363,50 +428,18 @@ bool StripePattern::update()
                 if (virtualPixelIdx % virtualPixelRatio == 0) {
                     unsigned int pixelIdx = virtualPixelIdx / virtualPixelRatio;
                     float distanceToCenter = abs(i - stripeVirtualPos);
-                    uint8_t value = stripeHsv.value - (uint8_t) (valueSlope * distanceToCenter);
+                    uint8_t value = stripeCenterValue - (uint8_t) (valueSlope * distanceToCenter);
                     for (int iStripe = 0; iStripe < numStripes; ++iStripe) {
 
-                        float hueStep = fabs(endingHue - startingHue) / (float) numStrings * hueRepeat;
-                        float hue = startingHue;
-
-                        float satStep = fabs(endingSaturation - startingSaturation) / (float) numStrings * saturationRepeat;
-                        float sat = startingSaturation;
+                        float hue = hueOffset;
+                        float sat = saturationOffset;
+                        //logger.logMsg(LOG_DEBUG, "%s i=%d pixelIdx=%d iStripe=%d hueSpan=%f hueStep=%f hue=%f",
+                        //              name.c_str(), i, pixelIdx, iStripe, hueSpan hueStep, hue);
 
                         // TODO:  implement hue and saturation foldback
 
-                        ////for (auto&& coneString : coneStrings) {
                         for (unsigned int stringIdx = 0; stringIdx < numStrings; ++stringIdx) {
-
-                            coneStrings[stringIdx][pixelIdx].h = hue;
-                            coneStrings[stringIdx][pixelIdx].s = sat;
-                            coneStrings[stringIdx][pixelIdx].v = value;
-
-                            if (hueDirectionIsRedToBlue) {
-                                hue += hueStep;
-                                if (hue > endingHue) {
-                                    hue = startingHue;
-                                }
-                            }
-                            else {
-                                hue -= hueStep;
-                                if (hue < endingHue) {
-                                    hue = startingHue;
-                                }
-                            }
-
-                            if (saturationDirectionIsDecreasing) {
-                                sat -= satStep;
-                                if (sat < endingSaturation) {
-                                    sat = startingSaturation;
-                                }
-                            }
-                            else {
-                                sat += satStep;
-                                if (sat > endingSaturation) {
-                                    sat = startingSaturation;
-                                }
-                            }
-
+                            setPixel(stringIdx, pixelIdx, hue, sat, value);
                         }
 
                         // Jump to next stripe.
@@ -434,50 +467,15 @@ bool StripePattern::update()
                     unsigned int stringIdx = virtualStringIdx / virtualPixelRatio;
 
                     float distanceToCenter = abs(i - stripeVirtualPos);
-                    uint8_t value = stripeHsv.value - (uint8_t) (valueSlope * distanceToCenter);
+                    uint8_t value = stripeCenterValue - (uint8_t) (valueSlope * distanceToCenter);
 
                     for (int iStripe = 0; iStripe < numStripes; ++iStripe) {
 
-                        float hueStep = fabs(endingHue - startingHue) / (float) pixelsPerString * hueRepeat;
-                        float hue = startingHue;
-
-                        float satStep = fabs(endingSaturation - startingSaturation) / (float) pixelsPerString * saturationRepeat;
-                        float sat = startingSaturation;
-
-                        // TODO:  implement hue and saturation foldback
+                        float hue = hueOffset;
+                        float sat = saturationOffset;
 
                         for (unsigned int pixelIdx = 0; pixelIdx < pixelsPerString; ++pixelIdx) {
-                            
-                            coneStrings[stringIdx][pixelIdx].h = hue;
-                            coneStrings[stringIdx][pixelIdx].s = sat;
-                            coneStrings[stringIdx][pixelIdx].v = value;
-
-                            if (hueDirectionIsRedToBlue) {
-                                hue += hueStep;
-                                if (hue > endingHue) {
-                                    hue = startingHue;
-                                }
-                            }
-                            else {
-                                hue -= hueStep;
-                                if (hue < endingHue) {
-                                    hue = startingHue;
-                                }
-                            }
-
-                            if (saturationDirectionIsDecreasing) {
-                                sat -= satStep;
-                                if (sat < endingSaturation) {
-                                    sat = startingSaturation;
-                                }
-                            }
-                            else {
-                                sat += satStep;
-                                if (sat > endingSaturation) {
-                                    sat = startingSaturation;
-                                }
-                            }
-
+                            setPixel(stringIdx, pixelIdx, hue, sat, value);
                         }
 
                         // Jump to next stripe.

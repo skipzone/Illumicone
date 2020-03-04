@@ -47,6 +47,8 @@ class StripePattern : public Pattern {
 
     private:
 
+        void setPixel(unsigned int stringIdx, unsigned int pixelIdx, float& hue, float& sat, uint8_t val);
+
         std::shared_ptr<WidgetChannel> positionChannel;
         std::shared_ptr<WidgetChannel> widthChannel;
         std::shared_ptr<WidgetChannel> hueChannel;
@@ -59,12 +61,11 @@ class StripePattern : public Pattern {
 
         int stripeVirtualPos;
         int widthPos;
+        float hueOffset;
+        float saturationOffset;
 
         int numStripes;
         int stripeStep;
-
-        int scaledownFactor;
-        int widthScaledownFactor;
 
         int maxSidebandWidth;
         int minSidebandWidth;
@@ -73,16 +74,19 @@ class StripePattern : public Pattern {
 
         float startingHue;
         float endingHue;
-//        bool hueDirectionIsBlueToRed;
-        bool hueDirectionIsRedToBlue;
         float hueFoldbackPct;
-        unsigned int hueRepeat;
+        float hueRepeat;
+        bool hueDirectionIsRedToBlue;
+        float hueSpan;
+        float hueStep;
 
         float startingSaturation;
         float endingSaturation;
-        bool saturationDirectionIsDecreasing;
         float saturationFoldbackPct;
-        unsigned int saturationRepeat;
+        float saturationRepeat;
+        bool saturationDirectionIsDecreasing;
+        float saturationSpan;
+        float saturationStep;
 
         int stripeCenterValue;
 
