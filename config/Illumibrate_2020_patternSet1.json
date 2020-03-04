@@ -32,8 +32,8 @@
         // sparkle band, density on Rattle2, position on Flower6
 
         // temporary until sparkle band and throbbing dots patterns are ready (for flowers 5 and 6)
-        { "_include_file_spring_flowers" : "patterns/spring_Flower5_Flower3_Rattle1.json" }
-        //{ "_include_file_multicolorSparkle_rattle" : "patterns/multicolorSparkle_Rattle2.json" }
+        { "_include_file_spring_flowers" : "patterns/spring_Flower5_Flower3_Rattle1.json" },
+        { "_include_file_multicolorSparkle_rattle" : "patterns/multicolorSparkle_Rattle2.json" }
 
     ]
 }
