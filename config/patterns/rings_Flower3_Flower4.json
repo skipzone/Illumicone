@@ -64,6 +64,21 @@
     ],
     "hueMeasurementMapper" : [
         {   "rawMin" : 0,
+            "rawMax" : 899,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 900,
+            "rawMax" : 1799,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 1800,
+            "rawMax" : 2699,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 2700,
             "rawMax" : 3599,
             "mappedStart" : 0.0,
             "mappedEnd" : 255.0
@@ -71,9 +86,24 @@
     ],
     "saturationMeasurementMapper" : [
         {   "rawMin" : 0,
+            "rawMax" : 899,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        },
+        {   "rawMin" : 900,
+            "rawMax" : 1799,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        },
+        {   "rawMin" : 1800,
+            "rawMax" : 2699,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        },
+        {   "rawMin" : 2700,
             "rawMax" : 3599,
-            "mappedStart" : 0.9,
-            "mappedEnd" : 255.0
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
         }
     ],
 
@@ -85,9 +115,8 @@
 
     "startingHue" : 0,
     "endingHue" : 255,
-    "hueDirectionIsBlueToRed" : false,
     "hueFoldbackPct" : 0,
-    "hueRepeat" : 1,
+    "hueRepeat" : 6,
 
     "startingSaturation" : 255.0,
     "endingSaturation" : 255.0,
@@ -96,10 +125,6 @@
 
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
 
-    // deprecated
-    "defaultHsv" : "aqua",              // can use a recognized color name or h,s,v to specify custom hue, sat, and/or value
-    "scaledownFactor" : 1,              // effectively gear down a rotating widget
-    "widthScaledownFactor" : 1
-
+    "stripeCenterValue" : 255           // the hsv value at the center of the stripe
 }
 
