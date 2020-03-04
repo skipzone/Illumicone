@@ -181,7 +181,7 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     }
     logger.logMsg(LOG_INFO, "%s hueDirectionIsBlueToRed=%d", name.c_str(), isHorizontal);
 
-    if (!ConfigReader::getFloatValue(patternConfigObject, "hueFoldbackPct", hueFoldbackPct, errMsgSuffix, 1.0, 99.9)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "hueFoldbackPct", hueFoldbackPct, errMsgSuffix, 0, 99.9)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " hueFoldbackPct=" + to_string(hueFoldbackPct));
@@ -209,7 +209,7 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 
     saturationDirectionIsDecreasing = (startingSaturation > endingSaturation);
 
-    if (!ConfigReader::getFloatValue(patternConfigObject, "saturationFoldbackPct", saturationFoldbackPct, errMsgSuffix, 1.0, 99.9)) {
+    if (!ConfigReader::getFloatValue(patternConfigObject, "saturationFoldbackPct", saturationFoldbackPct, errMsgSuffix, 0, 99.9)) {
         return false;
     }
     logger.logMsg(LOG_INFO, name + " saturationFoldbackPct=" + to_string(saturationFoldbackPct));
