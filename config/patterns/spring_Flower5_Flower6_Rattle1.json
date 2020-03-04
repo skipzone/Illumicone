@@ -52,11 +52,11 @@
         {   "rawMin" : 900,
             "rawMax" : 1800,
             "mappedStart" : 1.0,
-            "mappedEnd" : 4.0
+            "mappedEnd" : 2.0
         },
         {   "rawMin" : 1800,
             "rawMax" : 2700,
-            "mappedStart" : 4.0,
+            "mappedStart" : 2.0,
             "mappedEnd" : 1.0
         },
         {   "rawMin" : 2700,

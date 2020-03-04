@@ -26,26 +26,107 @@
             "channelNumber" : 0,
             "measurement" : "position"
         },
-        {   "inputName" : "hueOffset",
+        {   "inputName" : "hue",
             "widgetName" : "flower2",
             "channelNumber" : 0,
             "measurement" : "position"
         }
-        //{   "inputName" : "width",
+        //{   "inputName" : "saturation",
         //    "widgetName" : "flower2",
         //    "channelNumber" : 0,
         //    "measurement" : "position"
         //}
     ],
+
+    "positionMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 3599,
+            "mappedStart" : 0,
+            "mappedEnd" : 47 
+        }
+    ],
+    "hueMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 899,
+            "mappedStart" : 200.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 900,
+            "rawMax" : 1799,
+            "mappedStart" : 200.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 1800,
+            "rawMax" : 2699,
+            "mappedStart" : 200.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 2700,
+            "rawMax" : 3599,
+            "mappedStart" : 200.0,
+            "mappedEnd" : 255.0
+        }
+    ],
+    "saturationMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 3599,
+            "mappedStart" : 0.9,
+            "mappedEnd" : 255.0
+        }
+    ],
+
     "isHorizontal" : false,
-    "defaultHsv" : "pink",              // can use a recognized color name or h,s,v to specify custom hue, sat, and/or value
-    "virtualPixelRatio" : 75,           // 75 * 48 strings = 3600; flower rotation measurements are [0, 3600)
+    "virtualPixelRatio" : 1,           // 75 * 48 strings = 3600; flower rotation measurements are [0, 3600)
     "numStripes" : 4,
-    "scaledownFactor" : 1,              // effectively gear down a rotating widget
+    "minSidebandWidth" : 1,           // min should be equal to or greater than virtualPixelRatio
+    "maxSidebandWidth" : 1,           // sideband widths are in the context of virtual pixels
+
+    "startingHue" : 200,
+    "endingHue" : 255,
+    "hueFoldbackPct" : 0,
+    "hueRepeat" : 3,
+
+    "startingSaturation" : 255.0,
+    "endingSaturation" : 255.0,
+    "saturationFoldbackPct" : 0.0,
+    "saturationRepeat" : 1,
+
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
-    "widthScaledownFactor" : 1,
-    "minSidebandWidth" : 150,           // min should be equal to or greater than virtualPixelRatio
-    "maxSidebandWidth" : 150            // sideband widths are in the context of virtual pixels
+
+    "stripeCenterValue" : 255           // the hsv value at the center of the stripe
 
 }
+
+
+/********** virtual pixels **********
+        {   "inputName" : "width",
+            "widgetName" : "flower2",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        },
+
+    "positionMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 3599,
+            "mappedStart" : 0,
+            "mappedEnd" : 3599 
+        }
+    ],
+    "widthMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 1799,
+            "mappedStart" : 150,
+            "mappedEnd" : 450
+        },
+        {   "rawMin" : 1800,
+            "rawMax" : 3599,
+            "mappedStart" : 450,
+            "mappedEnd" : 150
+        }
+    ],
+
+    "virtualPixelRatio" : 75,           // 75 * 48 strings = 3600; flower rotation measurements are [0, 3600)
+    "minSidebandWidth" : 150,           // min should be equal to or greater than virtualPixelRatio
+    "maxSidebandWidth" : 150,           // sideband widths are in the context of virtual pixels
+****************************************/
 

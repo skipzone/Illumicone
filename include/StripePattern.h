@@ -20,6 +20,7 @@
 #include <map>
 #include <memory>
 
+#include "MeasurementMapper.h"
 #include "Pattern.h"
 #include "WidgetId.h"
 
@@ -46,22 +47,48 @@ class StripePattern : public Pattern {
 
     private:
 
+        void setPixel(unsigned int stringIdx, unsigned int pixelIdx, float& hue, float& sat, uint8_t val);
+
         std::shared_ptr<WidgetChannel> positionChannel;
         std::shared_ptr<WidgetChannel> widthChannel;
+        std::shared_ptr<WidgetChannel> hueChannel;
+        std::shared_ptr<WidgetChannel> saturationChannel;
+
+        MeasurementMapper<int, int> positionMeasmtMapper;
+        MeasurementMapper<int, int> widthMeasmtMapper;
+        MeasurementMapper<int, float> hueMeasmtMapper;
+        MeasurementMapper<int, float> saturationMeasmtMapper;
 
         int stripeVirtualPos;
         int widthPos;
+        float hueOffset;
+        float saturationOffset;
 
         int numStripes;
         int stripeStep;
-
-        int scaledownFactor;
-        int widthScaledownFactor;
 
         int maxSidebandWidth;
         int minSidebandWidth;
 
         HsvPixel stripeHsv;
+
+        float startingHue;
+        float endingHue;
+        float hueFoldbackPct;
+        float hueRepeat;
+        bool hueDirectionIsRedToBlue;
+        float hueSpan;
+        float hueStep;
+
+        float startingSaturation;
+        float endingSaturation;
+        float saturationFoldbackPct;
+        float saturationRepeat;
+        bool saturationDirectionIsDecreasing;
+        float saturationSpan;
+        float saturationStep;
+
+        int stripeCenterValue;
 
         int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
@@ -84,5 +111,6 @@ class StripePattern : public Pattern {
         // Similarly, for a horizontal stripe, a vertical drawing plane exists at each string.
         unsigned int numPixelsInDrawingPlane;
         unsigned int numVirtualPixelsInDrawingPlane;
+
 };
 
