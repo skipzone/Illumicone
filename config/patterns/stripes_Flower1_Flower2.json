@@ -83,9 +83,8 @@
     "minSidebandWidth" : 150,           // min should be equal to or greater than virtualPixelRatio
     "maxSidebandWidth" : 150,           // sideband widths are in the context of virtual pixels
 
-    "startingHue" : 0,
+    "startingHue" : 200,
     "endingHue" : 255,
-    "hueDirectionIsBlueToRed" : false,
     "hueFoldbackPct" : 0,
     "hueRepeat" : 1,
 
@@ -96,10 +95,6 @@
 
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
 
-    // deprecated
-    "defaultHsv" : "pink",              // can use a recognized color name or h,s,v to specify custom hue, sat, and/or value
-    "scaledownFactor" : 1,              // effectively gear down a rotating widget
-    "widthScaledownFactor" : 1
-
+    "stripeCenterValue" : 255           // the hsv value at the center of the stripe
 }
 

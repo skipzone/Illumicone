@@ -15,6 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cmath>
 #include <iostream>
 
 #include "ConfigReader.h"
@@ -89,33 +90,6 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
 
-    // ----- measurement mapper configuration -----
-
-    if (positionChannel != nullptr) {
-        if (!positionMeasmtMapper.readConfig(patternConfigObject, "positionMeasurementMapper", errMsgSuffix)) {
-            return false;
-        }
-    }
-
-    if (widthChannel != nullptr) {
-        if (!widthMeasmtMapper.readConfig(patternConfigObject, "widthMeasurementMapper", errMsgSuffix)) {
-            return false;
-        }
-    }
-
-    if (hueChannel != nullptr) {
-        if (!hueMeasmtMapper.readConfig(patternConfigObject, "hueMeasurementMapper", errMsgSuffix)) {
-            return false;
-        }
-    }
-
-    if (saturationChannel != nullptr) {
-        if (!saturationMeasmtMapper.readConfig(patternConfigObject, "saturationMeasurementMapper", errMsgSuffix)) {
-            return false;
-        }
-    }
-
-
     // ----- layout configuration -----
 
     if (!ConfigReader::getBoolValue(patternConfigObject, "isHorizontal", isHorizontal, errMsgSuffix)) {
@@ -176,10 +150,11 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     }
     logger.logMsg(LOG_INFO, name + " endingHue=" + to_string(endingHue));
 
-    if (!ConfigReader::getBoolValue(patternConfigObject, "hueDirectionIsBlueToRed", hueDirectionIsBlueToRed)) {
-        hueDirectionIsBlueToRed = (startingHue > endingHue);
-    }
-    logger.logMsg(LOG_INFO, "%s hueDirectionIsBlueToRed=%d", name.c_str(), isHorizontal);
+    hueDirectionIsRedToBlue = (startingHue < endingHue);
+//    if (!ConfigReader::getBoolValue(patternConfigObject, "hueDirectionIsBlueToRed", hueDirectionIsBlueToRed)) {
+//        hueDirectionIsBlueToRed = (startingHue > endingHue);
+//    }
+//    logger.logMsg(LOG_INFO, "%s hueDirectionIsBlueToRed=%d", name.c_str(), isHorizontal);
 
     if (!ConfigReader::getFloatValue(patternConfigObject, "hueFoldbackPct", hueFoldbackPct, errMsgSuffix, 0, 99.9)) {
         return false;
@@ -229,30 +204,48 @@ bool StripePattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     // ----- misc. configuration -----
 
     if (widthChannel != nullptr) {
-        if (!ConfigReader::getIntValue(patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1)) {
+        if (!ConfigReader::getIntValue(
+            patternConfigObject, "widthResetTimeoutSeconds", widthResetTimeoutSeconds, errMsgSuffix, 1))
+        {
             return false;
         }
         logger.logMsg(LOG_INFO, name + " widthResetTimeoutSeconds=" + to_string(widthResetTimeoutSeconds));
     }
 
-    // TODO:  replace stripeHsv with dynamic hue and saturation
-    string hsvStr;
-    if (!ConfigReader::getHsvPixelValue(patternConfigObject, "defaultHsv", hsvStr, stripeHsv, errMsgSuffix)) {
+    if (!ConfigReader::getIntValue(patternConfigObject, "stripeCenterValue", stripeCenterValue, errMsgSuffix, 1)) {
         return false;
     }
-    logger.logMsg(LOG_INFO, name + " stripeHsv=" + hsvStr);
+    logger.logMsg(LOG_INFO, "%s stripeCenterValue=%d", name.c_str(), stripeCenterValue);
 
-    // TODO:  replace scaledown factor with mapper
-    if (!ConfigReader::getIntValue(patternConfigObject, "scaledownFactor", scaledownFactor, errMsgSuffix, 1)) {
-        return false;
-    }
-    logger.logMsg(LOG_INFO, "%s scaledownFactor=%d", name.c_str(), scaledownFactor);
 
-    // TODO:  replace widthScaledownFactor with mapper
-    if (!ConfigReader::getIntValue( patternConfigObject, "widthScaledownFactor", widthScaledownFactor, errMsgSuffix, 1)) {
-        return false;
+    // ----- measurement mapper configuration -----
+
+    // TODO:  implement a way to verify that the min and max outputs from a mapper are within range
+
+    //        (e.g., position output is [0, numVirtualPixelsInDrawingPlane)
+    if (positionChannel != nullptr) {
+        if (!positionMeasmtMapper.readConfig(patternConfigObject, "positionMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
     }
-    logger.logMsg(LOG_INFO, "%s widthScaledownFactor=%d", name.c_str(), widthScaledownFactor);
+
+    if (widthChannel != nullptr) {
+        if (!widthMeasmtMapper.readConfig(patternConfigObject, "widthMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
+    }
+
+    if (hueChannel != nullptr) {
+        if (!hueMeasmtMapper.readConfig(patternConfigObject, "hueMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
+    }
+
+    if (saturationChannel != nullptr) {
+        if (!saturationMeasmtMapper.readConfig(patternConfigObject, "saturationMeasurementMapper", errMsgSuffix)) {
+            return false;
+        }
+    }
 
 
     // ----- initialize object data -----
@@ -273,31 +266,18 @@ bool StripePattern::update()
     int rawPosition;
     unsigned int nowMs = getNowMs();
 
-
-/*
-        MeasurementMapper<int, float> hueMeasmtMapper;
-        MeasurementMapper<int, float> saturationMeasmtMapper;
-        MeasurementMapper<int, int> positionMeasmtMapper;
-        MeasurementMapper<int, int> widthMeasmtMapper;
-
-                if (rotationMeasmtMapper.mapMeasurement(rawRotationPos, rotationStepIntervalMs)) {
-                    gotUpdateFromWidget = true;
-                    rotateCounterclockwise = (rawRotationPos >= 0);
-                    //logger.logMsg(LOG_DEBUG, name + ":  rawRotationPos=" + to_string(rawRotationPos)
-                    //                  + ", rotateCounterclockwise=" + to_string(rotateCounterclockwise)
-                    //                  + ", rotationStepIntervalMs=" + to_string(rotationStepIntervalMs)
-                    //                  + ", rotationOffset=" + to_string(rotationOffset));
-                }
-*/
-
-
     if (positionChannel != nullptr) {
         if (positionChannel->getIsActive()) {
             isActive = true;
             if (positionChannel->getHasNewPositionMeasurement()) {
-                gotPositionOrWidthUpdate = true;
                 rawPosition = positionChannel->getPosition();
-                stripeVirtualPos = ((unsigned int) rawPosition) / scaledownFactor % numVirtualPixelsInDrawingPlane;
+                if (positionMeasmtMapper.mapMeasurement(rawPosition, stripeVirtualPos)) {
+                    gotPositionOrWidthUpdate = true;
+                    // Make sure stripeVirtualPos is in range even if the mapper destination range is misconfigured.
+                    stripeVirtualPos = stripeVirtualPos % numVirtualPixelsInDrawingPlane;
+                    //logger.logMsg(LOG_DEBUG, name + ":  rawPosition=" + to_string(rawPosition)
+                    //                  + ", stripeVirtualPos=" + to_string(stripeVirtualPos));
+                }
             }
         }
     }
@@ -317,19 +297,22 @@ bool StripePattern::update()
                 }
 
                 if (maxSidebandWidth > 0) {
-                    int scaledWidthPos = (rawWidthPos - widthPosOffset) / widthScaledownFactor;
-                    // TODO:  This doesn't work as expected.  widthPos can end up greater than maxSidebandWidth.
-                    // This is a triangle wave function where the period is maxSidebandWidth * 2
-                    // and the range is minSidebandWidth to maxSidebandWidth.  We right-shift the
-                    // wave so that the width starts out at minSidebandWidth.
-                    widthPos =
-                        abs(abs(scaledWidthPos + maxSidebandWidth) % (maxSidebandWidth * 2) - maxSidebandWidth)
-                        + minSidebandWidth;
-                    //logger.logMsg(LOG_DEBUG, name
-                    //              + ", rawWidthPos=" + to_string(rawWidthPos)
-                    //              + ", widthPosOffset=" + to_string(widthPosOffset)
-                    //              + ", scaledWidthPos=" + to_string(scaledWidthPos)
-                    //              + ", widthPos=" + to_string(widthPos));
+                    int scaledWidthPos;
+                    if (widthMeasmtMapper.mapMeasurement(rawWidthPos, scaledWidthPos)) {
+                        // TODO:  make sure mapper output is in range
+                        // TODO:  This doesn't work as expected.  widthPos can end up greater than maxSidebandWidth.
+                        // This is a triangle wave function where the period is maxSidebandWidth * 2
+                        // and the range is minSidebandWidth to maxSidebandWidth.  We right-shift the
+                        // wave so that the width starts out at minSidebandWidth.
+                        widthPos =
+                            abs(abs(scaledWidthPos + maxSidebandWidth) % (maxSidebandWidth * 2) - maxSidebandWidth)
+                            + minSidebandWidth;
+                        //logger.logMsg(LOG_DEBUG, name
+                        //              + ", rawWidthPos=" + to_string(rawWidthPos)
+                        //              + ", widthPosOffset=" + to_string(widthPosOffset)
+                        //              + ", scaledWidthPos=" + to_string(scaledWidthPos)
+                        //              + ", widthPos=" + to_string(widthPos));
+                    }
                 }
             }
         }
@@ -357,7 +340,7 @@ bool StripePattern::update()
         clearAllPixels(coneStrings);
 
         int sidebandWidth = widthPos;
-        float valueSlope = (float) stripeHsv.value / (float) (sidebandWidth + 1);
+        float valueSlope = (float) stripeCenterValue / (float) (sidebandWidth + 1);
 
         // TODO:  rename these
         int lowVEl = stripeVirtualPos - sidebandWidth;
@@ -378,15 +361,56 @@ bool StripePattern::update()
                 // If this virtual pixel corresponds to a physical
                 // pixel, we'll draw into the physical pixels.
                 if (virtualPixelIdx % virtualPixelRatio == 0) {
-                    unsigned int pixelIndex = virtualPixelIdx / virtualPixelRatio;
+                    unsigned int pixelIdx = virtualPixelIdx / virtualPixelRatio;
                     float distanceToCenter = abs(i - stripeVirtualPos);
                     uint8_t value = stripeHsv.value - (uint8_t) (valueSlope * distanceToCenter);
                     for (int iStripe = 0; iStripe < numStripes; ++iStripe) {
-                        for (auto&& coneString : coneStrings) {
-                            coneString[pixelIndex] = stripeHsv;
-                            coneString[pixelIndex].value = value;
+
+                        float hueStep = fabs(endingHue - startingHue) / (float) numStrings * hueRepeat;
+                        float hue = startingHue;
+
+                        float satStep = fabs(endingSaturation - startingSaturation) / (float) numStrings * saturationRepeat;
+                        float sat = startingSaturation;
+
+                        // TODO:  implement hue and saturation foldback
+
+                        ////for (auto&& coneString : coneStrings) {
+                        for (unsigned int stringIdx = 0; stringIdx < numStrings; ++stringIdx) {
+
+                            coneStrings[stringIdx][pixelIdx].h = hue;
+                            coneStrings[stringIdx][pixelIdx].s = sat;
+                            coneStrings[stringIdx][pixelIdx].v = value;
+
+                            if (hueDirectionIsRedToBlue) {
+                                hue += hueStep;
+                                if (hue > endingHue) {
+                                    hue = startingHue;
+                                }
+                            }
+                            else {
+                                hue -= hueStep;
+                                if (hue < endingHue) {
+                                    hue = startingHue;
+                                }
+                            }
+
+                            if (saturationDirectionIsDecreasing) {
+                                sat -= satStep;
+                                if (sat < endingSaturation) {
+                                    sat = startingSaturation;
+                                }
+                            }
+                            else {
+                                sat += satStep;
+                                if (sat > endingSaturation) {
+                                    sat = startingSaturation;
+                                }
+                            }
+
                         }
-                        pixelIndex = (pixelIndex + stripeStep) % pixelsPerString;
+
+                        // Jump to next stripe.
+                        pixelIdx = (pixelIdx + stripeStep) % pixelsPerString;
                     }
                 }
             }
@@ -407,15 +431,57 @@ bool StripePattern::update()
                 // If this virtual string corresponds to a physical
                 // string, we'll draw into the physical string.
                 if (virtualStringIdx % virtualPixelRatio == 0) {
-                    unsigned int stringIndex = virtualStringIdx / virtualPixelRatio;
+                    unsigned int stringIdx = virtualStringIdx / virtualPixelRatio;
+
                     float distanceToCenter = abs(i - stripeVirtualPos);
                     uint8_t value = stripeHsv.value - (uint8_t) (valueSlope * distanceToCenter);
+
                     for (int iStripe = 0; iStripe < numStripes; ++iStripe) {
-                        for (auto&& pixel : coneStrings[stringIndex]) {
-                            pixel = stripeHsv;
-                            pixel.value = value;
+
+                        float hueStep = fabs(endingHue - startingHue) / (float) pixelsPerString * hueRepeat;
+                        float hue = startingHue;
+
+                        float satStep = fabs(endingSaturation - startingSaturation) / (float) pixelsPerString * saturationRepeat;
+                        float sat = startingSaturation;
+
+                        // TODO:  implement hue and saturation foldback
+
+                        for (unsigned int pixelIdx = 0; pixelIdx < pixelsPerString; ++pixelIdx) {
+                            
+                            coneStrings[stringIdx][pixelIdx].h = hue;
+                            coneStrings[stringIdx][pixelIdx].s = sat;
+                            coneStrings[stringIdx][pixelIdx].v = value;
+
+                            if (hueDirectionIsRedToBlue) {
+                                hue += hueStep;
+                                if (hue > endingHue) {
+                                    hue = startingHue;
+                                }
+                            }
+                            else {
+                                hue -= hueStep;
+                                if (hue < endingHue) {
+                                    hue = startingHue;
+                                }
+                            }
+
+                            if (saturationDirectionIsDecreasing) {
+                                sat -= satStep;
+                                if (sat < endingSaturation) {
+                                    sat = startingSaturation;
+                                }
+                            }
+                            else {
+                                sat += satStep;
+                                if (sat > endingSaturation) {
+                                    sat = startingSaturation;
+                                }
+                            }
+
                         }
-                        stringIndex = (stringIndex + stripeStep) % numStrings;
+
+                        // Jump to next stripe.
+                        stringIdx = (stringIdx + stripeStep) % numStrings;
                     }
                 }
             }

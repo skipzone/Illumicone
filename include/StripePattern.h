@@ -52,10 +52,10 @@ class StripePattern : public Pattern {
         std::shared_ptr<WidgetChannel> hueChannel;
         std::shared_ptr<WidgetChannel> saturationChannel;
 
-        MeasurementMapper<int, float> hueMeasmtMapper;
-        MeasurementMapper<int, float> saturationMeasmtMapper;
         MeasurementMapper<int, int> positionMeasmtMapper;
         MeasurementMapper<int, int> widthMeasmtMapper;
+        MeasurementMapper<int, float> hueMeasmtMapper;
+        MeasurementMapper<int, float> saturationMeasmtMapper;
 
         int stripeVirtualPos;
         int widthPos;
@@ -73,14 +73,18 @@ class StripePattern : public Pattern {
 
         float startingHue;
         float endingHue;
-        bool hueDirectionIsBlueToRed;
+//        bool hueDirectionIsBlueToRed;
+        bool hueDirectionIsRedToBlue;
         float hueFoldbackPct;
         unsigned int hueRepeat;
+
         float startingSaturation;
         float endingSaturation;
         bool saturationDirectionIsDecreasing;
         float saturationFoldbackPct;
         unsigned int saturationRepeat;
+
+        int stripeCenterValue;
 
         int widthResetTimeoutSeconds;
         unsigned int nextResetWidthMs;
