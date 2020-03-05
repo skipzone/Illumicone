@@ -26,16 +26,16 @@
             "channelNumber" : 0,
             "measurement" : "position"
         },
-        {   "inputName" : "hue",
-            "widgetName" : "flower2",
-            "channelNumber" : 0,
-            "measurement" : "position"
-        }
-        //{   "inputName" : "saturation",
+        //{   "inputName" : "hue",
         //    "widgetName" : "flower2",
         //    "channelNumber" : 0,
         //    "measurement" : "position"
         //}
+        {   "inputName" : "saturation",
+            "widgetName" : "flower2",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
     ],
 
     "positionMeasurementMapper" : [
@@ -78,8 +78,8 @@
     "isHorizontal" : false,
     "virtualPixelRatio" : 1,           // 75 * 48 strings = 3600; flower rotation measurements are [0, 3600)
     "numStripes" : 4,
-    "minSidebandWidth" : 1,           // min should be equal to or greater than virtualPixelRatio
-    "maxSidebandWidth" : 1,           // sideband widths are in the context of virtual pixels
+    "minSidebandWidth" : 4,           // min should be equal to or greater than virtualPixelRatio
+    "maxSidebandWidth" : 4,           // sideband widths are in the context of virtual pixels
 
     "startingHue" : 200,
     "endingHue" : 255,
@@ -87,9 +87,9 @@
     "hueRepeat" : 3,
 
     "startingSaturation" : 255.0,
-    "endingSaturation" : 255.0,
+    "endingSaturation" : 0.0,
     "saturationFoldbackPct" : 0.0,
-    "saturationRepeat" : 1,
+    "saturationRepeat" : 3,
 
     "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
 

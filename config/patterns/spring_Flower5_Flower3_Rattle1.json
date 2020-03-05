@@ -22,12 +22,12 @@
     "patternClassName" : "SpiralPattern",
     "inputs" : [
         {   "inputName" : "compression",
-            "widgetName" : "flower5",
+            "widgetName" : "flower3",
             "channelNumber" : 0,                            // degrees * 10, [0, 3600)
             "measurement" : "position"
         },
         {   "inputName" : "rotation",
-            "widgetName" : "flower3",
+            "widgetName" : "flower5",
             "channelNumber" : 5,                            // degrees per second (?) * 10, [-?, ?]
             "measurement" : "position"
         },
@@ -70,15 +70,15 @@
     // rotation steps.  Each rotation step starts the spiral at the next
     // or previous string.
     "rotationMeasurementMapper" : [
-        {   "rawMin" : -7200,
+        {   "rawMin" : -300,
             "rawMax" : 0,
-            "mappedStart" : 5,
+            "mappedStart" : 1,
             "mappedEnd" : 100
         },
         {   "rawMin" : 0,
-            "rawMax" : 7200,
+            "rawMax" : 300,
             "mappedStart" : 100,
-            "mappedEnd" : 5
+            "mappedEnd" : 1
         }
     ],
     // The raw color measurement maps to the number of steps to rotate
