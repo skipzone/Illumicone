@@ -29,7 +29,7 @@
         ]
     },
     "widgetRcvr2" : {
-        //"patconIpAddress" : "192.168.198.72",
+        "patconIpAddress" : "192.168.195.34",
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 1000,
         "radios" : [
@@ -37,7 +37,7 @@
         ]
     },
     "widgetRcvr3" : {
-        //"patconIpAddress" : "192.168.198.72",
+        "patconIpAddress" : "192.168.195.34",
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 1000,
         "radios" : [
