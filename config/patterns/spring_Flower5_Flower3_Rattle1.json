@@ -30,12 +30,12 @@
             "widgetName" : "flower3",
             "channelNumber" : 5,                            // degrees per second (?) * 10, [-?, ?]
             "measurement" : "position"
+        },
+        {   "inputName" : "color",
+            "widgetName" : "rattle1",
+            "channelNumber" : 4,                            // gyro Y
+            "measurement" : "position"
         }
-        //{   "inputName" : "color",
-        //    "widgetName" : "rattle1",
-        //    "channelNumber" : 3,                          // gyro X
-        //    "measurement" : "position"
-        //}
     ],
     "flipSpring" : false,                                   // flip upside down; meaningful for a progressive spring
     "spiralTightnessFactor" : 6.0,                          // the number of turns around the cone
@@ -85,16 +85,26 @@
     // around the color wheel.  The color wheel has 255 steps.
     "colorMeasurementMapper" : [
         {   "rawMin" : -999,
-            "rawMax" : -20,
-            "mappedStart" : -40,
-            "mappedEnd" : -40
-        },
-        {   "rawMin" : -20,
-            "rawMax" : 20,
-            "mappedStart" : -40,
+            "rawMax" : -250,
+            "mappedStart" : 40,
             "mappedEnd" : 40
         },
-        {   "rawMin" : 20,
+        {   "rawMin" : -250,
+            "rawMax" : -50,
+            "mappedStart" : 40,
+            "mappedEnd" : 0
+        },
+        {   "rawMin" : -50,
+            "rawMax" : 50,
+            "mappedStart" : 0,
+            "mappedEnd" : 0
+        },
+        {   "rawMin" : 50,
+            "rawMax" : 250,
+            "mappedStart" : 0,
+            "mappedEnd" : 40
+        },
+        {   "rawMin" : 250,
             "rawMax" : 999,
             "mappedStart" : 40,
             "mappedEnd" : 40
