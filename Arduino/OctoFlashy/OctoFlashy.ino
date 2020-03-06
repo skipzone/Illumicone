@@ -55,7 +55,7 @@ constexpr int16_t maxPpSoundForStrobe = 500;
 constexpr uint8_t minStrobeValue = 225;
 constexpr uint8_t maxStrobeValue = 250;
 
-#define NUM_LAMPS 9
+#define NUM_LAMPS 8
 
 #define LAMP_MIN_INTENSITY 64
 
@@ -63,10 +63,10 @@ constexpr uint8_t maxStrobeValue = 250;
 // varies from one extreme to another.  (Without wraparound, the lamp
 // color would be red at one extreme and blue at the other, with no way
 // to go from blue through violet and magenta back to red.)
-//#define ENABLE_COLOR_WRAPAROUND
+#define ENABLE_COLOR_WRAPAROUND
 
 // The cheap-o RGB "PAR" lamps have a fourth DMX channel for strobe and intensity.
-//#define LAMP_HAS_CONTROL_CHANNEL
+#define LAMP_HAS_CONTROL_CHANNEL
 
 // With four-channel dimmers, it can be convenient to leave the fourth channel
 // unused so that each dimmer controls one tri-color lamp arrangement.
@@ -78,7 +78,7 @@ constexpr uint8_t maxStrobeValue = 250;
  ***********************/
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS (genuine Noric chips only).
-#define DATA_RATE RF24_1MBPS
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
 #define CRC_LENGTH RF24_CRC_16
@@ -88,7 +88,7 @@ constexpr uint8_t maxStrobeValue = 250;
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
 // Illumicone widgets use channel 84.  IBG widgets used channel 97 in 2018.
-#define RF_CHANNEL 84
+#define RF_CHANNEL 80
 
 // Nwdgt, where N indicates the pipe number (0-6) and payload type (0: stress test;
 // 1: position & velocity; 2: measurement vector; 3,4: undefined; 5: custom
@@ -138,9 +138,9 @@ typedef uint8_t fract8;   ///< ANSI: unsigned short _Fract
 
 union WidgetHeader {
   struct {
-    uint8_t id       : 4;
+    uint8_t id       : 5;
+    uint8_t channel  : 2;
     bool    isActive : 1;
-    uint8_t channel  : 3;
   };
   uint8_t raw;
 };
@@ -404,18 +404,28 @@ bool handleMeasurementVectorPayload(MeasurementVectorPayload* payload, uint8_t p
 {
   if (payload->widgetHeader.id == 12) payload->widgetHeader.id = 3;  // Pretend that Baton is Rainstick
   
-  if (payload->widgetHeader.id < 1 || payload->widgetHeader.id > 4) {
-#ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("got MeasurementVectorPayload payload from widget "));
-    Serial.print(payload->widgetHeader.id);
-    Serial.println(F(" but expected one from widgets 1 (Tilt-1), 2 (Tilt-2), 3 (Tilt-Test), or 4 (Rainstick)."));
-#endif
-    return false;
-  }
+//  if (payload->widgetHeader.id < 1 || payload->widgetHeader.id > 4) {
+//#ifdef ENABLE_DEBUG_PRINT
+//    Serial.print(F("got MeasurementVectorPayload payload from widget "));
+//    Serial.print(payload->widgetHeader.id);
+//    Serial.println(F(" but expected one from widgets 1 (Tilt-1), 2 (Tilt-2), 3 (Tilt-Test), or 4 (Rainstick)."));
+//#endif
+//    return false;
+//  }
 
 // TODO:  Enable the next two lines and remove the third when Rainstick is running current firmware.
   // Rainstick sends everything the tilt widgets send plus a peak-to-peak sound value.
-  uint8_t numExpectedValues = payload->widgetHeader.id <= 3 ? 13 : 14;
+  uint8_t numExpectedValues;
+  switch(payload->widgetHeader.id) {
+    case 30:
+    case 31:
+      numExpectedValues = 4;
+      break;
+    default:
+      numExpectedValues = 0;
+      break;
+  }
+//  numExpectedValues = payload->widgetHeader.id <= 3 ? 13 : 14;
 //  uint8_t numExpectedValues = 13;
   uint16_t expectedPayloadSize = sizeof(WidgetHeader) + sizeof(int16_t) * numExpectedValues;
   if (payloadSize != expectedPayloadSize) {
@@ -435,7 +445,7 @@ bool handleMeasurementVectorPayload(MeasurementVectorPayload* payload, uint8_t p
   // just a heartbeat while the widget is in standby mode.
   bool gotAllZeroData = true;
   for (uint8_t i = 0; gotAllZeroData && i < numExpectedValues; ++i) {
-    gotAllZeroData = payload->measurements[0] == 0;
+    gotAllZeroData = payload->measurements[i] == 0;
   }
   if (gotAllZeroData) {
     return false;
@@ -491,8 +501,27 @@ bool handleMeasurementVectorPayload(MeasurementVectorPayload* payload, uint8_t p
       Serial.println(currentPpSound);
 #endif
     break;
-  }
   
+    case 30:
+    case 31:
+      // Theremin's measurement 1 is the lamp selection angle, and measurement 2 is the color selection angle.
+      // (Measurment 0 is the pattern number, which we don't use here.)
+      currentLampAngle = map(payload->measurements[1], 0, 1023, -maxLampAngleDegrees, maxLampAngleDegrees);
+      currentColorAngle = map(payload->measurements[2], 0, 1023, -maxColorAngleDegrees, maxColorAngleDegrees);
+#ifdef ENABLE_DEBUG_PRINT
+      Serial.print(F("got measmt "));
+      Serial.print(payload->measurements[1]);
+      Serial.print(F(" for lamp angle "));
+      Serial.print(currentLampAngle);
+      Serial.print(F(" and measmt "));
+      Serial.print(payload->measurements[2]);
+      Serial.print(F(" for color angle "));
+      Serial.print(currentColorAngle);
+      Serial.println(F(" from widget 30"));
+#endif
+      break;
+  }
+
   return true;
 }
 
