@@ -68,13 +68,13 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
         case 22:
             return WidgetId::baton2;
         case 23:
-            return WidgetId::baton3;
+            return WidgetId::rattle1;
         case 24:
-            return WidgetId::baton4;
+            return WidgetId::rattle2;
         case 25:
-            return WidgetId::baton5;
+            return WidgetId::invalid;
         case 26:
-            return WidgetId::baton6;
+            return WidgetId::invalid;
         case 27:
             return WidgetId::lidar1;
         case 28:
@@ -141,14 +141,14 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 21;
         case WidgetId::baton2:
             return 22;
-        case WidgetId::baton3:
+        case WidgetId::rattle1:
             return 23;
-        case WidgetId::baton4:
+        case WidgetId::rattle2:
             return 24;
-        case WidgetId::baton5:
-            return 25;
-        case WidgetId::baton6:
-            return 26;
+        //case WidgetId:::
+        //    return 25;
+        //case WidgetId:::
+        //    return 26;
         case WidgetId::lidar1:
             return 27;
         //case WidgetId:::
@@ -207,14 +207,10 @@ std::string widgetIdToString(WidgetId widgetId)
             return "baton1";
         case WidgetId::baton2:
             return "baton2";
-        case WidgetId::baton3:
-            return "baton3";
-        case WidgetId::baton4:
-            return "baton4";
-        case WidgetId::baton5:
-            return "baton5";
-        case WidgetId::baton6:
-            return "baton6";
+        case WidgetId::rattle1:
+            return "rattle1";
+        case WidgetId::rattle2:
+            return "rattle2";
         case WidgetId::lidar1:
             return "lidar1";
         case WidgetId::invalid:

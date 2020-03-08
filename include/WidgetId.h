@@ -43,19 +43,19 @@ constexpr int maxWidgets = 32;
  * 16:  flower #6
  * 17:  flower #7
  * 18:  unassigned
- * 19:  unassigned (reserved for maraca #1)
- * 20:  unassigned (reserved for maraca #2)
+ * 19:  unassigned
+ * 20:  unassigned
  * 21:  Baton #1
  * 22:  Baton #2
- * 23:  Baton #3
- * 24:  Baton #4
- * 25:  Baton #5
- * 26:  Baton #6
+ * 23:  Rattle #1
+ * 24:  Rattle #2
+ * 25:  unassigned (reserved for Maraca #1)
+ * 26:  unassigned (reserved for Maraca #2)
  * 27:  Lidar1
  * 28:  unassigned
  * 29:  unassigned
- * 30:  unassigned
- * 31:  unassigned
+ * 30:  unassigned (Electric Garden theremin)
+ * 31:  reserved - experimental widget
  *
  * For stress tests, widget ids are reused as needed because stress-test
  * payloads are handled separately from all other types of payloads.
@@ -81,10 +81,8 @@ enum class WidgetId {
     flower7,
     baton1 = 21,
     baton2,
-    baton3,
-    baton4,
-    baton5,
-    baton6,
+    rattle1,
+    rattle2,
     lidar1 = 27,
     invalid = 255
 };

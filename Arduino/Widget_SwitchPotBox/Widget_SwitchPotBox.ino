@@ -1,10 +1,10 @@
 /*****************************************************************
  *                                                               *
- * nRF24 Stress Test Widget                                      *
+ * Ross's Black Box with Switches and Pots                       *
  *                                                               *
- * Platform:  Arduino Uno, Pro, Pro Mini                         *
+ * Platform:  Pololu A-Star                                      *
  *                                                               *
- * by Ross Butler, June 2016                                 )'( *
+ * by Ross Butler, January 2020                              )'( *
  *                                                               *
  *****************************************************************/
 
@@ -25,7 +25,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 
 
 #include "illumiconeWidget.h"
@@ -39,32 +39,39 @@
  * Widget Configuration *
  ************************/
 
-#define WIDGET_ID 0
-#define TX_INTERVAL_MS 10L
-#define STATS_PRINT_INTERVAL_MS 5000L
-#define LED_PIN 5
+constexpr uint8_t widgetId = 31;
+
+constexpr uint32_t activeTxIntervalMs = 50L;
+constexpr uint32_t inactiveTxIntervalMs = 2000L;  // should be a multiple of activeTxIntervalMs
+
+constexpr uint8_t numSwitches = 8;
+constexpr uint8_t switchPins[numSwitches] = {2, 4, 7, 8, A4, A3, A2, A1};
+constexpr uint8_t numPots = 3;
+constexpr uint8_t potPins[numPots] = {A7, A6, A5};
+constexpr uint8_t buttonPin = A0;
+constexpr uint8_t ledRedPin = 3;
+constexpr uint8_t ledGreenPin = 5;
+constexpr uint8_t ledBluePin = 6;
+
 
 // ---------- radio configuration ----------
 
 // Nwdgt, where N indicates the payload type (0: stress test; 1: position
 // and velocity; 2: measurement vector; 3,4: undefined; 5: custom)
-#define TX_PIPE_ADDRESS "0wdgt"       // 0 for tx stress
+#define TX_PIPE_ADDRESS "2wdgt"
 
-// Set to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
+// Set WANT_ACK to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
-#define WANT_ACK true
-#define TX_RETRY_DELAY_MULTIPLIER 2
-#define TX_MAX_RETRIES 0
-//#define WANT_ACK false
-//#define TX_RETRY_DELAY_MULTIPLIER 0
-//#define TX_MAX_RETRIES 0
+#define WANT_ACK false
+#define TX_RETRY_DELAY_MULTIPLIER 15    // use 15 when getting acks
+#define TX_MAX_RETRIES 15               // use 15 when getting acks
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-#define DATA_RATE RF24_1MBPS
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
 #define CRC_LENGTH RF24_CRC_16
@@ -73,10 +80,11 @@
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
+// Illumicone uses channel 97.  The Electric Garden theremin uses channel 80.
 #define RF_CHANNEL 80
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
+#define RF_POWER_LEVEL RF24_PA_LOW
 
 
 /***********
@@ -85,7 +93,10 @@
 
 RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
-StressTestPayload payload;
+static MeasurementVectorPayload payload;
+
+static bool isActive;
+static bool wasActive;
 
 
 /******************
@@ -99,80 +110,74 @@ void setup()
   printf_begin();
 #endif
 
-#ifdef LED_PIN      
-      pinMode(LED_PIN, OUTPUT);
-#endif
+  for (uint8_t i = 0; i < numSwitches; ++i) {
+    pinMode(switchPins[i], INPUT);
+    digitalWrite(switchPins[i], HIGH);
+  }
+
+  for (uint8_t i = 0; i < numPots; ++i) {
+    pinMode(potPins[i], INPUT);
+  }
+
+  pinMode(buttonPin, INPUT);
+  digitalWrite(buttonPin, HIGH);
+
+  pinMode(ledRedPin, OUTPUT);
+  pinMode(ledGreenPin, OUTPUT);
+  pinMode(ledBluePin, OUTPUT);
+  analogWrite(ledRedPin, 64);
+  analogWrite(ledGreenPin, 64);
+  analogWrite(ledBluePin, 64);
 
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
                  TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
                  RF_CHANNEL);
 
-#ifdef ENABLE_DEBUG_PRINT 
-  radio.printDetails();
-#endif
-
-  payload.widgetHeader.id = WIDGET_ID;
-  payload.widgetHeader.isActive = false;
+  payload.widgetHeader.id = widgetId;
   payload.widgetHeader.channel = 0;
 }
 
 
-void loop() {
+void sendMeasurements()
+{
+  uint16_t switchValue = 0;
+  for (uint8_t i = 0; i < numSwitches; ++i) {
+    switchValue |= ((digitalRead(switchPins[i]) == LOW) << (numSwitches - 1 - i));
+  }
+  payload.measurements[0] = (int16_t) switchValue;
 
+  for (uint8_t i = 0; i < numPots; ++i) {
+    payload.measurements[i + 1] = analogRead(potPins[i]);
+  }
+
+  payload.widgetHeader.isActive = isActive;
+
+  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * (numPots + 1), !WANT_ACK)) {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("radio.write failed."));
+#endif
+  }
+  else {
+#ifdef ENABLE_DEBUG_PRINT
+    Serial.println(F("radio.write succeeded."));
+#endif
+  }
+}
+
+
+void loop()
+{
   static int32_t lastTxMs;
-  static int32_t lastStatsPrintMs;
-  static int32_t lastStatsPrintPayloadNum;
 
   uint32_t now = millis();
-  if (now - lastTxMs >= TX_INTERVAL_MS) {
 
-    ++payload.payloadNum;
-    payload.widgetHeader.channel = 0;
-    payload.widgetHeader.isActive = true;
+  isActive = !digitalRead(buttonPin);
 
-    uint32_t txStartUs = micros();
-    bool txSuccessful = radio.write(&payload, (uint8_t) sizeof(payload), !WANT_ACK);
-    uint32_t txEndUs = micros();
-
-    payload.lastTxUs = txEndUs - txStartUs;
-
-    if (!txSuccessful) {
-#ifdef LED_PIN      
-      digitalWrite(LED_PIN, HIGH);
-#endif
-      ++payload.numTxFailures;
-      Serial.print(F("radio.write failed for "));
-      Serial.println(payload.payloadNum);
+  if (now - lastTxMs >= activeTxIntervalMs) {
+    if (isActive || wasActive || now - lastTxMs >= inactiveTxIntervalMs) {
+      lastTxMs = now;
+      sendMeasurements();
+      wasActive = isActive;
     }
-    else {
-#ifdef LED_PIN      
-      digitalWrite(LED_PIN, LOW);
-#endif
-    }
-    
-    lastTxMs = now;
   }
-
-#ifdef ENABLE_DEBUG_PRINT
-  now = millis();
-  uint32_t statsIntervalMs = now - lastStatsPrintMs;
-  if (statsIntervalMs >= STATS_PRINT_INTERVAL_MS) {
-    uint32_t sendRate = (payload.payloadNum - lastStatsPrintPayloadNum) * 1000L / statsIntervalMs;
-    uint32_t pctFail = payload.numTxFailures * 100L / payload.payloadNum;
-    Serial.print(F("---------- "));
-    Serial.print(payload.payloadNum);
-    Serial.print(F(" sent, "));
-    Serial.print(payload.numTxFailures);
-    Serial.print(F(" failures ("));
-    Serial.print(pctFail);
-    Serial.print(F("%), "));
-    Serial.print(sendRate);
-    Serial.print(F("/s over last "));
-    Serial.print(statsIntervalMs);
-    Serial.println(F(" ms"));
-    lastStatsPrintMs = now;
-    lastStatsPrintPayloadNum = payload.payloadNum;
-  }
-#endif
-
 }

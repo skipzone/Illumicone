@@ -29,6 +29,7 @@
 #include "SparklePattern.h"
 #include "SpinnerPattern.h"
 #include "SpiralPattern.h"
+#include "StripePattern.h"
 #include "SwitchActivatedRegionsPattern.h"
 
 
@@ -69,6 +70,9 @@ Pattern* patternFactory(const std::string& patternClassName, const std::string& 
     }
     else if (patternClassName == "SpiralPattern") {
         return new SpiralPattern(patternName);
+    }
+    else if (patternClassName == "StripePattern") {
+        return new StripePattern(patternName);
     }
     else if (patternClassName == "SwitchActivatedRegionsPattern") {
         return new SwitchActivatedRegionsPattern(patternName);

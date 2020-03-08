@@ -32,34 +32,49 @@ extern Log logger;
 FlowerWidget::FlowerWidget(WidgetId id)
     : Widget(id, 13)
 {
-    // Simulate acceleration.
-    simulationUpdateIntervalMs[6] = 10;
-    simulationUpdateIntervalMs[7] = 15;
-    simulationUpdateIntervalMs[8] = 20;
+    // Simulate yaw (channel 0).
+    simulationUpdateIntervalMs[0] = 1;
+    simulationMinValue[0] = 0;
+    simulationMaxValue[0] = 3599;
+    simulationStep[0] = 2;
+    simulationUpDown[0] = false;
+
+    // Simulate z-axis gyro (channel 5).
+    simulationUpdateIntervalMs[5] = 5;
+    simulationMinValue[5] = -7200;
+    simulationMaxValue[5] = 7200;  // degrees per second?
+    simulationStep[5] = 10;
+    simulationUpDown[5] = true;
 }
 
 
 void FlowerWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
+    // TODO:  maybe move all this stuff to Widget class as default behavior.
+
     // Make sure previous position and velocity have been
     // updated in case the pattern hasn't read them.
     channels[chIdx]->getPosition();
 
-    int newPosition = channels[chIdx]->getPreviousPosition();
-    if (!simulatedPositionGoingDown) {
-        if (newPosition < 1023) {
-            ++newPosition;
-        }
-        else {
-            simulatedPositionGoingDown = true;
+    int prevPosition = channels[chIdx]->getPreviousPosition();
+    int newPosition;
+    if (!simulatedPositionGoingDown[chIdx]) {
+        newPosition = prevPosition + simulationStep[chIdx];
+        if (newPosition > simulationMaxValue[chIdx]) {
+            if (simulationUpDown[chIdx]) {
+                newPosition = prevPosition;
+                simulatedPositionGoingDown[chIdx] = true;
+            }
+            else {
+                newPosition = simulationMinValue[chIdx];
+            }
         }
     }
     else {
-        if (newPosition > 0) {
-            --newPosition;
-        }
-        else {
-            simulatedPositionGoingDown = false;
+        newPosition = prevPosition - simulationStep[chIdx];
+        if (newPosition < simulationMinValue[chIdx]) {
+            newPosition = prevPosition;
+            simulatedPositionGoingDown[chIdx] = false;
         }
     }
 

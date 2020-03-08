@@ -1,0 +1,96 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "ringsAndStripes_Flower7",
+    "enabled" : true,
+    "priority" : 8,
+    "opacity" : 5,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "RgbStripePattern",
+    "inputs" : [
+        {   "inputName" : "rPosition",
+            "widgetName" : "flower7",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        },
+        {   "inputName" : "gPosition",
+            "widgetName" : "flower7",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        },
+        {   "inputName" : "bPosition",
+            "widgetName" : "flower7",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
+    ],
+    "hEnable" : true,
+    "vEnable" : true,
+    "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
+    "vConfig" : {
+        // virtualPixelRatio = 3600 / numStrings / max(scaledownFactor)
+        "virtualPixelRatio" : 38,
+        "widthScaledownFactor" : 1,
+        "rConfig" : {
+            "maxSidebandWidth" : 38,   // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 38,   // min should be equal to or greater than virtualPixelRatio
+            "numStripes" : 1,           // number of stripes is in the context of physical pixels
+            "scaledownFactor" : 1,      // effectively gear down a rotating widget
+            "baseIntensity" : 255
+        },
+        "gConfig" : {
+            "maxSidebandWidth" : 38,
+            "minSidebandWidth" : 38,
+            "numStripes" : 1,
+            "scaledownFactor" : 2,
+            "baseIntensity" : 255
+        },
+        "bConfig" : {
+            "maxSidebandWidth" : 38,
+            "minSidebandWidth" : 38,
+            "numStripes" : 1,
+            "scaledownFactor" : 4,
+            "baseIntensity" : 255
+        }
+    },
+    "hConfig" : {
+        // virtualPixelRatio = 3600 / pixelsPerString / max(scaledownFactor)
+        "virtualPixelRatio" : 45,
+        "widthScaledownFactor" : 1,
+        "rConfig" : {
+            "maxSidebandWidth" : 60,   // sideband widths are in the context of virtual pixels
+            "minSidebandWidth" : 60,   // min should be equal to or greater than virtualPixelRatio
+            "numStripes" : 1,           // number of stripes is in the context of physical pixels
+            "scaledownFactor" : 1,      // effectively gear down a rotating widget
+            "baseIntensity" : 255
+        },
+        "gConfig" : {
+            "maxSidebandWidth" : 60,
+            "minSidebandWidth" : 60,
+            "numStripes" : 1,
+            "scaledownFactor" : 2,
+            "baseIntensity" : 255
+        },
+        "bConfig" : {
+            "maxSidebandWidth" : 60,
+            "minSidebandWidth" : 60,
+            "numStripes" : 1,
+            "scaledownFactor" : 4,
+            "baseIntensity" : 255
+        }
+    }
+}
+

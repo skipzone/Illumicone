@@ -36,7 +36,7 @@ extern Log logger;
 
 
 MidiActivatedRegionsPattern::MidiActivatedRegionsPattern(const std::string& name)
-    : IndicatorRegionsPattern(name, true)
+    : IndicatorRegionsPattern(name, true)   // usesHsvModel = true
 {
 }
 
