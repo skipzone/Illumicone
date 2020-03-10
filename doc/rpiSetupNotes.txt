@@ -393,3 +393,7 @@ Useful Commands and Stuff
 
         sudo apt-get install --reinstall ca-certificates
 
+* restart NTP server
+
+    sudo /etc/init.d/ntp restart
+
