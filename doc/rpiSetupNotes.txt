@@ -90,7 +90,7 @@ Set up ic-widpatcon on a Raspberry Pi 3 B or 4 using Raspbian Buster Lite
 
 8.  Install required and useful packages.
 
-    sudo apt-get install vim psmisc git git-flow lsof dnsutils
+    sudo apt-get install vim psmisc git git-flow lsof dnsutils tmux
 
     (psmisc gives us the killall utility.)
 
