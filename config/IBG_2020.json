@@ -45,7 +45,7 @@
         ],
 
         "patterns" : [
-            { "_include_file_patterns" : "Illumibrate_2020_patternSet1.json" }
+            { "_include_file_patterns" : "IBG_2020_patternSet1.json" }
         ]
     }
 }
