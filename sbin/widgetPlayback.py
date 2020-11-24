@@ -92,7 +92,7 @@ def sendMvec(widgetData):
             i,                      # channel
             widgetData['isActive'],
             measmt,                 # position
-            0)                      # velocity is always zero
+            measmt)                 # velocity
         clientSock.sendto(message, (patconIpAddress, widgetPortNumberBase + widgetData['widgetId']))
 
 def sendCustom(widgetData):
@@ -204,6 +204,7 @@ def main(argv):
     ap.add_argument("-p", "--patcon-ip-address", nargs='?', default=defaultPatconIpAddress, help='IP address of host running patternController', dest='patconIpAddress')
     ap.add_argument("-b", "--widget-port-base", nargs='?', default=defaultWidgetPortNumberBase, type=int, help='Port number associated with widget 0.', dest='widgetPortNumberBase')
     ap.add_argument("-t", "--time-compression-threshold", nargs='?', default=defaultTimeCompressionThresholdSeconds, type=int, help='Skip to next active widget data message after this many seconds of inactivity.', dest='timeCompressionThresholdSeconds')
+    # TODO:  add -r --replay-duration
 
     args = ap.parse_args()
 
