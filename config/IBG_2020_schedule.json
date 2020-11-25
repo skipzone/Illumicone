@@ -17,22 +17,77 @@
 
 {
     "shutoffPeriods" : [
-        {   "description" : "outside event hours shutoff with daytime dry-out",
+        {   "description" : "nighttime",
             "startDateTime" : "21:45:00",
             "endDateTime" : "08:00:00"
         },
-        {   "description" : "Mon. before event opening",
+        {   "description" : "Monday 23 Nov. before event opening",
             "startDateTime" : "2020-11-23 17:00:00",
-            "endDateTime" : "2020-11-23 21:30:00"
+            "endDateTime" : "2020-11-23 21:45:00"
+        },
+        {   "description" : "short evening on Tuesday 24 Nov. before event opening",
+            "startDateTime" : "2020-11-24 19:45:00",
+            "endDateTime" : "2020-11-24 21:45:00"
+        },
+        {   "description" : "short evening on Wednesday 25 Nov. before event opening",
+            "startDateTime" : "2020-11-25 19:45:00",
+            "endDateTime" : "2020-11-25 21:45:00"
+        },
+        {   "description" : "closed Tuesday 1 Dec.",
+            "startDateTime" : "2020-12-01 17:00:00",
+            "endDateTime" : "2020-12-01 21:45:00"
+        },
+        {   "description" : "closed Monday 7 Dec.",
+            "startDateTime" : "2020-12-07 17:00:00",
+            "endDateTime" : "2020-12-07 21:45:00"
+        },
+        {   "description" : "closed Tuesday 8 Dec.",
+            "startDateTime" : "2020-12-08 17:00:00",
+            "endDateTime" : "2020-12-08 21:45:00"
+        },
+        {   "description" : "closed Monday 14 Dec.",
+            "startDateTime" : "2020-12-14 17:00:00",
+            "endDateTime" : "2020-12-14 21:45:00"
+        },
+        {   "description" : "closed Tuesday 15 Dec.",
+            "startDateTime" : "2020-12-15 17:00:00",
+            "endDateTime" : "2020-12-15 21:45:00"
+        },
+        {   "description" : "closed Monday 21 Dec.",
+            "startDateTime" : "2020-12-21 17:00:00",
+            "endDateTime" : "2020-12-21 21:45:00"
+        },
+        {   "description" : "closed Tuesday 22 Dec.",
+            "startDateTime" : "2020-12-22 17:00:00",
+            "endDateTime" : "2020-12-22 21:45:00"
+        },
+        {   "description" : "Monday 28 Dec. after event ends",
+            "startDateTime" : "2020-12-28 17:00:00",
+            "endDateTime" : "2020-12-28 21:45:00"
+        },
+        {   "description" : "Tuesday 29 Dec. after event ends",
+            "startDateTime" : "2020-12-29 17:00:00",
+            "endDateTime" : "2020-12-29 21:45:00"
+        },
+        {   "description" : "Wednesday 30 Dec. after event ends",
+            "startDateTime" : "2020-12-30 17:00:00",
+            "endDateTime" : "2020-12-30 21:45:00"
+        },
+        {   "description" : "Thursday 31 Dec. after event ends",
+            "startDateTime" : "2020-12-31 17:00:00",
+            "endDateTime" : "2020-12-31 21:45:00"
+        },
+        {   "description" : "Friday 1 Jan. after event ends",
+            "startDateTime" : "2021-01-01 17:00:00",
+            "endDateTime" : "2021-01-01 21:45:00"
+        },
+        {   "description" : "Saturday 2 Jan. after event ends",
+            "startDateTime" : "2021-01-02 17:00:00",
+            "endDateTime" : "2021-01-02 21:45:00"
         }
     ],
 
     "quiescentPeriods" : [
-//        {   "description" : "daytime dry-out early off",
-//            "startDateTime" : "2019-11-26 08:00:00",
-//            "endDateTime" : "2019-11-26 16:00:00",
-//            "quiescentColor" : "192,192,192"
-//        },
         {   "description" : "daytime dry-out",
             "startDateTime" : "08:00:00",
             "endDateTime" : "17:00:00",
@@ -41,6 +96,16 @@
         {   "description" : "go home",
             "startDateTime" : "21:30:00",
             "endDateTime" : "21:45:00",
+            "quiescentColor" : "navy"
+        },
+        {   "description" : "go home - short evening on Tuesday 24 Nov. before event opening",
+            "startDateTime" : "2020-11-24 19:30:00",
+            "endDateTime" : "2020-11-24 19:45:00",
+            "quiescentColor" : "navy"
+        },
+        {   "description" : "go home - short evening on Wednesday 25 Nov. before event opening",
+            "startDateTime" : "2020-11-25 19:30:00",
+            "endDateTime" : "2020-11-25 19:45:00",
             "quiescentColor" : "navy"
         }
     ]
