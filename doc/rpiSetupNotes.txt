@@ -1,5 +1,5 @@
 Set up ic-widpatcon on a Raspberry Pi 3 B or 4 using Raspbian Buster Lite
-(updated 5 Aug. 2019)
+(updated 26 Nov. 2020)
 
 
 -1.  Download Raspbian Buster Lite from here:
@@ -38,10 +38,11 @@ Set up ic-widpatcon on a Raspberry Pi 3 B or 4 using Raspbian Buster Lite
     and selecting Eject Parent Volume.  Do the same thing for the other icon.
 
 
-2.  Create user illumicone and add it to the sudo group.
+2.  Create user illumicone and add it to the sudo and adm groups.
 
     sudo adduser illumicone
     sudo adduser illumicone sudo
+    sudo adduser illumicone adm
 
 
 3.  Change user pi's password to be the same as illumicone's.

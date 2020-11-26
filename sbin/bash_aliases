@@ -7,6 +7,8 @@ alias ll='ls -lGh'
 alias mv='mv -iv'
 alias rm='rm -i'
 
+alias tailm='tail -40 /var/log/messages'
+
 if [ -f ~/.illumicone_aliases ]; then
     . ~/.illumicone_aliases
 fi
