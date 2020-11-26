@@ -50,13 +50,16 @@
 
         diskutil unmountDisk /dev/diskN
 
-    If you are using Linux, you'll figure out the SD card device.  Then, use
-    dd as shown above.  If you're using Windows, well, you poor bastard.  Go
-    google how to write a disk image to an SD card.  Or, make your life easier:
-    Go get a MacBook Pro, preferrably an older one with an SD slot.  Or, at
-    least get a cheap laptop and put Linux on it.  You'll thank yourself later
-    when you don't have to deal with the hassle of trying to work in a POSIX
-    world using a massively non-standard system.
+    If you are using Linux, you need to figure out which is the SD card device.
+    Then, use dd as shown above.  If you're using Windows, well, you poor
+    bastard.  Go google how to write a disk image to an SD card.  Or, make your
+    life easier:  Go get a MacBook Pro, preferrably an older one with an SD
+    slot.  Or, get a cheap laptop and put Linux on it.  If you have an extra
+    monitor, keyboard, and mouse lying around, a Raspberry Pi 4 makes a fine
+    development system.  There are instructions in Illumicone/doc for setting
+    one up for development  You'll thank yourself later when you don't have to
+    deal with the hassle of trying to work in a POSIX world using a crippled,
+    non-standard system with a shitty user interface.
 
 
 1.  Update everything.
@@ -71,10 +74,11 @@
     Reboot.
 
 
-2.  Create user illumicone and add it to the sudo group.
+2.  Create user illumicone and add it to the sudo and groups.
 
     sudo adduser illumicone
     sudo adduser illumicone sudo
+    sudo adduser illumicone adm
 
 
 3.  Change user debian's password to be the same as illumicone's.
@@ -342,10 +346,11 @@ path is to use Wheezy instead.
     Reboot.
 
 
-2.  Create user illumicone and add it to the sudo group.
+2.  Create user illumicone and add it to the sudo and adm groups.
 
     sudo adduser illumicone
     sudo adduser illumicone sudo
+    sudo adduser illumicone adm
 
 
 3.  Change user debian's password to be the same as illumicone's.
