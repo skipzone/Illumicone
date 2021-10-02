@@ -18,17 +18,12 @@
 {
     "common" : {
         "_include_file_network_symlink" : "network_active.json",
-
-        // Effectively never rotate log files.
-        "logRotationIntervalMinutes" : 14400000,
-        "logRotationOffsetHour" : 12,
-        "logRotationOffsetMinute" : 0
+        "_include_file_logRotation" : "logRotation_noon.json"
     },
-
 
     "widgetRcvr" : {
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
-        "radioPollingLoopSleepIntervalUs" : 500,
+        "radioPollingLoopSleepIntervalUs" : 1000,
         "radios" : [
             { "_include_file_widgetRadio" : "widgetRadio_ch97.json" }
         ]
@@ -38,9 +33,11 @@
         "numberOfStrings" : 48,
         "numberOfPixelsPerString" : 100,
 
-        "_include_file_schedule" : "schedule_alwaysOn.json",
+        "_include_file_schedule" : "IBG_2020_schedule.json",
+        //"_include_file_schedule" : "schedule_alwaysOn.json",
 
-        "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        //"patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        "patternBlendMethod" : "rgbAdd",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
         "patternRunLoopSleepIntervalUs" : 4000,
 
         "widgets" : [
@@ -48,7 +45,7 @@
         ],
 
         "patterns" : [
-            { "_include_file_patterns" : "IBG_2021_patternSet1.json" }
+            { "_include_file_patterns" : "IBG_2020_patternSet1.json" }
         ]
     }
 }
