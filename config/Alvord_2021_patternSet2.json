@@ -1,0 +1,37 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "patterns" : [
+
+        //{ "_include_file_ringsAndStripes_flower2" : "patterns/ringsAndStripes_Flower2.json" },
+        { "_include_file_rings_flower2" : "patterns/rings_Flower2.json" },
+        { "_include_file_coloredSparkle_flower3" : "patterns/multicolorSparkle_Flower3.json" },
+        { "_include_file_sparkleMagentaAqua_flower4" : "patterns/sparkleMagentaAqua_Flower4.json" },
+        { "_include_file_Stripes_flower6" : "patterns/stripes_Flower6.json" },
+
+        { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
+
+        { "_include_file_sprayWhite_Rattle1" : "patterns/sprayWhite_Rattle1.json" },
+        { "_include_file_sprayPurple_Rattle1" : "patterns/sprayPurple_Rattle1.json" },
+        { "_include_file_sprayAqua_Rattle1" : "patterns/sprayAqua_Rattle1.json" },
+
+        { "_include_file_rain_Rainstick" : "patterns/rain_Rainstick.json" }
+
+    ]
+}
+
