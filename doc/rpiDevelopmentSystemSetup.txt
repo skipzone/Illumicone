@@ -305,7 +305,9 @@ What you will need:
         dirmngr package:
             sudo apt install dirmngr.
 
-    b.  Use gh to store the GitHub credentials.
+    b.  Use gh to store the GitHub credentials.  Note that the GitHub user
+        name is in the authentication token and does not need to be entered
+        separately.
 
         $ gh auth login
         ? What account do you want to log into? GitHub.com
