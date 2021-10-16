@@ -158,7 +158,7 @@ What you will need:
     cp devl/Illumicone/sbin/illumicone_aliases .illumicone_aliases
 
 
-12. Install RF24 using tmrh20's fork of RF24 on Github.  This is the same one we
+12. Install RF24 using tmrh20's fork of RF24 on GitHub.  This is the same one we
     use for the widget Arduinos.  You will need RF24 to build the Illumicone
     programs even if you don't plan on connecting an nRF24L01+ module to receive
     widget data.
@@ -289,5 +289,27 @@ What you will need:
 
     Check if I2C is working:
         i2cdetect -y 1
+
+
+20.  Set up GitHub credentials for pushing to the Illumicone repository.
+
+    a.  Install GitHub CLI.
+
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt update
+        sudo apt install gh
+
+        Note: If you get the error "gpg: failed to start the dirmngr
+        '/usr/bin/dirmngr': No such file or directory", try installing the
+        dirmngr package:
+            sudo apt install dirmngr.
+
+    b.  Store the GitHub credentials.
+
+        gh auth login
+            For preferred protocol, select HTTPS.
+            Copy/paste your personal access token.
+
 
 
