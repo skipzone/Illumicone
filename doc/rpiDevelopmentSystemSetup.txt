@@ -1,7 +1,7 @@
 **** work in progress ****
 
 Set up a development system using a Raspberry Pi 4
-(updated 01 Dec. 2019)
+(updated 16 Oct. 2021)
 
 You should be comfortable working in a terminal window.
 
@@ -293,7 +293,7 @@ What you will need:
 
 20.  Set up GitHub credentials for pushing to the Illumicone repository.
 
-    a.  Install GitHub CLI.
+    a.  Install GitHub CLI (gh).
 
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
@@ -305,11 +305,19 @@ What you will need:
         dirmngr package:
             sudo apt install dirmngr.
 
-    b.  Store the GitHub credentials.
+    b.  Use gh to store the GitHub credentials.
 
-        gh auth login
-            For preferred protocol, select HTTPS.
-            Copy/paste your personal access token.
-
+        $ gh auth login
+        ? What account do you want to log into? GitHub.com
+        ? What is your preferred protocol for Git operations? HTTPS
+        ? Authenticate Git with your GitHub credentials? Yes
+        ? How would you like to authenticate GitHub CLI? Paste an authentication token
+        Tip: you can generate a Personal Access Token here https://github.com/settings/tokens
+        The minimum required scopes are 'repo', 'read:org', 'workflow'.
+        ? Paste your authentication token: ****************************************
+        - gh config set -h github.com git_protocol https
+        ✓ Configured git protocol
+        ✓ Logged in as skipzone
+        $
 
 
