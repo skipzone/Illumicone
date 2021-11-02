@@ -186,3 +186,13 @@ scp -P 50114 some/File illumicone@127.0.0.1:
 scp -P 50114 illumicone@127.0.0.1:some/file to/local/path
 
 
+ssh directly to ic2-widpatcon2 via myEc2Instance.com jump server.
+
+ssh -J illumicone@myEc2Instance.com illumicone@127.0.0.1 -p 50114
+
+
+Transfer files directly to/from ic2-widpatcon2 via myEc2Instance.com jump server.
+
+scp -o 'ProxyJump illumicone@myEc2Instance.com' -P 50114 file... illumicone@127.0.0.1:
+scp -o 'ProxyJump illumicone@myEc2Instance.com' -P 50114 illumicone@127.0.0.1:file... to/local/path
+
