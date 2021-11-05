@@ -18,9 +18,12 @@ Widget_FourPlay            FourPlay                   15
                            TriObelisk                  6
                            Spinnah                    11
 
-Widget_Plunger             Pump                       13
+Widget_Mike                Mike #1                     7
+                           Mike #2                     6
 
 Widget_MPU6050             Rainstick                   5
+
+Widget_Plunger             Pump                       13
 
 Widget_SchroedersPlaything Schroeder's Plaything       2
 
