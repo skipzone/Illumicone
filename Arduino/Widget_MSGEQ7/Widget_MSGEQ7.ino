@@ -35,6 +35,9 @@
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 
+#define MSGEQ7_10BIT
+#include "MSGEQ7.h"
+
 #include "illumiconeWidget.h"
 
 #ifdef ENABLE_DEBUG_PRINT
@@ -61,6 +64,20 @@ enum class WidgetMode {
 #define MIKE1
 //#define MIKE2
 
+#define PIN_SOUND_DETECTED_WAKEUP 2
+#define PIN_MSGEQ7_STROBE 4
+#define PIN_MSGEQ7_VDD 5
+#define PIN_MSGEQ7_RESET 6
+#define PIN_SOUND_ACTIVE 13
+#define PIN_MSGEQ7_ANALOG A0
+
+#define SOUND_ACTIVE_LED_ON HIGH
+#define SOUND_ACTIVE_LED_OFF LOW
+
+#define SOUND_DETECTED_INTERRUPT_MODE RISING
+
+static constexpr uint8_t numMsgeq7Bands = 7;
+
 #if defined(MIKE1)
   #define WIDGET_ID 19
 #elif defined(MIKE2)
@@ -69,26 +86,34 @@ enum class WidgetMode {
 
 #define ACTIVE_TX_INTERVAL_MS 100L
 #define INACTIVE_TX_INTERVAL_MS 1000L
-#define INACTIVITY_TIMEOUT_FOR_SLEEP_MS 10000L
-//#define TX_FAILURE_LED_PIN 2
+
+//#define TX_FAILURE_LED_PIN 7
 //#define TX_FAILURE_LED_ON HIGH
 //#define TX_FAILURE_LED_OFF LOW
-
-#define SPIN_ACTIVITY_DETECT_MS 50
-#define SPIN_INACTIVITY_TIMEOUT_MS 500
-
-#define RPM_UPDATE_INTERVAL_MS 250L
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
 // every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
 // STANDBY_TX_INTERVAL_S should be a multiple of 8 between 8 and 2040, inclusive.
 #define STANDBY_TX_INTERVAL_S 64
 
+// The processor is put to sleep when sound above the activity threshold
+// hasn't been detected for inactivityTimeoutForSleepMs ms.
+static constexpr uint16_t activityDetectionThreshold = 20;
+static constexpr uint32_t inactivityTimeoutForSleepMs = 60000L;
+
+static constexpr uint32_t gatherMeasurementsIntervalMs = 25;  // 40 samples/s
+
+// moving average length for averaging the MSGEQ7's sound level measurements
+static constexpr uint8_t maLength = 20;
+
+// Use all seven frequency bands.
+static constexpr uint8_t numMaSets = numMsgeq7Bands;
+
 // ---------- radio configuration ----------
 
 // Nwdgt, where N indicates the payload type (0: stress test; 1: position
 // and velocity; 2: measurement vector; 3,4: undefined; 5: custom)
-#define TX_PIPE_ADDRESS "1wdgt"
+#define TX_PIPE_ADDRESS "2wdgt"
 
 // Set WANT_ACK to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
@@ -131,38 +156,20 @@ static WidgetMode widgetMode = WidgetMode::init;
 
 static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
 
-static PositionVelocityPayload payload;
+static CMSGEQ7<0, PIN_MSGEQ7_RESET, PIN_MSGEQ7_STROBE, PIN_MSGEQ7_ANALOG> msgeq7;   // 0 = no smoothing
 
-static bool g_anyEncoderActive;
-static bool g_encoderActive[NUM_ENCODERS];
-static volatile uint8_t g_lastPortCEncoderStates;
-static volatile uint8_t g_lastPortDEncoderStates;
-static volatile int g_encoderValues[NUM_ENCODERS];
-static uint32_t g_encoderRpms[NUM_ENCODERS];
+static MeasurementVectorPayload payload;
 
-static const int8_t g_greyCodeToEncoderStepMap[] = {
-       // last this
-   0,  //  00   00
-  -1,  //  00   01
-   1,  //  00   10
-   0,  //  00   11
-   1,  //  01   00
-   0,  //  01   01
-   0,  //  01   10
-  -1,  //  01   11
-  -1,  //  10   00
-   0,  //  10   01
-   0,  //  10   10
-   1,  //  10   11
-   0,  //  11   00
-   1,  //  11   01
-  -1,  //  11   10
-   0,  //  11   11
-};
+static int16_t maValues[numMaSets][maLength];
+static int32_t maSums[numMaSets];
+static uint8_t maNextSlotIdx[numMaSets];
+static bool maSetFull[numMaSets];
 
-static volatile uint8_t g_pincEncoderStates;
+static bool anyBandIsActive;
 
-static volatile bool gotPinInterrupt;
+static volatile bool gotSoundDetectedWakeupInterrupt;
+
+static int32_t nextGatherMeasurementsMs;
 
 static int32_t nextTxMs;
 static uint32_t txInterval;
@@ -176,14 +183,6 @@ static uint8_t stayAwakeCountdown;
  * Implementation *
  ******************/
 
-void setUpPinChangeInterrupt(uint8_t pin)
-{
-  *digitalPinToPCMSK(pin) |= bit (digitalPinToPCMSKbit(pin));  // enable pin
-  PCIFR  |= bit (digitalPinToPCICRbit(pin)); // clear any outstanding interrupt
-  PCICR  |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
-}
-
-
 ISR(WDT_vect) {
   if (widgetMode == WidgetMode::standby) {
     sleep_disable();
@@ -191,65 +190,25 @@ ISR(WDT_vect) {
 }
 
 
-// Service pin change interrupt for D0 - D7.
-ISR(PCINT2_vect)
+// TODO:  Use a comparator to generate an interrupt when sound is detected.
+
+void handleSoundDetectedWakeupInterrupt()
 {
-  gotPinInterrupt = true;
-
-  uint8_t encoderStates = PIND >> 2;
-  uint8_t curStates = encoderStates;
-  uint8_t lastStates = g_lastPortDEncoderStates;
-
   if (widgetMode == WidgetMode::standby) {
     sleep_disable();
-    return;
   }
-
-  for (uint8_t i = 0; i < 3; ++i) {  // TODO: replace magic number 3
-    uint8_t idx = ((lastStates & 0b11) << 2) | (curStates & 0b11);
-    g_encoderValues[i] += g_greyCodeToEncoderStepMap[idx];
-    curStates >>= 2;
-    lastStates >>= 2;
-  }
-
-  g_lastPortDEncoderStates = encoderStates;
-}
-
-
-// Service pin change interrupt for A0 - A5.
-ISR(PCINT1_vect)
-{
-  gotPinInterrupt = true;
-
-  uint8_t encoderStates = PINC;
-  uint8_t curStates = encoderStates;
-  uint8_t lastStates = g_lastPortCEncoderStates;
-
-  if (widgetMode == WidgetMode::standby) {
-    sleep_disable();
-    return;
-  }
-
-#ifdef ENABLE_DEBUG_PRINT
-  g_pincEncoderStates = encoderStates;
-#endif
-
-  for (uint8_t i = 3; i < 4; ++i) {  // TODO: replace magic number for range
-    uint8_t idx = ((lastStates & 0b11) << 2) | (curStates & 0b11);
-    g_encoderValues[i] += g_greyCodeToEncoderStepMap[idx];
-    curStates >>= 2;
-    lastStates >>= 2;
-  }
-
-  g_lastPortCEncoderStates = encoderStates;
+  gotSoundDetectedWakeupInterrupt = true;
 }
 
 
 bool widgetWake()
 {
+  // Returns true if the widget should stay awake
+  // or false if it should continue to sleep.
+
   uint32_t now = millis();
 
-  if (!gotPinInterrupt) {
+  if (!gotSoundDetectedWakeupInterrupt) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("Woken up by watchdog."));
 #endif
@@ -261,7 +220,7 @@ bool widgetWake()
     return false;
   }
 
-  gotPinInterrupt = false;
+  gotSoundDetectedWakeupInterrupt = false;
 
 #ifdef ENABLE_DEBUG_PRINT
   Serial.println(F("Woken up by pin interrupt."));
@@ -271,6 +230,7 @@ bool widgetWake()
   // Time in this little world has stood still while time in the default
   // world marched on, so we need transmit and gather data ASAP.
   nextTxMs = now;
+  nextGatherMeasurementsMs = now;
   lastActiveMs = now;
 
   return true;
@@ -283,12 +243,12 @@ void widgetSleep()
   // and we don't want the ISR to disable sleep before we go to sleep.
   noInterrupts();
 
-  gotPinInterrupt = false;
+  gotSoundDetectedWakeupInterrupt = false;
 
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
 
-  // The interrupt is already attached because it is the interrupt the IMU uses.
+  // The sound-detected wakeup interrupt is already attached.
 
   // Turn off brown-out enable in software.  BODS must be set to
   // one and BODSE must be set to zero within four clock cycles.
@@ -316,6 +276,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Widget mode changing to standby."));
 #endif
+      digitalWrite(PIN_MSGEQ7_VDD, LOW);    // Turn off the MSGEQ7.
       wdt_reset();
       stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
       stayAwake = false;
@@ -324,6 +285,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
         widgetSleep();
         stayAwake = widgetWake();
       }
+      digitalWrite(PIN_MSGEQ7_VDD, HIGH);   // Turn on the MSGEQ7.
       widgetMode = WidgetMode::inactive;
       break;
 
@@ -360,6 +322,79 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
 }
 
 
+void clearMovingAverages()
+{
+  for (uint8_t i = 0; i < numMaSets; ++i) {
+    for (uint8_t j = 0; j < maLength; ++j) {
+      maValues[i][j] = 0;
+    }
+    maSums[i] = 0;
+    maNextSlotIdx[i] = 0;
+    maSetFull[i] = false;
+  }
+}
+
+
+void updateMovingAverage(uint8_t setIdx, int16_t newValue)
+{
+  maSums[setIdx] -= maValues[setIdx][maNextSlotIdx[setIdx]];
+  maSums[setIdx] += newValue;
+  maValues[setIdx][maNextSlotIdx[setIdx]] = newValue;
+
+  ++maNextSlotIdx[setIdx];
+  if (maNextSlotIdx[setIdx] >= maLength) {
+     maSetFull[setIdx] = true;
+     maNextSlotIdx[setIdx] = 0;
+  }
+}
+
+
+int16_t getMovingAverage(uint8_t setIdx)
+{
+  int32_t avg;
+  if (maSetFull[setIdx]) {
+    avg = maSums[setIdx] / (int32_t) maLength;
+  }
+  else {
+    avg = maNextSlotIdx[setIdx] > 0 ? (int32_t) maSums[setIdx] / (int32_t) maNextSlotIdx[setIdx] : 0;
+  }
+
+//#ifdef ENABLE_DEBUG_PRINT
+//  Serial.print("getMovingAverage(");
+//  Serial.print(setIdx);
+//  Serial.print("):  ");
+//  for (uint8_t i = 0; i < (maSetFull[setIdx] ? maLength : maNextSlotIdx[setIdx]); ++i) {
+//    Serial.print(i);
+//    Serial.print(":");
+//    Serial.print(maValues[setIdx][i]);
+//    Serial.print("  ");
+//  }
+//  Serial.print(maSums[setIdx]);
+//  Serial.print("  ");
+//  Serial.println(avg);
+//#endif
+
+  return avg;
+}
+
+
+bool detectMovingAverageChange(uint8_t setIdx, int16_t threshold)
+{
+  uint8_t latestSlotIdx;
+  if (maNextSlotIdx[setIdx] == 0) {
+    if (!maSetFull[setIdx]) {
+      return false;
+    }
+    latestSlotIdx = maLength - 1;
+  }
+  else {
+    latestSlotIdx = maNextSlotIdx[setIdx] - 1;
+  }
+  int16_t diff = maValues[setIdx][maNextSlotIdx[setIdx]] - maValues[setIdx][latestSlotIdx];
+  return abs(diff) > threshold ? true : false;
+}
+
+
 void setup()
 {
 #ifdef ENABLE_DEBUG_PRINT
@@ -367,44 +402,25 @@ void setup()
   printf_begin();
 #endif
 
+#ifdef PIN_SOUND_DETECTED_WAKEUP 
+  pinMode(PIN_SOUND_DETECTED_WAKEUP, INPUT);
+#endif
+
 #ifdef TX_FAILURE_LED_PIN
   pinMode(TX_FAILURE_LED_PIN, OUTPUT);
   digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
 #endif
 
-#ifdef ENCODER_0_A_PIN
-  pinMode(ENCODER_0_A_PIN, INPUT);
-  pinMode(ENCODER_0_B_PIN, INPUT);
-  digitalWrite(ENCODER_0_A_PIN, HIGH);
-  digitalWrite(ENCODER_0_B_PIN, HIGH);
-#endif
-#ifdef ENCODER_1_A_PIN
-  pinMode(ENCODER_1_A_PIN, INPUT);
-  pinMode(ENCODER_1_B_PIN, INPUT);
-  digitalWrite(ENCODER_1_A_PIN, HIGH);
-  digitalWrite(ENCODER_1_B_PIN, HIGH);
-#endif
-#ifdef ENCODER_2_A_PIN
-  pinMode(ENCODER_2_A_PIN, INPUT);
-  pinMode(ENCODER_2_B_PIN, INPUT);
-  digitalWrite(ENCODER_2_A_PIN, HIGH);
-  digitalWrite(ENCODER_2_B_PIN, HIGH);
-#endif
-#ifdef ENCODER_3_A_PIN
-  pinMode(ENCODER_3_A_PIN, INPUT);
-  pinMode(ENCODER_3_B_PIN, INPUT);
-  digitalWrite(ENCODER_3_A_PIN, HIGH);
-  digitalWrite(ENCODER_3_B_PIN, HIGH);
-#endif
+  msgeq7.begin();
 
-  // Initially, turn on power to the encoders and set the active indicator low.
-#ifdef ENCODERS_VDD_PIN
-  pinMode(ENCODERS_VDD_PIN, OUTPUT);
-  digitalWrite(ENCODERS_VDD_PIN, HIGH);
+  // Initially, turn on power to the MSGEQ7, and turn off the activity indicator.
+#ifdef PIN_MSGEQ7_VDD
+  pinMode(PIN_MSGEQ7_VDD, OUTPUT);
+  digitalWrite(PIN_MSGEQ7_VDD, HIGH);
 #endif
-#ifdef ENCODER_ACTIVE_PIN
-  pinMode(ENCODER_ACTIVE_PIN, OUTPUT);
-  digitalWrite(ENCODER_ACTIVE_PIN, LOW);
+#ifdef PIN_SOUND_ACTIVE
+  pinMode(PIN_SOUND_ACTIVE, OUTPUT);
+  digitalWrite(PIN_SOUND_ACTIVE, SOUND_ACTIVE_LED_OFF);
 #endif
 
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
@@ -421,30 +437,16 @@ void setup()
 
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
+  payload.widgetHeader.channel = 0;
 
-  g_anyEncoderActive = false;
-  for (uint8_t i = 0; i < NUM_ENCODERS; ++i) {
-    g_encoderValues[i] = 0;
-    g_encoderActive[i] = false;
-  }
+  anyBandIsActivanyBandIsActive = false;
 
   // Set up and turn on the pin-change interrupts last.
-#ifdef ENCODER_0_A_PIN
-  setUpPinChangeInterrupt(ENCODER_0_A_PIN);
-  setUpPinChangeInterrupt(ENCODER_0_B_PIN);
-#endif
-#ifdef ENCODER_1_A_PIN
-  setUpPinChangeInterrupt(ENCODER_1_A_PIN);
-  setUpPinChangeInterrupt(ENCODER_1_B_PIN);
-#endif
-#ifdef ENCODER_2_A_PIN
-  setUpPinChangeInterrupt(ENCODER_2_A_PIN);
-  setUpPinChangeInterrupt(ENCODER_2_B_PIN);
-#endif
-#ifdef ENCODER_3_A_PIN
-  setUpPinChangeInterrupt(ENCODER_3_A_PIN);
-  setUpPinChangeInterrupt(ENCODER_3_B_PIN);
-#endif
+#ifdef PIN_SOUND_DETECTED_WAKEUP
+  pinMode(PIN_SOUND_DETECTED_WAKEUP, INPUT);
+  //digitalWrite(PIN_SOUND_DETECTED_WAKEUP, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIN_SOUND_DETECTED_WAKEUP), handleSoundDetectedWakeupInterrupt, SOUND_DETECTED_INTERRUPT_MODE);
+#endif  
 
   setWidgetMode(WidgetMode::inactive, millis());
 }
@@ -452,134 +454,69 @@ void setup()
 
 void gatherMeasurements(uint32_t now)
 {
-  static int32_t lastEncoderValues[NUM_ENCODERS];
-  static uint32_t lastEncoderInactiveMs[NUM_ENCODERS];
-  static uint32_t lastEncoderChangeMs[NUM_ENCODERS];
+  msgeq7.reset();
+  MSGEQ7.read();
 
-  for (int i = 0; i < NUM_ENCODERS; ++i) {
-    bool encoderChanged = false;
-    int thisEncoderValue = g_encoderValues[i];
-    if (thisEncoderValue != lastEncoderValues[i]) {
-      encoderChanged = true;
-      lastEncoderValues[i] = thisEncoderValue;
-      lastEncoderChangeMs[i] = now;
-    }
-
-    if (!g_encoderActive[i]) {
-      if (!encoderChanged && now - lastEncoderChangeMs[i] > SPIN_INACTIVITY_TIMEOUT_MS) {
-        lastEncoderInactiveMs[i] = now;
-      }
-      else {
-        if (now - lastEncoderInactiveMs[i] > SPIN_ACTIVITY_DETECT_MS) {
-          g_encoderActive[i] = true;
-          lastEncoderValues[i] = g_encoderValues[i];
-        }
-      }
-    }
-    else {
-      if (!encoderChanged) {
-        if (now - lastEncoderChangeMs[i] > SPIN_INACTIVITY_TIMEOUT_MS) {
-          g_encoderActive[i] = false;
-          lastEncoderChangeMs[i] = 0;
-        }
-      }
+  anyBandIsActive = false;
+  for (int i = 0; i < numMsgeq7Bands; ++i) {
+    updateMovingAverage(i, msgeq7.get(i));
+    if (getMovingAverage(i) > activityDetectionThreshold) {
+      anyBandIsActive = true;
     }
   }
 
-  g_anyEncoderActive = false;
-  for (int i = 0; i < NUM_ENCODERS; ++i) {
-    if (g_encoderActive[i]) {
-      g_anyEncoderActive = true;
-      break;
-    }
-  }
-#ifdef ENCODER_ACTIVE_PIN
-  digitalWrite(ENCODER_ACTIVE_PIN, g_anyEncoderActive);
+#ifdef PIN_SOUND_ACTIVE
+  digitalWrite(PIN_SOUND_ACTIVE, anyBandIsActive ? SOUND_ACTIVE_LED_ON : SOUND_ACTIVE_LED_OFF);
 #endif
-  if (g_anyEncoderActive) {
+
+  if (anyBandIsActive) {
     lastActiveMs = now;
     if (widgetMode == WidgetMode::inactive) {
       setWidgetMode(WidgetMode::active, now);
     }
   }
-  else if (!g_anyEncoderActive && widgetMode == WidgetMode::active) {
+  else if (!anyBandIsActive && widgetMode == WidgetMode::active) {
     setWidgetMode(WidgetMode::inactive, now);
   }
-
-
-#ifdef ENABLE_DEBUG_PRINT
-//  for (int i = 0; i < NUM_ENCODERS; ++i) {
-//    Serial.print(i);
-//    Serial.print(",");
-//    Serial.print(g_encoderActive[i]);
-//    Serial.print(",");
-//    Serial.print(g_encoderValues[i]);
-//    Serial.print(",");
-//    Serial.println(g_encoderRpms[i]);
-//  }
-#endif
 
 }
 
 
 void sendMeasurements(uint32_t now)
 {
-  static int32_t lastEncoderValues[NUM_ENCODERS];
-  static uint32_t lastRpmUpdateMs[NUM_ENCODERS];
-  static int32_t encoderSteps[NUM_ENCODERS];
-  static int16_t encoderRpms[NUM_ENCODERS];
-
-  for (int i = 0; i < NUM_ENCODERS; ++i) {
-
-    // TODO:  change this crap to use a moving average
-    if (g_encoderActive[i]) {
-      encoderSteps[i] += (g_encoderValues[i] - lastEncoderValues[i]);
-      int32_t rpmIntervalMs = now - lastRpmUpdateMs[i];
-      if (rpmIntervalMs >= RPM_UPDATE_INTERVAL_MS) {
-        lastRpmUpdateMs[i] = now;
-        if (encoderSteps[i] != 0) {
-          int32_t encoderStepsPerMinute = (encoderSteps[i] * 60000L) / rpmIntervalMs;
-          encoderRpms[i] = encoderStepsPerMinute / NUM_STEPS_PER_REV;
 #ifdef ENABLE_DEBUG_PRINT
-          printf("%d: encoderSteps[i]=%ld, encoderStepsPerMinute=%ld, rpmIntervalMs=%ld, encoderRpms[i]=%d\n",
-                 i, encoderSteps[i], encoderStepsPerMinute, rpmIntervalMs, encoderRpms[i]);
+    Serial.println(F("send"));
 #endif
-          encoderSteps[i] = 0;
-        }
-        else {
-          encoderRpms[i] = 0;
-        }
-      }
-    }
-    else {
-      lastRpmUpdateMs[i] = now;
-      encoderSteps[i] = 0;
-      encoderRpms[i] = 0;
-    }
-    lastEncoderValues[i] = g_encoderValues[i];
 
-    payload.widgetHeader.channel = i;
-    payload.widgetHeader.isActive = g_encoderActive[i];
-    payload.position = g_encoderValues[i];
-    payload.velocity = encoderRpms[i];
+#ifdef TX_INDICATOR_LED_PIN
+  digitalWrite(TX_INDICATOR_LED_PIN, TX_INDICATOR_LED_ON);
+#endif
+
+  for (int i = 0; i < numMaSets; ++i) {
+    payload.measurements[i] = getMovingAverage(i);
+  }
+  payload.widgetHeader.isActive = widgetMode == WidgetMode::active;
 
 //#ifdef ENABLE_DEBUG_PRINT
-//  if (i == 2 && g_encoderActive[0]) printf("%d:  payload.position=%d, payload.velocity=%d\n", i, payload.position, payload.velocity);
+//  for (int i = 0; i < numMaSets; ++i) {
+//    Serial.print(i);
+//    Serial.print(":  ");
+//    Serial.println(payload.measurements[i]);
+//  }
 //#endif
 
-    if (!radio.write(&payload, sizeof(payload), !WANT_ACK)) {
+  if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * numMaSets, !WANT_ACK)) {
 #ifdef TX_FAILURE_LED_PIN
-      digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_ON);
+    digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_ON);
 #ifdef ENABLE_DEBUG_PRINT
-      Serial.println(F("tx failed."));
+    Serial.println(F("tx failed."));
 #endif
 #endif
-    }
-    else {
+  }
+  else {
 #ifdef TX_FAILURE_LED_PIN
-      digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
+    digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
 #endif
-    }
   }
 }
 
@@ -590,27 +527,23 @@ void loop() {
 
   uint32_t now = millis();
 
-  gatherMeasurements(now);
+  if ((int32_t) (now - nextGatherMeasurementsMs) >= 0) {
+    // TODO:  really should be nextGatherMeasurementsMs += gatherMeasurementsIntervalMs to avoid drift
+    nextGatherMeasurementsMs = now + gatherMeasurementsIntervalMs;
+    gatherMeasurements(now);
+  }
 
-//  if (now - lastTxMs >= (g_anyEncoderActive ? ACTIVE_TX_INTERVAL_MS : INACTIVE_TX_INTERVAL_MS)) {
-//
-//#ifdef ENABLE_DEBUG_PRINT
-////    printf("g_pincEncoderStates=%x\n", g_pincEncoderStates);
-//#endif
-//
-//    sendMeasurements();
-//    lastTxMs = now;
-//  }
   if ((int32_t) (now - nextTxMs) >= 0) {
+    // TODO:  really should be nextTxMs += txInterval to avoid drift
     nextTxMs = now + txInterval;
     sendMeasurements(now);
   }
 
   if (widgetMode == WidgetMode::inactive
-      && now - lastActiveMs >= INACTIVITY_TIMEOUT_FOR_SLEEP_MS)
+      && now - lastActiveMs >= inactivityTimeoutForSleepMs)
   {
 #ifdef ENABLE_DEBUG_PRINT
-    Serial.print(F("Going standby because no motion from "));
+    Serial.print(F("Going standby because no sound above activiy threshold was detected from "));
     Serial.print(lastActiveMs);
     Serial.print(F(" to "));
     Serial.println(now);
