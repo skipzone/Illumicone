@@ -281,7 +281,8 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
       stayAwake = false;
       while (!stayAwake) {
-        // widgetSleep returns after we sleep then wake up.
+        // widgetSleep sets widgetMode to standby at the appropriate
+        // point.  It returns after we sleep then wake up.
         widgetSleep();
         stayAwake = widgetWake();
       }
@@ -395,63 +396,6 @@ bool detectMovingAverageChange(uint8_t setIdx, int16_t threshold)
 }
 
 
-void setup()
-{
-#ifdef ENABLE_DEBUG_PRINT
-  Serial.begin(115200);
-  printf_begin();
-#endif
-
-#ifdef PIN_SOUND_DETECTED_WAKEUP 
-  pinMode(PIN_SOUND_DETECTED_WAKEUP, INPUT);
-#endif
-
-#ifdef TX_FAILURE_LED_PIN
-  pinMode(TX_FAILURE_LED_PIN, OUTPUT);
-  digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
-#endif
-
-  msgeq7.begin();
-
-  // Initially, turn on power to the MSGEQ7, and turn off the activity indicator.
-#ifdef PIN_MSGEQ7_VDD
-  pinMode(PIN_MSGEQ7_VDD, OUTPUT);
-  digitalWrite(PIN_MSGEQ7_VDD, HIGH);
-#endif
-#ifdef PIN_SOUND_ACTIVE
-  pinMode(PIN_SOUND_ACTIVE, OUTPUT);
-  digitalWrite(PIN_SOUND_ACTIVE, SOUND_ACTIVE_LED_OFF);
-#endif
-
-  configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
-                 TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
-                 RF_CHANNEL);
-
-  // Set the watchdog for interrupt only (no system reset) and an 8s interval.
-  // We have to turn off interrupts because the changes to the control register
-  // must be done within four clock cycles of setting WDCE (change-enable bit).
-  noInterrupts();
-  _WD_CONTROL_REG = (1 << WDCE) | (1 << WDE);
-  _WD_CONTROL_REG = (1 << WDIE) | (0 << WDE) | (1 << WDP3) | (1 << WDP0);
-  interrupts();
-
-  payload.widgetHeader.id = WIDGET_ID;
-  payload.widgetHeader.isActive = false;
-  payload.widgetHeader.channel = 0;
-
-  anyBandIsActivanyBandIsActive = false;
-
-  // Set up and turn on the pin-change interrupts last.
-#ifdef PIN_SOUND_DETECTED_WAKEUP
-  pinMode(PIN_SOUND_DETECTED_WAKEUP, INPUT);
-  //digitalWrite(PIN_SOUND_DETECTED_WAKEUP, HIGH);
-  attachInterrupt(digitalPinToInterrupt(PIN_SOUND_DETECTED_WAKEUP), handleSoundDetectedWakeupInterrupt, SOUND_DETECTED_INTERRUPT_MODE);
-#endif  
-
-  setWidgetMode(WidgetMode::inactive, millis());
-}
-
-
 void gatherMeasurements(uint32_t now)
 {
   msgeq7.reset();
@@ -518,6 +462,63 @@ void sendMeasurements(uint32_t now)
     digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
 #endif
   }
+}
+
+
+void setup()
+{
+#ifdef ENABLE_DEBUG_PRINT
+  Serial.begin(115200);
+  printf_begin();
+#endif
+
+#ifdef PIN_SOUND_DETECTED_WAKEUP
+  pinMode(PIN_SOUND_DETECTED_WAKEUP, INPUT);
+#endif
+
+#ifdef TX_FAILURE_LED_PIN
+  pinMode(TX_FAILURE_LED_PIN, OUTPUT);
+  digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
+#endif
+
+  msgeq7.begin();
+
+  // Initially, turn on power to the MSGEQ7, and turn off the activity indicator.
+#ifdef PIN_MSGEQ7_VDD
+  pinMode(PIN_MSGEQ7_VDD, OUTPUT);
+  digitalWrite(PIN_MSGEQ7_VDD, HIGH);
+#endif
+#ifdef PIN_SOUND_ACTIVE
+  pinMode(PIN_SOUND_ACTIVE, OUTPUT);
+  digitalWrite(PIN_SOUND_ACTIVE, SOUND_ACTIVE_LED_OFF);
+#endif
+
+  configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
+                 TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
+                 RF_CHANNEL);
+
+  // Set the watchdog for interrupt only (no system reset) and an 8s interval.
+  // We have to turn off interrupts because the changes to the control register
+  // must be done within four clock cycles of setting WDCE (change-enable bit).
+  noInterrupts();
+  _WD_CONTROL_REG = (1 << WDCE) | (1 << WDE);
+  _WD_CONTROL_REG = (1 << WDIE) | (0 << WDE) | (1 << WDP3) | (1 << WDP0);
+  interrupts();
+
+  payload.widgetHeader.id = WIDGET_ID;
+  payload.widgetHeader.isActive = false;
+  payload.widgetHeader.channel = 0;
+
+  anyBandIsActivanyBandIsActive = false;
+
+  // Set up and turn on the pin-change interrupts last.
+#ifdef PIN_SOUND_DETECTED_WAKEUP
+  pinMode(PIN_SOUND_DETECTED_WAKEUP, INPUT);
+  //digitalWrite(PIN_SOUND_DETECTED_WAKEUP, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIN_SOUND_DETECTED_WAKEUP), handleSoundDetectedWakeupInterrupt, SOUND_DETECTED_INTERRUPT_MODE);
+#endif
+
+  setWidgetMode(WidgetMode::inactive, millis());
 }
 
 
