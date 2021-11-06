@@ -1,28 +1,36 @@
 **** work in progress ****
 
-Set up a development system using a Raspberry Pi 4
-(updated 16 Oct. 2021)
+Set up a development system using a Raspberry Pi 4 or Zero 2 W
+(updated 6 Nov. 2021)
 
 You should be comfortable working in a terminal window.
 
 What you will need:
 
     - Raspberry Pi 4 Model B with 2 GB or 4 GB of RAM (4 GB recommended)
-    - 3-amp (minimum) power supply with USB-C connector
-    - USB-C to USB-C cable if the power supply does not have an attached cable
-      Note:  Due to a hardware design problem, the RPi 4 has a hardware bug that
-      makes it incompatible with electronically marked cables.  Older USB-C
-      cables that are for power only or USB 2.0 speeds should work ok.  See this
-      article for details and a list of compatible cables:
-      https://www.tomshardware.com/news/raspberry-pi-4-usb-c-cables-that-work,39869.html
-    - micro-HDMI-to-HDMI cable
+      or Raspberry Pi Zero 2 W (GUI apps very slow due to small, 512 MB memory,
+      but pretty good for headless use via ssh)
+    - RPi 4:
+        - 3-amp (minimum) power supply with USB-C connector
+        - USB-C to USB-C cable if the power supply does not have an attached
+          cable Note:  Due to a hardware design problem, the RPi 4 has a
+          hardware bug that makes it incompatible with electronically marked
+          cables.  Older USB-C cables that are for power only or USB 2.0 speeds
+          should work ok.  See this article for details and a list of compatible
+          cables:
+          https://www.tomshardware.com/news/raspberry-pi-4-usb-c-cables-that-work,39869.html
+        - micro-HDMI-to-HDMI cable
+    - Zero 2 W:
+        - .5-amp power supply with micro-USB connector
+        - mini-HDMI-to-HDMI cable
+        - micro-USB TO USB-A OTG adapter
+        - minimum 3-port USB hub
     - HDMI monitor
     - USB keyboard
     - USB mouse or other pointing device
-    - Wi-Fi or wired Ethernet network with Internet connection
+    - Wi-Fi or wired (RPi 4 only) Ethernet network with Internet connection
     - Ethernet cable if you will be using a wired network
     - 8 GB or larger micro-SD card, preferrably a high endurance model
-
 
 
 1.  Download Raspbian Buster with desktop from here:
@@ -102,9 +110,11 @@ What you will need:
 
 7.  Install the required and nice-to-have useful software.  Use the Add / Remove
     Software option on the raspberry -> Preferences menu.  You can use the
-    search feature to locate each package listed below.
+    search feature to locate each package listed below.  (On the Zero 2 W, the
+    package list and search updates are extremely slow.  Make sure nothing else
+    is open.  Otherwise, the system will thrash itself to death.)
 
-    Vi IMproved - enhanced vi editor - with GTK2 gui
+    Vi IMproved - enhanced vi editor - with GTK3 gui
     git (Should already be installed.)
     git-flow
     psmisc (Provides the killall utility.  May already be installed.)
@@ -208,8 +218,8 @@ What you will need:
     dragging further.  Once the Illumicone image the correct size to fit in
     the window, you can rotate it by dragging without holding the shift key.
     (One could argue that the graphics performance of gl_server is so poor as
-    to be barely usable.  But, hey, it's runing on a $55 computer, which is
-    pretty cool!)
+    to be barely usable.  But, hey, it's runing on a $55 (or $15!) computer,
+    which is pretty cool!)
 
     gl_server puts itself in the background.  Press <enter> in the terminal
     window to see a prompt again.
@@ -272,28 +282,7 @@ What you will need:
         cp -Rv ~/devl/Illumicone/Arduino/libraries/Illumicone ~/Arduino/libraries/
 
 
-=-=-=-= resume here
-
-
-19. Set up I2C.
-
-    sudo apt-get install python-smbus i2c-tools
-
-    sudo raspi-config
-        5 Interfacing Options
-        P5 I2C
-        Yes (to enable the ARM I2C interface)
-    Reboot.
-
-    Make illumicone a member of the i2c group.
-        sudo usermod -aG i2c illumicone
-    Log out and back in.
-
-    Check if I2C is working:
-        i2cdetect -y 1
-
-
-20.  Set up GitHub credentials for pushing to the Illumicone repository.
+19.  Set up GitHub credentials for pushing to the Illumicone repository.
 
     a.  Install GitHub CLI (gh).
 
@@ -323,5 +312,26 @@ What you will need:
         ✓ Configured git protocol
         ✓ Logged in as skipzone
         $
+
+
+=-=-=-= resume here
+
+
+20. Set up I2C.
+
+    sudo apt-get install python-smbus i2c-tools
+
+    sudo raspi-config
+        5 Interfacing Options
+        P5 I2C
+        Yes (to enable the ARM I2C interface)
+    Reboot.
+
+    Make illumicone a member of the i2c group.
+        sudo usermod -aG i2c illumicone
+    Log out and back in.
+
+    Check if I2C is working:
+        i2cdetect -y 1
 
 
