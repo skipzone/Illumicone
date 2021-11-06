@@ -233,13 +233,15 @@ What you will need:
     X in the upper right-hand corner of the OPC window.
 
 
-17. Install the Arduino IDE.  (Download from arduino.cc rather than installing
-    via Add / Remove Software in order to get a current version.)
+17. Install the Arduino IDE.  Download from arduino.cc rather than installing
+    via Add / Remove Software in order to get a current version.  Use the
+    32-bit version because the 64-bit version does not work, even on the RPi 4
+    and Zero 2 W.
 
     cd
-    wget -P Downloads https://downloads.arduino.cc/arduino-1.8.10-linuxarm.tar.xz
-    tar -xvf Downloads/arduino-1.8.10-linuxarm.tar.xz
-    cd arduino-1.8.10
+    wget -P Downloads https://downloads.arduino.cc/arduino-1.8.16-linuxarm.tar.xz
+    tar -xvf Downloads/arduino-1.8.16.linuxarm.tar.xz
+    cd arduino-1.8.16
     sudo ./install.sh
     cp -Rv devl/Illumicone/Arduino/libraries/Illumicone/ Arduino/libraries/
 
