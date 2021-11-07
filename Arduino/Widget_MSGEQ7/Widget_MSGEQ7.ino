@@ -68,7 +68,7 @@ enum class WidgetMode {
 #define PIN_MSGEQ7_STROBE 4
 #define PIN_MSGEQ7_VDD 5
 #define PIN_MSGEQ7_RESET 6
-#define PIN_SOUND_ACTIVE 13
+#define PIN_SOUND_ACTIVE 3
 #define PIN_MSGEQ7_ANALOG A0
 
 #define SOUND_ACTIVE_LED_ON HIGH
@@ -98,13 +98,13 @@ static constexpr uint8_t numMsgeq7Bands = 7;
 
 // The processor is put to sleep when sound above the activity threshold
 // hasn't been detected for inactivityTimeoutForSleepMs ms.
-static constexpr uint16_t activityDetectionThreshold = 20;
-static constexpr uint32_t inactivityTimeoutForSleepMs = 60000L;
+static constexpr uint16_t activityDetectionThreshold = 100;
+static constexpr uint32_t inactivityTimeoutForSleepMs = 120000L;
 
 static constexpr uint32_t gatherMeasurementsIntervalMs = 25;  // 40 samples/s
 
 // moving average length for averaging the MSGEQ7's sound level measurements
-static constexpr uint8_t maLength = 20;
+static constexpr uint8_t maLength = 2;
 
 // Use all seven frequency bands.
 static constexpr uint8_t numMaSets = numMsgeq7Bands;
@@ -164,8 +164,6 @@ static int16_t maValues[numMaSets][maLength];
 static int32_t maSums[numMaSets];
 static uint8_t maNextSlotIdx[numMaSets];
 static bool maSetFull[numMaSets];
-
-static bool anyBandIsActive;
 
 static volatile bool gotSoundDetectedWakeupInterrupt;
 
@@ -399,9 +397,9 @@ bool detectMovingAverageChange(uint8_t setIdx, int16_t threshold)
 void gatherMeasurements(uint32_t now)
 {
   msgeq7.reset();
-  MSGEQ7.read();
+  msgeq7.read();
 
-  anyBandIsActive = false;
+  bool anyBandIsActive = false;
   for (int i = 0; i < numMsgeq7Bands; ++i) {
     updateMovingAverage(i, msgeq7.get(i));
     if (getMovingAverage(i) > activityDetectionThreshold) {
@@ -509,8 +507,6 @@ void setup()
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
 
-  anyBandIsActivanyBandIsActive = false;
-
   // Set up and turn on the pin-change interrupts last.
 #ifdef PIN_SOUND_DETECTED_WAKEUP
   pinMode(PIN_SOUND_DETECTED_WAKEUP, INPUT);
@@ -554,4 +550,3 @@ void loop() {
     // When it wakes due to a pin interupt, execution eventually resumes here.
   }
 }
-
