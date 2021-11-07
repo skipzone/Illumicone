@@ -65,14 +65,20 @@ enum class WidgetMode {
 //#define MIKE2
 
 #define PIN_SOUND_DETECTED_WAKEUP 2
+#define PIN_SOUND_ACTIVE_LED 3
 #define PIN_MSGEQ7_STROBE 4
 #define PIN_MSGEQ7_VDD 5
 #define PIN_MSGEQ7_RESET 6
-#define PIN_SOUND_ACTIVE 3
+#define PIN_TX_FAILURE_LED 7
+#define PIN_RADIO_CE 9
+#define PIN_RADIO_CSN 10
+// The radio also uses SPI0 bus MOSI on 11, MISO on 12, and SCK on 13
 #define PIN_MSGEQ7_ANALOG A0
 
 #define SOUND_ACTIVE_LED_ON HIGH
 #define SOUND_ACTIVE_LED_OFF LOW
+#define TX_FAILURE_LED_ON HIGH
+#define TX_FAILURE_LED_OFF LOW
 
 #define SOUND_DETECTED_INTERRUPT_MODE RISING
 
@@ -82,14 +88,17 @@ static constexpr uint8_t numMsgeq7Bands = 7;
   #define WIDGET_ID 19
 #elif defined(MIKE2)
   #define WIDGET_ID 20
+#else
+  #error Which widget is this?!??  MIKE1 or MIKE2 is not defined.
 #endif
 
 #define ACTIVE_TX_INTERVAL_MS 100L
 #define INACTIVE_TX_INTERVAL_MS 1000L
 
-//#define TX_FAILURE_LED_PIN 7
-//#define TX_FAILURE_LED_ON HIGH
-//#define TX_FAILURE_LED_OFF LOW
+// When standby mode is enabled, the MSGEQ7 will be powered off
+// and the processor will be put to sleep after the widget has
+// been inactive for inactivityTimeoutForSleepMs ms.
+#define ENABLE_STANDBY_MODE
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
 // every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
@@ -99,7 +108,11 @@ static constexpr uint8_t numMsgeq7Bands = 7;
 // The processor is put to sleep when sound above the activity threshold
 // hasn't been detected for inactivityTimeoutForSleepMs ms.
 static constexpr uint16_t activityDetectionThreshold = 100;
-static constexpr uint32_t inactivityTimeoutForSleepMs = 120000L;
+static constexpr uint32_t inactivityTimeoutForSleepMs = 60000L;
+
+// Before changing from active to inactive mode, we'll
+// wait for the hang time after activity ceases.
+static constexpr uint32_t activityHangTimeMs = 1000L;
 
 static constexpr uint32_t gatherMeasurementsIntervalMs = 25;  // 40 samples/s
 
@@ -122,14 +135,15 @@ static constexpr uint8_t numMaSets = numMsgeq7Bands;
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for
 // TX_RETRY_DELAY_MULTIPLIER.  15 is the maximum value for TX_MAX_RETRIES.
 #define WANT_ACK true
-//#define TX_RETRY_DELAY_MULTIPLIER 0     // use widget-specific values below when getting acks
-#define TX_MAX_RETRIES 15               // use 15 when getting acks
+#define TX_MAX_RETRIES 15
 // Use these when getting acks:
 #if defined(MIKE1)
 #define TX_RETRY_DELAY_MULTIPLIER 7
 #elif defined(MIKE2)
 #define TX_RETRY_DELAY_MULTIPLIER 6
 #endif
+// Use this when not getting acks:
+//#define TX_RETRY_DELAY_MULTIPLIER 0
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
@@ -154,7 +168,7 @@ static constexpr uint8_t numMaSets = numMsgeq7Bands;
 
 static WidgetMode widgetMode = WidgetMode::init;
 
-static RF24 radio(9, 10);    // CE on pin 9, CSN on pin 10, also uses SPI bus (SCK on 13, MISO on 12, MOSI on 11)
+static RF24 radio(PIN_RADIO_CE, PIN_RADIO_CSN);   // also uses SPI0 bus (SCK on 13, MISO on 12, MOSI on 11)
 
 static CMSGEQ7<0, PIN_MSGEQ7_RESET, PIN_MSGEQ7_STROBE, PIN_MSGEQ7_ANALOG> msgeq7;   // 0 = no smoothing
 
@@ -172,7 +186,8 @@ static int32_t nextGatherMeasurementsMs;
 static int32_t nextTxMs;
 static uint32_t txInterval;
 
-static uint32_t lastActiveMs;
+static uint32_t lastActiveMs;       // when activity was last detected
+static uint32_t hangTimeEndsMs;     // when the current hang time ends; 0 means not set
 
 static uint8_t stayAwakeCountdown;
 
@@ -230,6 +245,7 @@ bool widgetWake()
   nextTxMs = now;
   nextGatherMeasurementsMs = now;
   lastActiveMs = now;
+  hangTimeEndsMs = 0;
 
   return true;
 }
@@ -274,6 +290,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Widget mode changing to standby."));
 #endif
+      digitalWrite(PIN_SOUND_ACTIVE_LED, SOUND_ACTIVE_LED_OFF);
       digitalWrite(PIN_MSGEQ7_VDD, LOW);    // Turn off the MSGEQ7.
       wdt_reset();
       stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
@@ -292,6 +309,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Widget mode changing to inactive."));
 #endif
+      digitalWrite(PIN_SOUND_ACTIVE_LED, SOUND_ACTIVE_LED_OFF);
       // The change in tx interval will become effective after the next
       // transmission, which needs to happen at the shorter active interval
       // so that the pattern controller quicly knows we've gone inactive.
@@ -303,6 +321,7 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
 #ifdef ENABLE_DEBUG_PRINT
       Serial.println(F("Widget mode changing to active."));
 #endif
+      digitalWrite(PIN_SOUND_ACTIVE_LED, SOUND_ACTIVE_LED_ON);
       txInterval = ACTIVE_TX_INTERVAL_MS;
       // The next transmission needs to be as soon as practical so that
       // the pattern controller quickly knows that we're active again.
@@ -406,21 +425,24 @@ void gatherMeasurements(uint32_t now)
       anyBandIsActive = true;
     }
   }
-
-#ifdef PIN_SOUND_ACTIVE
-  digitalWrite(PIN_SOUND_ACTIVE, anyBandIsActive ? SOUND_ACTIVE_LED_ON : SOUND_ACTIVE_LED_OFF);
-#endif
-
   if (anyBandIsActive) {
+    // Go active immediately if we're inactive.
     lastActiveMs = now;
+    hangTimeEndsMs = 0;
     if (widgetMode == WidgetMode::inactive) {
       setWidgetMode(WidgetMode::active, now);
     }
   }
-  else if (!anyBandIsActive && widgetMode == WidgetMode::active) {
-    setWidgetMode(WidgetMode::inactive, now);
+  // Activity has stopped.  Change to inactive
+  // mode at the end of the hang-time period.
+  else if (widgetMode == WidgetMode::active) {
+    if (hangTimeEndsMs == 0) {
+      hangTimeEndsMs = now + activityHangTimeMs;
+    }
+    if ((int32_t) (now - hangTimeEndsMs) >= 0) {
+      setWidgetMode(WidgetMode::inactive, now);
+    }
   }
-
 }
 
 
@@ -437,7 +459,7 @@ void sendMeasurements(uint32_t now)
   for (int i = 0; i < numMaSets; ++i) {
     payload.measurements[i] = getMovingAverage(i);
   }
-  payload.widgetHeader.isActive = widgetMode == WidgetMode::active;
+  payload.widgetHeader.isActive = (widgetMode == WidgetMode::active);
 
 //#ifdef ENABLE_DEBUG_PRINT
 //  for (int i = 0; i < numMaSets; ++i) {
@@ -448,16 +470,16 @@ void sendMeasurements(uint32_t now)
 //#endif
 
   if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * numMaSets, !WANT_ACK)) {
-#ifdef TX_FAILURE_LED_PIN
-    digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_ON);
+#ifdef PIN_TX_FAILURE_LED
+    digitalWrite(PIN_TX_FAILURE_LED, TX_FAILURE_LED_ON);
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("tx failed."));
 #endif
 #endif
   }
   else {
-#ifdef TX_FAILURE_LED_PIN
-    digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
+#ifdef PIN_TX_FAILURE_LED
+    digitalWrite(PIN_TX_FAILURE_LED, TX_FAILURE_LED_OFF);
 #endif
   }
 }
@@ -474,22 +496,22 @@ void setup()
   pinMode(PIN_SOUND_DETECTED_WAKEUP, INPUT);
 #endif
 
-#ifdef TX_FAILURE_LED_PIN
-  pinMode(TX_FAILURE_LED_PIN, OUTPUT);
-  digitalWrite(TX_FAILURE_LED_PIN, TX_FAILURE_LED_OFF);
+#ifdef PIN_SOUND_ACTIVE_LED
+  pinMode(PIN_SOUND_ACTIVE_LED, OUTPUT);
+  digitalWrite(PIN_SOUND_ACTIVE_LED, SOUND_ACTIVE_LED_OFF);
 #endif
 
-  msgeq7.begin();
+#ifdef PIN_TX_FAILURE_LED
+  pinMode(PIN_TX_FAILURE_LED, OUTPUT);
+  digitalWrite(PIN_TX_FAILURE_LED, TX_FAILURE_LED_OFF);
+#endif
 
-  // Initially, turn on power to the MSGEQ7, and turn off the activity indicator.
 #ifdef PIN_MSGEQ7_VDD
   pinMode(PIN_MSGEQ7_VDD, OUTPUT);
   digitalWrite(PIN_MSGEQ7_VDD, HIGH);
 #endif
-#ifdef PIN_SOUND_ACTIVE
-  pinMode(PIN_SOUND_ACTIVE, OUTPUT);
-  digitalWrite(PIN_SOUND_ACTIVE, SOUND_ACTIVE_LED_OFF);
-#endif
+
+  msgeq7.begin();
 
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
                  TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
@@ -504,17 +526,17 @@ void setup()
   interrupts();
 
   payload.widgetHeader.id = WIDGET_ID;
-  payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
+
+  setWidgetMode(WidgetMode::inactive, millis());
 
   // Set up and turn on the pin-change interrupts last.
 #ifdef PIN_SOUND_DETECTED_WAKEUP
   pinMode(PIN_SOUND_DETECTED_WAKEUP, INPUT);
-  //digitalWrite(PIN_SOUND_DETECTED_WAKEUP, HIGH);
-  attachInterrupt(digitalPinToInterrupt(PIN_SOUND_DETECTED_WAKEUP), handleSoundDetectedWakeupInterrupt, SOUND_DETECTED_INTERRUPT_MODE);
+  attachInterrupt(digitalPinToInterrupt(PIN_SOUND_DETECTED_WAKEUP),
+                  handleSoundDetectedWakeupInterrupt,
+                  SOUND_DETECTED_INTERRUPT_MODE);
 #endif
-
-  setWidgetMode(WidgetMode::inactive, millis());
 }
 
 
@@ -536,6 +558,7 @@ void loop() {
     sendMeasurements(now);
   }
 
+#ifdef ENABLE_STANDBY_MODE
   if (widgetMode == WidgetMode::inactive
       && now - lastActiveMs >= inactivityTimeoutForSleepMs)
   {
@@ -549,4 +572,5 @@ void loop() {
     // Setting the widget mode to standby will put the processor to sleep.
     // When it wakes due to a pin interupt, execution eventually resumes here.
   }
+#endif
 }
