@@ -2,8 +2,16 @@
 
 # icpf:  push/pull a file to/from a remote Illumicone host via a jump server.
 
+#set -x
+
 if [ $# -lt 4 ]; then
-    echo "Usage:  $0 push|pull hostname source... dest"
+    echo << EOT "
+Usage:  $0 push|pull hostname source... dest
+
+Quote filenames containing spaces or other crap characters
+rather than escaping the crap characters.
+"
+EOT
     exit 2
 fi
 
@@ -16,11 +24,14 @@ pushpull=$1
 shift
 hostname=$1
 shift
-sources=()
+##sources=()
+sourcestr=""
 while [[ $# -gt 1 ]]; do
-    sources+=($1)
+    #echo "1=+$1+"
+    sourcestr+="'$1' "
     shift
 done
+#echo "sourcestr=+$sourcestr+"
 dest=$1
 
 if [ "$pushpull" != "push" -a "$pushpull" != "pull" ]; then
@@ -38,10 +49,14 @@ if [ -z $port ] || [ -z $user ]; then
 fi
 
 if [ "$pushpull" == "push" ]; then
-    echo "Copying to $hostname via tunneling port $port at $ILLUMICONE_JUMPER..."
-    scp -o "ProxyJump $ILLUMICONE_JUMPER" -P $port ${sources[*]} $user@127.0.0.1:$dest
+    tofrom="to"
+    deststr="\"$dest"\"
+    cmd="scp -T -r -o \"ProxyJump $ILLUMICONE_JUMPER\" -P $port $sourcestr $user@127.0.0.1:\"'$dest'\""
 else
-    echo "Copying from $hostname via tunneling port $port at $ILLUMICONE_JUMPER..."
-    scp -o "ProxyJump $ILLUMICONE_JUMPER" -P $port $user@127.0.0.1:${sources[*]} $dest
+    tofrom="from"
+    cmd="scp -T -r -o \"ProxyJump $ILLUMICONE_JUMPER\" -P $port $user@127.0.0.1:\"$sourcestr\" \"$dest\""
 fi
+#echo "cmd=+${cmd}+"
 
+echo "Copying $tofrom $hostname via tunneling port $port at $ILLUMICONE_JUMPER..."
+eval $cmd
