@@ -79,6 +79,8 @@ enum class WidgetId {
     flower5,
     flower6,
     flower7,
+    mike1 = 19,
+    mike2,
     baton1 = 21,
     baton2,
     rattle1,

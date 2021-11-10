@@ -94,12 +94,13 @@ logTest: logTest.o hsv2rgb.o Log.o illumiconeUtility.o
 patternController: patternController.o AnnoyingFlashingPattern.o BatonWidget.o BellsWidget.o BoogieBoardWidget.o ConfigReader.o \
                    EyeWidget.o FillAndBurstPattern.o FlowerWidget.o FourPlay4xWidget.o HorizontalStripePattern.o \
                    IndicatorRegion.o IndicatorRegionsPattern.o LidarWidget.o Log.o MidiActivatedRegionsPattern.o \
-                   ParticlesPattern.o Pattern.o PumpWidget.o QueuedWidgetChannel.o RainbowExplosionPattern.o RainstickWidget.o \
-                   RattleWidget.o RgbStripePattern.o RgbVerticalPattern.o SchroedersPlaythingWidget.o SimpleBlockIndicator.o \
+                   MikeWidget.o ParticlesPattern.o Pattern.o PumpWidget.o QueuedWidgetChannel.o \
+                   RainbowExplosionPattern.o RainstickWidget.o RattleWidget.o RgbStripePattern.o \
+                   RgbVerticalPattern.o SchroedersPlaythingWidget.o SimpleBlockIndicator.o \
 				   SparklePattern.o SpinnahWidget.o SpinnerPattern.o SpiralPattern.o StripePattern.o \
-				   SwitchActivatedRegionsPattern.o Widget.o WidgetChannel.o WidgetId.o colorpalettes.o colorutils.o hsv2rgb.o \
-				   illumiconePixelUtility.o illumiconeUtility.o indicatorRegionFactory.o json11.o lib8tion.o patternFactory.o \
-				   widgetFactory.o
+				   SwitchActivatedRegionsPattern.o Widget.o WidgetChannel.o WidgetId.o colorpalettes.o \
+                   colorutils.o hsv2rgb.o illumiconePixelUtility.o illumiconeUtility.o \
+                   indicatorRegionFactory.o json11.o lib8tion.o patternFactory.o widgetFactory.o
 
 stringTester: stringTester.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
 
