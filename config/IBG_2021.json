@@ -33,7 +33,7 @@
         "numberOfStrings" : 48,
         "numberOfPixelsPerString" : 100,
 
-        "_include_file_schedule" : "IBG_2020_schedule.json",
+        "_include_file_schedule" : "IBG_2021_schedule.json",
         //"_include_file_schedule" : "schedule_alwaysOn.json",
 
         //"patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
@@ -45,7 +45,7 @@
         ],
 
         "patterns" : [
-            { "_include_file_patterns" : "IBG_2020_patternSet1.json" }
+            { "_include_file_patterns" : "IBG_2021_patternSet1.json" }
         ]
     }
 }
