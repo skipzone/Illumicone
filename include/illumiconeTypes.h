@@ -30,6 +30,13 @@ struct SchedulePeriod {
     time_t startTime;
     time_t endTime;
     json11::Json periodConfigObj;
+    bool operator== (const SchedulePeriod &rhs) const {
+        return this->isDaily == rhs.isDaily
+                && this->description == rhs.description
+                && this->startTime == rhs.startTime
+                && this->endTime == rhs.endTime; }
+    bool operator!= (const SchedulePeriod &rhs) const { return !(*this == rhs); }
+
 };
 
 
