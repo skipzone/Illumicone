@@ -58,7 +58,8 @@
 using namespace std;
 
 
-constexpr unsigned int reinitializationSleepIntervalS = 1;
+static const SchedulePeriod noPeriod = {false, "", 0, 0};
+static constexpr unsigned int reinitializationSleepIntervalS = 1;
 
 enum class OperatingState {
     startup,
@@ -1327,7 +1328,8 @@ int main(int argc, char **argv)
     }
     bool displayingTestPattern = false;
     time_t lastPeriodCheckTime = 0;
-    bool inPeriod = false;
+    SchedulePeriod selectedSchedulePeriod = noPeriod;
+    SchedulePeriod lastSelectedSchedulePeriod = noPeriod;
 
 /*
 //=-=-=-=-=-=-=-=-=
@@ -1366,7 +1368,8 @@ int main(int argc, char **argv)
             }
             displayingTestPattern = false;
             lastPeriodCheckTime = 0;
-            inPeriod = false;
+            selectedSchedulePeriod = noPeriod;
+            lastSelectedSchedulePeriod = noPeriod;
         }
 
         if (gotToggleTestPatternSignal) {
@@ -1394,25 +1397,30 @@ int main(int argc, char **argv)
         if (now > lastPeriodCheckTime) {
             lastPeriodCheckTime = now;
 
-            // TODO:  Log appropriate messages at both the start and end of each period.
-
-            SchedulePeriod selectedSchedulePeriod;
             if (timeIsInPeriod(now, shutoffPeriods, selectedSchedulePeriod)) {
-                inPeriod = true;
                 logOperatingState(OperatingState::shutoff, selectedSchedulePeriod.description);
                 turnOffAllPixels();
             }
             else if (timeIsInPeriod(now, quiescentPeriods, selectedSchedulePeriod)) {
-                inPeriod = true;
                 logOperatingState(OperatingState::quiescent, selectedSchedulePeriod.description);
                 setAllPixelsToQuiescentColor(selectedSchedulePeriod);
             }
             else {
-                inPeriod = false;
+                selectedSchedulePeriod = noPeriod;
+            }
+
+            if (selectedSchedulePeriod != lastSelectedSchedulePeriod) {
+                if (lastSelectedSchedulePeriod != noPeriod) {
+                    logger.logMsg(LOG_INFO, string("Leaving ") + lastSelectedSchedulePeriod.description + string(" period."));
+                }
+                if (selectedSchedulePeriod != noPeriod) {
+                    logger.logMsg(LOG_INFO, string("Entering ") + selectedSchedulePeriod.description + string(" period."));
+                }
+                lastSelectedSchedulePeriod = selectedSchedulePeriod;
             }
         }
 
-        if (!inPeriod) {
+        if (selectedSchedulePeriod == noPeriod) {
             doPatterns();
         }
     }
