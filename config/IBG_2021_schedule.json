@@ -1,9 +1,4 @@
-/*
-    This file is part of Illumicone.
-
-    Illumicone is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
+/* This file is part of Illumicone.  Illumicone is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
     Illumicone is distributed in the hope that it will be useful,
@@ -38,18 +33,27 @@ So . . .
     "shutoffPeriods" : [
         {   "description" : "nighttime",
             "startDateTime" : "21:45:00",
-            "endDateTime" : "08:00:00"
+            //"endDateTime" : "08:00:00"
+            "endDateTime" : "17:00:00"
         },
-        {   "description" : "closed Monday 22 Nov. before event opening",
-            "startDateTime" : "2021-11-22 17:00:00",
+        {   "description" : "closed Saturday 20 Nov. before event opening",
+            "startDateTime" : "2021-11-20 17:00:00",
+            "endDateTime" : "2021-11-20 21:45:00"
+        },
+        {   "description" : "closed Sunday 21 Nov. before event opening",
+            "startDateTime" : "2021-11-21 17:00:00",
+            "endDateTime" : "2021-11-21 21:45:00"
+        },
+        {   "description" : "short evening on Monday 22 Nov. before event opening",
+            "startDateTime" : "2021-11-22 20:15:00",
             "endDateTime" : "2021-11-22 21:45:00"
         },
         {   "description" : "short evening on Tuesday 23 Nov. before event opening",
-            "startDateTime" : "2021-11-23 19:45:00",
+            "startDateTime" : "2021-11-23 20:15:00",
             "endDateTime" : "2021-11-23 21:45:00"
         },
-        {   "description" : "short evening on Wednesday 24 Nov. before event opening",
-            "startDateTime" : "2021-11-24 19:45:00",
+        {   "description" : "closed Wednesday 24 Nov. before event opening",
+            "startDateTime" : "2021-11-24 17:00:00",
             "endDateTime" : "2021-11-24 21:45:00"
         },
         {   "description" : "closed Monday 29 Nov.",
@@ -103,24 +107,24 @@ So . . .
     ],
 
     "quiescentPeriods" : [
-        {   "description" : "daytime dry-out",
-            "startDateTime" : "08:00:00",
-            "endDateTime" : "17:00:00",
-            "quiescentColor" : "192,192,192"
-        },
+        //{   "description" : "daytime dry-out",
+        //    "startDateTime" : "08:00:00",
+        //    "endDateTime" : "17:00:00",
+        //    "quiescentColor" : "192,192,192"
+        //},
         {   "description" : "go home",
             "startDateTime" : "21:30:00",
             "endDateTime" : "21:45:00",
             "quiescentColor" : "navy"
         },
-        {   "description" : "go home - short evening on Tuesday 23 Nov. before event opening",
-            "startDateTime" : "2021-11-23 19:30:00",
-            "endDateTime" : "2021-11-24 19:45:00",
+        {   "description" : "go home - short evening on Monday 22 Nov. before event opening",
+            "startDateTime" : "2021-11-22 20:00:00",
+            "endDateTime" : "2021-11-22 20:15:00",
             "quiescentColor" : "navy"
         },
-        {   "description" : "go home - short evening on Wednesday 24 Nov. before event opening",
-            "startDateTime" : "2021-11-24 19:30:00",
-            "endDateTime" : "2021-11-25 19:45:00",
+        {   "description" : "go home - short evening on Tuesday 23 Nov. before event opening",
+            "startDateTime" : "2021-11-23 20:00:00",
+            "endDateTime" : "2021-11-23 20:15:00",
             "quiescentColor" : "navy"
         }
     ]
