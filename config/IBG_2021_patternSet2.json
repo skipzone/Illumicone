@@ -19,9 +19,19 @@
     "patterns" : [
         { "_include_file_stripes" : "patterns/stripes_Flower1_Flower2_Flower3.json" },
         { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower4_Flower5_Flower6.json" },
-        { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower7.json" }
-        //{ "_include_file_redGreenGoldSparkle_mike1" : "patterns/sparkleRedGreenGold_Mike1.json" },
-        //{ "_include_file_carwashMike2" : "patterns/carwash_Mike2.json" }
+        { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower7.json" },
+
+        { "_include_file_blueSparkle_mike1" : "patterns/sparkleBlue_Mike1.json" },
+        { "_include_file_redSparkle_mike1" : "patterns/sparkleRed_Mike1.json" },
+        { "_include_file_greenSparkle_mike1" : "patterns/sparkleGreen_Mike1.json" },
+        { "_include_file_goldSparkle_mike1" : "patterns/sparkleGold_Mike1.json" },
+        { "_include_file_whiteSparkle_mike1" : "patterns/sparkleWhite_Mike1.json" },
+
+        { "_include_file_rainBlue_mike2" : "patterns/rainBlue_Mike2.json" },
+        { "_include_file_rainGreen_mike2" : "patterns/rainGreen_Mike2.json" },
+        { "_include_file_sprayAqua_mike2" : "patterns/sprayAqua_Mike2.json" },
+        { "_include_file_sprayMagenta_mike2" : "patterns/sprayMagenta_Mike2.json" },
+        { "_include_file_sprayYellow_mike2" : "patterns/sprayYellow_Mike2.json" }
     ]
 }
 
