@@ -15,23 +15,13 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "multicolorSparkle_Flower3",
-    "enabled" : true,
-    "priority" : 7,
-    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-    "patternClassName" : "SparklePattern",
-    "inputs" : [
-        {   "inputName" : "density",
-            "widgetName" : "flower3",
-            "channelNumber" : 5,
-            "measurement" : "velocity"
-        }
-    ],
-    "activationThreshold" : 1,
-    "deactivationThreshold" : 99999,
-    "numGoodMeasurementsForReactivation" : 1,
-    "densityScaledownFactor" : 1000,
-    "useRandomColors" : true,
-    "sparkleChangeIntervalMs" : 50
+{
+    "patterns" : [
+        { "_include_file_stripes" : "patterns/stripes_Flower1_Flower2_Flower3.json" },
+        { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower4_Flower5_Flower6.json" },
+        { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower7.json" }
+        //{ "_include_file_redGreenGoldSparkle_mike1" : "patterns/sparkleRedGreenGold_Mike1.json" },
+        //{ "_include_file_carwashMike2" : "patterns/carwash_Mike2.json" }
+    ]
 }
 

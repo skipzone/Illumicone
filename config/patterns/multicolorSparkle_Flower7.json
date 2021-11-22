@@ -15,14 +15,14 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "multicolorSparkle_Flower3",
+{   "name" : "multicolorSparkle_Flower7",
     "enabled" : true,
     "priority" : 7,
     "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "SparklePattern",
     "inputs" : [
         {   "inputName" : "density",
-            "widgetName" : "flower3",
+            "widgetName" : "flower7",
             "channelNumber" : 5,
             "measurement" : "velocity"
         }
