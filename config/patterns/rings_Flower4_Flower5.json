@@ -15,95 +15,33 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "stripes_Flower1_Flower2",
+{   "name" : "rings_Flower4_Flower5",
     "enabled" : true,
-    "priority" : 3,
-    "opacity" : 100,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "priority" : 2,
+    "opacity" : 80,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "StripePattern",
     "inputs" : [
         {   "inputName" : "position",
-            "widgetName" : "flower1",
+            "widgetName" : "flower4",
             "channelNumber" : 0,
             "measurement" : "position"
         },
+        //{   "inputName" : "width",
+        //    "widgetName" : "flower6",
+        //    "channelNumber" : 0,
+        //    "measurement" : "position"
+        //},
         {   "inputName" : "hue",
-            "widgetName" : "flower2",
+            "widgetName" : "flower5",
             "channelNumber" : 0,
             "measurement" : "position"
         }
         //{   "inputName" : "saturation",
-        //    "widgetName" : "flower2",
+        //    "widgetName" : "flower6",
         //    "channelNumber" : 0,
         //    "measurement" : "position"
         //}
     ],
-
-    "positionMeasurementMapper" : [
-        {   "rawMin" : 0,
-            "rawMax" : 3599,
-            "mappedStart" : 0,
-            "mappedEnd" : 47 
-        }
-    ],
-    "hueMeasurementMapper" : [
-        {   "rawMin" : 0,
-            "rawMax" : 899,
-            "mappedStart" : 64.0,
-            "mappedEnd" : 255.0
-        },
-        {   "rawMin" : 900,
-            "rawMax" : 1799,
-            "mappedStart" : 64.0,
-            "mappedEnd" : 255.0
-        },
-        {   "rawMin" : 1800,
-            "rawMax" : 2699,
-            "mappedStart" : 64.0,
-            "mappedEnd" : 255.0
-        },
-        {   "rawMin" : 2700,
-            "rawMax" : 3599,
-            "mappedStart" : 64.0,
-            "mappedEnd" : 255.0
-        }
-    ],
-    "saturationMeasurementMapper" : [
-        {   "rawMin" : 0,
-            "rawMax" : 3599,
-            "mappedStart" : 0.9,
-            "mappedEnd" : 255.0
-        }
-    ],
-
-    "isHorizontal" : false,
-    "virtualPixelRatio" : 1,           // 75 * 48 strings = 3600; flower rotation measurements are [0, 3600)
-    "numStripes" : 4,
-    "minSidebandWidth" : 2,           // min should be equal to or greater than virtualPixelRatio
-    "maxSidebandWidth" : 2,           // sideband widths are in the context of virtual pixels
-
-    "startingHue" : 64,
-    "endingHue" : 255,
-    "hueFoldbackPct" : 0,
-    "hueRepeat" : 3,
-
-    "startingSaturation" : 255.0,
-    "endingSaturation" : 64.0,
-    "saturationFoldbackPct" : 0.0,
-    "saturationRepeat" : 3,
-
-    "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
-
-    "stripeCenterValue" : 255           // the hsv value at the center of the stripe
-
-}
-
-
-/********** virtual pixels **********
-        {   "inputName" : "width",
-            "widgetName" : "flower2",
-            "channelNumber" : 0,
-            "measurement" : "position"
-        },
 
     "positionMeasurementMapper" : [
         {   "rawMin" : 0,
@@ -115,18 +53,78 @@
     "widthMeasurementMapper" : [
         {   "rawMin" : 0,
             "rawMax" : 1799,
-            "mappedStart" : 150,
-            "mappedEnd" : 450
+            "mappedStart" : 144,
+            "mappedEnd" : 288
         },
         {   "rawMin" : 1800,
             "rawMax" : 3599,
-            "mappedStart" : 450,
-            "mappedEnd" : 150
+            "mappedStart" : 288,
+            "mappedEnd" : 144
+        }
+    ],
+    "hueMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 899,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 900,
+            "rawMax" : 1799,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 1800,
+            "rawMax" : 2699,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 2700,
+            "rawMax" : 3599,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        }
+    ],
+    "saturationMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 899,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        },
+        {   "rawMin" : 900,
+            "rawMax" : 1799,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        },
+        {   "rawMin" : 1800,
+            "rawMax" : 2699,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        },
+        {   "rawMin" : 2700,
+            "rawMax" : 3599,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
         }
     ],
 
-    "virtualPixelRatio" : 75,           // 75 * 48 strings = 3600; flower rotation measurements are [0, 3600)
-    "minSidebandWidth" : 150,           // min should be equal to or greater than virtualPixelRatio
-    "maxSidebandWidth" : 150,           // sideband widths are in the context of virtual pixels
-****************************************/
+    "isHorizontal" : true,
+    "virtualPixelRatio" : 36,           // 36 * 100 pixels per string = 3600; flower rotation measurements are [0, 3600)
+    "numStripes" : 3,
+    "minSidebandWidth" : 288,           // min should be equal to or greater than virtualPixelRatio
+    "maxSidebandWidth" : 288,           // sideband widths are in the context of virtual pixels
+
+    "startingHue" : 0,
+    "endingHue" : 255,
+    "hueFoldbackPct" : 0,
+    "hueRepeat" : 4,
+
+    "startingSaturation" : 255.0,
+    "endingSaturation" : 255.0,
+    "saturationFoldbackPct" : 0.0,
+    "saturationRepeat" : 1,
+
+    "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
+
+    "stripeCenterValue" : 255           // the hsv value at the center of the stripe
+}
 

@@ -7,13 +7,13 @@ Flower1   vertical stripes position
 
 Flower2   vertical stripes hue
 
-Flower3   multicolor sparkle (set 1) vertical stripes saturation (set 2)
+Flower3   multicolor sparkle (set 1), vertical stripes saturation (set 2)
 
 Flower4   horizontal rings position
 
 Flower5   horizontal rings hue
 
-Flower6   horizontal rings saturation
+Flower6   magenta/aqua sparkle (set 1), horizontal rings saturation
 
 Flower7   multicolor sparkle (set 2)
 
@@ -37,9 +37,11 @@ four vertical stripes   position:    Flower1/0  use stripes_Flower1_Flower2
 four horizonal rings    position:    Flower4/0  base on rings_Flower6_Flower4 from Illumibrate 2020
                         width:      (constant)
                         hue:         Flower5/0
-                        saturation:  Flower6/0  saturation will need an auto reset like width
+                        saturation: (constant)
 
 multicolor sparkle      density:     Flower3/5  use multicolorSparkle_Flower3
+
+magenta/aqua sparkle    density:     Flower6/5  clone sparkleMagentaAqua_Flower4
 
 red sparkle             density:       Mike1/2
 green sparkle           density:       Mike1/3
