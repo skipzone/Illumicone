@@ -43,8 +43,8 @@ constexpr int maxWidgets = 32;
  * 16:  flower #6
  * 17:  flower #7
  * 18:  unassigned
- * 19:  unassigned
- * 20:  unassigned
+ * 19:  Mike #1
+ * 20:  Mike #2
  * 21:  Baton #1
  * 22:  Baton #2
  * 23:  Rattle #1
@@ -79,6 +79,8 @@ enum class WidgetId {
     flower5,
     flower6,
     flower7,
+    mike1 = 19,
+    mike2,
     baton1 = 21,
     baton2,
     rattle1,
