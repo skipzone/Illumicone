@@ -33,8 +33,10 @@ So . . .
     "shutoffPeriods" : [
         {   "description" : "nighttime",
             "startDateTime" : "21:45:00",
-            //"endDateTime" : "08:00:00"
-            "endDateTime" : "17:00:00"
+            // Use the following line when daytime dryout is enabled.
+            "endDateTime" : "08:00:00"
+            // Use the following line when daytime dryout is disabled.
+            //"endDateTime" : "17:00:00"
         },
         {   "description" : "closed Saturday 20 Nov. before event opening",
             "startDateTime" : "2021-11-20 17:00:00",
@@ -107,11 +109,11 @@ So . . .
     ],
 
     "quiescentPeriods" : [
-        //{   "description" : "daytime dry-out",
-        //    "startDateTime" : "08:00:00",
-        //    "endDateTime" : "17:00:00",
-        //    "quiescentColor" : "192,192,192"
-        //},
+        {   "description" : "daytime dry-out",
+            "startDateTime" : "08:00:00",
+            "endDateTime" : "17:00:00",
+            "quiescentColor" : "192,192,192"
+        },
         {   "description" : "go home",
             "startDateTime" : "21:30:00",
             "endDateTime" : "21:45:00",
