@@ -78,8 +78,8 @@
     "isHorizontal" : false,
     "virtualPixelRatio" : 1,           // 75 * 48 strings = 3600; flower rotation measurements are [0, 3600)
     "numStripes" : 4,
-    "minSidebandWidth" : 2,           // min should be equal to or greater than virtualPixelRatio
-    "maxSidebandWidth" : 2,           // sideband widths are in the context of virtual pixels
+    "minSidebandWidth" : 4,           // min should be equal to or greater than virtualPixelRatio
+    "maxSidebandWidth" : 4,           // sideband widths are in the context of virtual pixels
 
     "startingHue" : 64,
     "endingHue" : 255,
