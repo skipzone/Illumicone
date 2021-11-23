@@ -44,7 +44,7 @@
 //#define BATON1
 //#define BATON2
 //#define BOOGIEBOARD
-//#define FLOWER1
+#define FLOWER1
 //#define FLOWER2
 //#define FLOWER3
 //#define FLOWER4
@@ -55,7 +55,7 @@
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
 //#define RAINSTICK
-#define RATTLE1
+//#define RATTLE1
 //#define RATTLE2
 
 #if defined(BATON1) || defined(BATON2)
@@ -397,40 +397,24 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #if defined(FLOWER1)
   #define ACTIVE_TX_INTERVAL_MS 31L
   #define INACTIVE_TX_INTERVAL_MS 3001L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER2)
   #define ACTIVE_TX_INTERVAL_MS 32L
   #define INACTIVE_TX_INTERVAL_MS 3002L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER3)
   #define ACTIVE_TX_INTERVAL_MS 33L
   #define INACTIVE_TX_INTERVAL_MS 3003L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER4)
   #define ACTIVE_TX_INTERVAL_MS 34L
   #define INACTIVE_TX_INTERVAL_MS 3004L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER5)
   #define ACTIVE_TX_INTERVAL_MS 35L
   #define INACTIVE_TX_INTERVAL_MS 3005L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER6)
   #define ACTIVE_TX_INTERVAL_MS 36L
   #define INACTIVE_TX_INTERVAL_MS 3006L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER7)
-  // Flower7 is in the Fluf Haven at Illumibrate 2020, where it is doing pattern selection duty.
-  //#define ACTIVE_TX_INTERVAL_MS 37L
-  #define ACTIVE_TX_INTERVAL_MS 250L
+  #define ACTIVE_TX_INTERVAL_MS 37L
   #define INACTIVE_TX_INTERVAL_MS 3007L
-  #define RF_CHANNEL 80
-  #define DATA_RATE RF24_250KBPS
 #else
   #error No tx intervals defined for this flower.
 #endif
@@ -489,13 +473,27 @@ static constexpr uint8_t numMaSets = 7;
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
-#define WANT_ACK false
-#define TX_RETRY_DELAY_MULTIPLIER 0
-#define TX_MAX_RETRIES 0
+#define WANT_ACK true
+#define TX_MAX_RETRIES 15
+#if defined(FLOWER1)
+  #define TX_RETRY_DELAY_MULTIPLIER 9
+#elif defined(FLOWER2)
+  #define TX_RETRY_DELAY_MULTIPLIER 8
+#elif defined(FLOWER3)
+  #define TX_RETRY_DELAY_MULTIPLIER 5
+#elif defined(FLOWER4)
+  #define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(FLOWER5)
+  #define TX_RETRY_DELAY_MULTIPLIER 11
+#elif defined(FLOWER6)
+  #define TX_RETRY_DELAY_MULTIPLIER 13
+#elif defined(FLOWER7)
+  #define TX_RETRY_DELAY_MULTIPLIER 15
+#endif
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-// Data rate is flower-specific because Flower7 is on loan to JUMP for the Fluf Haven.
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED.
 #define CRC_LENGTH RF24_CRC_16
@@ -504,10 +502,10 @@ static constexpr uint8_t numMaSets = 7;
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-// Channel is flower-specific because Flower7 is on loan to JUMP for the Fluf Haven.
+#define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
+#define RF_POWER_LEVEL RF24_PA_HIGH
 
 #endif
 
