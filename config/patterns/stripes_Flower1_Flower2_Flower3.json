@@ -15,7 +15,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "stripes_Flower1_Flower2",
+{   "name" : "stripes_Flower1_Flower2_Flower3",
     "enabled" : true,
     "priority" : 3,
     "opacity" : 100,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
