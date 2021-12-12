@@ -1,3 +1,26 @@
+27 Nov. 2021 -- Wheezy End-of-Life
+==================================
+
+As of 27 Nov. 2021, apt-get update no longer works with the existing URLs in
+/etc/apt/sources.list.  Comment out the existing debian.org URLs, and add
+these:
+
+    # 2021-11-27:  Wheezy is EOL'd, and the above URLs are invalid.  These work,
+    # but there's really no reason to use them because there have been no updates
+    # since May 2018.
+    deb http://archive.debian.org/debian wheezy main
+    deb http://archive.debian.org/debian-security wheezy/updates main
+
+Of course, if the strdrv host was updated at some point since May 2018, there
+are no more updates, so there is no point in trying.
+
+Source:  https://serverfault.com/questions/960970/wheezy-updates-on-archive-debian-org-returns-404-not-found
+
+
+================================================================================
+================================================================================
+
+
 7/7/2018 -- Set up ic-strdrv on a BeagleBone Black or Green using Debian Wheezy
 ===============================================================================
 
@@ -7,7 +30,7 @@
      cause is something setting GPIO1_16 (GPIO_48) and GPIO2_0 (not exposed) to
      outputs.  The two GPIOs are connected together through zero-ohm R160 and
      R161 for reasons that are not apparent.  If/when they are both configured
-     as outputs but not in the same high/low state, excessive current will  flow
+     as outputs but not in the same high/low state, excessive current will flow
      betweenn them, damaging one or both.  The symptom is that string 45 works
      fine after the first boot but ceases to work after a subsequent boot.
      GPIO_48 appears to work if toggled manually and observed with a voltmeter,
@@ -109,6 +132,9 @@
 
     Reboot.
 
+    Note:  On the Mini-Cone/backup controller, set the host name to ic2-strdrv.
+    Use ic2-strdrv everywhere ic-strdrv is referenced in this document.
+
 
 6.  Create .bash_aliases
 
@@ -127,6 +153,9 @@
     sudo dpkg-reconfigure tzdata
         America
         Boise
+
+    Note:  On ic2-strdrv, use 192.168.69.113, which is ic2-widpatcon's IP
+    address.
 
 
 8.  Install required and useful packages.
@@ -251,6 +280,11 @@
     batches every 5-7 minutes if you didn't add the fflush calls as suggested
     above.
 
+    To see if LEDscape is running, use this:  sudo tail syslog
+    You should see messages that look like this:
+
+        Nov 27 11:38:00 ic-strdrv run-ledscape[621]: [render] fps_info={frame_avg_usec: 1202, possible_fps: 831.95, actual_fps: 828.50, sample_frames: 8285}
+
 
 12.  Assign static IP address 192.168.69.100 for ic-strdrv on wired network.
 
@@ -264,6 +298,8 @@
             gateway 192.168.69.1
 
     reboot
+
+    Note:  For ic2-strdrv, assign 192.168.69.110.
 
 
 13.  After you have determined that everything is working correctly, write the
@@ -784,7 +820,6 @@ LEDscape Setup
 The osresearch branch specifies this command, which seems to be unnecessary
 for the Yona-Appletree branch:
 echo 'options uio_pruss extram_pool_sz=0x800000' | sudo tee -a /etc/modprobe.d/ledscape.conf
-
 
 ================================================================================
 ================================================================================
