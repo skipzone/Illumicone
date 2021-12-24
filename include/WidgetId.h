@@ -45,12 +45,12 @@ constexpr int maxWidgets = 32;
  * 18:  unassigned
  * 19:  Mike #1
  * 20:  Mike #2
- * 21:  Baton #1
- * 22:  Baton #2
- * 23:  Rattle #1
- * 24:  Rattle #2
- * 25:  unassigned (reserved for Maraca #1)
- * 26:  unassigned (reserved for Maraca #2)
+ * 21:  BatRat #1
+ * 22:  BatRat #2
+ * 23:  BatRat #3
+ * 24:  BatRat #4
+ * 25:  TODO:  remove this:  unassigned (reserved for Maraca #1)
+ * 26:  TODO:  remove this:  unassigned (reserved for Maraca #2)
  * 27:  Lidar1
  * 28:  unassigned
  * 29:  unassigned

@@ -109,6 +109,8 @@ So . . .
     ],
 
     "quiescentPeriods" : [
+        // Comment out / un-comment-out this block and the appropriate lines
+        // in the shutoffPeriods section to disable/enable daytime dryout.
         {   "description" : "daytime dry-out",
             "startDateTime" : "08:00:00",
             "endDateTime" : "17:00:00",
