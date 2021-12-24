@@ -35,7 +35,8 @@
     },
 
     "widgetRcvr3" : {
-        "patconIpAddress" : "192.168.69.103",
+        // Comment out patconIpAddress to use the address from the network configuration.
+        // "patconIpAddress" : "192.168.69.103",
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 1000,
         "radios" : [
