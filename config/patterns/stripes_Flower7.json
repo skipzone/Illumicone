@@ -55,7 +55,7 @@
 
     "isHorizontal" : false,
     "virtualPixelRatio" : 1,
-    "numStripes" : 1,
+    "numStripes" : 2,
     "minSidebandWidth" : 1,           // min should be equal to or greater than virtualPixelRatio
     "maxSidebandWidth" : 1,           // sideband widths are in the context of virtual pixels
 
