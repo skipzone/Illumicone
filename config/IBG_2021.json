@@ -53,7 +53,7 @@
         ],
 
         "patterns" : [
-            { "_include_file_patterns" : "IBG_2021_patternSet2.json" }
+            { "_include_file_patterns" : "IBG_2021_patternSet3.json" }
         ]
     }
 }
