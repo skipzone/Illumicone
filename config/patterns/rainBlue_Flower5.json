@@ -28,7 +28,7 @@
         }
     ],
     "emitColorDefault" : "rainstickBlue",
-    "emitIntervalUseMeasmtAbsValue" : false,
+    "emitIntervalUseMeasmtAbsValue" : true,
     "emitIntervalMeasmtLow" : 2,
     "emitIntervalMeasmtHigh" : 400,
     "emitIntervalLowMs" : 200,
