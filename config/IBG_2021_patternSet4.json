@@ -17,9 +17,15 @@
 
 {
     "patterns" : [
-        { "_include_file_stripes" : "patterns/stripes_Flower1_Flower2_Flower3.json" },
-        { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower4_Flower5_Flower6.json" },
-        { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower7.json" },
+        { "_include_file_stripes" : "patterns/stripes_Flower1_Flower2.json" },
+        { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower3.json" },
+        { "_include_file_horizontalRings_flower" : "patterns/rings_Flower4.json" },
+        { "_include_file_blueRain_flower" : "patterns/rainBlue_Flower5.json" },
+        { "_include_file_magentaAquaSparkle_flower" : "patterns/sparkleMagentaAqua_Flower6.json" },
+        { "_include_file_traditional_stripes" : "patterns/stripes_Flower7.json" },
+        { "_include_file_sprayWhite_Baton1" : "patterns/sprayWhite_Baton1.json" },
+        { "_include_file_sprayPurple_Baton1" : "patterns/sprayPurple_Baton1.json" },
+        { "_include_file_sprayAqua_Baton1" : "patterns/sprayAqua_Baton1.json" },
 
         { "_include_file_blueSparkle_mike1" : "patterns/sparkleBlue_Mike1.json" },
         { "_include_file_redSparkle_mike1" : "patterns/sparkleRed_Mike1.json" },

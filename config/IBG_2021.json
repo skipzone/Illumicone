@@ -41,8 +41,8 @@
         "numberOfStrings" : 48,
         "numberOfPixelsPerString" : 100,
 
-        "_include_file_schedule" : "IBG_2021_schedule.json",
-        //"_include_file_schedule" : "schedule_alwaysOn.json",
+        //"_include_file_schedule" : "IBG_2021_schedule.json",
+        "_include_file_schedule" : "schedule_alwaysOn.json",
 
         //"patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
         "patternBlendMethod" : "rgbAdd",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
