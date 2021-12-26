@@ -26,10 +26,12 @@
         { "_include_file_sprayWhite_Baton1" : "patterns/sprayWhite_Baton1.json" },
         { "_include_file_sprayPurple_Baton1" : "patterns/sprayPurple_Baton1.json" },
         { "_include_file_sprayAqua_Baton1" : "patterns/sprayAqua_Baton1.json" },
-        { "_include_file_sprayWhite_Baton2" : "patterns/sprayWhite_Baton1.json" },
-        { "_include_file_sprayPurple_Baton2" : "patterns/sprayPurple_Baton1.json" },
-        { "_include_file_sprayAqua_Baton2" : "patterns/sprayAqua_Baton1.json" }
-
+        //{ "_include_file_sprayWhite_Baton2" : "patterns/sprayWhite_Baton2.json" },
+        //{ "_include_file_sprayPurple_Baton2" : "patterns/sprayPurple_Baton2.json" },
+        //{ "_include_file_sprayAqua_Baton2" : "patterns/sprayAqua_Baton1.2son" }
+        { "_include_file_sprayRed_Baton2" : "patterns/sprayRed_Baton2.json" },
+        { "_include_file_sprayGreen_Baton2" : "patterns/sprayGreen_Baton2.json" },
+        { "_include_file_sprayGold_Baton2" : "patterns/sprayGold_Baton1.2son" }
     ]
 }
 
