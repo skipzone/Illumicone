@@ -1,0 +1,102 @@
+Winter Garden aGlow 2021 Patterns and Widgets
+
+
+Widget    Pattern
+--------  ---------------------------
+Flower1   vertical stripes position
+
+Flower2   vertical stripes hue
+
+Flower3   multicolor sparkle (set 1), vertical stripes saturation (set 2)
+
+Flower4   horizontal rings position
+
+Flower5   horizontal rings hue
+
+Flower6   magenta/aqua sparkle (set 1), horizontal rings saturation
+
+Flower7   multicolor sparkle (set 2)
+
+Mike1     red, green, and gold sparkle
+
+Mike2     shower or spring
+
+
+
+Pattern Set 1
+=============
+
+Pattern                 Inputs                  Notes
+----------------------  ----------------------  ------------------------------------------------------------------------
+
+four vertical stripes   position:    Flower1/0  use stripes_Flower1_Flower2
+                        width:      (constant)
+                        hue:         Flower2/0 
+                        saturation: (constant)
+
+four horizonal rings    position:    Flower4/0  base on rings_Flower6_Flower4 from Illumibrate 2020
+                        width:      (constant)
+                        hue:         Flower5/0
+                        saturation: (constant)
+
+multicolor sparkle      density:     Flower3/5  use multicolorSparkle_Flower3
+
+magenta/aqua sparkle    density:     Flower6/5  clone sparkleMagentaAqua_Flower4
+
+red sparkle             density:       Mike1/2
+green sparkle           density:       Mike1/3
+gold sparkle            density:       Mike1/4
+
+shower down             emitRate:      Mike2/3  base on rain_Rainstick, just change scaling and direction
+                        emitColor:     Mike2/2  
+shower up               emitRate:      Mike2/4  if possible, put in same include file as shower down (shower_Mike2) 
+                        emitColor:     Mike2/5  (patterns are showerDown_Mike2 and showerUp_Mike2)
+
+
+Pattern Set 2
+=============
+
+Pattern                 Inputs                  Notes
+----------------------  ----------------------  ------------------------------------------------------------------------
+
+four vertical stripes   position:    Flower1/0  base on stripes_Flower1_Flower2
+                        width:      (constant)
+                        hue:         Flower2/0
+                        saturation:  Flower3/0  saturation will need an auto reset like width
+
+four horizonal rings    position:    Flower4/0  base on rings_Flower6_Flower4 from Illumibrate 2020
+                        width:      (constant)
+                        hue:         Flower5/0
+                        saturation:  Flower6/0  saturation will need an auto reset like width
+
+multicolor sparkle      density:     Flower7/5  base on multicolorSparkle_Flower3
+
+red sparkle             density:       Mike1/2
+green sparkle           density:       Mike1/3
+gold sparkle            density:       Mike1/4
+
+shower down             emitRate:      Mike2/3  base on rain_Rainstick, just change scaling and direction
+                        emitColor:     Mike2/2  
+shower up               emitRate:      Mike2/4  if possible, put in same include file as shower down (shower_Mike2) 
+                        emitColor:     Mike2/5  (patterns are showerDown_Mike2 and showerUp_Mike2)
+
+
+Experimental
+============
+
+spring                  compression:   Mike2/2  base on spring_Flower5_Flower3_Rattle1
+                        rotation:      Mike2/3
+                        color:         Mike2/4
+
+
+
+Pattern Class       Inputs
+------------------  --------------------------------
+stripe              position, width, hue, saturation
+
+particles           emitRate, emitColor
+
+sparkle             density
+
+spiral              compression, rotation, color
+

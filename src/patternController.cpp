@@ -58,7 +58,20 @@
 using namespace std;
 
 
-constexpr unsigned int reinitializationSleepIntervalS = 1;
+static const SchedulePeriod noPeriod = {false, "", 0, 0};
+static constexpr unsigned int reinitializationSleepIntervalS = 1;
+
+enum class OperatingState {
+    startup,
+    initializing,
+    testPattern,
+    active,
+    inactive,
+    idle,
+    quiescent,
+    shutoff,
+    shutdown
+};
 
 enum class PatternBlendMethod {
     overlay,
@@ -89,7 +102,7 @@ static ConfigReader configReader;
 static json11::Json configObject;
 static string lockFilePath;
 static string logFilePath = ".";
-static std::string pidFilePathName;
+static string pidFilePathName;
 static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
 static vector<SchedulePeriod> shutoffPeriods;
@@ -127,6 +140,7 @@ static void getCommandLineOptions(int argc, char* argv[]);
 static bool registerSignalHandler();
 static void signalHandler(int signum);
 static void daemonize();
+static void logOperatingState(OperatingState currentOperatingState, const string& msg = "");
 
 
 void usage()
@@ -627,7 +641,7 @@ void displayTestPattern()
 }
 
 
-void printSchedulePeriods(const std::string& scheduleDescription, const vector<SchedulePeriod>& schedulePeriods)
+void printSchedulePeriods(const string& scheduleDescription, const vector<SchedulePeriod>& schedulePeriods)
 {
     logger.logMsg(LOG_INFO, scheduleDescription + ":");
 
@@ -1071,7 +1085,7 @@ bool doTeardown()
 void doPatterns()
 {
     static bool doIdlePattern;
-    static time_t timeWentIdle;
+    static time_t timeWentInactive;
 
     // Let all the patterns update their shit.
     bool anyPatternIsActive = false;
@@ -1094,7 +1108,7 @@ void doPatterns()
     clearAllPixels(hsvFinalFrame);
 
     if (anyPatternIsActive) {
-        //logger.logMsg(LOG_DEBUG, "a pattern is active");
+        logOperatingState(OperatingState::active);
 
         bool anyPixelIsOn = false;
 
@@ -1199,21 +1213,22 @@ void doPatterns()
             turnOnSafetyLights();
         }
         doIdlePattern = false;
-        timeWentIdle = 0;
+        timeWentInactive = 0;
     }
     else {
-        //logger.logMsg(LOG_DEBUG, "no pattern is active");
         if (!doIdlePattern) {
+            logOperatingState(OperatingState::inactive);
             // Turn on the safety lights until the idle pattern takes over.
             turnOnSafetyLights();
-            if (timeWentIdle == 0) {
-                time(&timeWentIdle);
+            if (timeWentInactive == 0) {
+                time(&timeWentInactive);
             }
             else {
                 time_t now;
                 time(&now);
-                // TODO 7/22/2017 ross:  replace the magic number 3 with the hard idle timeout
-                if (now - timeWentIdle > 3) {
+                // TODO 7/22/2017 ross:  replace the magic number 3 with the idle timeout
+                if (now - timeWentInactive > 3) {
+                    logOperatingState(OperatingState::idle);
                     doIdlePattern = true;
                 }
             }
@@ -1221,6 +1236,44 @@ void doPatterns()
         // When doIdlePattern is true, we stop sending messages to the OPC server.
         // The server will display its own rainbow-like pattern when it hasn't
         // received a message for a few seconds.
+    }
+}
+
+
+void logOperatingState(OperatingState currentOperatingState, const string& msg)
+{
+    static OperatingState lastOperatingState = OperatingState::startup;
+
+    if (currentOperatingState != lastOperatingState) {
+        lastOperatingState = currentOperatingState;
+        switch (currentOperatingState) {
+            case OperatingState::startup:
+                break;
+            case OperatingState::initializing:
+                logger.logMsg(LOG_INFO, "Initializing.  " + msg);
+                break;
+            case OperatingState::testPattern:
+                logger.logMsg(LOG_INFO, "Displaying test pattern.");
+                break;
+            case OperatingState::active:
+                logger.logMsg(LOG_INFO, "Going active.");
+                break;
+            case OperatingState::inactive:
+                logger.logMsg(LOG_INFO, "Going inactive.");
+                break;
+            case OperatingState::idle:
+                logger.logMsg(LOG_INFO, "Going idle.");
+                break;
+            case OperatingState::quiescent:
+                logger.logMsg(LOG_INFO, "Starting \"" + msg + "\" quiescent period.");
+                break;
+            case OperatingState::shutoff:
+                logger.logMsg(LOG_INFO, "Starting \"" + msg + "\" shutoff period.");
+                break;
+            case OperatingState::shutdown:
+                logger.logMsg(LOG_INFO, "Shutting down.  " + msg);
+                break;
+        }
     }
 }
 
@@ -1268,15 +1321,15 @@ int main(int argc, char **argv)
         }
     }
 
-    logger.logMsg(LOG_INFO, "---------- patternController starting ----------");
+    logOperatingState(OperatingState::initializing, "---------- patternController starting ----------");
 
     if (!doInitialization()) {
         return(EXIT_FAILURE);
     }
     bool displayingTestPattern = false;
     time_t lastPeriodCheckTime = 0;
-    bool inPeriod = false;
-    string lastPeriodDesc = "";
+    SchedulePeriod selectedSchedulePeriod = noPeriod;
+    SchedulePeriod lastSelectedSchedulePeriod = noPeriod;
 
 /*
 //=-=-=-=-=-=-=-=-=
@@ -1299,9 +1352,10 @@ int main(int argc, char **argv)
 
         if (gotReinitSignal) {
             gotReinitSignal = false;
-            logger.logMsg(LOG_INFO, "---------- Reinitializing... ----------");
+            logOperatingState(OperatingState::initializing, "---------- Reinitializing... ----------");
             turnOnSafetyLights();
             if (!doTeardown()) {
+                logOperatingState(OperatingState::shutdown, "Exiting due to error during teardown.");
                 return(EXIT_FAILURE);
             }
             // Sleep for a little bit because reconnecting to
@@ -1309,17 +1363,19 @@ int main(int argc, char **argv)
             logger.logMsg(LOG_INFO, "Sleeping for " + to_string(reinitializationSleepIntervalS) + " seconds.");
             sleep(reinitializationSleepIntervalS);
             if (!readConfig() || !doInitialization()) {
+                logOperatingState(OperatingState::shutdown, "Exiting due to error during reinitialization.");
                 return(EXIT_FAILURE);
             }
             displayingTestPattern = false;
             lastPeriodCheckTime = 0;
-            inPeriod = false;
-            lastPeriodDesc = "";
+            selectedSchedulePeriod = noPeriod;
+            lastSelectedSchedulePeriod = noPeriod;
         }
 
         if (gotToggleTestPatternSignal) {
             gotToggleTestPatternSignal = false;
             displayingTestPattern = !displayingTestPattern;
+            // TODO:  add an operation state for test pattern
             logger.logMsg(LOG_INFO, string("Turning test pattern ") + (displayingTestPattern ? "on." : "off."));
         }
 
@@ -1330,6 +1386,7 @@ int main(int argc, char **argv)
         }
 
         if (displayingTestPattern) {
+            logOperatingState(OperatingState::testPattern);
             displayTestPattern();
             continue;
         }
@@ -1340,36 +1397,35 @@ int main(int argc, char **argv)
         if (now > lastPeriodCheckTime) {
             lastPeriodCheckTime = now;
 
-            // TODO:  Log appropriate messages at both the start and end of each period.
-
-            SchedulePeriod selectedSchedulePeriod;
             if (timeIsInPeriod(now, shutoffPeriods, selectedSchedulePeriod)) {
-                inPeriod = true;
-//                if (selectedSchedulePeriod.description != lastPeriodDesc) {
-                    lastPeriodDesc = selectedSchedulePeriod.description;
-                    logger.logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" shutoff period.");
-//                }
+                logOperatingState(OperatingState::shutoff, selectedSchedulePeriod.description);
                 turnOffAllPixels();
             }
             else if (timeIsInPeriod(now, quiescentPeriods, selectedSchedulePeriod)) {
-                inPeriod = true;
-//                if (selectedSchedulePeriod.description != lastPeriodDesc) {
-                    lastPeriodDesc = selectedSchedulePeriod.description;
-                    logger.logMsg(LOG_INFO, "In \"" + selectedSchedulePeriod.description + "\" quiescent period.");
-//                }
+                logOperatingState(OperatingState::quiescent, selectedSchedulePeriod.description);
                 setAllPixelsToQuiescentColor(selectedSchedulePeriod);
             }
             else {
-                inPeriod = false;
+                selectedSchedulePeriod = noPeriod;
+            }
+
+            if (selectedSchedulePeriod != lastSelectedSchedulePeriod) {
+                if (lastSelectedSchedulePeriod != noPeriod) {
+                    logger.logMsg(LOG_INFO, string("Leaving ") + lastSelectedSchedulePeriod.description + string(" period."));
+                }
+                if (selectedSchedulePeriod != noPeriod) {
+                    logger.logMsg(LOG_INFO, string("Entering ") + selectedSchedulePeriod.description + string(" period."));
+                }
+                lastSelectedSchedulePeriod = selectedSchedulePeriod;
             }
         }
 
-        if (!inPeriod) {
+        if (selectedSchedulePeriod == noPeriod) {
             doPatterns();
         }
     }
 
-    logger.logMsg(LOG_INFO, "---------- Exiting... ----------");
+    logOperatingState(OperatingState::shutdown, "---------- Exiting... ----------");
     turnOnSafetyLights();
     if (!doTeardown()) {
         return(EXIT_FAILURE);

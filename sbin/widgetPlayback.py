@@ -38,15 +38,35 @@ from time import sleep
 defaultPatconIpAddress = '127.0.0.1'
 defaultWidgetPortNumberBase = 4200
 defaultTimeCompressionThresholdSeconds = 5
+defaultRunDurationMinutes = 0               # run as long as necessary to play the entire log file once
 
 # command-line options
 patconIpAddress = None
 widgetPortNumberBase = None
 timeCompressionThresholdSeconds = None
+runDurationMinutes = None
 
 lineCount = 0
 lastTimestamp = None
 clientSock = None
+startDatetime = None
+
+
+def calculateMinutesLeftToRun():
+
+    global runDurationMinutes
+    global startDatetime
+
+    # Return -1 if we need to run however long it takes to play the entire log file.
+    if not runDurationMinutes:
+        return -1.0
+
+    if not startDatetime:
+        startDatetime = datetime.now()
+
+    interval = datetime.now() - startDatetime
+    runningMinutes = interval.days * 1440 + interval.seconds / 60.0
+    return max(0.0, round(runDurationMinutes - runningMinutes, 1))
 
 
 def waitUntilTimestamp(timestamp):
@@ -92,7 +112,7 @@ def sendMvec(widgetData):
             i,                      # channel
             widgetData['isActive'],
             measmt,                 # position
-            0)                      # velocity is always zero
+            measmt)                 # velocity
         clientSock.sendto(message, (patconIpAddress, widgetPortNumberBase + widgetData['widgetId']))
 
 def sendCustom(widgetData):
@@ -125,6 +145,8 @@ def processLogFile(logFileName):
     try:
         with open(logFileName, 'r') as f:
             for line in f:
+                if calculateMinutesLeftToRun() == 0.0:
+                    break
                 if lineCount % 100 == 0:
                     print('{0}:  Processed {1} lines.  Last timestamp was {2}.'.format(datetime.now(), lineCount, lastTimestamp))
                 lineCount += 1
@@ -197,6 +219,7 @@ def main(argv):
     global patconIpAddress
     global widgetPortNumberBase
     global timeCompressionThresholdSeconds
+    global runDurationMinutes
 
     ap = argparse.ArgumentParser(description='This program replays widgetRcvr data logs and sends the recorded widget messages to patternController.')
 
@@ -204,12 +227,16 @@ def main(argv):
     ap.add_argument("-p", "--patcon-ip-address", nargs='?', default=defaultPatconIpAddress, help='IP address of host running patternController', dest='patconIpAddress')
     ap.add_argument("-b", "--widget-port-base", nargs='?', default=defaultWidgetPortNumberBase, type=int, help='Port number associated with widget 0.', dest='widgetPortNumberBase')
     ap.add_argument("-t", "--time-compression-threshold", nargs='?', default=defaultTimeCompressionThresholdSeconds, type=int, help='Skip to next active widget data message after this many seconds of inactivity.', dest='timeCompressionThresholdSeconds')
+    ap.add_argument(
+        "-r", "--run_for_minutes", nargs='?', default=defaultRunDurationMinutes, dest='runDurationMinutes',
+        help='Number of minutes to run or 0 to play entire log file once.')
 
     args = ap.parse_args()
 
     patconIpAddress = args.patconIpAddress
     widgetPortNumberBase = args.widgetPortNumberBase
     timeCompressionThresholdSeconds = args.timeCompressionThresholdSeconds
+    runDurationMinutes = float(args.runDurationMinutes)
 
     if not os.path.exists(args.inputFileName):
         sys.stderr.write('File {0} does not exist.\n'.format(args.inputFileName))
@@ -217,7 +244,12 @@ def main(argv):
 
     clientSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    processLogFile(args.inputFileName)
+    while True:
+        processLogFile(args.inputFileName)
+        minutesLeftToRun = calculateMinutesLeftToRun();
+        if minutesLeftToRun <= 0.0:
+            break
+        print('{0} {1} minutes left to run.  Rewinding and replaying log file. {0}'.format('-' * 10, minutesLeftToRun))
 
     return 0
 

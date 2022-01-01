@@ -92,6 +92,16 @@
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 500
         },
+        {   "name" : "mike1",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 500
+        },
+        {   "name" : "mike2",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 500
+        },
         {   "name" : "pump",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,

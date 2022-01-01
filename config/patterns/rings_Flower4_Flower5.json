@@ -1,0 +1,130 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "rings_Flower4_Flower5",
+    "enabled" : true,
+    "priority" : 2,
+    "opacity" : 80,                     // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "StripePattern",
+    "inputs" : [
+        {   "inputName" : "position",
+            "widgetName" : "flower4",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        },
+        //{   "inputName" : "width",
+        //    "widgetName" : "flower6",
+        //    "channelNumber" : 0,
+        //    "measurement" : "position"
+        //},
+        {   "inputName" : "hue",
+            "widgetName" : "flower5",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
+        //{   "inputName" : "saturation",
+        //    "widgetName" : "flower6",
+        //    "channelNumber" : 0,
+        //    "measurement" : "position"
+        //}
+    ],
+
+    "positionMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 3599,
+            "mappedStart" : 0,
+            "mappedEnd" : 3599 
+        }
+    ],
+    "widthMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 1799,
+            "mappedStart" : 144,
+            "mappedEnd" : 288
+        },
+        {   "rawMin" : 1800,
+            "rawMax" : 3599,
+            "mappedStart" : 288,
+            "mappedEnd" : 144
+        }
+    ],
+    "hueMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 899,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 900,
+            "rawMax" : 1799,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 1800,
+            "rawMax" : 2699,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        },
+        {   "rawMin" : 2700,
+            "rawMax" : 3599,
+            "mappedStart" : 0.0,
+            "mappedEnd" : 255.0
+        }
+    ],
+    "saturationMeasurementMapper" : [
+        {   "rawMin" : 0,
+            "rawMax" : 899,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        },
+        {   "rawMin" : 900,
+            "rawMax" : 1799,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        },
+        {   "rawMin" : 1800,
+            "rawMax" : 2699,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        },
+        {   "rawMin" : 2700,
+            "rawMax" : 3599,
+            "mappedStart" : 255.0,
+            "mappedEnd" : 0.0
+        }
+    ],
+
+    "isHorizontal" : true,
+    "virtualPixelRatio" : 36,           // 36 * 100 pixels per string = 3600; flower rotation measurements are [0, 3600)
+    "numStripes" : 3,
+    "minSidebandWidth" : 600,           // min should be equal to or greater than virtualPixelRatio
+    "maxSidebandWidth" : 600,           // sideband widths are in the context of virtual pixels
+
+    "startingHue" : 0,
+    "endingHue" : 255,
+    "hueFoldbackPct" : 0,
+    "hueRepeat" : 4,
+
+    "startingSaturation" : 255.0,
+    "endingSaturation" : 255.0,
+    "saturationFoldbackPct" : 0.0,
+    "saturationRepeat" : 1,
+
+    "widthResetTimeoutSeconds" : 10,    // reset width to normal after this period of inactivity of the width channel
+
+    "stripeCenterValue" : 255           // the hsv value at the center of the stripe
+}
+

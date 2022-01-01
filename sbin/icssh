@@ -1,0 +1,28 @@
+#! /bin/bash
+
+# icssh:  ssh to a remote Illumicone host via a jump server.
+
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    echo "Usage:  $0 hostname [command]"
+    exit 2
+fi
+
+if [ -z $ILLUMICONE_JUMPER ]; then
+    echo "ILLUMICONE_JUMPER is not defined in the environment."
+    exit 1
+fi
+
+hostname=$1
+cmd=$2
+
+hostinfo=`ssh $ILLUMICONE_JUMPER "grep -A 6 \"$hostname\$\" ~/.ssh/config | egrep '(Port|User)[[:space:]]+[[:alnum:]]+' | awk '{print \\$1,\\$2}' | tr '\n' ' '"`
+port=`echo "$hostinfo" | sed -En -e 's/.*Port ([[:digit:]]+).*/\1/p'`
+user=`echo "$hostinfo" | sed -En -e 's/.*User ([[:alnum:]]+).*/\1/p'`
+
+if [ -z $port ] || [ -z $user ]; then
+    echo "$hostname is not in ~/.ssh/config at $ILLUMICONE_JUMPER, or Port and/or User are not specified for it."
+    exit 1
+fi
+
+ssh -J $ILLUMICONE_JUMPER $user@127.0.0.1 -p $port $2
+

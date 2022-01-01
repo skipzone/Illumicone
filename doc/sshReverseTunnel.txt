@@ -1,4 +1,5 @@
-02/22/2019 -- Set up reverse tunneling using ic2-widpatcon2 as the example
+Set up reverse tunneling using ic2-widpatcon2 as the example
+(updated 6 Nov. 2021)
 
 We assign these ports:
 
@@ -8,6 +9,8 @@ We assign these ports:
     50113 ic2-widpatcon
     50114 ic2-widpatcon2
     50120 ic-devl
+    50121 ic-devl2
+    50122 ic-devl3
 
 Replace myEc2Instance.com with the name or IP address of the relay server.  An
 Amazon Web Services (AWS) Elastic Compute Cloud (EC2) server is assumed.
@@ -30,7 +33,9 @@ ssh-keygen
 exit
 
 
-Share ssh public keys between myEc2Instance.com and ic2-widpatcon2.com.
+Share ssh public keys between myEc2Instance.com and ic2-widpatcon2.com.  The
+required result is that each can connect to the other as user illumicone using
+ssh key credentials.
 
 From the host with ssh access to myEc2Instance.com as ec2-user:
 
@@ -82,7 +87,7 @@ In the ssh session on myEc2Instance.com:
 
 On myEc2Instance.com, create .ssh/config with this content:
 
-Host ic2widpatcon2
+Host ic2-widpatcon2
     HostName localhost
     User illumicone
     Port 50114
@@ -93,7 +98,7 @@ Host ic2widpatcon2
 
 Test .ssh/config.
 
-ssh ic2widpatcon2
+ssh ic2-widpatcon2
 
 
 
@@ -165,6 +170,15 @@ sudo systemctl enable autossh-tunnel.service
 
 
 
+Enable the icssh and icpp utility scripts
+=========================================
+
+Add this to ~/.profile and ~/.bashrc:
+
+export ILLUMICONE_JUMPER="illumicone@myEc2Instance.com"
+
+
+
 Misc. Commands
 ==============
 
@@ -185,4 +199,19 @@ Transfer files between myEc2Instance.com and ic2-widpatcon2 through the tunnel:
 scp -P 50114 some/File illumicone@127.0.0.1:
 scp -P 50114 illumicone@127.0.0.1:some/file to/local/path
 
+
+ssh directly to ic2-widpatcon2 via myEc2Instance.com jump server.
+
+ssh -J illumicone@myEc2Instance.com illumicone@127.0.0.1 -p 50114
+-or-
+icssh ic2-widpatcon2
+
+
+Transfer files directly to/from ic2-widpatcon2 via myEc2Instance.com jump server.
+
+scp -o 'ProxyJump illumicone@myEc2Instance.com' -P 50114 file... illumicone@127.0.0.1:
+scp -o 'ProxyJump illumicone@myEc2Instance.com' -P 50114 illumicone@127.0.0.1:file... to/local/path
+-or-
+icpp push ic2-widpatcon2 localfile... remotedest
+icpp pull ic2-widpatcon2 remotefile... localdest
 

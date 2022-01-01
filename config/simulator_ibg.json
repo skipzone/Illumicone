@@ -30,7 +30,8 @@
         // Avoid hammering on the SPI interface by sleeping between polls for received data.
         "radioPollingLoopSleepIntervalUs" : 500,
         "radios" : [
-            { "_include_file_widgetRadio" : "widgetRadio_ch97.json" }
+            { "_include_file_widgetRadio" : "widgetRadio_ch97.json" },
+            { "_include_file_widgetRadio" : "widgetRadio_ch76.json" }
         ]
     },
 
@@ -48,7 +49,7 @@
         ],
 
         "patterns" : [
-            { "_include_file_patterns" : "IBG_2019_patternSet1.json" }
+            { "_include_file_patterns" : "IBG_2021_patternSet1.json" }
         ]
     }
 }

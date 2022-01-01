@@ -1,0 +1,60 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{
+    "common" : {
+        "_include_file_network_symlink" : "network_active.json",
+        "_include_file_logRotation" : "logRotation_noon.json"
+    },
+
+    "widgetRcvr" : {
+        // Avoid hammering on the SPI interface by sleeping between polls for received data.
+        "radioPollingLoopSleepIntervalUs" : 1000,
+        "radios" : [
+            { "_include_file_widgetRadio" : "widgetRadio_ch97.json" }
+        ]
+    },
+    "widgetRcvr3" : {
+        "patconIpAddress" : "192.168.69.103",
+        // Avoid hammering on the SPI interface by sleeping between polls for received data.
+        "radioPollingLoopSleepIntervalUs" : 1000,
+        "radios" : [
+            { "_include_file_widgetRadio" : "widgetRadio_ch97.json" }
+        ]
+    },
+
+    "patternController" : {
+        "numberOfStrings" : 48,
+        "numberOfPixelsPerString" : 100,
+
+        "_include_file_schedule" : "IBG_2021_schedule.json",
+        //"_include_file_schedule" : "schedule_alwaysOn.json",
+
+        //"patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        "patternBlendMethod" : "rgbAdd",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        "patternRunLoopSleepIntervalUs" : 4000,
+
+        "widgets" : [
+            { "_include_file_widgets" : "widgets/allWidgets.json" }
+        ],
+
+        "patterns" : [
+            { "_include_file_patterns" : "IBG_2021_patternSet4.json" }
+            //{ "_include_file_patterns" : "IBG_2021_patternSet3.json" }
+        ]
+    }
+}

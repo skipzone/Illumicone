@@ -35,15 +35,15 @@ FlowerWidget::FlowerWidget(WidgetId id)
     // Simulate yaw (channel 0).
     simulationUpdateIntervalMs[0] = 1;
     simulationMinValue[0] = 0;
-    simulationMaxValue[0] = 3599;
+    simulationMaxValue[0] = 3599;   // 10ths of a degree
     simulationStep[0] = 2;
     simulationUpDown[0] = false;
 
     // Simulate z-axis gyro (channel 5).
     simulationUpdateIntervalMs[5] = 5;
-    simulationMinValue[5] = -7200;
-    simulationMaxValue[5] = 7200;  // degrees per second?
-    simulationStep[5] = 10;
+    simulationMinValue[5] = -300;
+    simulationMaxValue[5] = 300;  // degrees per second?
+    simulationStep[5] = 1;
     simulationUpDown[5] = true;
 }
 
@@ -82,7 +82,7 @@ void FlowerWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
     //    logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " newPosition=" + to_string(newPosition));
     //}
 
-    channels[chIdx]->setPositionAndVelocity(newPosition, 0);
+    channels[chIdx]->setPositionAndVelocity(newPosition, newPosition);
     channels[chIdx]->setIsActive(true);
 }
 

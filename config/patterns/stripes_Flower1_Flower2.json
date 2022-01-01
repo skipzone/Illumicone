@@ -26,16 +26,16 @@
             "channelNumber" : 0,
             "measurement" : "position"
         },
-        //{   "inputName" : "hue",
-        //    "widgetName" : "flower2",
-        //    "channelNumber" : 0,
-        //    "measurement" : "position"
-        //}
-        {   "inputName" : "saturation",
+        {   "inputName" : "hue",
             "widgetName" : "flower2",
             "channelNumber" : 0,
             "measurement" : "position"
         }
+        //{   "inputName" : "saturation",
+        //    "widgetName" : "flower2",
+        //    "channelNumber" : 0,
+        //    "measurement" : "position"
+        //}
     ],
 
     "positionMeasurementMapper" : [
@@ -48,22 +48,22 @@
     "hueMeasurementMapper" : [
         {   "rawMin" : 0,
             "rawMax" : 899,
-            "mappedStart" : 200.0,
+            "mappedStart" : 64.0,
             "mappedEnd" : 255.0
         },
         {   "rawMin" : 900,
             "rawMax" : 1799,
-            "mappedStart" : 200.0,
+            "mappedStart" : 64.0,
             "mappedEnd" : 255.0
         },
         {   "rawMin" : 1800,
             "rawMax" : 2699,
-            "mappedStart" : 200.0,
+            "mappedStart" : 64.0,
             "mappedEnd" : 255.0
         },
         {   "rawMin" : 2700,
             "rawMax" : 3599,
-            "mappedStart" : 200.0,
+            "mappedStart" : 64.0,
             "mappedEnd" : 255.0
         }
     ],
@@ -81,13 +81,13 @@
     "minSidebandWidth" : 4,           // min should be equal to or greater than virtualPixelRatio
     "maxSidebandWidth" : 4,           // sideband widths are in the context of virtual pixels
 
-    "startingHue" : 200,
+    "startingHue" : 64,
     "endingHue" : 255,
     "hueFoldbackPct" : 0,
     "hueRepeat" : 3,
 
     "startingSaturation" : 255.0,
-    "endingSaturation" : 0.0,
+    "endingSaturation" : 64.0,
     "saturationFoldbackPct" : 0.0,
     "saturationRepeat" : 3,
 

@@ -45,6 +45,12 @@ alias restartwr3='sudo systemctl restart widgetRcvr3.service'
 alias reloadwr3='sudo systemctl reload widgetRcvr3.service'
 alias statuswr3='sudo systemctl status widgetRcvr3.service'
 
+alias tailtemp='tail -40 $ILLUMICONE_LOGS/temperature.log'
+alias vimtemp='vim $ILLUMICONE_LOGS/temperature.log'
+
+alias tailcputemp='tail -40 $ILLUMICONE_LOGS/cpuTemperature.log'
+alias vimcputemp='vim $ILLUMICONE_LOGS/cpuTemperature.log'
+
 alias tailpc='tail -40 $ILLUMICONE_LOGS/patternController.log'
 alias tailfpc='tail -f $ILLUMICONE_LOGS/patternController.log'
 alias vimpc='vim $ILLUMICONE_LOGS/patternController.log'
@@ -76,10 +82,4 @@ alias vimwr3='vim $ILLUMICONE_LOGS/widgetRcvr3.log'
 alias tailwr3d='tail -40 $ILLUMICONE_LOGS/widgetRcvr3_data.log'
 alias tailfwr3d='tail -f $ILLUMICONE_LOGS/widgetRcvr3_data.log'
 alias vimwr3d='vim $ILLUMICONE_LOGS/widgetRcvr3_data.log'
-
-alias tailtemp='tail -40 $ILLUMICONE_LOGS/temperature.log'
-alias vimtemp='vim $ILLUMICONE_LOGS/temperature.log'
-
-alias tailcputemp='tail -40 $ILLUMICONE_LOGS/cpuTemperature.log'
-alias vimcputemp='vim $ILLUMICONE_LOGS/cpuTemperature.log'
 

@@ -1,0 +1,81 @@
+#! /bin/bash
+
+# icpf:  push/pull a file to/from a remote Illumicone host via a jump server.
+
+#set -x
+
+if [ $# -lt 4 ]; then
+    echo << EOT "
+Usage:  $0 push|pull hostname source... dest
+
+Escape embedded spaces or other crap characters (but not wildcards).
+
+push:  Do not enclose multiple files or paths in quotes; separate
+       them with a space. 
+
+pull:  For multiple files or paths, enclose each in quotes, and
+       separate the quoted strings with a space. 
+"
+EOT
+    exit 2
+fi
+
+if [ -z $ILLUMICONE_JUMPER ]; then
+    echo "ILLUMICONE_JUMPER is not defined in the environment."
+    exit 1
+fi
+
+pushpull=$1
+shift
+hostname=$1
+shift
+sources=()
+while [[ $# -gt 1 ]]; do
+    sources+=("$1")
+    shift
+done
+dest=$1
+
+if [ "$pushpull" != "push" -a "$pushpull" != "pull" ]; then
+    echo "Specify push or pull."
+    exit 1
+fi
+
+hostinfo=`ssh $ILLUMICONE_JUMPER "grep -A 6 \"$hostname\$\" ~/.ssh/config | egrep '(Port|User)[[:space:]]+[[:alnum:]]+' | awk '{print \\$1,\\$2}' | tr '\n' ' '"`
+port=`echo "$hostinfo" | sed -En -e 's/.*Port ([[:digit:]]+).*/\1/p'`
+user=`echo "$hostinfo" | sed -En -e 's/.*User ([[:alnum:]]+).*/\1/p'`
+if [ -z $port ] || [ -z $user ]; then
+    echo "$hostname is not in ~/.ssh/config at $ILLUMICONE_JUMPER, or Port and/or User are not specified for it."
+    exit 1
+fi
+
+if [[ $OSTYPE == "*linux*" ]]; then
+    scpCmdBase="scp -T -r -o \"ProxyJump $ILLUMICONE_JUMPER\" -P $port"
+else
+    # scp on macOS Mojave (10.14) does not have the -T option.
+    scpCmdBase="scp -r -o \"ProxyJump $ILLUMICONE_JUMPER\" -P $port"
+fi
+
+if [ "$pushpull" == "push" ]; then
+    echo "Copying to $hostname via tunneling port $port at $ILLUMICONE_JUMPER..."
+    sourcestr=""
+    for i in "${sources[@]}"; do
+        sourcestr+="'$i' "
+    done
+    cmd="$scpCmdBase $sourcestr $user@127.0.0.1:\"'$dest'\""
+    #echo "cmd=+$cmd+"
+    #set -x
+    eval $cmd
+else
+    echo "Copying from $hostname via tunneling port $port at $ILLUMICONE_JUMPER..."
+    # We need to do separate scp commands to properly
+    # handle wildcards in multiple source paths.
+    # TODO:  We don't really need to do multiple scp commands if there are no wildcards in any of the source paths.
+    cmd=""
+    for i in "${sources[@]}"; do
+        cmd+="$scpCmdBase $user@127.0.0.1:\"$i\" \"$dest\"; "
+    done
+    #echo "cmd=+$cmd+"
+    #set -x
+    eval $cmd
+fi

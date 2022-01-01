@@ -41,8 +41,10 @@
  * A specific target widget is selected here. *
  **********************************************/
 
-//#define BATON1
-//#define BATON2
+//#define BATRAT1
+#define BATRAT2
+//#define BATRAT3
+//#define BATRAT4
 //#define BOOGIEBOARD
 //#define FLOWER1
 //#define FLOWER2
@@ -55,11 +57,9 @@
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
 //#define RAINSTICK
-#define RATTLE1
-//#define RATTLE2
 
-#if defined(BATON1) || defined(BATON2)
-  #define BATON
+#if defined(BATRAT1) || defined(BATRAT2)|| defined(BATRAT3) || defined(BATRAT4)
+  #define BATRAT
 #endif
 
 #if defined(FLOWER1) || defined(FLOWER2) || defined(FLOWER3) || defined(FLOWER4) || \
@@ -67,9 +67,6 @@
   #define FLOWER
 #endif
 
-#if defined(RATTLE1) || defined(RATTLE2)
-  #define RATTLE
-#endif
 
 
 /************
@@ -118,21 +115,29 @@ enum class WidgetMode {
 };
 
 
-/******************************
- * Baton Widget Configuration *
- ******************************/
+/**************************************************
+ * Baton and Rattle (BatRat) Widget Configuration *
+ **************************************************/
 
-#ifdef BATON
+#ifdef BATRAT
 
-#if defined(BATON1)
+#if defined(BATRAT1)
   #define WIDGET_ID 21
-  static constexpr bool skipDeviceIdCheck = false;
-#elif defined(BATON2)
+#elif defined(BATRAT2)
   #define WIDGET_ID 22
-  static constexpr bool skipDeviceIdCheck = false;
+#elif defined(BATRAT3)
+  #define WIDGET_ID 23
+#elif defined(BATRAT4)
+  #define WIDGET_ID 24
 #else
-  #error No widget id defined for this baton.
+  #error No widget id defined for this batrat.
 #endif
+
+#if defined(BATRAT2)
+  #define ENABLE_SYSTEM_RESET_WATCHDOG
+#endif
+
+static constexpr bool skipDeviceIdCheck = false;
 
 #define ACTIVATE_WITH_MOVEMENT
 
@@ -147,14 +152,20 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
 
 // Stagger the transmissions to avoid repeated collisions.
-#if defined(BATON1)
+#if defined(BATRAT1)
   #define ACTIVE_TX_INTERVAL_MS 81L
   #define INACTIVE_TX_INTERVAL_MS 2001L
-#elif defined(BATON2)
+#elif defined(BATRAT2)
   #define ACTIVE_TX_INTERVAL_MS 83L
   #define INACTIVE_TX_INTERVAL_MS 2003L
+#elif defined(BATRAT3)
+  #define ACTIVE_TX_INTERVAL_MS 85L
+  #define INACTIVE_TX_INTERVAL_MS 2005L
+#elif defined(BATRAT4)
+  #define ACTIVE_TX_INTERVAL_MS 87L
+  #define INACTIVE_TX_INTERVAL_MS 2007L
 #else
-  #error No tx intervals defined for this baton.
+  #error No tx intervals defined for this batrat.
 #endif
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
@@ -171,7 +182,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -181,6 +192,9 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
 #define VIBRATION_SENSOR_PIN 3
+#if defined(BATRAT2)
+  #define IMU_POWER_PIN 4
+#endif
 #define RADIO_CE_PIN 9
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
@@ -219,18 +233,22 @@ static constexpr uint8_t numMaSets = 13;
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
 #define WANT_ACK true
-#if defined(BATON1)
+#if defined(BATRAT1)
   #define TX_RETRY_DELAY_MULTIPLIER 13
-#elif defined(BATON2)
+#elif defined(BATRAT2)
   #define TX_RETRY_DELAY_MULTIPLIER 11
+#elif defined(BATRAT3)
+  #define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(BATRAT4)
+  #define TX_RETRY_DELAY_MULTIPLIER 5
 #else
-  #error No TX_RETRY_DELAY_MULTIPLIER defined for this baton.
+  #error No TX_RETRY_DELAY_MULTIPLIER defined for this batrat.
 #endif
 #define TX_MAX_RETRIES 15   // use 15 (the maximum) when expecting acks
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-#define DATA_RATE RF24_1MBPS
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED.
 #define CRC_LENGTH RF24_CRC_16
@@ -242,7 +260,7 @@ static constexpr uint8_t numMaSets = 13;
 #define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
+#define RF_POWER_LEVEL RF24_PA_HIGH
 
 #endif
 
@@ -285,7 +303,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -397,40 +415,24 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #if defined(FLOWER1)
   #define ACTIVE_TX_INTERVAL_MS 31L
   #define INACTIVE_TX_INTERVAL_MS 3001L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER2)
   #define ACTIVE_TX_INTERVAL_MS 32L
   #define INACTIVE_TX_INTERVAL_MS 3002L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER3)
   #define ACTIVE_TX_INTERVAL_MS 33L
   #define INACTIVE_TX_INTERVAL_MS 3003L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER4)
   #define ACTIVE_TX_INTERVAL_MS 34L
   #define INACTIVE_TX_INTERVAL_MS 3004L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER5)
   #define ACTIVE_TX_INTERVAL_MS 35L
   #define INACTIVE_TX_INTERVAL_MS 3005L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER6)
   #define ACTIVE_TX_INTERVAL_MS 36L
   #define INACTIVE_TX_INTERVAL_MS 3006L
-  #define RF_CHANNEL 97
-  #define DATA_RATE RF24_1MBPS
 #elif defined(FLOWER7)
-  // Flower7 is in the Fluf Haven at Illumibrate 2020, where it is doing pattern selection duty.
-  //#define ACTIVE_TX_INTERVAL_MS 37L
-  #define ACTIVE_TX_INTERVAL_MS 250L
+  #define ACTIVE_TX_INTERVAL_MS 37L
   #define INACTIVE_TX_INTERVAL_MS 3007L
-  #define RF_CHANNEL 80
-  #define DATA_RATE RF24_250KBPS
 #else
   #error No tx intervals defined for this flower.
 #endif
@@ -449,7 +451,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -489,13 +491,27 @@ static constexpr uint8_t numMaSets = 7;
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
-#define WANT_ACK false
-#define TX_RETRY_DELAY_MULTIPLIER 0
-#define TX_MAX_RETRIES 0
+#define WANT_ACK true
+#define TX_MAX_RETRIES 15
+#if defined(FLOWER1)
+  #define TX_RETRY_DELAY_MULTIPLIER 9
+#elif defined(FLOWER2)
+  #define TX_RETRY_DELAY_MULTIPLIER 8
+#elif defined(FLOWER3)
+  #define TX_RETRY_DELAY_MULTIPLIER 5
+#elif defined(FLOWER4)
+  #define TX_RETRY_DELAY_MULTIPLIER 7
+#elif defined(FLOWER5)
+  #define TX_RETRY_DELAY_MULTIPLIER 11
+#elif defined(FLOWER6)
+  #define TX_RETRY_DELAY_MULTIPLIER 13
+#elif defined(FLOWER7)
+  #define TX_RETRY_DELAY_MULTIPLIER 15
+#endif
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-// Data rate is flower-specific because Flower7 is on loan to JUMP for the Fluf Haven.
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED.
 #define CRC_LENGTH RF24_CRC_16
@@ -504,10 +520,10 @@ static constexpr uint8_t numMaSets = 7;
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-// Channel is flower-specific because Flower7 is on loan to JUMP for the Fluf Haven.
+#define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
+#define RF_POWER_LEVEL RF24_PA_HIGH
 
 #endif
 
@@ -569,7 +585,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -680,7 +696,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -757,134 +773,6 @@ static constexpr uint8_t numMaSets = 14;
 #endif
 
 
-/*******************************
- * Rattle Widget Configuration *
- *******************************/
-
-#ifdef RATTLE
-
-#if defined(RATTLE1)
-  #define WIDGET_ID 23
-  static constexpr bool skipDeviceIdCheck = false;
-#elif defined(RATTLE2)
-  #define WIDGET_ID 24
-  static constexpr bool skipDeviceIdCheck = false;
-#else
-  #error No widget id defined for this rattle.
-#endif
-
-#define ACTIVATE_WITH_MOVEMENT
-
-static constexpr int16_t movementDetectionThreshold = 10;               // widget is active if gyro rotational speed > threshold
-static constexpr uint32_t inactiveTransitionDelayMs = 5000;             // delay between inactivity detection and going inactive
-
-static constexpr uint8_t mpu6050MotionDetectionThreshold = 1;           // unit is 2 mg
-static constexpr uint8_t mpu6050MotionDetectionCounterDecrement = 1;
-static constexpr uint8_t mpu6050MotionDetectionDuration = 1;            // unit is ms
-static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1.25 Hz, 1 = 2.5 Hz, 2 - 5 Hz, 3 = 10 Hz
-
-#define TEMPERATURE_SAMPLE_INTERVAL_MS 1000L
-
-// Stagger the transmissions to avoid repeated collisions.
-#if defined(RATTLE1)
-  #define ACTIVE_TX_INTERVAL_MS 85L
-  #define INACTIVE_TX_INTERVAL_MS 2005L
-#elif defined(RATTLE2)
-  #define ACTIVE_TX_INTERVAL_MS 87L
-  #define INACTIVE_TX_INTERVAL_MS 2007L
-#else
-  #error No tx intervals defined for this rattle.
-#endif
-
-// In standby mode, we'll transmit a packet with zero-valued data approximately
-// every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
-// STANDBY_TX_INTERVAL_S should be a multiple of 8 between 8 and 2040, inclusive.
-#define STANDBY_TX_INTERVAL_S 64
-
-// The MPU-6050 is placed in cycle mode, and the processor is put to sleep
-// when movement hasn't been detected for MOVEMENT_TIMEOUT_FOR_SLEEP_MS ms.
-#define MOVEMENT_TIMEOUT_FOR_SLEEP_MS 60000L
-
-// We use the time elapsed since getting good data from the MPU-6050 to determine
-// if we need to reinitialize the little bastard because he's quit working right.
-// MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
-// so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
-// not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
-
-//#define TX_INDICATOR_LED_PIN 16
-//#define TX_INDICATOR_LED_ON HIGH
-//#define TX_INDICATOR_LED_OFF LOW
-//#define IMU_NORMAL_INDICATOR_LED_PIN 16
-//#define IMU_NORMAL_INDICATOR_LED_ON HIGH
-//#define IMU_NORMAL_INDICATOR_LED_OFF LOW
-#define IMU_INTERRUPT_PIN 2
-#define VIBRATION_SENSOR_PIN 3
-#define RADIO_CE_PIN 9
-#define RADIO_CSN_PIN 10
-// The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
-
-// moving average length for averaging IMU measurements
-#define MA_LENGTH 20
-
-static constexpr uint8_t maSlotYaw = 0;
-static constexpr uint8_t maSlotPitch = 1;
-static constexpr uint8_t maSlotRoll = 2;
-static constexpr uint8_t maSlotGyroX = 3;
-static constexpr uint8_t maSlotGyroY = 4;
-static constexpr uint8_t maSlotGyroZ = 5;
-static constexpr uint8_t maSlotAccelX = 6;
-static constexpr uint8_t maSlotAccelY = 7;
-static constexpr uint8_t maSlotAccelZ = 8;
-static constexpr uint8_t maSlotLinearAccelX = 9;
-static constexpr uint8_t maSlotLinearAccelY = 10;
-static constexpr uint8_t maSlotLinearAccelZ = 11;
-static constexpr uint8_t maSlotTemperature = 12;
-
-static constexpr uint8_t numMaSets = 13;
-
-#define INCLUDE_ACCEL_DATA
-#define INCLUDE_LINEAR_ACCEL_DATA
-
-// ---------- radio configuration ----------
-
-// Nwdgt, where N indicates the payload type (0: stress test; 1: position
-// and velocity; 2: measurement vector; 3,4: undefined; 5: custom)
-#define TX_PIPE_ADDRESS "2wdgt"
-
-// Set WANT_ACK to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
-// to 0 for fire-and-forget.  To enable retries and delivery failure detection,
-// set WANT_ACK to true.  The delay between retries is 250 us multiplied by
-// TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
-// prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
-#define WANT_ACK true
-#if defined(RATTLE1)
-  #define TX_RETRY_DELAY_MULTIPLIER 7
-#elif defined(RATTLE2)
-  #define TX_RETRY_DELAY_MULTIPLIER 5
-#else
-  #error No TX_RETRY_DELAY_MULTIPLIER defined for this rattle.
-#endif
-#define TX_MAX_RETRIES 15   // use 15 (the maximum) when expecting acks
-
-// Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
-// works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-#define DATA_RATE RF24_1MBPS
-
-// Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED.
-#define CRC_LENGTH RF24_CRC_16
-
-// nRF24 frequency range:  2400 to 2525 MHz (channels 0 to 125)
-// ISM: 2400-2500;  ham: 2390-2450
-// WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
-//                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 97
-
-// RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
-
-#endif
-
 
 /*******************************
  * Common Widget Configuration *
@@ -903,6 +791,20 @@ static constexpr uint8_t numMaSets = 13;
 // packets are in it.
 constexpr uint8_t maxPacketsInMpu6050FifoBeforeForcedClear = 2;
 
+// The cheap-ass MPU-6050s sometimes lock up for no apparent reason.
+// imuPowerCycleMs is how long we turn off the MPU-6050 just prior to initializing
+// it, thus hopefully waking it back up after the watchdog triggers a system reset.
+constexpr uint32_t imuPowerCycleMs = 500;
+
+// interrupt enabled, system reset disabled, 8-second interval
+static constexpr uint8_t watchdogForSleepWakeup = (1 << WDIE) | (0 << WDE) | (1 << WDP3) | (0 << WDP2) | (0 << WDP1) | (1 << WDP0);
+
+// interrupt disabled, system reset enabled, 2-second interval
+#ifdef ENABLE_SYSTEM_RESET_WATCHDOG
+static constexpr uint8_t watchdogForSystemReset = (0 << WDIE) | (1 << WDE) | (0 << WDP3) | (1 << WDP2) | (1 << WDP1) | (1 << WDP0);
+#else
+static constexpr uint8_t watchdogForSystemReset = watchdogForSleepWakeup;
+#endif
 
 /***********
  * Globals *
@@ -943,7 +845,7 @@ static volatile int16_t gotVibrationSensorInterrupt;
 
 static int32_t nextTxMs;
 static int32_t lastTemperatureSampleMs;
-static int32_t lastSuccessfulMpu6050ReadMs;
+///static int32_t lastSuccessfulMpu6050ReadMs;
 static uint32_t lastMotionDetectedMs;
 #ifdef ENABLE_SOUND
 static int32_t lastSoundSampleMs;
@@ -994,6 +896,19 @@ void handleVibrationSensorInterrupt()
 }
 
 
+void configureWatchdog(uint8_t watchdogControlRegister)
+{
+  // We have to turn off interrupts because the changes to the control register
+  // must be done within four clock cycles of setting WDCE (change-enable bit).
+  wdt_reset();
+  noInterrupts();
+  _WD_CONTROL_REG = (1 << WDCE) | (1 << WDE);
+  _WD_CONTROL_REG = watchdogControlRegister;
+  interrupts();
+  wdt_reset();
+}
+
+
 bool widgetWakeUp()
 {
   // Returns true if widget should stay awake, false if it should go back to sleep.
@@ -1027,7 +942,7 @@ bool widgetWakeUp()
   nextTxMs = now;
   lastTemperatureSampleMs = now;
   lastMotionDetectedMs = now;
-  lastSuccessfulMpu6050ReadMs = now;
+///  lastSuccessfulMpu6050ReadMs = now;
   isImuActive = true;
 #ifdef ENABLE_SOUND
   lastSoundSampleMs = now;
@@ -1094,14 +1009,15 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       digitalWrite(MIC_POWER_PIN, LOW);
 #endif
       setMpu6050Mode(Mpu6050Mode::cycle, now);
-      wdt_reset();
       stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
+      configureWatchdog(watchdogForSleepWakeup);
       stayAwake = false;
       while (!stayAwake) {
         // widgetSleep returns after we sleep then wake up.
         widgetSleep();
         stayAwake = widgetWakeUp();
       }
+      configureWatchdog(watchdogForSystemReset);
 #ifdef ENABLE_SOUND
       digitalWrite(MIC_POWER_PIN, HIGH);
 #endif
@@ -1183,7 +1099,7 @@ void setMpu6050Mode(Mpu6050Mode newMode, uint32_t now)
       mpu6050.setDMPEnabled(true);
       lastTemperatureSampleMs = now;
       lastMotionDetectedMs = now;
-      lastSuccessfulMpu6050ReadMs = now;
+///      lastSuccessfulMpu6050ReadMs = now;
 #ifdef IMU_NORMAL_INDICATOR_LED_PIN
       digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_ON);
 #endif
@@ -1230,6 +1146,13 @@ void initLcd()
 
 bool initMpu6050()
 {
+#ifdef IMU_POWER_PIN
+  digitalWrite(IMU_POWER_PIN, LOW);
+  delay(imuPowerCycleMs);
+  digitalWrite(IMU_POWER_PIN, HIGH);
+  delay(imuPowerCycleMs);
+#endif
+
   if (!skipDeviceIdCheck) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("Testing MPU6050 connection..."));
@@ -1312,6 +1235,8 @@ void initVibrationSensor()
 
 void setup()
 {
+  configureWatchdog(watchdogForSystemReset);
+
 #ifdef ENABLE_DEBUG_PRINT
   Serial.begin(115200);
   printf_begin();
@@ -1333,6 +1258,10 @@ void setup()
   pinMode(MIC_POWER_PIN, OUTPUT);
   digitalWrite(MIC_POWER_PIN, LOW);
 #endif
+#ifdef IMU_POWER_PIN
+  pinMode(IMU_POWER_PIN, OUTPUT);
+  digitalWrite(IMU_POWER_PIN, LOW);
+#endif
 
   initI2c();
   initMpu6050();
@@ -1342,14 +1271,6 @@ void setup()
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
                  TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
                  RF_CHANNEL);
-
-  // Set the watchdog for interrupt only (no system reset) and an 8s interval.
-  // We have to turn off interrupts because the changes to the control register
-  // must be done within four clock cycles of setting WDCE (change-enable bit).
-  noInterrupts();
-  _WD_CONTROL_REG = (1 << WDCE) | (1 << WDE);
-  _WD_CONTROL_REG = (1 << WDIE) | (0 << WDE) | (1 << WDP3) | (1 << WDP0);
-  interrupts();
 
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
@@ -1535,7 +1456,8 @@ void gatherMotionMeasurements(uint32_t now)
     if (quat.w != 0 || quat.x != 0 || quat.y != 0 || quat.z != 0
         || gyro.x != 0 || gyro.y != 0 || gyro.z != 0)
     {
-      lastSuccessfulMpu6050ReadMs = now;
+///      lastSuccessfulMpu6050ReadMs = now;
+      wdt_reset();
     }
 
     if ((abs(getMovingAverage(maSlotGyroX)) > movementDetectionThreshold)
@@ -1804,6 +1726,7 @@ void loop()
 
   uint32_t now = millis();
 
+#ifdef NO_COMPILE
   // We need to reset the IMU if we are awake and haven't received any
   // data from it for a while (because it has probably gone out to lunch).
   if (now - lastSuccessfulMpu6050ReadMs >= MPU6050_ASSUMED_DEAD_TIMEOUT_MS) {
@@ -1818,6 +1741,7 @@ void loop()
     // value of lastMotionDetectedMs so that it isn't in the future.
     lastMotionDetectedMs = now;
   }
+#endif
 
   if (gotMpu6050Interrupt) {
     gotMpu6050Interrupt = false;

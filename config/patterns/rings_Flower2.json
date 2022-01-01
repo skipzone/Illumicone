@@ -46,14 +46,14 @@
         "rConfig" : {
             "maxSidebandWidth" : 120,   // sideband widths are in the context of virtual pixels
             "minSidebandWidth" : 120,   // min should be equal to or greater than virtualPixelRatio
-            "numStripes" : 2,           // number of stripes is in the context of physical pixels
+            "numStripes" : 1,           // number of stripes is in the context of physical pixels
             "scaledownFactor" : 3,      // effectively gear down a rotating widget
             "baseIntensity" : 255
         },
         "gConfig" : {
             "maxSidebandWidth" : 120,
             "minSidebandWidth" : 120,
-            "numStripes" : 3,
+            "numStripes" : 2,
             "scaledownFactor" : 2,
             "baseIntensity" : 255
         },

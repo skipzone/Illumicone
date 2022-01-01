@@ -33,7 +33,5 @@
     "densityScaledownFactor" : 1000,
     "useRandomColors" : true,
     "sparkleChangeIntervalMs" : 50
-    //"forwardSparkleColor" : "magenta",
-    //"reverseSparkleColor" : "green"
 }
 
