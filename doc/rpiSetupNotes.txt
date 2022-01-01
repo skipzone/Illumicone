@@ -398,3 +398,7 @@ Useful Commands and Stuff
 
     sudo /etc/init.d/ntp restart
 
+* on-demand, quick-and-dirty copying of log files for archiving
+
+    for f in `ls -1 *.log`; do fd=`basename $f '.log'`; cp -v $fd.log ${fd}_20220101_1031.log; done
+
