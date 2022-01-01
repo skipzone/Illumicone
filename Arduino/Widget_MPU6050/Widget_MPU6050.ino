@@ -133,6 +133,10 @@ enum class WidgetMode {
   #error No widget id defined for this batrat.
 #endif
 
+#if defined(BATRAT2)
+  #define ENABLE_SYSTEM_RESET_WATCHDOG
+#endif
+
 static constexpr bool skipDeviceIdCheck = false;
 
 #define ACTIVATE_WITH_MOVEMENT
@@ -178,7 +182,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -188,6 +192,9 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
 #define VIBRATION_SENSOR_PIN 3
+#if defined(BATRAT2)
+  #define IMU_POWER_PIN 4
+#endif
 #define RADIO_CE_PIN 9
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
@@ -296,7 +303,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -444,7 +451,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -578,7 +585,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -689,7 +696,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 1;                      // 0 = 1
 // MPU6050_ASSUMED_DEAD_TIMEOUT_MS must be less than MOVEMENT_TIMEOUT_FOR_SLEEP_MS
 // so that we re-init the MPU-6050 rather than putting it in cycle mode when we're
 // not getting good data from it.
-#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
+///#define MPU6050_ASSUMED_DEAD_TIMEOUT_MS 3000
 
 //#define TX_INDICATOR_LED_PIN 16
 //#define TX_INDICATOR_LED_ON HIGH
@@ -784,6 +791,20 @@ static constexpr uint8_t numMaSets = 14;
 // packets are in it.
 constexpr uint8_t maxPacketsInMpu6050FifoBeforeForcedClear = 2;
 
+// The cheap-ass MPU-6050s sometimes lock up for no apparent reason.
+// imuPowerCycleMs is how long we turn off the MPU-6050 just prior to initializing
+// it, thus hopefully waking it back up after the watchdog triggers a system reset.
+constexpr uint32_t imuPowerCycleMs = 500;
+
+// interrupt enabled, system reset disabled, 8-second interval
+static constexpr uint8_t watchdogForSleepWakeup = (1 << WDIE) | (0 << WDE) | (1 << WDP3) | (0 << WDP2) | (0 << WDP1) | (1 << WDP0);
+
+// interrupt disabled, system reset enabled, 2-second interval
+#ifdef ENABLE_SYSTEM_RESET_WATCHDOG
+static constexpr uint8_t watchdogForSystemReset = (0 << WDIE) | (1 << WDE) | (0 << WDP3) | (1 << WDP2) | (1 << WDP1) | (1 << WDP0);
+#else
+static constexpr uint8_t watchdogForSystemReset = watchdogForSleepWakeup;
+#endif
 
 /***********
  * Globals *
@@ -824,7 +845,7 @@ static volatile int16_t gotVibrationSensorInterrupt;
 
 static int32_t nextTxMs;
 static int32_t lastTemperatureSampleMs;
-static int32_t lastSuccessfulMpu6050ReadMs;
+///static int32_t lastSuccessfulMpu6050ReadMs;
 static uint32_t lastMotionDetectedMs;
 #ifdef ENABLE_SOUND
 static int32_t lastSoundSampleMs;
@@ -875,6 +896,19 @@ void handleVibrationSensorInterrupt()
 }
 
 
+void configureWatchdog(uint8_t watchdogControlRegister)
+{
+  // We have to turn off interrupts because the changes to the control register
+  // must be done within four clock cycles of setting WDCE (change-enable bit).
+  wdt_reset();
+  noInterrupts();
+  _WD_CONTROL_REG = (1 << WDCE) | (1 << WDE);
+  _WD_CONTROL_REG = watchdogControlRegister;
+  interrupts();
+  wdt_reset();
+}
+
+
 bool widgetWakeUp()
 {
   // Returns true if widget should stay awake, false if it should go back to sleep.
@@ -908,7 +942,7 @@ bool widgetWakeUp()
   nextTxMs = now;
   lastTemperatureSampleMs = now;
   lastMotionDetectedMs = now;
-  lastSuccessfulMpu6050ReadMs = now;
+///  lastSuccessfulMpu6050ReadMs = now;
   isImuActive = true;
 #ifdef ENABLE_SOUND
   lastSoundSampleMs = now;
@@ -975,14 +1009,15 @@ void setWidgetMode(WidgetMode newMode, uint32_t now)
       digitalWrite(MIC_POWER_PIN, LOW);
 #endif
       setMpu6050Mode(Mpu6050Mode::cycle, now);
-      wdt_reset();
       stayAwakeCountdown = STANDBY_TX_INTERVAL_S / 8;
+      configureWatchdog(watchdogForSleepWakeup);
       stayAwake = false;
       while (!stayAwake) {
         // widgetSleep returns after we sleep then wake up.
         widgetSleep();
         stayAwake = widgetWakeUp();
       }
+      configureWatchdog(watchdogForSystemReset);
 #ifdef ENABLE_SOUND
       digitalWrite(MIC_POWER_PIN, HIGH);
 #endif
@@ -1064,7 +1099,7 @@ void setMpu6050Mode(Mpu6050Mode newMode, uint32_t now)
       mpu6050.setDMPEnabled(true);
       lastTemperatureSampleMs = now;
       lastMotionDetectedMs = now;
-      lastSuccessfulMpu6050ReadMs = now;
+///      lastSuccessfulMpu6050ReadMs = now;
 #ifdef IMU_NORMAL_INDICATOR_LED_PIN
       digitalWrite(IMU_NORMAL_INDICATOR_LED_PIN, IMU_NORMAL_INDICATOR_LED_ON);
 #endif
@@ -1111,6 +1146,13 @@ void initLcd()
 
 bool initMpu6050()
 {
+#ifdef IMU_POWER_PIN
+  digitalWrite(IMU_POWER_PIN, LOW);
+  delay(imuPowerCycleMs);
+  digitalWrite(IMU_POWER_PIN, HIGH);
+  delay(imuPowerCycleMs);
+#endif
+
   if (!skipDeviceIdCheck) {
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("Testing MPU6050 connection..."));
@@ -1193,6 +1235,8 @@ void initVibrationSensor()
 
 void setup()
 {
+  configureWatchdog(watchdogForSystemReset);
+
 #ifdef ENABLE_DEBUG_PRINT
   Serial.begin(115200);
   printf_begin();
@@ -1214,6 +1258,10 @@ void setup()
   pinMode(MIC_POWER_PIN, OUTPUT);
   digitalWrite(MIC_POWER_PIN, LOW);
 #endif
+#ifdef IMU_POWER_PIN
+  pinMode(IMU_POWER_PIN, OUTPUT);
+  digitalWrite(IMU_POWER_PIN, LOW);
+#endif
 
   initI2c();
   initMpu6050();
@@ -1223,14 +1271,6 @@ void setup()
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
                  TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
                  RF_CHANNEL);
-
-  // Set the watchdog for interrupt only (no system reset) and an 8s interval.
-  // We have to turn off interrupts because the changes to the control register
-  // must be done within four clock cycles of setting WDCE (change-enable bit).
-  noInterrupts();
-  _WD_CONTROL_REG = (1 << WDCE) | (1 << WDE);
-  _WD_CONTROL_REG = (1 << WDIE) | (0 << WDE) | (1 << WDP3) | (1 << WDP0);
-  interrupts();
 
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
@@ -1416,7 +1456,8 @@ void gatherMotionMeasurements(uint32_t now)
     if (quat.w != 0 || quat.x != 0 || quat.y != 0 || quat.z != 0
         || gyro.x != 0 || gyro.y != 0 || gyro.z != 0)
     {
-      lastSuccessfulMpu6050ReadMs = now;
+///      lastSuccessfulMpu6050ReadMs = now;
+      wdt_reset();
     }
 
     if ((abs(getMovingAverage(maSlotGyroX)) > movementDetectionThreshold)
@@ -1685,6 +1726,7 @@ void loop()
 
   uint32_t now = millis();
 
+#ifdef NO_COMPILE
   // We need to reset the IMU if we are awake and haven't received any
   // data from it for a while (because it has probably gone out to lunch).
   if (now - lastSuccessfulMpu6050ReadMs >= MPU6050_ASSUMED_DEAD_TIMEOUT_MS) {
@@ -1699,6 +1741,7 @@ void loop()
     // value of lastMotionDetectedMs so that it isn't in the future.
     lastMotionDetectedMs = now;
   }
+#endif
 
   if (gotMpu6050Interrupt) {
     gotMpu6050Interrupt = false;
