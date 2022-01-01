@@ -98,7 +98,7 @@ static constexpr uint8_t numMsgeq7Bands = 7;
 // When standby mode is enabled, the MSGEQ7 will be powered off
 // and the processor will be put to sleep after the widget has
 // been inactive for inactivityTimeoutForSleepMs ms.
-#define ENABLE_STANDBY_MODE
+//#define ENABLE_STANDBY_MODE
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
 // every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
@@ -147,7 +147,7 @@ static constexpr uint8_t numMaSets = numMsgeq7Bands;
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-#define DATA_RATE RF24_1MBPS
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
 #define CRC_LENGTH RF24_CRC_16
@@ -159,7 +159,7 @@ static constexpr uint8_t numMaSets = numMsgeq7Bands;
 #define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_LOW
+#define RF_POWER_LEVEL RF24_PA_HIGH
 
 
 /***********
