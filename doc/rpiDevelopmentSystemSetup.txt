@@ -106,7 +106,7 @@ What you will need:
     i.  Click OK.
 
     j.  Close the VNC Server window.
-    
+
 
 7.  Install the required and nice-to-have useful software.  Use the Add / Remove
     Software option on the raspberry -> Preferences menu.  You can use the
@@ -258,19 +258,44 @@ What you will need:
     For more information:  https://www.arduino.cc/en/Guide/Linux
 
 
-18. Install the required Arduino libraries.
+18. Install additional boards packages.
 
+    Board          URL
+    -------------  -------------------------------------------------------------
+    Pololu A-Star  https://files.pololu.com/arduino/package_pololu_index.json
+
+    In the Arduino IDE, do the following for each board listed above:
+        a.  Go to Arduino/Preferences.
+        b.  Add the boards package URLs to the Additional Boards Manager URLs
+            field by either appending each URL to the comma-delimited list in
+            the field or by clicking on the icon next to the field and adding
+            each URL on a new line in the dialog box.
+        c.  Click on Ok.
+        d.  Go to Tools/Board and select Boards Manager at the top of the list.
+        e.  Enter a search term from the Board column (brand name works well)
+            in the search field.
+        f.  In the list that is displayed, find and click on the entry
+            corresponding to the board indicated in the Board column.
+        h.  Click Install.
+        i.  Repeat steps e and f for each board in the list.
+        j.  Click Close when finished installing all the boards packages.
+
+
+19. Install the required Arduino libraries.
+
+    MSGEQ7 by NicoHood
     RBD_Button by Alex Taujenis
     RBD_Timer by Alex Taujenis
     RF24 by TMRh20
     VL53L1X by Pololu
 
-        In the Arduino IDE:
+        In the Arduino IDE, do the following for each library listed above:
             a.  Go to Tools/Manage Libraries.
-            b.  Enter the library name (RF24, VL53L1X, etc.) in the search field.
-            c.  In the list that is displayed, find the specified library.  Be
-                sure the "by" part matches.
-            d.  Click on Install.
+            b.  Enter the library name (RF24, VL53L1X, etc.) in the search
+                field.
+            c.  In the list that is displayed, find and click on the specified
+                library.  Be sure the "by" part matches.
+            d.  Click Install.
 
     I2Cdev and MPU6050 by jrowberg
         cd ~/devl
@@ -279,10 +304,23 @@ What you will need:
         cp -Rv i2cdevlib/Arduino/MPU6050 ~/Arduino/libraries/
 
     Illumicone
-        cp -Rv ~/devl/Illumicone/Arduino/libraries/Illumicone ~/Arduino/libraries/
+        ln -s ~/devl/Illumicone/Arduino/libraries/Illumicone/ ~/Arduino/libraries/Illumicone
 
 
-19.  Set up GitHub credentials for pushing to the Illumicone repository.
+20.  If using a Pololu USB AVR Programmer v2 (highly recommended over a simple
+     USB<->UART board), install the corresponding software.  Instructions can
+     be found in section 4 of the User's Guide.  Brief but probably sufficient
+     instructions are below.
+
+    a.  Download https://www.pololu.com/file/0J1475/pololu-usb-avr-programmer-v2-1.1.0-linux-rpi.tar.xz
+    b.  Extract the contents of the tarball with "tar -xvf <filename>".
+    c.  Run the installation script with "sudo <path>/install.sh".
+    d.  Connect the programmer to the RPi.
+    e.  Run "pavr2cmd --list" to make sure the software can find the programmer.
+    f.  Start the configuration utility with "pavr2gui".
+
+
+21.  Set up GitHub credentials for pushing to the Illumicone repository.
 
     a.  Install GitHub CLI (gh).
 
@@ -317,7 +355,7 @@ What you will need:
 =-=-=-= resume here
 
 
-20. Set up I2C.
+22. Set up I2C.
 
     sudo apt-get install python-smbus i2c-tools
 
