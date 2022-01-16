@@ -65,7 +65,7 @@ constexpr uint8_t ledBluePin = 6;
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for TX_MAX_RETRIES.
-#define WANT_ACK false
+#define WANT_ACK true
 #define TX_RETRY_DELAY_MULTIPLIER 15    // use 15 when getting acks
 #define TX_MAX_RETRIES 15               // use 15 when getting acks
 
@@ -81,10 +81,10 @@ constexpr uint8_t ledBluePin = 6;
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
 // Illumicone uses channel 97.  The Electric Garden theremin uses channel 80.
-#define RF_CHANNEL 80
+#define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_LOW
+#define RF_POWER_LEVEL RF24_PA_HIGH
 
 
 /***********
@@ -125,9 +125,9 @@ void setup()
   pinMode(ledRedPin, OUTPUT);
   pinMode(ledGreenPin, OUTPUT);
   pinMode(ledBluePin, OUTPUT);
-  analogWrite(ledRedPin, 64);
-  analogWrite(ledGreenPin, 64);
-  analogWrite(ledBluePin, 64);
+  analogWrite(ledRedPin, 128);
+  analogWrite(ledGreenPin, 0);
+  analogWrite(ledBluePin, 0);
 
   configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
                  TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
@@ -153,11 +153,13 @@ void sendMeasurements()
   payload.widgetHeader.isActive = isActive;
 
   if (!radio.write(&payload, sizeof(WidgetHeader) + sizeof(int16_t) * (numPots + 1), !WANT_ACK)) {
+    analogWrite(ledRedPin, 64);
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write failed."));
 #endif
   }
   else {
+    analogWrite(ledRedPin, 0);
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("radio.write succeeded."));
 #endif
@@ -171,7 +173,16 @@ void loop()
 
   uint32_t now = millis();
 
-  isActive = !digitalRead(buttonPin);
+  if (digitalRead(buttonPin)) {
+    isActive = false;
+    analogWrite(ledGreenPin, 0);
+    analogWrite(ledBluePin, 64);
+  }
+  else {
+    isActive = true;
+    analogWrite(ledGreenPin, 64);
+    analogWrite(ledBluePin, 0);
+  }
 
   if (now - lastTxMs >= activeTxIntervalMs) {
     if (isActive || wasActive || now - lastTxMs >= inactiveTxIntervalMs) {
