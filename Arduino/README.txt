@@ -39,7 +39,7 @@ Widget_MPU6050             Baton1                     13
                            Rattle1                     7
                            Rattle2                     5
 
-Widget_Plunger             Pump                       13
+Widget_Pump                Pump                       13
 
 Widget_SchroedersPlaything Schroeder's Plaything       2
 
