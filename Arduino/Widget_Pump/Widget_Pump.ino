@@ -52,13 +52,21 @@ enum class WidgetMode {
   standby,
   inactive,
   active
+  // TODO:  maybe these should be init, asleep, and awake, with the inactive/active states expressed by WidgetState.
 };
 
 enum class WidgetState {
   init,
-  ,
-  ,
-  
+  sleepBleedoff,
+  sleep,
+  timerWake,
+  wakeup,
+  inactive,
+  pressurizing,
+  bleedoff,
+  popoff,
+  rest,
+  restBleedoff
 };
 
 
@@ -67,20 +75,28 @@ enum class WidgetState {
  ************************/
 
 #define WIDGET_ID 6
-#define ACTIVE_TX_INTERVAL_MS 250L
-#define INACTIVE_TX_INTERVAL_MS 60000L      // should be a multiple of ACTIVE_TX_INTERVAL_MS
-#define PRESSURE_SAMPLE_INTERVAL_MS 10L
+
 #define PRESSURE_SENSOR_SIGNAL_PIN A3
 #define PIN_TX_FAILURE_LED 7
 #define PIN_RADIO_CE 9
 #define PIN_RADIO_CSN 10
-// TODO:  these need to be on pwm pins
+// TODO:  the LEDs need to be on PWM pins
 #define PIN_STATUS_RED_LED 3
 #define PIN_STATUS_GREEN_LED 3
 #define PIN_STATUS_BLUE_LED 3
+// TODO:  the valve control relay and sensor power do not need a PWM pin
+#define PIN_VALVE_CONTROL 99
+#define PIN_VALVE_POWER_EN 99
+#define PIN_SENSOR_POWER 99
 
 #define STATUS_LED_ON HIGH
 #define STATUS_LED_OFF LOW
+
+
+//=-=-=-=-=-=-= vvv  old shit  vvv =-=-=-=-=-=-=
+#define ACTIVE_TX_INTERVAL_MS 250L
+#define INACTIVE_TX_INTERVAL_MS 60000L      // should be a multiple of ACTIVE_TX_INTERVAL_MS
+#define PRESSURE_SAMPLE_INTERVAL_MS 10L
 
 // In standby mode, we'll transmit a packet with zero-valued data approximately
 // every STANDBY_TX_INTERVAL_S seconds.  Wake-ups occur at 8-second intervals, so
@@ -96,6 +112,11 @@ constexpr uint16_t activePressureThreshold = 120;
 constexpr uint8_t numInactiveSendTries = 5; // when going inactive, transmit that fact this many times at the active rate
 
 static constexpr uint32_t gatherMeasurementsIntervalMs = 25;  // 40 samples/s
+//=-=-=-=-=-=-= ^^^  old shit  ^^^ =-=-=-=-=-=-=
+
+
+
+
 
 // moving average length for averaging the pressure sensor and battery voltage measurements
 static constexpr uint8_t maLength = 2;
