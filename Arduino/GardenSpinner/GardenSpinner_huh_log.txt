@@ -1,0 +1,35 @@
+commit 69bd071a54066428fbd709e37ce1f2fb28c95747
+Author: Ross Butler <ross271828@gmail.com>
+Date:   Wed Nov 27 16:02:40 2019 +0000
+
+    Added mapping for the rose garden at Winter Garden aGlow 2019.  Turned off gamma correction because the LED Christmas light strings have a very different brightness curve.  Changed lamp min intensity from 48 to 64 for the same reason.
+
+commit 2af732d717e1c02fa3849954c548a0a1a61cfbe4
+Author: Ross Butler <ross271828@gmail.com>
+Date:   Tue Nov 26 19:59:03 2019 +0000
+
+    Disabled simulated measurements.  Works ok with a flower widget.
+
+commit 823110d99a2fba1989d95660d9833a237a2c5a87
+Author: Ross Butler <ross271828@gmail.com>
+Date:   Tue Nov 26 19:13:43 2019 +0000
+
+    Basic functionality is working.  Not yet tested with a widget.
+
+commit 9cf90096754ac5ae172d66c0bab1c8ba707bdfda
+Author: Ross Butler <ross271828@gmail.com>
+Date:   Tue Nov 26 14:33:53 2019 +0000
+
+    Removed unneeded code.  Radio configured for auto ack.  Updated widget header layout.  Fixed up some stuff.  Still haven't tried compiling it.
+
+commit 2d3e40cc8d1ed3a870efe6bc652395a4831c52a4
+Author: Ross Butler <ross271828@gmail.com>
+Date:   Tue Nov 26 14:11:21 2019 +0000
+
+    Code might be complete.
+
+commit 592ce20a430dc951b6096cb0415d51135c1269ef
+Author: Ross Butler <ross271828@gmail.com>
+Date:   Tue Nov 26 13:05:47 2019 +0000
+
+    Adding GardenSpinner, which is nowhere near done yet.

@@ -1,0 +1,38 @@
+/* This file is part of Illumicone.  Illumicone is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*******************************************************************************
+The Great Google says that sunset at Stargazer Ranch, Utah on Saturday 18 June
+is at 9:10 PM and sunrise on Sunday 19 June is at 5:59 AM.  We'll go with that.
+*******************************************************************************/
+
+{
+    "shutoffPeriods" : [
+        {   "description" : "daytime",
+            "startDateTime" : "06:00:00",
+            "endDateTime" : "21:10:00"
+        },
+        {   "description" : "no shutoff for setup on Tuesday 21 June",
+            "startDateTime" : "2022-06-21 06:00:00",
+            "endDateTime" : "2022-06-21 06:01:00"
+        }
+    ],
+
+    "quiescentPeriods" : [
+//        {   "description" : "Temple Burn",
+//            "startDateTime" : "2022-06-25 22:00:00",
+//            "endDateTime" : "2022-06-25 23:00:00",
+//            "quiescentColor" : "192,192,192"
+//        }
+    ]
+}
+
