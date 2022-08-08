@@ -1,0 +1,24 @@
+List all tags with their comments:
+
+    git tag -n1
+
+
+Create and tag a release (usually at the end of an event after all changes are
+finalized):
+
+    git checkout develop
+
+    git flow release start v3.10
+
+    git flow release finish 'v3.10'
+        For both the merge and the tag message, add something like "This is the
+        final version from such-and-such event 2021 (SAS_2021)."
+
+    git push
+    git push --tags
+
+    git checkout master
+    git push
+    git push --tags
+
+    git checkout develop

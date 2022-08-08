@@ -297,6 +297,26 @@ Source:  https://serverfault.com/questions/960970/wheezy-updates-on-archive-debi
             network 192.168.69.0   <-- not sure if this is needed
             gateway 192.168.69.1
 
+    Also, comment out this section to prevent udhcpd from starting.
+
+        # Ethernet/RNDIS gadget (g_ether)
+        # Used by: /opt/scripts/boot/autoconfigure_usb0.sh
+        #iface usb0 inet static
+        #    address 192.168.7.2
+        #    netmask 255.255.255.252
+        #    network 192.168.7.0
+        #    gateway 192.168.7.1
+
+    20 July 2022:  For years now, the IP address--which is supposed to be
+    static--would sporadically end up changing due to DHCP mysteriously
+    becoming enabled.  Turns out that dhclient is started by something when
+    the eth0 link goes down.  Finding that something has been elusive.  As a
+    workaround to prevent ic-strdrv from becoming unreachable at its static
+    IP address whenever the network goes down, rename dhclient to disable it.
+    In /sbin:
+
+        sudo mv dhclient dhclient.disabled
+
     reboot
 
     Note:  For ic2-strdrv, assign 192.168.69.110.
@@ -343,6 +363,7 @@ Source:  https://serverfault.com/questions/960970/wheezy-updates-on-archive-debi
     sudo umount /media/card
 
     Remove the SD card.
+
 
 
 ================================================================================
