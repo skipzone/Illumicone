@@ -26,10 +26,6 @@ https://sunrisesunset.willyweather.com/nv/pershing-county/black-rock-city-burnin
         {   "description" : "daytime",
             "startDateTime" : "07:28:00",
             "endDateTime" : "20:38:00"
-        },
-        {   "description" : "no shutoff for setup on Friday 26 August",
-            "startDateTime" : "2022-08-26 07:28:00",
-            "endDateTime" : "2022-08-26 07:29:00"
         }
     ],
 
@@ -39,6 +35,29 @@ https://sunrisesunset.willyweather.com/nv/pershing-county/black-rock-city-burnin
 //            "endDateTime" : "2022-06-25 23:00:00",
 //            "quiescentColor" : "192,192,192"
 //        }
+    ],
+
+    "overridePeriods" : [
+        {   "description" : "development during build week",
+            "startDateTime" : "2022-08-22 00:00:00",
+            "endDateTime" : "2022-08-22 23:59:59"
+        },
+        {   "description" : "development during build week",
+            "startDateTime" : "2022-08-23 00:00:00",
+            "endDateTime" : "2022-08-23 23:59:59"
+        },
+        {   "description" : "development during build week",
+            "startDateTime" : "2022-08-24 00:00:00",
+            "endDateTime" : "2022-08-24 23:59:59"
+        },
+        {   "description" : "development during build week",
+            "startDateTime" : "2022-08-25 00:00:00",
+            "endDateTime" : "2022-08-25 23:59:59"
+        },
+        {   "description" : "setup on Friday 26 August",
+            "startDateTime" : "2022-08-26 00:00:00",
+            "endDateTime" : "2022-08-26 23:59:59"
+        }
     ]
 }
 
