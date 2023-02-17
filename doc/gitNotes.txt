@@ -3,6 +3,7 @@ List all tags with their comments:
     git tag -n1
 
 
+
 Create and tag a release (usually at the end of an event after all changes are
 finalized):
 
@@ -22,3 +23,15 @@ finalized):
     git push --tags
 
     git checkout develop
+
+
+
+To fix this error during "sudo apt-get update":
+
+    Err:1 https://cli.github.com/packages stable InRelease                      
+      The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 23F3D4EA75716059
+
+Get a new /usr/share/keyrings/githubcli-archive-keyring.gpg with this:
+
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg; sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+
