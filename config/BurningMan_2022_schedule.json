@@ -19,13 +19,15 @@ sunrise, we'll use the earlier sunset and the later sunrise times.  Since we
 don't mess with the time zone on widpatcon, we'll use MDT in this config.
 
 https://sunrisesunset.willyweather.com/nv/pershing-county/black-rock-city-burning-man-festival.html
+
+1 Sept.:  The sun went behind the mountain at 19:08 PDT.
 *******************************************************************************/
 
 {
     "shutoffPeriods" : [
         {   "description" : "daytime",
             "startDateTime" : "07:28:00",
-            "endDateTime" : "20:38:00"
+            "endDateTime" : "20:08:00"
         }
     ],
 
