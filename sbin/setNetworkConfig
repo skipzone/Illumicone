@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Creates the network_active.json symbolic link in the config directory.
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage:  setNetworkConfig config_name"
+    echo "(omit network_ prefix and .json extension)"
+    exit 2
+fi
+
+if [[ ! -f $ILLUMICONE_CONFIG/network_$1.json ]]; then
+    echo "$ILLUMICONE_CONFIG/network_$1.json not found." >&2
+    exit 1
+fi
+
+if [[ -h $ILLUMICONE_CONFIG/network_active.json ]]; then
+    activeSymlinkTarget=`readlink $ILLUMICONE_CONFIG/network_active.json`
+    prevConfigName=`basename $activeSymlinkTarget .json | sed 's/^network_//'`
+    echo "Previous network configuration was $prevConfigName."
+fi
+
+if ln -fs $ILLUMICONE_CONFIG/network_$1.json $ILLUMICONE_CONFIG/network_active.json; then
+    echo "Active network configuration now $1."
+else
+    echo "Failed to create symbolic link.  Active network configuration not set."
+    exit 1
+fi
