@@ -107,6 +107,7 @@ static unsigned int numberOfStrings;
 static unsigned int numberOfPixelsPerString;
 static vector<SchedulePeriod> shutoffPeriods;
 static vector<SchedulePeriod> quiescentPeriods;
+static vector<SchedulePeriod> overridePeriods;
 static string patternBlendMethodStr;
 static PatternBlendMethod patternBlendMethod;
 static unsigned int patternRunLoopSleepIntervalUs;
@@ -727,9 +728,10 @@ bool readConfig()
     shutoffPeriods.clear();
     quiescentPeriods.clear();
     if (!ConfigReader::getSchedulePeriods(configObject, "shutoffPeriods", shutoffPeriods)
-        || !ConfigReader::getSchedulePeriods(configObject, "quiescentPeriods", quiescentPeriods))
+        || !ConfigReader::getSchedulePeriods(configObject, "quiescentPeriods", quiescentPeriods)
+        || !ConfigReader::getSchedulePeriods(configObject, "overridePeriods", overridePeriods))
     {
-        logger.logMsg(LOG_ERR, "shutoffPeriods or quiescentPeriods is missing or invalid" + errMsgSuffix);
+        logger.logMsg(LOG_ERR, "shutoffPeriods, quiescentPeriods, and/or overridePeriods is missing or invalid" + errMsgSuffix);
         return false;
     }
 
@@ -1010,6 +1012,7 @@ bool doInitialization()
     logger.logMsg(LOG_INFO, "pattern blend method is " + patternBlendMethodStr);
     printSchedulePeriods("Shutoff periods", shutoffPeriods);
     printSchedulePeriods("Quiescent periods", quiescentPeriods);
+    printSchedulePeriods("Override periods", overridePeriods);
 
     logger.setAutoLogRotation(logRotationIntervalMinutes, logRotationOffsetHour, logRotationOffsetMinute);
 
@@ -1346,6 +1349,7 @@ int main(int argc, char **argv)
 */
 
     // ----- run loop -----
+    bool inOverridePeriod = false;
     while (!gotExitSignal) {
 
         usleep(patternRunLoopSleepIntervalUs);
@@ -1397,7 +1401,11 @@ int main(int argc, char **argv)
         if (now > lastPeriodCheckTime) {
             lastPeriodCheckTime = now;
 
-            if (timeIsInPeriod(now, shutoffPeriods, selectedSchedulePeriod)) {
+            inOverridePeriod = false;
+            if (timeIsInPeriod(now, overridePeriods, selectedSchedulePeriod)) {
+                inOverridePeriod = true;
+            }
+            else if (timeIsInPeriod(now, shutoffPeriods, selectedSchedulePeriod)) {
                 logOperatingState(OperatingState::shutoff, selectedSchedulePeriod.description);
                 turnOffAllPixels();
             }
@@ -1420,7 +1428,7 @@ int main(int argc, char **argv)
             }
         }
 
-        if (selectedSchedulePeriod == noPeriod) {
+        if (selectedSchedulePeriod == noPeriod || inOverridePeriod) {
             doPatterns();
         }
     }

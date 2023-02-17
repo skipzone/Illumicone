@@ -42,7 +42,7 @@
  **********************************************/
 
 //#define BATRAT1
-//#define BATRAT2
+#define BATRAT2
 //#define BATRAT3
 //#define BATRAT4
 //#define BOOGIEBOARD
@@ -56,7 +56,7 @@
 //#define IBG_TILT_1
 //#define IBG_TILT_2
 //#define IBG_TILT_TEST
-#define RAINSTICK
+//#define RAINSTICK
 
 #if defined(BATRAT1) || defined(BATRAT2)|| defined(BATRAT3) || defined(BATRAT4)
   #define BATRAT
@@ -133,7 +133,7 @@ enum class WidgetMode {
   #error No widget id defined for this batrat.
 #endif
 
-#if defined(BATRAT2)
+#if defined(BATRAT2) || defined(BATRAT3)
   #define ENABLE_SYSTEM_RESET_WATCHDOG
 #endif
 
@@ -192,7 +192,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
 #define VIBRATION_SENSOR_PIN 3
-#if defined(BATRAT2)
+#if defined(BATRAT2) || defined(BATRAT3)
   #define IMU_POWER_PIN 4
 #endif
 #define RADIO_CE_PIN 9
@@ -232,6 +232,7 @@ static constexpr uint8_t numMaSets = 13;
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
+// TX_MAX_RETRIES is usually set to 15 when retries are enabled.
 #define WANT_ACK true
 #if defined(BATRAT1)
   #define TX_RETRY_DELAY_MULTIPLIER 13
@@ -273,6 +274,8 @@ static constexpr uint8_t numMaSets = 13;
 
 #define WIDGET_ID 7
 
+#define ENABLE_SYSTEM_RESET_WATCHDOG
+
 static constexpr bool skipDeviceIdCheck = false;
 
 #define ACTIVATE_WITH_MOVEMENT
@@ -311,9 +314,9 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 //#define IMU_NORMAL_INDICATOR_LED_PIN 16
 //#define IMU_NORMAL_INDICATOR_LED_ON HIGH
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
-#define DEBUG_A_PIN 16
 #define IMU_INTERRUPT_PIN 2
 #define VIBRATION_SENSOR_PIN 3
+#define IMU_POWER_PIN 4
 #define RADIO_CE_PIN 9
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
@@ -351,13 +354,14 @@ static constexpr uint8_t numMaSets = 13;
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
-#define WANT_ACK false
-#define TX_RETRY_DELAY_MULTIPLIER 0
-#define TX_MAX_RETRIES 0
+// TX_MAX_RETRIES is usually set to 15 when retries are enabled.
+#define WANT_ACK true
+#define TX_RETRY_DELAY_MULTIPLIER 3
+#define TX_MAX_RETRIES 15
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-#define DATA_RATE RF24_1MBPS
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED.
 #define CRC_LENGTH RF24_CRC_16
@@ -369,7 +373,7 @@ static constexpr uint8_t numMaSets = 13;
 #define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_MAX
+#define RF_POWER_LEVEL RF24_PA_HIGH
 
 #endif
 
@@ -491,6 +495,7 @@ static constexpr uint8_t numMaSets = 7;
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
+// TX_MAX_RETRIES is usually set to 15 when retries are enabled.
 #define WANT_ACK true
 #define TX_MAX_RETRIES 15
 #if defined(FLOWER1)
@@ -631,6 +636,7 @@ static constexpr uint8_t numMaSets = 13;
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
+// TX_MAX_RETRIES is usually set to 15 when retries are enabled.
 #define WANT_ACK false
 #define TX_RETRY_DELAY_MULTIPLIER 0
 #define TX_MAX_RETRIES 0
@@ -750,6 +756,7 @@ static constexpr uint8_t numMaSets = 14;
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for the multiplier.
+// TX_MAX_RETRIES is usually set to 15 when retries are enabled.
 #define WANT_ACK true
 #define TX_RETRY_DELAY_MULTIPLIER 5     // use 5 when getting acks
 #define TX_MAX_RETRIES 15               // use 15 when getting acks
