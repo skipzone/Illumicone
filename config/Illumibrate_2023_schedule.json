@@ -1,0 +1,80 @@
+/* This file is part of Illumicone.  Illumicone is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*******************************************************************************
+WillyWeather says that sunset at Black Rock City on Friday, 26 August 2022 is at
+7:38 PM PDT, and sunrise the next morning is at 6:19 AM PDT.  By the end of the
+event on 5 Sept., sunrise is 9 minutes later, and sunset the nigh before is 16
+minutes earlier!  To make sure that Illumicone is always on from sunset to
+sunrise, we'll use the earlier sunset and the later sunrise times.  Since we
+don't mess with the time zone on widpatcon, we'll use MDT in this config.
+
+https://sunrisesunset.willyweather.com/nv/pershing-county/black-rock-city-burning-man-festival.html
+
+1 Sept.:  The sun went behind the mountain at 19:08 PDT.
+*******************************************************************************/
+
+{
+    "shutoffPeriods" : [
+        // Sunday 01 Mar.
+        //{   "description" : "JUMP daytime shutoff",
+        //    "startDateTime" : "2020-03-01 07:30:00",
+        //    "endDateTime" : "2020-03-01 18:00:00"
+        //},
+        //{   "description" : "JUMP nighttime shutoff",
+        //    "startDateTime" : "2020-03-01 22:00:00",
+        //    "endDateTime" : "2020-03-02 06:30:00"
+        //},
+        {   "description" : "JUMP pre-midnight nighttime shutoff",
+            "startDateTime" : "23:00:00",
+            "endDateTime" : "23:59:59"
+        },
+        {   "description" : "JUMP post-midnight nighttime shutoff",
+            "startDateTime" : "00:00:00",
+            "endDateTime" : "06:30:00"
+        },
+        {   "description" : "JUMP daytime shutoff",
+            "startDateTime" : "07:30:00",
+            "endDateTime" : "18:00:00"
+        }
+    ],
+
+    "quiescentPeriods" : [
+        {   "description" : "Illumibrate party-over chill",
+             "startDateTime" : "2023-03-03 22:45:00",
+             "endDateTime" : "2023-03-03 23:00:00",
+             "quiescentColor" : "navy"
+        }
+        //{   "description" : "closing time chill",
+        //     "startDateTime" : "2023-03-01 22:55:00",
+        //     "endDateTime" : "2023-03-01 23:00:00",
+        //     "quiescentColor" : "navy"
+        //},
+        //{   "description" : "daytime dry-out",
+        //    "startDateTime" : "07:30:00",
+        //    "endDateTime" : "18:00:00",
+        //    "quiescentColor" : "192,192,192"
+        //}
+    ],
+
+    "overridePeriods" : [
+        //{   "description" : "development during build week",
+        //    "startDateTime" : "2022-08-22 00:00:00",
+        //    "endDateTime" : "2022-08-22 23:59:59"
+        //},
+        {   "description" : "setup on Saturday 25 February",
+            "startDateTime" : "2023-02-25 00:00:00",
+            "endDateTime" : "2023-02-25 23:00:00"
+        }
+    ]
+}
+
