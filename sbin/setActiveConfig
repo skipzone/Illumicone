@@ -19,7 +19,7 @@ if [[ -h $ILLUMICONE_CONFIG/activeConfig.json ]]; then
     echo "Previous configuration was $prevConfigName."
 fi
 
-if ln -fs $ILLUMICONE_CONFIG/$1.json $ILLUMICONE_CONFIG/activeConfig.json; then
+if ln -fs $ILLUMICONE_CONFIG/$1.json $ILLUMICONE_CONFIG/activeConfig.json && ln -fs $ILLUMICONE_CONFIG/$1.json ~/activeConfig.json ; then
     echo "Active configuration now $1."
 else
     echo "Failed to create symbolic link.  Active configuration not set."
