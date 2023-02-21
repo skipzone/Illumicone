@@ -543,7 +543,7 @@ bool sendOpcMessage()
         }
         if (bytesSentCount != opcBufferSize) {
             logger.logMsg(LOG_ERR,
-                   "UPD payload size is " + to_string(opcBufferSize)
+                   "UDP payload size is " + to_string(opcBufferSize)
                    + ", but " + to_string(bytesSentCount) + " bytes were sent to OPC server.");
             return false;
         }
