@@ -208,10 +208,6 @@ def processLogFile(logFileName):
     return
 
 
-def usage():
-    print('Usage:  widgetPlayback.py data_log_file_name')
-    return
-
 
 def main(argv):
 
@@ -221,18 +217,35 @@ def main(argv):
     global timeCompressionThresholdSeconds
     global runDurationMinutes
 
-    ap = argparse.ArgumentParser(description='This program replays widgetRcvr data logs and sends the recorded widget messages to patternController.')
-
-    ap.add_argument('inputFileName', action='store', help='widgetRcvr data log file name')
-    ap.add_argument("-p", "--patcon-ip-address", nargs='?', default=defaultPatconIpAddress, help='IP address of host running patternController', dest='patconIpAddress')
-    ap.add_argument("-b", "--widget-port-base", nargs='?', default=defaultWidgetPortNumberBase, type=int, help='Port number associated with widget 0.', dest='widgetPortNumberBase')
-    ap.add_argument("-t", "--time-compression-threshold", nargs='?', default=defaultTimeCompressionThresholdSeconds, type=int, help='Skip to next active widget data message after this many seconds of inactivity.', dest='timeCompressionThresholdSeconds')
-    ap.add_argument(
-        "-r", "--run_for_minutes", nargs='?', default=defaultRunDurationMinutes, dest='runDurationMinutes',
-        help='Number of minutes to run or 0 to play entire log file once.')
-
+    ap = argparse.ArgumentParser(
+        description='This program replays widgetRcvr data logs '
+                    'and sends the recorded widget messages to patternController.')
+    ap.add_argument('inputFileName',
+                    action='store',
+                    help='widgetRcvr data log file name')
+    ap.add_argument("-p", "--patcon-ip-address",
+                    nargs='?',
+                    default=defaultPatconIpAddress,
+                    help='IP address of host running patternController',
+                    dest='patconIpAddress')
+    ap.add_argument("-b", "--widget-port-base",
+                    nargs='?',
+                    default=defaultWidgetPortNumberBase,
+                    type=int,
+                    help='Port number associated with widget 0.',
+                    dest='widgetPortNumberBase')
+    ap.add_argument("-t", "--time-compression-threshold",
+                    nargs='?',
+                    default=defaultTimeCompressionThresholdSeconds,
+                    type=int,
+                    help='Skip to next active widget data message after this many seconds of inactivity.',
+                    dest='timeCompressionThresholdSeconds')
+    ap.add_argument("-r", "--run_for_minutes",
+                    nargs='?',
+                    default=defaultRunDurationMinutes,
+                    dest='runDurationMinutes',
+                    help='Number of minutes to run or 0 to play entire log file once.')
     args = ap.parse_args()
-
     patconIpAddress = args.patconIpAddress
     widgetPortNumberBase = args.widgetPortNumberBase
     timeCompressionThresholdSeconds = args.timeCompressionThresholdSeconds
