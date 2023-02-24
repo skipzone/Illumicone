@@ -21,7 +21,7 @@
 #include "illumiconeWidgetTypes.h"
 #include "illumiconeUtility.h"
 #include "Log.h"
-#include "BatonWidget.h"
+#include "BatRatWidget.h"
 
 using namespace std;
 
@@ -29,7 +29,7 @@ using namespace std;
 extern Log logger;
 
 
-BatonWidget::BatonWidget(WidgetId id)
+BatRatWidget::BatRatWidget(WidgetId id)
     : Widget(id, 13)
 {
     // Simulate acceleration.
@@ -39,7 +39,7 @@ BatonWidget::BatonWidget(WidgetId id)
 }
 
 
-void BatonWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
+void BatRatWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
     // Make sure previous position and velocity have been
     // updated in case the pattern hasn't read them.

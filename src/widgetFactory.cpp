@@ -16,7 +16,7 @@
 */
 
 
-#include "BatonWidget.h"
+#include "BatRatWidget.h"
 #include "BellsWidget.h"
 #include "BoogieBoardWidget.h"
 #include "EyeWidget.h"
@@ -27,7 +27,6 @@
 #include "MikeWidget.h"
 #include "PumpWidget.h"
 #include "RainstickWidget.h"
-#include "RattleWidget.h"
 #include "SchroedersPlaythingWidget.h"
 #include "SpinnahWidget.h"
 #include "widgetFactory.h"
@@ -66,12 +65,12 @@ Widget* widgetFactory(WidgetId id) {
         case WidgetId::mike1:
         case WidgetId::mike2:
             return new MikeWidget(id);
-        case WidgetId::baton1:
-        case WidgetId::baton2:
-            return new BatonWidget(id);
-        case WidgetId::rattle1:
-        case WidgetId::rattle2:
-            return new RattleWidget(id);
+        case WidgetId::batrat1:
+        case WidgetId::batrat2:
+        case WidgetId::batrat3:
+        case WidgetId::batrat4:
+        case WidgetId::batrat5:
+            return new BatRatWidget(id);
         case WidgetId::lidar1:
             return new LidarWidget(id);
         default:

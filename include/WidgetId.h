@@ -49,8 +49,8 @@ constexpr int maxWidgets = 32;
  * 22:  BatRat #2
  * 23:  BatRat #3
  * 24:  BatRat #4
- * 25:  TODO:  remove this:  unassigned (reserved for Maraca #1)
- * 26:  TODO:  remove this:  unassigned (reserved for Maraca #2)
+ * 25:  BatRat #5
+ * 26:  unassigned
  * 27:  Lidar1
  * 28:  unassigned
  * 29:  unassigned
@@ -81,10 +81,11 @@ enum class WidgetId {
     flower7,
     mike1 = 19,
     mike2,
-    baton1 = 21,
-    baton2,
-    rattle1,
-    rattle2,
+    batrat1 = 21,
+    batrat2,
+    batrat3,
+    batrat4,
+    batrat5,
     lidar1 = 27,
     invalid = 255
 };

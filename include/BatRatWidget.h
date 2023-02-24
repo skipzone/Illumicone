@@ -23,7 +23,7 @@
 
 
 /*
- * These are the measurements that Baton (an MPU6050-type widget) sends:
+ * These are the measurements that a BatRat (an MPU6050-type widget) sends:
  *     Channel  Value
  *     -------  -------------
  *        0     Yaw
@@ -41,14 +41,14 @@
  *       12     Temperature
 */
 
-class BatonWidget : public Widget
+class BatRatWidget : public Widget
 {
     public:
-        BatonWidget(WidgetId id);
-        virtual ~BatonWidget() {};
+        BatRatWidget(WidgetId id);
+        virtual ~BatRatWidget() {};
 
-        BatonWidget(const BatonWidget&) = delete;
-        BatonWidget& operator =(const BatonWidget&) = delete;
+        BatRatWidget(const BatRatWidget&) = delete;
+        BatRatWidget& operator =(const BatRatWidget&) = delete;
 
         void updateChannelSimulatedMeasurements(unsigned int chIdx);
 
