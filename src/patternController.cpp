@@ -727,6 +727,7 @@ bool readConfig()
 
     shutoffPeriods.clear();
     quiescentPeriods.clear();
+    overridePeriods.clear();
     if (!ConfigReader::getSchedulePeriods(configObject, "shutoffPeriods", shutoffPeriods)
         || !ConfigReader::getSchedulePeriods(configObject, "quiescentPeriods", quiescentPeriods)
         || !ConfigReader::getSchedulePeriods(configObject, "overridePeriods", overridePeriods))
@@ -1401,6 +1402,9 @@ int main(int argc, char **argv)
         if (now > lastPeriodCheckTime) {
             lastPeriodCheckTime = now;
 
+            // An override period overrides both shutoff and quiescent periods,
+            // forcing the cone to be on.  Basically, it is an exception to
+            // the regular schedule.
             inOverridePeriod = false;
             if (timeIsInPeriod(now, overridePeriods, selectedSchedulePeriod)) {
                 inOverridePeriod = true;
