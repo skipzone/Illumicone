@@ -136,9 +136,7 @@ enum class WidgetMode {
   #error No widget id defined for this batrat.
 #endif
 
-#if defined(BATRAT2) || defined(BATRAT3)
-  #define ENABLE_SYSTEM_RESET_WATCHDOG
-#endif
+#define ENABLE_SYSTEM_RESET_WATCHDOG
 
 static constexpr bool skipDeviceIdCheck = false;
 
@@ -198,9 +196,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
 #define VIBRATION_SENSOR_PIN 3
-#if defined(BATRAT2) || defined(BATRAT3)
-  #define IMU_POWER_PIN 4
-#endif
+#define IMU_POWER_PIN 4
 #define RADIO_CE_PIN 9
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
