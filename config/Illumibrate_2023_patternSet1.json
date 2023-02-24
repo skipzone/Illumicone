@@ -24,8 +24,8 @@ Flower4      horizontal rings
 Flower5      /// reassign ///
 Flower6      magenta/aqua sparkle
 Flower7      stripes
+BatRat2      red/green/gold spray
 BatRat5      white/purple/aqua spray
-Baton2       red/green/gold spray
 Rainstick    rain
 Schroeder's  60 keys
 *******************************************************************************/
@@ -38,13 +38,13 @@ Schroeder's  60 keys
         { "_include_file_magentaAquaSparkle_flower" : "patterns/sparkleMagentaAqua_Flower6.json" },
         { "_include_file_traditional_stripes" : "patterns/stripes_Flower7.json" },
 
+        { "_include_file_sprayRed_BatRat2" : "patterns/sprayRed_BatRat2.json" },
+        { "_include_file_sprayGreen_BatRat2" : "patterns/sprayGreen_BatRat2.json" },
+        { "_include_file_sprayGold_BatRat2" : "patterns/sprayGold_BatRat2.json" },
+
         { "_include_file_sprayWhite_BatRat5" : "patterns/sprayWhite_BatRat5.json" },
         { "_include_file_sprayPurple_BatRat5" : "patterns/sprayPurple_BatRat5.json" },
         { "_include_file_sprayAqua_BatRat5" : "patterns/sprayAqua_BatRat5.json" },
-
-        { "_include_file_sprayRed_Baton2" : "patterns/sprayRed_Baton2.json" },
-        { "_include_file_sprayGreen_Baton2" : "patterns/sprayGreen_Baton2.json" },
-        { "_include_file_sprayGold_Baton2" : "patterns/sprayGold_Baton2.json" },
 
         { "_include_file_rain_Rainstick" : "patterns/rain_Rainstick.json" },
 
