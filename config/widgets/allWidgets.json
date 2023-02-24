@@ -17,12 +17,27 @@
 
 {
     "widgets" : [
-        {   "name" : "baton1",
+        {   "name" : "batrat1",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
         },
-        {   "name" : "baton2",
+        {   "name" : "batrat2",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "batrat3",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "batrat4",
+            "enabled" : true,
+            "generateSimulatedMeasurements" : false,
+            "autoInactiveMs" : 5000
+        },
+        {   "name" : "batrat5",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000
@@ -108,16 +123,6 @@
             "autoInactiveMs" : 5000
         },
         {   "name" : "rainstick",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
-        {   "name" : "rattle1",
-            "enabled" : true,
-            "generateSimulatedMeasurements" : false,
-            "autoInactiveMs" : 5000
-        },
-        {   "name" : "rattle2",
             "enabled" : true,
             "generateSimulatedMeasurements" : false,
             "autoInactiveMs" : 5000

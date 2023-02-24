@@ -15,14 +15,14 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "sprayPurple_Rattle1",
+{   "name" : "sprayPurple_BatRat5",
     "enabled" : true,
     "priority" : 2,
     "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "ParticlesPattern",
     "inputs" : [
         {   "inputName" : "emitRate",
-            "widgetName" : "rattle1",
+            "widgetName" : "batrat5",
             "channelNumber" : 4,        // gyro Y
             "measurement" : "position"
         }
