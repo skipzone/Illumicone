@@ -17,10 +17,10 @@
 /*******************************************************************************
 Widget       Pattern
 -----------  -------------------------------------------------------------------
-Flower1      position of four vertical stripes
+Flower1      position of four vertical stripes  <--- vestibule
 Flower2      hue of four vertical stripes
 Flower3      multi-color sparkle
-Flower4      horizontal rings
+Flower4      horizontal rings  <--- vestibule
 Flower5      /// reassign ///
 Flower6      magenta/aqua sparkle
 Flower7      stripes
@@ -50,9 +50,7 @@ Schroeder's  60 keys
 
         { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
 
-        { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" },
-
-        { "_include_file_traditional_stripes_potbox" : "patterns/stripes_traditional_FourPlay42.json" }
+        { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" }
     ]
 }
 
