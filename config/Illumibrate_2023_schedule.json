@@ -121,6 +121,10 @@ https://sunrisesunset.willyweather.com/nv/pershing-county/black-rock-city-burnin
         {   "description" : "setup on Saturday 25 February",
             "startDateTime" : "2023-02-25 07:30:00",
             "endDateTime" : "2023-02-25 22:00:00"
+        },
+        {   "description" : "development",
+            "startDateTime" : "2023-02-26 00:00:00",
+            "endDateTime" : "2023-02-26 23:59:59"
         }
         //{   "description" : "Illumibrate event after 10 PM",
         //    "startDateTime" : "2023-03-03 22:00:01",
