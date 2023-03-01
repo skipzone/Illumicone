@@ -25,10 +25,7 @@ https://sunrisesunset.willyweather.com/nv/pershing-county/black-rock-city-burnin
 
 {
     "shutoffPeriods" : [
-        //{   "description" : "JUMP daytime shutoff",
-        //    "startDateTime" : "07:30:00",
-        //    "endDateTime" : "18:00:00"
-        //},
+/*
         {   "description" : "JUMP pre-midnight nighttime shutoff for 25 Feb.",
             "startDateTime" : "2023-02-25 23:00:00",
             "endDateTime" : "2023-02-25 23:59:59"
@@ -93,6 +90,11 @@ https://sunrisesunset.willyweather.com/nv/pershing-county/black-rock-city-burnin
             "startDateTime" : "00:00:00",
             "endDateTime" : "04:00:00"
         }
+        */
+        //{   "description" : "JUMP daytime shutoff",
+        //    "startDateTime" : "07:30:00",
+        //    "endDateTime" : "18:00:00"
+        //},
     ],
 
     "quiescentPeriods" : [
@@ -103,14 +105,24 @@ https://sunrisesunset.willyweather.com/nv/pershing-county/black-rock-city-burnin
         },
         {   "description" : "Illumibrate party-over chill",
              "startDateTime" : "2023-03-03 22:30:00",
-             "endDateTime" : "2023-03-03 22:44:59",
+             "endDateTime" : "2023-03-03 22:59:59",
              "quiescentColor" : "navy"
-        }
+        },
         //{   "description" : "closing time chill",
         //     "startDateTime" : "2023-03-01 22:55:00",
         //     "endDateTime" : "2023-03-01 23:00:00",
         //     "quiescentColor" : "navy"
         //},
+        {   "description" : "nighttime blue",
+            "startDateTime" : "00:00:00",
+            "endDateTime" : "04:30:00",
+            "quiescentColor" : "navy"
+        },
+        {   "description" : "pre-midnight blue",
+            "startDateTime" : "23:00:00",
+            "endDateTime" : "23:59:59",
+            "quiescentColor" : "navy"
+        }
     ],
 
     "overridePeriods" : [
