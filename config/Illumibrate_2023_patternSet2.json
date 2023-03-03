@@ -51,8 +51,7 @@ BoogieBoard      spring
         { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower3.json" },
 
         { "_include_file_magentaSparkle_batrat" : "patterns/sparkleMagenta_BatRat1.json" },
-// [ ] magenta sparkle on BatRat1
-// [ ] aqua sparkle on BatRat2
+        { "_include_file_aquaSparkle_batrat" : "patterns/sparkleAqua_BatRat2.json" },
 // [ ] multicolor sparkle on BatRat3
 
 // [ ] Ukraine on Flower3
