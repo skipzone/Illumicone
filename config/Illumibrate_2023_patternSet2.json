@@ -20,7 +20,7 @@ Widget           Pattern
 Flower1          position of four vertical stripes  <--- vestibule
 Flower2          hue of four vertical stripes
 
-Flower3          Ukraine
+Flower3          spinner blocks
 
 Flower4          position of three horizontal rings  <--- vestibule
 Flower5          hue of three horizontal rings
@@ -42,18 +42,14 @@ BoogieBoard      spring
 {
     "patterns" : [
         { "_include_file_stripes" : "patterns/stripes_Flower1_Flower2.json" },
+        { "_include_file_spinnerBlocks" : "patterns/spinnerBlocks_Flower3.json" },
         { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower4_Flower5.json" },
-
-        { "_include_file_traditional_stripes" : "patterns/stripes_vertical_Flower7.json" },
         { "_include_file_traditional_rings" : "patterns/stripes_horizontal_Flower6.json" },
-
-        { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower3.json" },
+        { "_include_file_traditional_stripes" : "patterns/stripes_vertical_Flower7.json" },
 
         { "_include_file_magentaSparkle_batrat" : "patterns/sparkleMagenta_BatRat1.json" },
         { "_include_file_aquaSparkle_batrat" : "patterns/sparkleAqua_BatRat2.json" },
         { "_include_file_multicolorSparkle_batrat" : "patterns/sparkleMulticolor_BatRat3.json" },
-
-// [ ] Ukraine on Flower3
 
         { "_include_file_sprayWhite_BatRat5" : "patterns/sprayWhite_BatRat5.json" },
         { "_include_file_sprayPurple_BatRat5" : "patterns/sprayPurple_BatRat5.json" },
