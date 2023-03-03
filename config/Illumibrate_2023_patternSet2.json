@@ -49,7 +49,8 @@ BoogieBoard      spring
         { "_include_file_traditional_stripes" : "patterns/stripes_horizontal_Flower6.json" },
 
         { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower3.json" },
-///        { "_include_file_magentaAquaSparkle_flower" : "patterns/sparkleMagentaAqua_Flower6.json" },
+
+        { "_include_file_magentaSparkle_batrat" : "patterns/sparkleMagenta_BatRat1.json" },
 // [ ] magenta sparkle on BatRat1
 // [ ] aqua sparkle on BatRat2
 // [ ] multicolor sparkle on BatRat3
