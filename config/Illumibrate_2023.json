@@ -61,7 +61,7 @@
         ],
 
         "patterns" : [
-            { "_include_file_patterns" : "Illumibrate_2023_patternSet1.json" }
+            { "_include_file_patterns" : "Illumibrate_2023_patternSet2.json" }
         ]
     }
 }

@@ -36,7 +36,7 @@ Schroeder's  60 keys
         { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower3.json" },
         { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower4_Flower5.json" },
         { "_include_file_magentaAquaSparkle_flower" : "patterns/sparkleMagentaAqua_Flower6.json" },
-        { "_include_file_traditional_stripes" : "patterns/stripes_Flower7.json" },
+        { "_include_file_traditional_stripes" : "patterns/stripes_vertical_Flower7.json" },
 
         { "_include_file_sprayRed_BatRat2" : "patterns/sprayRed_BatRat2.json" },
         { "_include_file_sprayGreen_BatRat2" : "patterns/sprayGreen_BatRat2.json" },
