@@ -28,6 +28,7 @@
             "measurement" : "position"
         }
     ],
+    "positionDivisor" : 60,
     "selectedBlockAnimationIntervalMs" : 1000,
     "indicatorClassName" : "SimpleBlockIndicator",
     "numberOfIndicators" : 60,
