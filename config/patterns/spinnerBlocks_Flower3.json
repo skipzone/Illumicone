@@ -1,0 +1,577 @@
+
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "spinnerBlocks_Flower3",
+    "enabled" : true,
+    "priority" : 3,
+    "opacity" : 80,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SpinnerPattern",
+    "inputs" : [
+        {   "inputName" : "spinnerPosition",
+            "widgetName" : "flower3",
+            "channelNumber" : 0,
+            "measurement" : "position"
+        }
+    ],
+    "positionDivisor" : 60,
+    "selectedBlockAnimationIntervalMs" : 1000,
+    "indicatorClassName" : "SimpleBlockIndicator",
+    "numberOfIndicators" : 60,
+    "indicators" : [
+        // --- C1 ---
+        {   "index" : 0,
+            "upperLeftStringIdx" : 0,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- C#1 ---
+        {   "index" : 1,
+            "upperLeftStringIdx" : 4,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- D1 ---
+        {   "index" : 2,
+            "upperLeftStringIdx" : 8,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- D#1 ---
+        {   "index" : 3,
+            "upperLeftStringIdx" : 12,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- E1 ---
+        {   "index" : 4,
+            "upperLeftStringIdx" : 16,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "yellow",
+            "flashIntervalMs" : 125
+        },
+        // --- F1 ---
+        {   "index" : 5,
+            "upperLeftStringIdx" : 20,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- F#1 ---
+        {   "index" : 6,
+            "upperLeftStringIdx" : 24,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- G1 ---
+        {   "index" : 7,
+            "upperLeftStringIdx" : 28,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- G#1 ---
+        {   "index" : 8,
+            "upperLeftStringIdx" : 32,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- A1 ---
+        {   "index" : 9,
+            "upperLeftStringIdx" : 36,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- A#1 ---
+        {   "index" : 10,
+            "upperLeftStringIdx" : 40,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- B1 ---
+        {   "index" : 11,
+            "upperLeftStringIdx" : 44,
+            "upperLeftPixelIdx" : 83,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "purple",
+            "flashIntervalMs" : 125
+        },
+        // --- C2 ---
+        {   "index" : 12,
+            "upperLeftStringIdx" : 0,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- C#2 ---
+        {   "index" : 13,
+            "upperLeftStringIdx" : 4,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- D2 ---
+        {   "index" : 14,
+            "upperLeftStringIdx" : 8,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- D#2 ---
+        {   "index" : 15,
+            "upperLeftStringIdx" : 12,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- E2 ---
+        {   "index" : 16,
+            "upperLeftStringIdx" : 16,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "yellow",
+            "flashIntervalMs" : 125
+        },
+        // --- F2 ---
+        {   "index" : 17,
+            "upperLeftStringIdx" : 20,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- F#2 ---
+        {   "index" : 18,
+            "upperLeftStringIdx" : 24,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- G2 ---
+        {   "index" : 19,
+            "upperLeftStringIdx" : 28,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- G#2 ---
+        {   "index" : 20,
+            "upperLeftStringIdx" : 32,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- A2 ---
+        {   "index" : 21,
+            "upperLeftStringIdx" : 36,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- A#2 ---
+        {   "index" : 22,
+            "upperLeftStringIdx" : 40,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- B2 ---
+        {   "index" : 23,
+            "upperLeftStringIdx" : 44,
+            "upperLeftPixelIdx" : 66,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "purple",
+            "flashIntervalMs" : 125
+        },
+        // --- C3 ---
+        {   "index" : 24,
+            "upperLeftStringIdx" : 0,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- C#3 ---
+        {   "index" : 25,
+            "upperLeftStringIdx" : 4,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- D3 ---
+        {   "index" : 26,
+            "upperLeftStringIdx" : 8,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- D#3 ---
+        {   "index" : 27,
+            "upperLeftStringIdx" : 12,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- E3 ---
+        {   "index" : 28,
+            "upperLeftStringIdx" : 16,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "yellow",
+            "flashIntervalMs" : 125
+        },
+        // --- F3 ---
+        {   "index" : 29,
+            "upperLeftStringIdx" : 20,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- F#3 ---
+        {   "index" : 30,
+            "upperLeftStringIdx" : 24,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- G3 ---
+        {   "index" : 31,
+            "upperLeftStringIdx" : 28,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- G#3 ---
+        {   "index" : 32,
+            "upperLeftStringIdx" : 32,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- A3 ---
+        {   "index" : 33,
+            "upperLeftStringIdx" : 36,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- A#3 ---
+        {   "index" : 34,
+            "upperLeftStringIdx" : 40,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- B3 ---
+        {   "index" : 35,
+            "upperLeftStringIdx" : 44,
+            "upperLeftPixelIdx" : 49,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "purple",
+            "flashIntervalMs" : 125
+        },
+        // --- C4 ---
+        {   "index" : 36,
+            "upperLeftStringIdx" : 0,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- C#4 ---
+        {   "index" : 37,
+            "upperLeftStringIdx" : 4,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- D4 ---
+        {   "index" : 38,
+            "upperLeftStringIdx" : 8,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- D#4 ---
+        {   "index" : 39,
+            "upperLeftStringIdx" : 12,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- E4 ---
+        {   "index" : 40,
+            "upperLeftStringIdx" : 16,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "yellow",
+            "flashIntervalMs" : 125
+        },
+        // --- F4 ---
+        {   "index" : 41,
+            "upperLeftStringIdx" : 20,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- F#4 ---
+        {   "index" : 42,
+            "upperLeftStringIdx" : 24,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- G4 ---
+        {   "index" : 43,
+            "upperLeftStringIdx" : 28,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- G#4 ---
+        {   "index" : 44,
+            "upperLeftStringIdx" : 32,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- A4 ---
+        {   "index" : 45,
+            "upperLeftStringIdx" : 36,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- A#4 ---
+        {   "index" : 46,
+            "upperLeftStringIdx" : 40,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- B4 ---
+        {   "index" : 47,
+            "upperLeftStringIdx" : 44,
+            "upperLeftPixelIdx" : 32,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "purple",
+            "flashIntervalMs" : 125
+        },
+        // --- C5 ---
+        {   "index" : 48,
+            "upperLeftStringIdx" : 0,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- C#5 ---
+        {   "index" : 49,
+            "upperLeftStringIdx" : 4,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "red",
+            "flashIntervalMs" : 125
+        },
+        // --- D5 ---
+        {   "index" : 50,
+            "upperLeftStringIdx" : 8,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- D#5 ---
+        {   "index" : 51,
+            "upperLeftStringIdx" : 12,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "orange",
+            "flashIntervalMs" : 125
+        },
+        // --- E5 ---
+        {   "index" : 52,
+            "upperLeftStringIdx" : 16,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "yellow",
+            "flashIntervalMs" : 125
+        },
+        // --- F5 ---
+        {   "index" : 53,
+            "upperLeftStringIdx" : 20,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- F#5 ---
+        {   "index" : 54,
+            "upperLeftStringIdx" : 24,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "green",
+            "flashIntervalMs" : 125
+        },
+        // --- G5 ---
+        {   "index" : 55,
+            "upperLeftStringIdx" : 28,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- G#5 ---
+        {   "index" : 56,
+            "upperLeftStringIdx" : 32,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "aqua",
+            "flashIntervalMs" : 125
+        },
+        // --- A5 ---
+        {   "index" : 57,
+            "upperLeftStringIdx" : 36,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- A#5 ---
+        {   "index" : 58,
+            "upperLeftStringIdx" : 40,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "blue",
+            "flashIntervalMs" : 125
+        },
+        // --- B5 ---
+        {   "index" : 59,
+            "upperLeftStringIdx" : 44,
+            "upperLeftPixelIdx" : 15,
+            "widthInStrings" : 4,
+            "heightInPixels" : 17,
+            "foregroundHsv" : "purple",
+            "flashIntervalMs" : 125
+        }
+    ]
+}

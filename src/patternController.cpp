@@ -543,7 +543,7 @@ bool sendOpcMessage()
         }
         if (bytesSentCount != opcBufferSize) {
             logger.logMsg(LOG_ERR,
-                   "UPD payload size is " + to_string(opcBufferSize)
+                   "UDP payload size is " + to_string(opcBufferSize)
                    + ", but " + to_string(bytesSentCount) + " bytes were sent to OPC server.");
             return false;
         }
@@ -595,8 +595,16 @@ void setAllPixelsToQuiescentColor(SchedulePeriod& selectedSchedulePeriod)
 
 void displayTestPattern()
 {
+    // As an aid for identifying strings that intermittenly don't respond to new
+    // data but are illuminated nevertheless, we'll alternate between the odd
+    // and even illumination pixels with each frame.  If a string isn't
+    // responding consistently, every other illumination pixel will be off or
+    // perhaps flickering.  Note that the average intensity will be half of that
+    // specified by areaIlluminationColorStr.
+    static int areaIlluminationPixelToggle;
+
     // TODO 2/5/2018 ross:  get the colors from config
-    string areaIlluminationColorStr = "127,127,127";        // half-intensity white
+    string areaIlluminationColorStr = "255,255,255";        // effectively half-intensity white due to 50% duty cycle
     string stringPosition1IndicatorColorStr = "0,255,0";    // full-intensity green
     string stringPosition5IndicatorColorStr = "0,255,255";  // full-intensity cyan
     string stringPosition10IndicatorColorStr = "255,0,255"; // full-intensity magenta
@@ -634,9 +642,13 @@ void displayTestPattern()
         // Use the part of the cone above the string
         // position indicators for area illumination.
         for (iPixel = numberOfPixelsPerString - numberOfStrings - 1; iPixel >= 0; --iPixel) {
-            rgbFinalFrame[iString][iPixel] = areaIlluminationColor;
+            if (iPixel % 2 == areaIlluminationPixelToggle) {
+                rgbFinalFrame[iString][iPixel] = areaIlluminationColor;
+            }
         }
     }
+
+    areaIlluminationPixelToggle = !areaIlluminationPixelToggle;
 
     sendOpcMessage();
 }
@@ -727,6 +739,7 @@ bool readConfig()
 
     shutoffPeriods.clear();
     quiescentPeriods.clear();
+    overridePeriods.clear();
     if (!ConfigReader::getSchedulePeriods(configObject, "shutoffPeriods", shutoffPeriods)
         || !ConfigReader::getSchedulePeriods(configObject, "quiescentPeriods", quiescentPeriods)
         || !ConfigReader::getSchedulePeriods(configObject, "overridePeriods", overridePeriods))
@@ -1381,6 +1394,11 @@ int main(int argc, char **argv)
             displayingTestPattern = !displayingTestPattern;
             // TODO:  add an operation state for test pattern
             logger.logMsg(LOG_INFO, string("Turning test pattern ") + (displayingTestPattern ? "on." : "off."));
+            if (!displayingTestPattern) {
+                // Turn on the safety lights as an indication
+                // that we're no longer in test-pattern mode.
+                turnOnSafetyLights();
+            }
         }
 
         // Give the widgets a chance to update their simulated measurements.
@@ -1401,6 +1419,9 @@ int main(int argc, char **argv)
         if (now > lastPeriodCheckTime) {
             lastPeriodCheckTime = now;
 
+            // An override period overrides both shutoff and quiescent periods,
+            // forcing the cone to be on.  Basically, it is an exception to
+            // the regular schedule.
             inOverridePeriod = false;
             if (timeIsInPeriod(now, overridePeriods, selectedSchedulePeriod)) {
                 inOverridePeriod = true;

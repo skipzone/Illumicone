@@ -446,7 +446,7 @@ bool sendUdp(const UdpPayload& payload)
                                     sizeof(struct sockaddr_in));
 
     if (bytesSentCount != sizeof(payload)) {
-        logger.logMsg(LOG_ERR, "UPD payload size is %d, but %d bytes were sent.", sizeof(payload), bytesSentCount);
+        logger.logMsg(LOG_ERR, "UDP payload size is %d, but %d bytes were sent.", sizeof(payload), bytesSentCount);
         return false;
     }
     //logger.logMsg(LOG_DEBUG, "Sent %d-byte payload via UDP.", bytesSentCount);

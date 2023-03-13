@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Creates the activeConfig.json symbolic link in the config directory.
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage:  setActiveConfig config_name"
+    echo "(omit .json extension)"
+    exit 2
+fi
+
+if [[ ! -f $ILLUMICONE_CONFIG/$1.json ]]; then
+    echo "$ILLUMICONE_CONFIG/$1.json not found." >&2
+    exit 1
+fi
+
+if [[ -h $ILLUMICONE_CONFIG/activeConfig.json ]]; then
+    activeSymlinkTarget=`readlink $ILLUMICONE_CONFIG/activeConfig.json`
+    prevConfigName=`basename $activeSymlinkTarget .json`
+    echo "Previous configuration was $prevConfigName."
+fi
+
+if ln -fs $ILLUMICONE_CONFIG/$1.json $ILLUMICONE_CONFIG/activeConfig.json && ln -fs $ILLUMICONE_CONFIG/$1.json ~/activeConfig.json ; then
+    echo "Active configuration now $1."
+else
+    echo "Failed to create symbolic link.  Active configuration not set."
+    exit 1
+fi

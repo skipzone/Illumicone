@@ -1,0 +1,56 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/*******************************************************************************
+Widget       Pattern
+-----------  -------------------------------------------------------------------
+Flower1      position of four vertical stripes  <--- vestibule
+Flower2      hue of four vertical stripes
+Flower3      multi-color sparkle
+Flower4      horizontal rings  <--- vestibule
+Flower5      /// reassign ///
+Flower6      magenta/aqua sparkle
+Flower7      stripes
+BatRat2      red/green/gold spray
+BatRat5      white/purple/aqua spray
+Rainstick    rain
+Schroeder's  60 keys
+*******************************************************************************/
+
+{
+    "patterns" : [
+        { "_include_file_stripes" : "patterns/stripes_Flower1_Flower2.json" },
+        { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower3.json" },
+        { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower4_Flower5.json" },
+        { "_include_file_magentaAquaSparkle_flower" : "patterns/sparkleMagentaAqua_Flower6.json" },
+        { "_include_file_traditional_stripes" : "patterns/stripes_vertical_Flower7.json" },
+
+        { "_include_file_sprayRed_BatRat2" : "patterns/sprayRed_BatRat2.json" },
+        { "_include_file_sprayGreen_BatRat2" : "patterns/sprayGreen_BatRat2.json" },
+        { "_include_file_sprayGold_BatRat2" : "patterns/sprayGold_BatRat2.json" },
+
+        { "_include_file_sprayWhite_BatRat5" : "patterns/sprayWhite_BatRat5.json" },
+        { "_include_file_sprayPurple_BatRat5" : "patterns/sprayPurple_BatRat5.json" },
+        { "_include_file_sprayAqua_BatRat5" : "patterns/sprayAqua_BatRat5.json" },
+
+        { "_include_file_rain_Rainstick" : "patterns/rain_Rainstick.json" },
+
+        { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
+
+        { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" }
+    ]
+}
+

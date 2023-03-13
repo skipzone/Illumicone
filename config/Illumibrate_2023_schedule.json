@@ -1,0 +1,142 @@
+/* This file is part of Illumicone.  Illumicone is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*******************************************************************************
+WillyWeather says that sunset at Black Rock City on Friday, 26 August 2022 is at
+7:38 PM PDT, and sunrise the next morning is at 6:19 AM PDT.  By the end of the
+event on 5 Sept., sunrise is 9 minutes later, and sunset the nigh before is 16
+minutes earlier!  To make sure that Illumicone is always on from sunset to
+sunrise, we'll use the earlier sunset and the later sunrise times.  Since we
+don't mess with the time zone on widpatcon, we'll use MDT in this config.
+
+https://sunrisesunset.willyweather.com/nv/pershing-county/black-rock-city-burning-man-festival.html
+
+1 Sept.:  The sun went behind the mountain at 19:08 PDT.
+*******************************************************************************/
+
+{
+    "shutoffPeriods" : [
+/*
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 25 Feb.",
+            "startDateTime" : "2023-02-25 23:00:00",
+            "endDateTime" : "2023-02-25 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 26 Feb.",
+            "startDateTime" : "2023-02-26 22:00:00",
+            "endDateTime" : "2023-02-26 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 27 Feb.",
+            "startDateTime" : "2023-02-27 22:00:00",
+            "endDateTime" : "2023-02-27 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 28 Feb.",
+            "startDateTime" : "2023-02-28 22:00:00",
+            "endDateTime" : "2023-02-28 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 01 Mar.",
+            "startDateTime" : "2023-03-01 22:00:00",
+            "endDateTime" : "2023-03-01 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 02 Mar.",
+            "startDateTime" : "2023-03-02 23:00:00",
+            "endDateTime" : "2023-03-02 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff after Illumibrate event",
+            "startDateTime" : "2023-03-03 22:45:00",
+            "endDateTime" : "2023-03-03 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 04 Mar.",
+            "startDateTime" : "2023-03-04 23:00:00",
+            "endDateTime" : "2023-03-04 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 05 Mar.",
+            "startDateTime" : "2023-03-05 22:00:00",
+            "endDateTime" : "2023-03-05 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 06 Mar.",
+            "startDateTime" : "2023-03-06 22:00:00",
+            "endDateTime" : "2023-03-06 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 07 Mar.",
+            "startDateTime" : "2023-03-07 22:00:00",
+            "endDateTime" : "2023-03-07 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 08 Mar.",
+            "startDateTime" : "2023-03-08 22:00:00",
+            "endDateTime" : "2023-03-08 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 09 Mar.",
+            "startDateTime" : "2023-03-09 22:00:00",
+            "endDateTime" : "2023-03-09 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 10 Mar.",
+            "startDateTime" : "2023-03-10 23:00:00",
+            "endDateTime" : "2023-03-10 23:59:59"
+        },
+        {   "description" : "JUMP pre-midnight nighttime shutoff for 11 Mar.",
+            "startDateTime" : "2023-03-11 23:00:00",
+            "endDateTime" : "2023-03-11 23:59:59"
+        },
+        {   "description" : "JUMP post-midnight nighttime shutoff",
+            "startDateTime" : "00:00:00",
+            "endDateTime" : "04:00:00"
+        }
+        */
+        //{   "description" : "JUMP daytime shutoff",
+        //    "startDateTime" : "07:30:00",
+        //    "endDateTime" : "18:00:00"
+        //},
+    ],
+
+    "quiescentPeriods" : [
+        {   "description" : "daytime dry-out",
+            "startDateTime" : "07:30:00",
+            "endDateTime" : "18:00:00",
+            "quiescentColor" : "192,192,192"
+        },
+        {   "description" : "Illumibrate party-over chill",
+             "startDateTime" : "2023-03-03 22:30:00",
+             "endDateTime" : "2023-03-03 22:59:59",
+             "quiescentColor" : "navy"
+        },
+        {   "description" : "nighttime blue",
+            "startDateTime" : "00:00:00",
+            "endDateTime" : "04:30:00",
+            "quiescentColor" : "navy"
+        },
+        {   "description" : "pre-midnight blue",
+            "startDateTime" : "23:00:00",
+            "endDateTime" : "23:59:59",
+            "quiescentColor" : "navy"
+        }
+    ],
+
+    "overridePeriods" : [
+        {   "description" : "testing on Friday 24 February",
+            "startDateTime" : "2023-02-24 13:00:00",
+            "endDateTime" : "2023-02-24 23:59:59"
+        },
+        {   "description" : "setup on Saturday 25 February",
+            "startDateTime" : "2023-02-25 07:30:00",
+            "endDateTime" : "2023-02-25 22:00:00"
+        },
+        {   "description" : "development",
+            "startDateTime" : "2023-02-26 00:00:00",
+            "endDateTime" : "2023-02-26 23:59:59"
+        },
+        {   "description" : "development",
+            "startDateTime" : "2023-03-03 16:53:00",
+            "endDateTime" : "2023-03-03 18:00:00"
+        }
+    ]
+}
+

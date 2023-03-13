@@ -53,11 +53,19 @@ bool SpinnerPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
     string errMsgSuffix = " in " + name + " pattern configuration.";
 
     if (!ConfigReader::getUnsignedIntValue(patternConfigObject,
+                                           "positionDivisor",
+                                           positionDivisor)) {
+        positionDivisor = 1;
+    }
+    logger.logMsg(LOG_INFO, name + " positionDivisor=" + to_string(positionDivisor));
+
+    if (!ConfigReader::getUnsignedIntValue(patternConfigObject,
                                            "selectedBlockAnimationIntervalMs",
                                            selectedBlockAnimationIntervalMs,
                                            errMsgSuffix)) {
         return false;
     }
+    logger.logMsg(LOG_INFO, name + " selectedBlockAnimationIntervalMs=" + to_string(selectedBlockAnimationIntervalMs));
 
 
     // ----- get input channels -----
@@ -124,7 +132,7 @@ bool SpinnerPattern::update()
             activeIndicator->turnOffImmediately();
             activeIndicator = nullptr;
         }
-        unsigned int indicatorIdx = spinnerPositionChannel->getPosition() % indicatorRegions.size();
+        unsigned int indicatorIdx = (spinnerPositionChannel->getPosition() / positionDivisor) % indicatorRegions.size();
         //logger.logMsg(LOG_DEBUG, "indicatorIdx = " + to_string(indicatorIdx));
         activeIndicator = indicatorRegions[indicatorIdx];
         activeIndicator->turnOnImmediately();

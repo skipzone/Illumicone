@@ -42,9 +42,10 @@
  **********************************************/
 
 //#define BATRAT1
-#define BATRAT2
+//#define BATRAT2
 //#define BATRAT3
 //#define BATRAT4
+#define BATRAT5
 //#define BOOGIEBOARD
 //#define FLOWER1
 //#define FLOWER2
@@ -58,7 +59,7 @@
 //#define IBG_TILT_TEST
 //#define RAINSTICK
 
-#if defined(BATRAT1) || defined(BATRAT2)|| defined(BATRAT3) || defined(BATRAT4)
+#if defined(BATRAT1) || defined(BATRAT2)|| defined(BATRAT3) || defined(BATRAT4) || defined(BATRAT5)
   #define BATRAT
 #endif
 
@@ -129,13 +130,13 @@ enum class WidgetMode {
   #define WIDGET_ID 23
 #elif defined(BATRAT4)
   #define WIDGET_ID 24
+#elif defined(BATRAT5)
+  #define WIDGET_ID 25
 #else
   #error No widget id defined for this batrat.
 #endif
 
-#if defined(BATRAT2) || defined(BATRAT3)
-  #define ENABLE_SYSTEM_RESET_WATCHDOG
-#endif
+#define ENABLE_SYSTEM_RESET_WATCHDOG
 
 static constexpr bool skipDeviceIdCheck = false;
 
@@ -164,6 +165,9 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 #elif defined(BATRAT4)
   #define ACTIVE_TX_INTERVAL_MS 87L
   #define INACTIVE_TX_INTERVAL_MS 2007L
+#elif defined(BATRAT5)
+  #define ACTIVE_TX_INTERVAL_MS 89L
+  #define INACTIVE_TX_INTERVAL_MS 2009L
 #else
   #error No tx intervals defined for this batrat.
 #endif
@@ -192,9 +196,7 @@ static constexpr uint8_t mpu6050WakeFrequency = 0;                      // 0 = 1
 //#define IMU_NORMAL_INDICATOR_LED_OFF LOW
 #define IMU_INTERRUPT_PIN 2
 #define VIBRATION_SENSOR_PIN 3
-#if defined(BATRAT2) || defined(BATRAT3)
-  #define IMU_POWER_PIN 4
-#endif
+#define IMU_POWER_PIN 4
 #define RADIO_CE_PIN 9
 #define RADIO_CSN_PIN 10
 // The radio uses the SPI bus, so it also uses SCK on 13, MISO on 12, and MOSI on 11.
@@ -242,6 +244,8 @@ static constexpr uint8_t numMaSets = 13;
   #define TX_RETRY_DELAY_MULTIPLIER 7
 #elif defined(BATRAT4)
   #define TX_RETRY_DELAY_MULTIPLIER 5
+#elif defined(BATRAT5)
+  #define TX_RETRY_DELAY_MULTIPLIER 3
 #else
   #error No TX_RETRY_DELAY_MULTIPLIER defined for this batrat.
 #endif
@@ -261,7 +265,7 @@ static constexpr uint8_t numMaSets = 13;
 #define RF_CHANNEL 97
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_HIGH
+#define RF_POWER_LEVEL RF24_PA_LOW
 
 #endif
 

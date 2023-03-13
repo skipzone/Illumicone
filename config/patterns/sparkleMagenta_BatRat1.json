@@ -15,26 +15,25 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "sprayWhite_Rattle1",
+{   "name" : "sparkleMagenta_BatRat1",
     "enabled" : true,
-    "priority" : 2,
-    "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-    "patternClassName" : "ParticlesPattern",
+    "priority" : 7,
+    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SparklePattern",
     "inputs" : [
-        {   "inputName" : "emitRate",
-            "widgetName" : "rattle1",
+        {   "inputName" : "density",
+            "widgetName" : "batrat1",
             "channelNumber" : 3,        // gyro X
             "measurement" : "position"
         }
     ],
-    "emitColorDefault" : "white",
-    "emitIntervalUseMeasmtAbsValue" : true,
-    "emitIntervalMeasmtLow" : 50,
-    "emitIntervalMeasmtHigh" : 300,
-    "emitIntervalLowMs" : 250,
-    "emitIntervalHighMs" : 10,
-    "emitBatchSize" : 15,
-    "emitDirectionIsUp" : true,
-    "particleMoveIntervalMs" : 6
+    "activationThreshold" : 50,
+    "deactivationThreshold" : 999,
+    "numGoodMeasurementsForReactivation" : 1,
+    "densityScaledownFactor" : 1600,
+    "useRandomColors" : false,
+    "sparkleChangeIntervalMs" : 50,
+    "forwardSparkleColor" : "magenta",
+    "reverseSparkleColor" : "magenta"
 }
 

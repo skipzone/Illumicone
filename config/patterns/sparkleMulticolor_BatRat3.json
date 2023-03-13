@@ -15,26 +15,23 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "sprayRed_Baton2",
+{   "name" : "sparkleMulticolor_BatRat3",
     "enabled" : true,
-    "priority" : 2,
-    "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
-    "patternClassName" : "ParticlesPattern",
+    "priority" : 7,
+    "opacity" : 10,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SparklePattern",
     "inputs" : [
-        {   "inputName" : "emitRate",
-            "widgetName" : "baton2",
-            "channelNumber" : 5,        // gyro X
+        {   "inputName" : "density",
+            "widgetName" : "batrat3",
+            "channelNumber" : 3,        // gyro X
             "measurement" : "position"
         }
     ],
-    "emitColorDefault" : "red",
-    "emitIntervalUseMeasmtAbsValue" : true,
-    "emitIntervalMeasmtLow" : 50,
-    "emitIntervalMeasmtHigh" : 300,
-    "emitIntervalLowMs" : 250,
-    "emitIntervalHighMs" : 10,
-    "emitBatchSize" : 15,
-    "emitDirectionIsUp" : true,
-    "particleMoveIntervalMs" : 6
+    "activationThreshold" : 50,
+    "deactivationThreshold" : 999,
+    "numGoodMeasurementsForReactivation" : 1,
+    "densityScaledownFactor" : 1600,
+    "useRandomColors" : true,
+    "sparkleChangeIntervalMs" : 50
 }
 

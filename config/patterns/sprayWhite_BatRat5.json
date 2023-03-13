@@ -15,19 +15,19 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "sprayPurple_Rattle1",
+{   "name" : "sprayWhite_BatRat5",
     "enabled" : true,
     "priority" : 2,
     "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "ParticlesPattern",
     "inputs" : [
         {   "inputName" : "emitRate",
-            "widgetName" : "rattle1",
-            "channelNumber" : 4,        // gyro Y
+            "widgetName" : "batrat5",
+            "channelNumber" : 3,        // gyro X
             "measurement" : "position"
         }
     ],
-    "emitColorDefault" : "purple",
+    "emitColorDefault" : "white",
     "emitIntervalUseMeasmtAbsValue" : true,
     "emitIntervalMeasmtLow" : 50,
     "emitIntervalMeasmtHigh" : 300,
@@ -35,6 +35,6 @@
     "emitIntervalHighMs" : 10,
     "emitBatchSize" : 15,
     "emitDirectionIsUp" : true,
-    "particleMoveIntervalMs" : 18
+    "particleMoveIntervalMs" : 6
 }
 

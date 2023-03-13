@@ -15,19 +15,19 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-{   "name" : "sprayGreen_Baton2",
+{   "name" : "sprayRed_BatRat2",
     "enabled" : true,
     "priority" : 2,
     "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "ParticlesPattern",
     "inputs" : [
         {   "inputName" : "emitRate",
-            "widgetName" : "baton2",
-            "channelNumber" : 4,        // gyro X
+            "widgetName" : "batrat2",
+            "channelNumber" : 5,        // gyro X
             "measurement" : "position"
         }
     ],
-    "emitColorDefault" : "green",
+    "emitColorDefault" : "red",
     "emitIntervalUseMeasmtAbsValue" : true,
     "emitIntervalMeasmtLow" : 50,
     "emitIntervalMeasmtHigh" : 300,

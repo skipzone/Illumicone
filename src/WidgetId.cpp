@@ -64,15 +64,15 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
         case 20:
             return WidgetId::mike2;
         case 21:
-            return WidgetId::baton1;
+            return WidgetId::batrat1;
         case 22:
-            return WidgetId::baton2;
+            return WidgetId::batrat2;
         case 23:
-            return WidgetId::rattle1;
+            return WidgetId::batrat3;
         case 24:
-            return WidgetId::rattle2;
+            return WidgetId::batrat4;
         case 25:
-            return WidgetId::invalid;
+            return WidgetId::batrat5;
         case 26:
             return WidgetId::invalid;
         case 27:
@@ -137,14 +137,16 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 19;
         case WidgetId::mike2:
             return 20;
-        case WidgetId::baton1:
+        case WidgetId::batrat1:
             return 21;
-        case WidgetId::baton2:
+        case WidgetId::batrat2:
             return 22;
-        case WidgetId::rattle1:
+        case WidgetId::batrat3:
             return 23;
-        case WidgetId::rattle2:
+        case WidgetId::batrat4:
             return 24;
+        case WidgetId::batrat5:
+            return 25;
         //case WidgetId:::
         //    return 25;
         //case WidgetId:::
@@ -207,14 +209,16 @@ std::string widgetIdToString(WidgetId widgetId)
             return "mike1";
         case WidgetId::mike2:
             return "mike2";
-        case WidgetId::baton1:
-            return "baton1";
-        case WidgetId::baton2:
-            return "baton2";
-        case WidgetId::rattle1:
-            return "rattle1";
-        case WidgetId::rattle2:
-            return "rattle2";
+        case WidgetId::batrat1:
+            return "batrat1";
+        case WidgetId::batrat2:
+            return "batrat2";
+        case WidgetId::batrat3:
+            return "batrat3";
+        case WidgetId::batrat4:
+            return "batrat4";
+        case WidgetId::batrat5:
+            return "batrat5";
         case WidgetId::lidar1:
             return "lidar1";
         case WidgetId::invalid:
@@ -232,6 +236,13 @@ WidgetId stringToWidgetId(const std::string& widgetName)
             return widgetId;
         }
     }
+
+    // Translate name for renamed widgets.
+    if (widgetName == std::string("baton1")) return WidgetId::batrat1;
+    if (widgetName == std::string("baton2")) return WidgetId::batrat2;
+    if (widgetName == std::string("rattle1")) return WidgetId::batrat3;
+    if (widgetName == std::string("rattle2")) return WidgetId::batrat4;
+
     return WidgetId::invalid;
 }
 
