@@ -49,8 +49,7 @@
         "numberOfStrings" : 48,
         "numberOfPixelsPerString" : 100,
 
-        "_include_file_schedule" : "Illumibrate_2023_schedule.json",
-        //"_include_file_schedule" : "schedule_alwaysOn.json",
+        "_include_file_schedule" : "Element11_2023_schedule.json",
 
         //"patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
         "patternBlendMethod" : "rgbAdd",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
@@ -61,7 +60,7 @@
         ],
 
         "patterns" : [
-            { "_include_file_patterns" : "Illumibrate_2023_patternSet2.json" }
+            { "_include_file_patterns" : "Element11_2023_patternSet1.json" }
         ]
     }
 }
