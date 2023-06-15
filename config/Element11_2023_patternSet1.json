@@ -17,12 +17,14 @@
 /*******************************************************************************
 Widget           Pattern
 ---------------  -------------------------------------------------------------------
-Flower1          position of four vertical stripes  <--- vestibule
+Eye              eye flash
+
+Flower1          position of four vertical stripes
 Flower2          hue of four vertical stripes
 
 Flower3          spinner blocks
 
-Flower4          position of three horizontal rings  <--- vestibule
+Flower4          position of three horizontal rings
 Flower5          hue of three horizontal rings
 
 Flower6          traditional rings
@@ -35,12 +37,14 @@ BatRat5 (GL's)   white/purple/aqua spray
 
 Rainstick        rain
 
-BoogieBoard      spring
+Schroeder's  60 keys
 
 *******************************************************************************/
 
 {
     "patterns" : [
+        { "_include_file_eyeFlash" : "patterns/eyeFlash.json" },
+
         { "_include_file_stripes" : "patterns/stripes_Flower1_Flower2.json" },
         { "_include_file_spinnerBlocks" : "patterns/spinnerBlocks_Flower3.json" },
         { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower4_Flower5.json" },
@@ -57,7 +61,8 @@ BoogieBoard      spring
 
         { "_include_file_rain_Rainstick" : "patterns/rain_Rainstick.json" },
 
-        { "_include_file_spring_BoogieBoard" : "patterns/spring_BoogieBoard.json" }
+        { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" }
+
     ]
 }
 
