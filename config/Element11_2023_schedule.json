@@ -13,13 +13,15 @@
 /*******************************************************************************
 The Great Google says that sunset at Stargazer Ranch, Utah on Saturday 18 June
 is at 9:10 PM and sunrise on Sunday 19 June is at 5:59 AM.  We'll go with that.
+The previous is from 2022.  It is now 2023, and an earlier on-time seems more
+appropriate because of light and clouds and shit.  So there.
 *******************************************************************************/
 
 {
     "shutoffPeriods" : [
         {   "description" : "daytime",
             "startDateTime" : "06:00:00",
-            "endDateTime" : "21:10:00"
+            "endDateTime" : "20:50:00"
         }
     ],
 
@@ -39,6 +41,10 @@ is at 9:10 PM and sunrise on Sunday 19 June is at 5:59 AM.  We'll go with that.
         {   "description" : "setup on Tuesday 20 June",
             "startDateTime" : "2023-06-20 00:00:00",
             "endDateTime" : "2023-06-20 21:10:00"
+        },
+        {   "description" : "geek out with Justin",
+            "startDateTime" : "2023-06-23 00:00:00",
+            "endDateTime" : "2023-06-23 21:10:00"
         }
     ]
 }
