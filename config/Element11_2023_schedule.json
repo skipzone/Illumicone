@@ -45,6 +45,10 @@ appropriate because of light and clouds and shit.  So there.
         {   "description" : "geek out with Justin",
             "startDateTime" : "2023-06-23 00:00:00",
             "endDateTime" : "2023-06-23 21:10:00"
+        },
+        {   "description" : "early turn-on on cloudy Saturday",
+            "startDateTime" : "2023-06-24 20:00:00",
+            "endDateTime" : "2023-06-24 21:10:00"
         }
     ]
 }

@@ -60,8 +60,7 @@
         ],
 
         "patterns" : [
-            //{ "_include_file_patterns" : "Element11_2023_patternSet1.json" }
-            { "_include_file_patterns" : "Element11_2023_patternSet2.json" }
+            { "_include_file_patterns" : "Element11_2023_patternSet3.json" }
         ]
     }
 }
