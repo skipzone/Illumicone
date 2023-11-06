@@ -191,31 +191,22 @@ What you will need:
     programs even if you don't plan on connecting an nRF24L01+ module to receive
     widget data.
 
-=-=-=-=-= delete below
-    Pre-Debian-Bullseye:
-
-    cd ~/devl
-    git clone https://github.com/nRF24/RF24.git
-    cd RF24
-    ./configure --driver=SPIDEV  (this allows widgetRcvr to be run without sudo)
-    make
-    sudo make install
-=-=-=-=-= delete above
-
-    Debian Bullseye:
-
     cd ~/devl
     git clone https://github.com/nRF24/RF24.git
     cd RF24
     mkdir build
     cd build
     cmake .. -D RF24_DRIVER=SPIDEV
+    make
+    sudo make install
 
 
 13. Build the Illumicone programs.
 
     cd ~/devl/Illumicone/src
     make
+
+=-=-=-=-= resume here.  resolve build errors.
 
 
 14. Set up the Illumicone simulation configuration.
@@ -379,7 +370,7 @@ What you will need:
         ? Paste your authentication token: ****************************************
         - gh config set -h github.com git_protocol https
         ✓ Configured git protocol
-        ✓ Logged in as skipzone
+        ✓ Logged in as [your GitHub user name]
         $
 
 
