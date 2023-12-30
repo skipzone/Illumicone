@@ -173,7 +173,7 @@ sudo systemctl enable autossh-tunnel.service
 Enable the icssh and icpp utility scripts
 =========================================
 
-Add this to ~/.profile and ~/.bashrc:
+Add this to ~/.profile:
 
 export ILLUMICONE_JUMPER="illumicone@myEc2Instance.com"
 

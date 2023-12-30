@@ -157,7 +157,7 @@ What you will need:
     steps.
 
 
-10. Using your text editor of preference, add these lines to the end of ~/.bashrc:
+10. Using your text editor of preference, add these lines to the end of ~/.profile:
 
     # Set up Illumicone paths.
     export ILLUMICONE_BIN="$HOME/bin"
