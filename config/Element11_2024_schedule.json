@@ -1,0 +1,51 @@
+/* This file is part of Illumicone.  Illumicone is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*******************************************************************************
+The Great Google says that sunset at Stargazer Ranch, Utah on Saturday 18 June
+is at 9:10 PM and sunrise on Sunday 19 June is at 5:59 AM.  We'll go with that.
+The previous is from 2022.  It is now 2023, and an earlier on-time seems more
+appropriate because of light and clouds and shit.  So there.
+*******************************************************************************/
+
+{
+    "shutoffPeriods" : [
+        {   "description" : "daytime",
+            "startDateTime" : "06:00:00",
+            "endDateTime" : "20:50:00"
+        }
+    ],
+
+    "quiescentPeriods" : [
+//        {   "description" : "Temple Burn",
+//            "startDateTime" : "2024-06-22 22:00:00",
+//            "endDateTime" : "2024-06-22 23:00:00",
+//            "quiescentColor" : "192,192,192"
+//        }
+    ],
+
+    "overridePeriods" : [
+        {   "description" : "development",
+            "startDateTime" : "2024-06-06 00:00:00",
+            "endDateTime" : "2024-06-06 23:59:59"
+        },
+        {   "description" : "setup on Tuesday 18 June",
+            "startDateTime" : "2024-06-18 00:00:00",
+            "endDateTime" : "2024-06-18 20:50:00"
+        }
+//        {   "description" : "early turn-on on cloudy Saturday",
+//            "startDateTime" : "2024-06-22 20:00:00",
+//            "endDateTime" : "2024-06-22 20:50:00"
+//        }
+    ]
+}
+
