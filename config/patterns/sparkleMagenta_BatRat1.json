@@ -23,14 +23,14 @@
     "inputs" : [
         {   "inputName" : "density",
             "widgetName" : "batrat1",
-            "channelNumber" : 3,        // gyro X
+            "channelNumber" : 5,        // gyro Z?
             "measurement" : "position"
         }
     ],
-    "activationThreshold" : 50,
+    "activationThreshold" : 20,
     "deactivationThreshold" : 999,
     "numGoodMeasurementsForReactivation" : 1,
-    "densityScaledownFactor" : 1600,
+    "densityScaledownFactor" : 800,
     "useRandomColors" : false,
     "sparkleChangeIntervalMs" : 50,
     "forwardSparkleColor" : "magenta",

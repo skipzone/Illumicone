@@ -1,0 +1,95 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+{   "name" : "spring_Flower3",
+    "enabled" : true,
+    "priority" : 1,
+    "opacity" : 100,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
+    "patternClassName" : "SpiralPattern",
+    "inputs" : [
+        {   "inputName" : "rotation",
+            "widgetName" : "flower3",
+            "channelNumber" : 3,                            // degrees per second (?) * 10, [-?, ?]
+            "measurement" : "position"
+        },
+        {   "inputName" : "color",
+            "widgetName" : "flower3",
+            "channelNumber" : 4,                            // gyro Y
+            "measurement" : "position"
+        }
+    ],
+    "flipSpring" : false,                                   // flip upside down; meaningful for a progressive spring
+    "spiralTightnessFactor" : 6.0,                          // the number of turns around the cone
+    "progressiveSpringFactor" : 3,                          // 1 for non-progressive, >= 3 kinda looks like a bedspring
+    "progressiveSpringCompressionResponseFactor" : -0.5,    // multiplied by comp fac and added to progressiveSpringFactor
+    "compressionResetTimeoutSeconds" : 3,                   // reset to min after period of compression ch inactivity
+    // The raw rotation measurement maps to the delay, in ms, between
+    // rotation steps.  Each rotation step starts the spiral at the next
+    // or previous string.
+    "rotationMeasurementMapper" : [
+        {   "rawMin" : -999,
+            "rawMax" : -25,
+            "mappedStart" : 1,
+            "mappedEnd" : 1
+        },
+        {   "rawMin" : -25,
+            "rawMax" : 0,
+            "mappedStart" : 1,
+            "mappedEnd" : 100
+        },
+        {   "rawMin" : 0,
+            "rawMax" : 25,
+            "mappedStart" : 100,
+            "mappedEnd" : 1
+        },
+        {   "rawMin" : 25,
+            "rawMax" : 999,
+            "mappedStart" : 1,
+            "mappedEnd" : 1
+        }
+    ],
+    // The raw color measurement maps to the number of steps to rotate
+    // around the color wheel.  The color wheel has 255 steps.
+    "colorMeasurementMapper" : [
+        {   "rawMin" : -999,
+            "rawMax" : -30,
+            "mappedStart" : 40,
+            "mappedEnd" : 40
+        },
+        {   "rawMin" : -30,
+            "rawMax" : -5,
+            "mappedStart" : 40,
+            "mappedEnd" : 0
+        },
+        {   "rawMin" : -5,
+            "rawMax" : 5,
+            "mappedStart" : 0,
+            "mappedEnd" : 0
+        },
+        {   "rawMin" : 5,
+            "rawMax" : 30,
+            "mappedStart" : 0,
+            "mappedEnd" : 40
+        },
+        {   "rawMin" : 30,
+            "rawMax" : 999,
+            "mappedStart" : 40,
+            "mappedEnd" : 40
+        }
+    ]
+}
+
