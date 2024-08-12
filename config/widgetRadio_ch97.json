@@ -28,7 +28,7 @@
     "autoAck" : true,
 
     // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-    "rfPowerLevel" : "RF24_PA_HIGH",
+    "rfPowerLevel" : "RF24_PA_LOW",
 
     // RF24_250KBPS or RF24_1MBPS
     "dataRate" : "RF24_250KBPS",
