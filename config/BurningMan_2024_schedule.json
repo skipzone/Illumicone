@@ -1,0 +1,77 @@
+/* This file is part of Illumicone.  Illumicone is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*******************************************************************************
+The Great Google says that sunset at Stargazer Ranch, Utah on Saturday 18 June
+is at 9:10 PM and sunrise on Sunday 19 June is at 5:59 AM.  We'll go with that.
+The previous is from 2024.  It is now 2023, and an earlier on-time seems more
+appropriate because of light and clouds and shit.  So there.
+*******************************************************************************/
+
+{
+    "shutoffPeriods" : [
+        {   "description" : "daytime",
+            "startDateTime" : "07:00:00",   // 06:00 PDT
+            "endDateTime" : "20:00:00"      // 19:00 PDT
+        }
+    ],
+
+    "quiescentPeriods" : [
+//        {   "description" : "Temple Burn",
+//            "startDateTime" : "2024-06-22 22:00:00",
+//            "endDateTime" : "2024-06-22 23:00:00",
+//            "quiescentColor" : "navy"
+//        },
+//        {   "description" : "Illumination",
+//            "startDateTime" : "2024-06-22 22:00:00",
+//            "endDateTime" : "2024-06-22 23:00:00",
+//            "quiescentColor" : "192,192,192"
+//        },
+//        {   "description" : "Low Power",
+//            "startDateTime" : "2024-06-22 22:00:00",
+//            "endDateTime" : "2024-06-22 23:00:00",
+//            "quiescentColor" : "0,32,0"
+//        }
+    ],
+
+    "overridePeriods" : [
+        {   "description" : "development during build week - Monday",
+            "startDateTime" : "2024-08-19 00:00:00",
+            "endDateTime" : "2024-08-19 23:59:59"
+        },
+        {   "description" : "development during build week - Tuesday",
+            "startDateTime" : "2024-08-20 00:00:00",
+            "endDateTime" : "2024-08-20 23:59:59"
+        },
+        {   "description" : "development during build week - Wednesday",
+            "startDateTime" : "2024-08-21 00:00:00",
+            "endDateTime" : "2024-08-21 23:59:59"
+        },
+        {   "description" : "development during build week - Thursday",
+            "startDateTime" : "2024-08-22 00:00:00",
+            "endDateTime" : "2024-08-22 23:59:59"
+        },
+        {   "description" : "cone setup on Friday 23 August",
+            "startDateTime" : "2024-08-23 00:00:00",
+            "endDateTime" : "2024-08-23 23:59:59"
+        },
+        {   "description" : "widget setup on Saturday 24 August",
+            "startDateTime" : "2024-08-24 19:30:00",
+            "endDateTime" : "2024-08-24 19:59:59"
+        }
+//        {   "description" : "early turn-on on cloudy day",
+//            "startDateTime" : "2024-08-25 19:00:00",
+//            "endDateTime" : "2024-08-25 20:00:00"
+//        }
+    ]
+}
+
