@@ -46,6 +46,7 @@
 #define LED_RED_PIN 3
 #define LED_GREEN_PIN 5
 #define LED_BLUE_PIN 6
+#define ALT_RF_CHANNEL_PIN 2
 
 // ---------- radio configuration ----------
 
@@ -60,8 +61,8 @@
 // prime number (2, 3, 5, 7, 11, 13), or 15 (the maximum) for
 // TX_RETRY_DELAY_MULTIPLIER.  15 is the maximum value for TX_MAX_RETRIES.
 #define WANT_ACK true
-#define TX_RETRY_DELAY_MULTIPLIER 1
-#define TX_MAX_RETRIES 0
+#define TX_RETRY_DELAY_MULTIPLIER 15
+#define TX_MAX_RETRIES 15
 //#define WANT_ACK false
 //#define TX_RETRY_DELAY_MULTIPLIER 0
 //#define TX_MAX_RETRIES 0
@@ -78,9 +79,10 @@
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
 #define RF_CHANNEL 97
+#define ALT_RF_CHANNEL 76
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_LOW
+#define RF_POWER_LEVEL RF24_PA_HIGH
 
 
 /***********
@@ -98,6 +100,8 @@ StressTestPayload payload;
 
 void setup()
 {
+  uint8_t rf_channel = RF_CHANNEL;
+
 #ifdef ENABLE_DEBUG_PRINT
   Serial.begin(115200);
   printf_begin();
@@ -116,9 +120,15 @@ void setup()
   digitalWrite(LED_RED_PIN, LOW);
 #endif
 
+#ifdef ALT_RF_CHANNEL_PIN
+  pinMode(ALT_RF_CHANNEL_PIN, INPUT_PULLUP);
+  rf_channel = digitalRead(ALT_RF_CHANNEL_PIN) ? RF_CHANNEL : ALT_RF_CHANNEL;
+  digitalWrite(ALT_RF_CHANNEL_PIN, LOW);  // turn off the pullup
+#endif
+
   if (!configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
                       TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
-                      RF_CHANNEL)) {
+                      rf_channel)) {
     // Nothing else to do except leave the blue LED on.
     while (true);
   }
