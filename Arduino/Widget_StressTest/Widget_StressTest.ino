@@ -25,7 +25,7 @@
     along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#define ENABLE_DEBUG_PRINT
+#define ENABLE_DEBUG_PRINT
 
 
 #include "illumiconeWidget.h"
@@ -104,21 +104,24 @@ void setup()
 #endif
 
 #ifdef LED_BLUE_PIN
-      pinMode(LED_BLUE_PIN, OUTPUT);
-      digitalWrite(LED_BLUE_PIN, HIGH);
+  pinMode(LED_BLUE_PIN, OUTPUT);
+  digitalWrite(LED_BLUE_PIN, HIGH);
 #endif
 #ifdef LED_GREEN_PIN
-      pinMode(LED_GREEN_PIN, OUTPUT);
-      digitalWrite(LED_GREEN_PIN, LOW);
+  pinMode(LED_GREEN_PIN, OUTPUT);
+  digitalWrite(LED_GREEN_PIN, LOW);
 #endif
 #ifdef LED_RED_PIN
-      pinMode(LED_RED_PIN, OUTPUT);
-      digitalWrite(LED_RED_PIN, LOW);
+  pinMode(LED_RED_PIN, OUTPUT);
+  digitalWrite(LED_RED_PIN, LOW);
 #endif
 
-  configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
-                 TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
-                 RF_CHANNEL);
+  if (!configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
+                      TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
+                      RF_CHANNEL)) {
+    // Nothing else to do except leave the blue LED on.
+    while (true);
+  }
 
 #ifdef ENABLE_DEBUG_PRINT
   radio.printDetails();
