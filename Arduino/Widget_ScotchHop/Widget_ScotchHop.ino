@@ -73,6 +73,16 @@ enum class StatusLedState {
   flash
 };
 
+union StepId {
+  struct {
+    uint8_t bit0 : 1;
+    uint8_t bit1 : 1;
+    uint8_t bit2 : 1;
+    uint8_t bit3 : 1;
+  };
+  uint8_t id;
+};
+
 
 /************************
  * Widget Configuration *
@@ -87,6 +97,10 @@ static constexpr StatusLed_t statusLeds[static_cast<int>(StatusLedId::count)] = 
 #define PIN_RADIO_CE 9
 #define PIN_RADIO_CSN 10
 // The radio also uses SPI0 bus MOSI on 11, MISO on 12, and SCK on 13
+#define PIN_STEP_ID_0 14  // A0
+#define PIN_STEP_ID_1 15  // A1
+#define PIN_STEP_ID_2 16  // A2
+#define PIN_STEP_ID_3 17  // A3
 
 #define STEP_SWITCH_ACTIVE_STATE LOW
 #define STEP_SWITCH_INTERRUPT_MODE RISING
@@ -159,7 +173,7 @@ static WidgetMode widgetMode = WidgetMode::init;
 
 static RF24 radio(PIN_RADIO_CE, PIN_RADIO_CSN);   // also uses SPI0 bus (SCK on 13, MISO on 12, MOSI on 11)
 
-static uint16_t stepId;
+static StepId stepId;
 
 static bool stepSwitchIsActive;
 
@@ -277,7 +291,7 @@ void setLedState(StatusLedId id, StatusLedState state)
       digitalWrite(statusLeds[idx].pin, LOW);
       break;
     case StatusLedState::flash:
-      // TODO:  turn on the LED, then set a one-shot timer to turn it off
+      // TODO:  when not in standby mode, turn on the LED, then set a one-shot timer to turn it off
       digitalWrite(statusLeds[idx].pin, HIGH);
       delay(statusLeds[idx].flashMs);
       digitalWrite(statusLeds[idx].pin, LOW);
@@ -388,7 +402,9 @@ void sendMeasurements(uint32_t now)
 //#endif
 
   if (!radio.write(&payload, sizeof(payload), !WANT_ACK)) {
-    setLedState(StatusLedId::txFailure, StatusLedState::on);
+    // Turning the txFailure LED on solid while in standby mode isn't visible
+    // because it gets turned off almost right away.  So, flash it.
+    setLedState(StatusLedId::txFailure, widgetMode != WidgetMode::standby ? StatusLedState::on : StatusLedState::flash);
 #ifdef ENABLE_DEBUG_PRINT
     Serial.println(F("tx failed"));
 #endif
@@ -410,7 +426,19 @@ void setup()
     pinMode(statusLeds[i].pin, OUTPUT);
   }
 
-  // TODO:  read stepId from A0-A3
+  // Read stepId set by jumpers on D14-D17.
+  pinMode(PIN_STEP_ID_0, INPUT_PULLUP);
+  pinMode(PIN_STEP_ID_1, INPUT_PULLUP);
+  pinMode(PIN_STEP_ID_2, INPUT_PULLUP);
+  pinMode(PIN_STEP_ID_3, INPUT_PULLUP);
+  stepId.bit0 = !digitalRead(PIN_STEP_ID_0);
+  stepId.bit1 = !digitalRead(PIN_STEP_ID_1);
+  stepId.bit2 = !digitalRead(PIN_STEP_ID_2);
+  stepId.bit3 = !digitalRead(PIN_STEP_ID_3);
+  pinMode(PIN_STEP_ID_0, INPUT);
+  pinMode(PIN_STEP_ID_1, INPUT);
+  pinMode(PIN_STEP_ID_2, INPUT);
+  pinMode(PIN_STEP_ID_3, INPUT);
 
   setLedState(StatusLedId::txFailure, StatusLedState::on); // We'll leave the red LED on solid if radio config fails.
   if (!configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
@@ -430,7 +458,7 @@ void setup()
 
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.channel = 0;
-  payload.position = stepId;
+  payload.position = stepId.id;
 
   setWidgetMode(WidgetMode::inactive, millis());
 
@@ -454,8 +482,7 @@ void loop() {
   }
 
   if ((int32_t) (now - nextTxMs) >= 0) {
-    // TODO:  really should be nextTxMs += txInterval to avoid drift
-    nextTxMs = now + txInterval;
+    nextTxMs += txInterval;
     sendMeasurements(now);
   }
 
