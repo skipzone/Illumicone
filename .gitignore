@@ -10,7 +10,10 @@ widgetRcvr
 .*.swp
 *~
 *.DS_Store
+cscope.files
+cscope.in.out
 cscope.out
+cscope.po.out
 database/log*
 database/*.pdf
 database/sql*.sql
