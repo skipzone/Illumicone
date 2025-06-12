@@ -108,7 +108,7 @@ static constexpr StatusLed_t statusLeds[static_cast<int>(StatusLedId::count)] = 
 #define WIDGET_ID 18
 
 #define ACTIVE_TX_INTERVAL_MS 100L
-#define INACTIVE_TX_INTERVAL_MS 1000L
+#define INACTIVE_TX_INTERVAL_MS 500L
 
 // When standby mode is enabled, the processor will be put to sleep after
 // the widget has been inactive for inactivityTimeoutForSleepMs ms.
@@ -121,11 +121,11 @@ static constexpr StatusLed_t statusLeds[static_cast<int>(StatusLedId::count)] = 
 
 // The processor is put to sleep when step switch activity
 // hasn't been detected for inactivityTimeoutForSleepMs ms.
-static constexpr uint32_t inactivityTimeoutForSleepMs = 60000L;
+static constexpr uint32_t inactivityTimeoutForSleepMs = 180000L;
 
 // Before changing from active to inactive mode, we'll
 // wait for the hang time after activity ceases.
-static constexpr uint32_t activityHangTimeMs = 1000L;
+static constexpr uint32_t activityHangTimeMs = 5000L;
 
 static constexpr uint32_t gatherMeasurementsIntervalMs = 25;  // 40 samples/s
 
