@@ -30,7 +30,7 @@ extern Log logger;
 
 
 ScotchHopWidget::ScotchHopWidget(WidgetId id)
-    : Widget(id, 1)
+    : Widget(id, 1, true)
 {
 }
 

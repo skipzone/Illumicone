@@ -95,6 +95,7 @@ patternController: patternController.o AnnoyingFlashingPattern.o BatRatWidget.o 
                    BoogieBoardWidget.o ConfigReader.o EyeWidget.o FillAndBurstPattern.o \
                    FlowerWidget.o FourPlay4xWidget.o HorizontalStripePattern.o IndicatorRegion.o \
                    IndicatorRegionsPattern.o LidarWidget.o Log.o MidiActivatedRegionsPattern.o \
+				   MultiSwitchActivatedRegionsPattern.o \
                    MikeWidget.o ParticlesPattern.o Pattern.o PumpWidget.o QueuedWidgetChannel.o \
                    RainbowExplosionPattern.o RainstickWidget.o RgbStripePattern.o \
                    RgbVerticalPattern.o SchroedersPlaythingWidget.o ScotchHopWidget.o SimpleBlockIndicator.o \
