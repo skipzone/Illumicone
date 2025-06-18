@@ -123,10 +123,11 @@ we can't hear it anymore.)
            && multiSwitchChannel->getHasNewVelocityMeasurement())
     {
         ++messageCount;
-        logger.logMsg(LOG_DEBUG, "processing message #" + to_string(messageCount));
 
         unsigned int switchId = multiSwitchChannel->getPosition();
         bool switchIsActivated = multiSwitchChannel->getVelocity();
+
+        ///logger.logMsg(LOG_DEBUG, "processing message #" + to_string(messageCount) + ", switchId=" + to_string(switchId) + " switchIsActivated=" + to_string(switchIsActivated));
 
         if (switchId < maxSwitches) {
             switchStates[switchId].isActivated = switchIsActivated;
@@ -151,20 +152,27 @@ we can't hear it anymore.)
     }
 */
 
+    // TODO:  Add code to support fading indicators.  See the Midi... pattern.
+
+    ///logger.logMsg(LOG_DEBUG, "maxSwitches=" + to_string(maxSwitches) + " indicatorRegions.size returns " + to_string(indicatorRegions.size()));
     for (unsigned int switchId = 0; switchId < maxSwitches; switchId++) {
-        for (unsigned int indicatorIdx = 0; indicatorIdx <= indicatorRegions.size(); indicatorIdx++) {
+        for (unsigned int indicatorIdx = 0; indicatorIdx < indicatorRegions.size(); indicatorIdx++) {
+            ///logger.logMsg(LOG_DEBUG, "switchId=" + to_string(switchId) + " indicatorIdx=" + to_string(indicatorIdx));
             IndicatorRegion* indicatorRegion = indicatorRegions[indicatorIdx];
+            ///logger.logMsg(LOG_DEBUG, "indicatorRegion switch id " + to_string(indicatorRegion->getSwitchId()));
             if (indicatorRegion->getSwitchId() == switchId) {
+                ///logger.logMsg(LOG_DEBUG, "found indicator region for switch");
                 if (switchStates[switchId].isActivated) {
+                    ///logger.logMsg(LOG_DEBUG, "switchId " + to_string(switchId) + " is active");
                     if (activeIndicators.find(indicatorRegion) == activeIndicators.end()) {
-                        logger.logMsg(LOG_DEBUG, "switch " + to_string(switchId) + " turned on");
+                        ///logger.logMsg(LOG_DEBUG, "switch " + to_string(switchId) + " turned on");
                         activeIndicators.insert(indicatorRegion);
                         indicatorRegion->makeAnimating(true);
                     }
                 }
                 else {
                     if (activeIndicators.find(indicatorRegion) != activeIndicators.end()) {
-                        logger.logMsg(LOG_DEBUG, "switch " + to_string(switchId) + " turned off");
+                        ///logger.logMsg(LOG_DEBUG, "switch " + to_string(switchId) + " turned off");
                         activeIndicators.erase(indicatorRegion);
                         indicatorRegion->turnOffImmediately();
                     }

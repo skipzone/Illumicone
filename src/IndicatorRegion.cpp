@@ -48,7 +48,7 @@ bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString
         return false;
     }
 
-    if (indicatorConfigObject["switchId"].is_string()) {
+    if (indicatorConfigObject["switchId"].is_number()) {
         switchId = indicatorConfigObject["switchId"].int_value();
     }
     else {
