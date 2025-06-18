@@ -67,7 +67,9 @@ FourPlay43       traditional rings
         { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
 
         { "_include_file_stripes_FourPlay42" : "patterns/stripes_traditional_FourPlay42.json" },
-        { "_include_file_rings_FourPlay43" : "patterns/rings_traditional_FourPlay43.json" }
+        { "_include_file_rings_FourPlay43" : "patterns/rings_traditional_FourPlay43.json" },
+
+        { "_include_file_scotchHop4Pride" : "patterns/scotchHop4Pride.json" }
     ]
 }
 
