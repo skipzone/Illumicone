@@ -32,5 +32,21 @@ extern Log logger;
 ScotchHopWidget::ScotchHopWidget(WidgetId id)
     : Widget(id, 1, true)
 {
+    simulationUpdateIntervalMs[0] = 250;
+    simulationSwitchId = 0;
+    simulationTurningOn = true;
+}
+
+
+void ScotchHopWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
+{
+    logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " simulationSwitchId=" + to_string(simulationSwitchId));
+    channels[chIdx]->setPositionAndVelocity(simulationSwitchId, simulationTurningOn ? 1 : 0);
+    channels[chIdx]->setIsActive(true);
+
+    if (++simulationSwitchId >= simulationNumSwitches) {
+        simulationSwitchId = 0;
+        simulationTurningOn = !simulationTurningOn;
+    }
 }
 

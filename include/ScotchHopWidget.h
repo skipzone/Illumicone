@@ -30,5 +30,14 @@ class ScotchHopWidget : public Widget
 
         ScotchHopWidget(const ScotchHopWidget&) = delete;
         ScotchHopWidget& operator =(const ScotchHopWidget&) = delete;
+
+        void updateChannelSimulatedMeasurements(unsigned int chIdx);
+
+    private:
+
+        static constexpr int simulationNumSwitches = 8;
+
+        int simulationSwitchId;
+        bool simulationTurningOn;
 };
 
