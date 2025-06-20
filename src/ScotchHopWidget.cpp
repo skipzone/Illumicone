@@ -40,7 +40,7 @@ ScotchHopWidget::ScotchHopWidget(WidgetId id)
 
 void ScotchHopWidget::updateChannelSimulatedMeasurements(unsigned int chIdx)
 {
-    logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " simulationSwitchId=" + to_string(simulationSwitchId));
+    // logger.logMsg(LOG_DEBUG, channels[chIdx]->getName() + " simulationSwitchId=" + to_string(simulationSwitchId));
     channels[chIdx]->setPositionAndVelocity(simulationSwitchId, simulationTurningOn ? 1 : 0);
     channels[chIdx]->setIsActive(true);
 
