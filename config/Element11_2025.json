@@ -60,7 +60,7 @@
         ],
 
         "patterns" : [
-            { "_include_file_patterns" : "Element11_2025_patternSet1.json" }
+            { "_include_file_patterns" : "Element11_2025_patternSet2.json" }
         ]
     }
 }
