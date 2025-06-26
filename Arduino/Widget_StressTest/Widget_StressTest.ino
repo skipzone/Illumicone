@@ -41,8 +41,12 @@
 
 #define WIDGET_ID 0
 #define TX_INTERVAL_MS 100L
+#define LED_ON_MS 5L
 #define STATS_PRINT_INTERVAL_MS 5000L
-//#define LED_PIN 5
+#define LED_RED_PIN 3
+#define LED_GREEN_PIN 5
+#define LED_BLUE_PIN 6
+#define ALT_RF_CHANNEL_PIN 2
 
 // ---------- radio configuration ----------
 
@@ -50,7 +54,7 @@
 // and velocity; 2: measurement vector; 3,4: undefined; 5: custom)
 #define TX_PIPE_ADDRESS "0wdgt"       // 0 for tx stress
 
-// Set to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
+// Set WANT_ACK to false, TX_RETRY_DELAY_MULTIPLIER to 0, and TX_MAX_RETRIES
 // to 0 for fire-and-forget.  To enable retries and delivery failure detection,
 // set WANT_ACK to true.  The delay between retries is 250 us multiplied by
 // TX_RETRY_DELAY_MULTIPLIER.  To help prevent repeated collisions, use 1, a
@@ -65,7 +69,7 @@
 
 // Possible data rates are RF24_250KBPS, RF24_1MBPS, or RF24_2MBPS.  (2 Mbps
 // works with genuine Nordic Semiconductor chips only, not the counterfeits.)
-#define DATA_RATE RF24_1MBPS
+#define DATA_RATE RF24_250KBPS
 
 // Valid CRC length values are RF24_CRC_8, RF24_CRC_16, and RF24_CRC_DISABLED
 #define CRC_LENGTH RF24_CRC_16
@@ -74,10 +78,11 @@
 // ISM: 2400-2500;  ham: 2390-2450
 // WiFi ch. centers: 1:2412, 2:2417, 3:2422, 4:2427, 5:2432, 6:2437, 7:2442,
 //                   8:2447, 9:2452, 10:2457, 11:2462, 12:2467, 13:2472, 14:2484
-#define RF_CHANNEL 76
+#define RF_CHANNEL 97
+#define ALT_RF_CHANNEL 76
 
 // RF24_PA_MIN = -18 dBm, RF24_PA_LOW = -12 dBm, RF24_PA_HIGH = -6 dBm, RF24_PA_MAX = 0 dBm
-#define RF_POWER_LEVEL RF24_PA_LOW
+#define RF_POWER_LEVEL RF24_PA_HIGH
 
 
 /***********
@@ -95,18 +100,38 @@ StressTestPayload payload;
 
 void setup()
 {
+  uint8_t rf_channel = RF_CHANNEL;
+
 #ifdef ENABLE_DEBUG_PRINT
   Serial.begin(115200);
   printf_begin();
 #endif
 
-#ifdef LED_PIN
-      pinMode(LED_PIN, OUTPUT);
+#ifdef LED_BLUE_PIN
+  pinMode(LED_BLUE_PIN, OUTPUT);
+  digitalWrite(LED_BLUE_PIN, HIGH);
+#endif
+#ifdef LED_GREEN_PIN
+  pinMode(LED_GREEN_PIN, OUTPUT);
+  digitalWrite(LED_GREEN_PIN, LOW);
+#endif
+#ifdef LED_RED_PIN
+  pinMode(LED_RED_PIN, OUTPUT);
+  digitalWrite(LED_RED_PIN, LOW);
 #endif
 
-  configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
-                 TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
-                 RF_CHANNEL);
+#ifdef ALT_RF_CHANNEL_PIN
+  pinMode(ALT_RF_CHANNEL_PIN, INPUT_PULLUP);
+  rf_channel = digitalRead(ALT_RF_CHANNEL_PIN) ? RF_CHANNEL : ALT_RF_CHANNEL;
+  digitalWrite(ALT_RF_CHANNEL_PIN, LOW);  // turn off the pullup
+#endif
+
+  if (!configureRadio(radio, TX_PIPE_ADDRESS, WANT_ACK, TX_RETRY_DELAY_MULTIPLIER,
+                      TX_MAX_RETRIES, CRC_LENGTH, RF_POWER_LEVEL, DATA_RATE,
+                      rf_channel)) {
+    // Nothing else to do except leave the blue LED on.
+    while (true);
+  }
 
 #ifdef ENABLE_DEBUG_PRINT
   radio.printDetails();
@@ -115,16 +140,32 @@ void setup()
   payload.widgetHeader.id = WIDGET_ID;
   payload.widgetHeader.isActive = false;
   payload.widgetHeader.channel = 0;
+
+#ifdef LED_BLUE_PIN
+  digitalWrite(LED_BLUE_PIN, LOW);
+#endif
 }
 
 
 void loop() {
 
   static int32_t lastTxMs;
+  static int32_t lastLedOnMs;
   static int32_t lastStatsPrintMs;
   static int32_t lastStatsPrintPayloadNum;
 
   uint32_t now = millis();
+
+  if (lastLedOnMs && now - lastLedOnMs >= LED_ON_MS) {
+    lastLedOnMs = 0;
+#ifdef LED_GREEN_PIN
+    digitalWrite(LED_GREEN_PIN, LOW);
+#endif
+#ifdef LED_RED_PIN
+    digitalWrite(LED_RED_PIN, LOW);
+#endif
+  }
+
   if (now - lastTxMs >= TX_INTERVAL_MS) {
 
     ++payload.payloadNum;
@@ -138,16 +179,18 @@ void loop() {
     payload.lastTxUs = txEndUs - txStartUs;
 
     if (!txSuccessful) {
-#ifdef LED_PIN
-      digitalWrite(LED_PIN, HIGH);
+#ifdef LED_RED_PIN
+      digitalWrite(LED_RED_PIN, HIGH);
+      lastLedOnMs = now;
 #endif
       ++payload.numTxFailures;
       Serial.print(F("radio.write failed for "));
       Serial.println(payload.payloadNum);
     }
     else {
-#ifdef LED_PIN
-      digitalWrite(LED_PIN, LOW);
+#ifdef LED_GREEN_PIN
+      digitalWrite(LED_GREEN_PIN, HIGH);
+      lastLedOnMs = now;
 #endif
     }
 

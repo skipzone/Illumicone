@@ -1,8 +1,287 @@
 Notes About the (usually cheapshit) NRF24L01+ Modules
 =====================================================
 
-an exceptionally good thread that covers RF issues, shielding, and the problem
-of having to touch the module in order to get it to transmit
+An exceptionally good thread that covers RF issues, shielding, and the problem
+of having to touch the module in order to get it to transmit:
 
 https://hackaday.com/2016/05/31/fixing-the-terrible-range-of-your-cheap-nrf24l01-palna-module/
+
+2025-06-03:  Unfortunately, the link in the above article to the actual
+information is broken.
+
+
+This one is helpful:
+
+https://hackaday.com/2021/01/22/fixing-nrf24l01-modules-without-going-too-insane/
+
+
+An interesting and maybe informative project:
+
+https://github.com/soligen2010/RC_RX_CABELL_V3_FHSS
+
+
+Maybe this is the huckleberry (from https://www.electronic7.com/blog/fixing-the-terrible-range-of-your-cheap-nrf24l01-palna-module-hackaday/):
+
+
+Fixing The Terrible Range Of Your Cheap NRF24L01+ PA/LNA Module | Hackaday
+TagsR200 Resistor Jun. 7 , 12
+nRF24L01 + PA / LNA module specifications appearance
+
+on the paper. Can various cheap sources in China provide wireless communications up to 1000m in a small package? Have various open source projects completed the hard work of software connectivity? It sounds pretty good! But if you buy and get
+
+ 1% of the range, don’t worry, because
+
+.
+
+[Oitzu] obtained significantly better performance from cheaper equipment, including providing better power, controlling noise, increasing shielding, and carefully choosing the correct channel. He claimed, "Through these modifications, I got a free line of sight of about 1000m from the module. In a forest with non-free line of sight, I measured a distance of about 270m, but this may not be the maximum range. I need further testing."
+
+Modified nRF24L01 + PA/LNA module and
+
+The software framework was used in another recent project of [Oitzu]: his
+
+ They are responsible for transferring the camera images to the Raspberry Pi for later upload via the mobile network. Before making a simple modification, he was able to obtain the above 270m in the woods, but not even one-tenth.
+
+In my opinion, the module works well and it is entirely the user's fault. They provided it with nonsense and placed it in a noisy environment.
+
+Considering that these modules do not require any filtering of the power cord, and clearly state that they require more than 100ma of power for full power transmission, a well-designed power supply seems unreasonable, especially when you consider the nature of the data packet. Each of the devices needs to quickly switch between transmitting/receiving, which will cause serious damage to poorly designed SMPS power supplies. In addition, if you want the "1/4 wave" whip antenna to work properly, you need to install it on the ground plane (probably his work done by wrapping the entire object in aluminum foil), which is another problem if The module has been correctly installed in the metal box, and the antenna is only installed on the pass-through SMA, it means that it does not exist at all.
+
+You are absolutely correct. When you buy such a cheap unshielded module, you don't need to buy a complete radio device, but only a piggyback PCB, you don't need to solder QFN ICs and perform all microwave RF matching.
+
+It will not allow you to build a complete, powerful and compatible device without having to master RF knowledge.
+
+If you are unwilling, please buy a certified shielded module with an integrated micro module, which will cost you about 100 times the money.
+
+@fuckface When I wrote this article, it was mainly aimed at users who were unable to make the module work properly. Similarly, this article initially focused on shielding and repairing, and later expanded more errors that may occur.
+
+Therefore, yes, you are completely correct that the unstable power supply is the user's fault, but this does not prevent the user from doing something wrong. :)
+
+Regarding noise: Well, regardless of a noise-free environment and a clean power supply, the module cannot work normally without shielding. Not only is the module installed in a metal box, is it just a way to add a larger (volume) shield?
+
+@cyk: Actually, there are some shielding modules that claim to be FCC certified, and you only need to spend 3 times the money. ;)
+
+The ITU never intended to set the ISM band as a broadcast band. It is designed for short-distance data transmission.
+
+@fface: (open!) You are right, you are wrong.
+
+How many projects do we see here (quite savvy audience) that use nRF24 modules where people just disconnect it from the 5V power supply of the Arduino? Ton. How many things are blocking? No. Is it balanced? please!
+
+The point is, if you buy one of these modules and follow the instructions (haha! get it!), you will get the same thing everyone has – a bare nRF24 module is stuck on a breadboard and the wires are Sealed in one of the cardboard boxes.
+
+A better way to document may not be a hack in itself. But this can definitely improve the overall level of hackers. This is what we really want, right?
+
+@Elliot: "Fuck" has nothing to do with "potty". Unless I am the one who did the wrong thing...
+
+It is 3.3V. I am very lucky to be able to use the maximum power even with an unshielded external power supply. If I encounter a problem, I will do it... I haven't done a lot of RF tests yet, and I am still coding.
+
+Bravely say everything I thought about.
+
+By doing this to make the radiation pattern more directional, you may get a better range.
+
+If you are interested in the 2.4GHz homemade antenna, please check the channel of "andrew mcneil" on YouTube. In fact, he has dozens of very useful 2.4GHz antenna structures and related videos.
+
+Great video! Direct link:
+
+I will have to browse this content and do some writing articles...any favorites? It's actually built?
+
+I made a 915 MHz omnidirectional two-way antenna, which is suitable for Andrew McNeil’s 2.4 GHz two-way antenna (
+
+) Car-to-home link for my Ubiquiti router. For the same gain, it works better than collinear, and is easier and more compact.
+
+He uses lawn mowers or sheet metal clamps for repeated wire cutting/bending construction techniques that are very helpful. RG-402 semi-rigid coaxial cable is also easy to weld.
+
+I have used antennas from time to time
+
+(No direct link, please search for "antenna" in KB) A great success.
+
+We made the Yagi antenna (simple and cheap) for testing. Yes, it further extends the range. But I haven't had any maximum range of tests. Maybe I should do that. :)
+
+superior! Don't forget to test the forest range and sight line.
+
+These radios are interesting because most of them are actually countervailing chips from China. They can be easily faked, but what's interesting is that real radios actually have design flaws, and because they meet specifications, there is no equivalent. Unless you use high-throughput ping-pong mode, you won't notice. The counterfeit will not speak to the genuine one, because one of the packages has been turned over! I recommend always buying them in pairs until you get a completely error-free software...
+
+I use RFM75 or RFM73, which are clones with the proper bits for the node. However, I use NRF with a large PA/LNA antenna in the center to get a good range. What really annoys me is that I cannot use automatic ACK between them. Otherwise, Hoperf will not use LNA and external antennas to create a "high-power" version.
+
+The NO_ACK bit can actually be selected by bit 9 of the 0x0C register in bank 1 (also called "compatibility mode").
+
+No need to change the bitrate to 250K...this alone can greatly increase the range.
+
+Where's the antenna? Is it targeted and matched?
+
+Tin foil shielding is very interesting to me....
+
+A few years ago, I conducted some tests to get the maximum range of some XRF radio modules with standard whip antennas running at 868.3mhz. I found that if I set the wireless baud rate to 1.2k, when the antenna is aligned correctly, I can reach 3.4km, of which 1km can send out a good signal.
+
+I also made a quick video, by holding a wireless error detector next to the transceiver, sending it repeatedly at 250k and then sending a packet at 1.2k, showing the difference between how many transmissions:
+
+Of course, slow speed can improve a lot, but for the same data, you will consume 200 times the energy! Some people seem to miss this and just reduce the radio to the lowest data rate for maximum range.
+
+Radio novice here.
+
+But I get more power at a lower rate, and I think it can be balanced. Just like text messages or calls. I have a hard time finding this word.
+
+It can be roughly balanced indeed. A higher data rate proportionally requires more bandwidth, a larger bandwidth proportionally increases the received noise, and higher transmit power needs to be overcome, which ultimately results in the power * data rate product for a given path and a given signal-to-noise ratio In terms of approximately constant (becomes 1 / (error rate)). Suppose the receiver bandwidth decreases with the data rate, but I don’t know if a module like this does that.
+
+@BrightBlueJim is correct. As long as you can still increase the power or decrease the bit rate, you can trade them with each other. But in reality, the situation is different: shorter data packets with the same SNR have less chance of being affected by other transmissions in the shared frequency band.
+
+This is why people tend to use RX power to the maximum and then reduce the bit rate only when the SNR/range is unacceptable.
+
+Thanks for your quick reply! I need to make sure that my assumptions are correct. :) I know that every product may be different.
+
+Thanks for your clarification, although the XRF module I run on 2v-3.6v consumes only 36mA during full power transmission, so there is not much energy when transmitting slow data over long distances.
+
+If you use a lower bit rate, the transmission will take more time and therefore will consume more energy. Every bit you transmit consumes more energy.
+
+On most of the transceiver modules I purchased, nRF24L01+ is an unlicensed clone, not produced by Nordic Semi. The weakness of these clones is that they are extremely sensitive to power supply noise. The 50mV pp switching noise is enough to reduce its usable range to a few feet. Moreover, if there is a PA/LNA, then... you know their evaluation of garbage entering and garbage exiting.
+
+For modules without PA/LNA, I first soldered the 10uF ceramic SMD cap directly to the VCC/GND connector pins. This is helpful, but it is usually not enough to supply power with a normal switch. Instead of increasing the capacitor, I connected the VCC and GND of the module through a 1ohm resistor. Combined with the added cover, the Pi filter can be made more effective. This always solves the problem and reaches the expected range.
+
+For modules with PA/LNA, I use 100uF and 2x 0.1ohm. In addition, I usually add an LC Pi filter to the switcher output.
+
+It should be regarded as the knowledge required to use the nRF24L01+ module.
+
+Chris C, hello, can you better explain or plot the connection details with the 1ohm resistor and capacitor cap. I mean what is connected where..
+
+Thank you
+
+Chris C. is absolutely correct. We actually used these clones in production, and through a lot of tests, we found that by properly filtering the power supply, they are very useful in the range of up to 250m. For ordinary modules without series resistance, we have achieved better success by using 22uF tantalum instead of 10uF ceramic. Similarly, for PA/LNA, we use 47uF tantalum capacitors, if it is on its own dedicated 3.3v linear power rail, then it can also be reduced to 22uF.
+
+One thing we don't do, because this never worked in production: please use a switching power supply nearby or power these clones. You are lucky to walk 10 feet! By adding a shielding layer and a real ground layer and an additional LC filter, RF can work normally within a range of 100m, but it will still fail. However, the additional ground plane or the production cost of placing OEM parts on the PCB but requiring external connectors is not worth it. The battery life has been hit little, but the alternative methods have gotten worse...
+
+"Wrap it in plastic wrap"-not sure this is the best idea...
+
+Probably not the best. But it needs to win the title of "ugly fix". ;)
+
+However, despite this, it has worked flawlessly since a few months.
+
+Next is the LDO switching regulator?
+
+This will not save you from having to filter power as Chris C. said.
+
+If you look at the LDO ripple rejection at high frequencies, you will find that it is very bad, so a simple filter is better at attenuation.
+
+This is what I learned from using these things:
+
+1. Pay attention to the power supply: Decouple your LDO correctly (it needs 1-2uF ceramic, not 100n + 100u electrolysis!). b. Use a decoupling cap (1-2 uF ceramic) next to the module.
+
+2. Use a linear power supply instead of a switching power supply
+
+3. Don't use SPI polling like most libraries to check if there is a received packet. This will increase noise. Use IRQ pin
+
+4. 250Kbps is really amazing
+
+5. Pay attention to cheap connectors and solder if possible.
+
+6. It is best to place a large ground near the module, for example, place it in a metal box that is in good contact with the antenna ground.
+
+7. Do not use long wires on the module, especially cheap things. look here:
+
+This is excellent advice. I myself encountered a problem when using some shielded versions of the PA + LNB version. I thought that ordering the shielded version would solve my problem, but it is not the case.
+
+I use the following module boards to connect to my unit:
+
+My problem is that the module is only sent when I hold the unit in my hand, I think it has something to do with the grounding of the module. When I held it, I got an excellent range. To sum up, I will try to add some ceramic capacitors (
+
+), do I need to add them to the ground and vcc on both the radio and the modules used above? Regarding the need to hold the device, how can I solve this problem, my application cannot choose a metal box. Is there anything else I should know?
+
+Any help or suggestions would be greatly appreciated, I am a newbie in electronics!
+
+By the way, please be careful to use the large ceramic caps (MLCC) on those OLD 1117 regulators shown in the link. This regulator is very old and was designed before MLCC, so it would be unstable without some minimum ESR. It only applies to electrolytic covers. The part is very cheap ($0.03 from China), so the price is cheap.
+
+I read the data sheet and understood the problem with the original part based on LM1117, so I designed a series resistor. Just for the hell of it, I tested these outputs when I used them in the design.
+
+Go to the bottom of the page:
+
+The oscilloscope image with sawtooth wave is because the ESR of the MLCC is so low that the voltage regulator starts to oscillate. By adding the series resistance (1R) of my design, the output will meet expectations.
+
+Daily experience: Don’t mix old regulators with high-value ceramic bottle caps without reading the data sheet-it’s best to base them on their data sheet. Use chips designed in the last 5 to 10 years.
+
+The Y5V dielectric of your second link capacitor is very poor because their value drops to a small percentage under bias. You need X7R or X5R dielectric. Generally, when using decoupling capacitors, keep the leads/connections very short, because the inductance of the leads will increase the impedance.
+
+Hi @fpgacomputer,
+
+Thank you for your reply, I think I understand most of it:-/
+
+So, considering that I also use linked modules, how would you set it up (eg capacitor/resistor). I'm new to the electronics industry, so the simpler the better (I hardly understand decoupling, oops). That said, I spent several weeks trying to make things work properly and pulling out my hair. I'm really not sure why holding my modules can make them work perfectly, as far as I read it might be related to its foundation? By the way, I currently connect the module to the 5v line of the Arduino Uno.
+
+Any help would be greatly appreciated.
+
+It sounds like you are making a top-notch antenna. Sorry, I can't provide more.
+
+Well, thanks, I guess so? :)
+
+@Bogdan any ideas?
+
+Maybe put some pictures somewhere to see? In addition, do you start with some basic codes that you know are valid?
+
+Hi Bogdan,
+
+I can put some pictures, but the wiring is very simple. I have basically connected the adapter board to the Arduino and plugged the shielded/unshielded NRF into the adapter board. Use the unamplified version to confirm that the code works perfectly.
+
+Like I said, if I hold the module, the range is great and the gearbox is perfect; if I don’t think this is bad, the gearbox is very slow, do I think it needs a better foundation?
+
+I am a little confused about the decoupling/resistor business, do you suggest that I put a small capacitor on the radio and circuit board, such as 0.1 span gnd/vcc and a 1k resistor, and where to lead the wires from the Arduino to the adapter board ?
+
+Sorry, sorry!
+
+@Bogdan Any ideas, I'm really dead :-(
+
+It's hard to tell without some documents and pictures. First, you might even find the error yourself.
+
+Bob, do you know why smaller ceramics are better here than larger electrolyzers? It seems illogical...?
+
+Sorry, Bogdan, not Bob...!
+
+Not Bob, but they have better high frequency response.
+
+Sparkfun gave a good description of RFM69, and the same description about antennas also applies to nRF24
+
+See how they have a circuit board with good decoupling function next to the module? Most people will skip the circuit board and connect the module directly, skip the capacitor and use thin wires. In addition, the PA version of NRF consumes more current than RFM69 (low power).
+
+Laura
+
+If the design is not good, Laura will not be able to save you. The article pointed out that "may reach 1% of this range" pointed out some basic problems. Of course, you can always get a bad module, but it usually looks ok.
+
+Well, I have several modules with very small antennas, and their forged range is only half of that of PC board antennas.
+
+The bit 0 in the register 09 of these nrf24L01+ chips is marked as RPD-Received Power Detector. When the strength of any signal received on the selected channel exceeds -64dBm, the bit will become 1 when the RX mode is turned off. Why not use this function to quickly scan the entire channel range, find an empty channel and send a command to the receiver to switch to that channel?
+
+I thought everyone knew that each IC and each module needed its own power filter. Even sockets designed for logic chips have built-in 10nF or 100nF capacitors between the Vdd and GND pins...
+
+I tried. Quick scan is not a good measure. I live in an urban area and there is a lot of WiFi around. Using this method, I can find something on each channel. I find that the one that can provide better results is to switch to wifi channels 8-9. Reason: Most APs use channel 1 by default, and some use 6 or 11. They are non-overlapping. If no one manually sets their AP here, 8-9 should be the quietest area.
+
+I have some, and I seem to be lucky because they seem to be real. They have built-in antennas and don't have a large range, but they have enough range for the applications I want, often monitoring plant water levels and the like.
+
+One thing I want to know is whether these ultra-cheap "clone boards" are really close to the specifications they should meet in RF applications. Is the impedance of the RF trace controlled? Are they not even willing to use test strips to check the impedance obtained in the PCB fab? How is the distribution network designed for these boards? Have they actually performed a proper PDN analysis and ensured that the impedance of the grid is suitable for the current task?
+
+In your dreams... they even started to take out components from the cheapest modules.
+
+It may be that these modules were cloned from some better-designed modules, but I can be sure that there are at least 3 designs for low power and 3 modules for high power. So, maybe not.
+
+If you want a better product with a lower price, check out HopeRF modules, they have RFM75 (newest or old 73). They are indeed compatible with real NRF (not compatible with fake ACK). You can also get them from some large publishers, not from nonsense.
+
+Hello, for the problem that the module can only work normally when you hold the device with your hand or touch the IC with your finger, I solved the problem by reducing the power consumption to the lowest radio. setPALevel(RF24_PA_MIN); and reached a range of 250 meters, I use nLRF24L01P PA + LNA :-)
+
+It is strange, what type of whip antenna did you use in your test?
+
+By the way, anyone who has tried E01-2G4M27D (
+
+)?
+
+I just managed to extract 700m (through trees) from these modules, but it took 3 days of experimentation. Thank you very much for the above comments, indeed, this particular thread may be the best resource to make the high power module work properly. The best solution is to use the old 317 with 3.3V voltage provided by 330R/560R. There are 0.1uF and 10uF on my radio module. 317 is the standard schematic diagram in the data sheet, for example, the input (470uF) and output have maximum limits of 0.1uF and 10uF. I also wanted to delete a variable, so I added a 2 meter cable to the antenna (you can pre-make it on eBay). I also have small ferrites on all data lines, but I'm not sure if these are needed. Power seems to be critical. I tried many switching regulators, including regulators up to 3A, but without success. There are multiple LC filters on the input and output of the switch. Place the switch under the load (10R) and observe the waveform on the CRO until it stabilizes. Still no luck, but strangely, when I connect the switcher in parallel with the linear regulator, it works (I know it's a bit anti-throat). If the linear reg is connected in parallel with the output after the additional LC filter, it works normally, but it does not work before these filters. I want to know whether the radio module will produce high-voltage spikes, and the linear regulator will suppress these spikes?
+
+Another interesting thing is that if I try to power the module through a large number of capacitors, I can replicate the failure even at the lowest power setting. It seems that if the module is not satisfied, it will fall into self-oscillation and consume a lot of power, and then shut down.
+
+I also tried another experiment-tap the antenna with a rock-solid sound for one second and extend it for 2 meters, but if the wire is removed and the antenna is directly connected, about one-tenth of the ping will not kick in. I think this helps to keep the antenna away from the module and arduino. I suspect that the ground plane may also be shielding the module (same as the tin foil trick).
+
+If a wire is used as an antenna, there are two types, male, reverse male and ditto female. Not sure about the correct terminology, but one type seems to be used for radio modules and one type is used for home router wifi antennas, and they are not compatible. However, if you buy the wrong adapter, you will get very few adapters.
+
+In any case, LM317 and antenna can work normally.
+
+In my case, there is no problem receiving data, but to transmit anything in any range, I have to touch the antenna, as long as I keep touching it, everything on the sender can work normally. I have tried shielding, using power, making modifications, etc., nothing helped except touch the antenna with my fingers.
+
+This website seems to have been offline for several years. This is an Internet archive for future clickers:
+
+Please be kind and respectful to help make the comment section great. (
+
+)
 

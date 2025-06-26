@@ -31,6 +31,7 @@
 #include "SpiralPattern.h"
 #include "StripePattern.h"
 #include "SwitchActivatedRegionsPattern.h"
+#include "MultiSwitchActivatedRegionsPattern.h"
 
 
 extern Log logger;
@@ -76,6 +77,9 @@ Pattern* patternFactory(const std::string& patternClassName, const std::string& 
     }
     else if (patternClassName == "SwitchActivatedRegionsPattern") {
         return new SwitchActivatedRegionsPattern(patternName);
+    }
+    else if (patternClassName == "MultiSwitchActivatedRegionsPattern") {
+        return new MultiSwitchActivatedRegionsPattern(patternName);
     }
 
     logger.logMsg(LOG_ERR, "Unsupported pattern class name \"" + patternClassName + "\" for pattern " + patternName);

@@ -71,7 +71,7 @@
  *******************************************************************************/
 
 
-void configureRadio(
+bool configureRadio(
   RF24&             radio,
   const char*       writePipeAddress,
   bool              wantAcks,

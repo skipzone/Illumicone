@@ -63,6 +63,7 @@ class IndicatorRegion {
         virtual bool            getIsOn()                 { return isOn; }
         virtual bool            getIsSubtle()             { return isSubtle; }
         virtual bool            getIsTransitioning()      { return isTransitioning; }
+        virtual int             getSwitchId()             { return switchId; }
         virtual unsigned int    getUpperLeftStringIndex() { return upperLeftStringIdx; }
         virtual unsigned int    getUpperLeftPixelIndex()  { return upperLeftPixelIdx; }
         virtual unsigned int    getWidthInStrings()       { return widthInStrings; }
@@ -89,6 +90,7 @@ class IndicatorRegion {
         unsigned int pixelsPerString;
         unsigned int startPixelIdx;
         unsigned int startStringIdx;
+        int switchId;                       // associates multiple regions with a single widget switch; -1 if unspecified
         unsigned int upperLeftStringIdx;
         unsigned int upperLeftPixelIdx;
         unsigned int widthInStrings;

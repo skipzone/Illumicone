@@ -48,6 +48,13 @@ bool IndicatorRegion::init(unsigned int numStrings, unsigned int pixelsPerString
         return false;
     }
 
+    if (indicatorConfigObject["switchId"].is_number()) {
+        switchId = indicatorConfigObject["switchId"].int_value();
+    }
+    else {
+        switchId = -1;  // unassigned
+    }
+
     if (!ConfigReader::getUnsignedIntValue(indicatorConfigObject, "upperLeftStringIdx", upperLeftStringIdx, errMsgSuffix)) {
         return false;
     }

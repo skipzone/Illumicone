@@ -58,7 +58,7 @@ WidgetId intToWidgetId(unsigned int widgetIdValue)
         case 17:
             return WidgetId::flower7;
         case 18:
-            return WidgetId::invalid;
+            return WidgetId::scotchHop;
         case 19:
             return WidgetId::mike1;
         case 20:
@@ -131,8 +131,8 @@ unsigned int widgetIdToInt(WidgetId widgetId)
             return 16;
         case WidgetId::flower7:
             return 17;
-        //case WidgetId:::
-        //    return 18;
+        case WidgetId::scotchHop:
+            return 18;
         case WidgetId::mike1:
             return 19;
         case WidgetId::mike2:
@@ -205,6 +205,8 @@ std::string widgetIdToString(WidgetId widgetId)
             return "flower6";
         case WidgetId::flower7:
             return "flower7";
+        case WidgetId::scotchHop:
+            return "scotchHop";
         case WidgetId::mike1:
             return "mike1";
         case WidgetId::mike2:

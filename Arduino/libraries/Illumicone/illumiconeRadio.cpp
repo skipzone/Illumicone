@@ -28,7 +28,7 @@
 #include "illumiconeWidget.h"
 
 
-void configureRadio(
+bool configureRadio(
   RF24&             radio,
   const char*       writePipeAddress,
   bool              wantAcks,
@@ -39,7 +39,9 @@ void configureRadio(
   rf24_datarate_e   dataRate,
   uint8_t           channel)
 {
-  radio.begin();
+  if (!radio.begin()) {
+    return false;
+  }
 
   radio.setPALevel(rfPowerLevel);
   radio.setRetries(txRetryDelayMultiplier, txMaxRetries);
@@ -57,6 +59,8 @@ void configureRadio(
   
   // Widgets only transmit data.
   radio.stopListening();
+
+  return true;
 }
 
 

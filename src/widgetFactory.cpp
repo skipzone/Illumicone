@@ -28,6 +28,7 @@
 #include "PumpWidget.h"
 #include "RainstickWidget.h"
 #include "SchroedersPlaythingWidget.h"
+#include "ScotchHopWidget.h"
 #include "SpinnahWidget.h"
 #include "widgetFactory.h"
 
@@ -62,6 +63,8 @@ Widget* widgetFactory(WidgetId id) {
         case WidgetId::flower6:
         case WidgetId::flower7:
             return new FlowerWidget(id);
+        case WidgetId::scotchHop:
+            return new ScotchHopWidget(id);
         case WidgetId::mike1:
         case WidgetId::mike2:
             return new MikeWidget(id);
