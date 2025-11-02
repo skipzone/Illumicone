@@ -51,14 +51,168 @@
 
         "_include_file_schedule" : "schedule_alwaysOn.json",
 
-        "patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        //"patternBlendMethod" : "rgbBlend",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
+        "patternBlendMethod" : "rgbAdd",    // overlay, rgbAdd, rgbBlend, hsvBlend, hsvHueBlend
         "patternRunLoopSleepIntervalUs" : 4000,
 
         "widgets" : [
-            { "_include_file_allWidgets" : "widgets/allWidgets.json" }
+            {   "name" : "batrat1",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "batrat2",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "batrat3",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "batrat4",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "batrat5",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "bells",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "boogieBoard",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 10000
+            },
+            {   "name" : "eye",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 500
+            },
+            {   "name" : "flower1",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "flower2",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "flower3",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "flower4",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "flower5",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "flower6",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "flower7",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "scotchHop",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : true,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "fourPlay42",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "fourPlay43",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "lidar1",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 500
+            },
+            {   "name" : "mike1",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 500
+            },
+            {   "name" : "mike2",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 500
+            },
+            {   "name" : "pump",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "rainstick",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            },
+            {   "name" : "schroedersPlaything",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 8000
+            },
+            {   "name" : "spinnah",
+                "enabled" : true,
+                "generateSimulatedMeasurements" : false,
+                "autoInactiveMs" : 5000
+            }
         ],
 
         "patterns" : [
+
+            // from Element11_2025_patternSet2.json
+
+            { "_include_file_eyeFlash" : "patterns/eyeFlash.json" },
+
+            { "_include_file_stripes" : "patterns/stripes_Flower1_Flower2.json" },
+            { "_include_file_spring" : "patterns/spring_Flower3.json" },
+            { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower4_Flower5.json" },
+            { "_include_file_magentaAquaSparkle" : "patterns/sparkleMagentaAqua_Flower6.json" },
+            { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower7.json" },
+
+            { "_include_file_magentaSparkle_batrat" : "patterns/sparkleMagenta_BatRat1.json" },
+            { "_include_file_aquaSparkle_batrat" : "patterns/sparkleAqua_BatRat2.json" },
+            { "_include_file_multicolorSparkle_batrat" : "patterns/sparkleMulticolor_BatRat3.json" },
+
+            { "_include_file_sprayWhite_BatRat5" : "patterns/sprayWhite_BatRat5.json" },
+            { "_include_file_sprayPurple_BatRat5" : "patterns/sprayPurple_BatRat5.json" },
+            { "_include_file_sprayAqua_BatRat5" : "patterns/sprayAqua_BatRat5.json" },
+
+            { "_include_file_rain_Rainstick" : "patterns/rain_Rainstick.json" },
+
+            { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
+
+            { "_include_file_stripes_FourPlay42" : "patterns/stripes_traditional_FourPlay42.json" },
+            { "_include_file_rings_FourPlay43" : "patterns/rings_traditional_FourPlay43.json" },
+
+            { "_include_file_scotchHop4Pride" : "patterns/scotchHop8PrideFlashing.json" }
+
+            // stuff that was in this file prior to adding the above
 
             //{ "_include_file_blueSparkle_mike1" : "patterns/sparkleBlue_Mike1.json" },
             //{ "_include_file_redSparkle_mike1" : "patterns/sparkleRed_Mike1.json" },
@@ -66,11 +220,11 @@
             //{ "_include_file_goldSparkle_mike1" : "patterns/sparkleGold_Mike1.json" },
             //{ "_include_file_whiteSparkle_mike1" : "patterns/sparkleWhite_Mike1.json" }
 
-            { "_include_file_rainBlue_mike2" : "patterns/rainBlue_Mike2.json" },
-            { "_include_file_rainGreen_mike2" : "patterns/rainGreen_Mike2.json" },
-            { "_include_file_sprayAqua_mike2" : "patterns/sprayAqua_Mike2.json" },
-            { "_include_file_sprayMagenta_mike2" : "patterns/sprayMagenta_Mike2.json" },
-            { "_include_file_sprayYellow_mike2" : "patterns/sprayYellow_Mike2.json" }
+            //{ "_include_file_rainBlue_mike2" : "patterns/rainBlue_Mike2.json" },
+            //{ "_include_file_rainGreen_mike2" : "patterns/rainGreen_Mike2.json" },
+            //{ "_include_file_sprayAqua_mike2" : "patterns/sprayAqua_Mike2.json" },
+            //{ "_include_file_sprayMagenta_mike2" : "patterns/sprayMagenta_Mike2.json" },
+            //{ "_include_file_sprayYellow_mike2" : "patterns/sprayYellow_Mike2.json" }
 
             //{ "_include_file_coloredSparkles_Baton" : "patterns/coloredSparkles_Baton.json" },
             //{ "_include_file_coloredSparkles_Bells" : "patterns/coloredSparkles_Bells.json" },
