@@ -4,6 +4,7 @@ patternController
 stringTester
 unitTests
 widgetRcvr
+gl_server
 *.dSYM
 *.o
 *.pyc
