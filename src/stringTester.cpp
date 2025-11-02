@@ -36,6 +36,89 @@ Log logger;                     // this is the global Log object used everywhere
 static string configFileName = "activeConfig.json";
 static unsigned int stringNum;
 static CRGB testColor;
+static bool useTcpForOpcServer;
+static string opcServerIpAddress;
+static unsigned int opcServerPortNumber;
+static struct sockaddr_in opcServerSockaddr;
+static int opcServerSocketFd;
+
+
+bool openOpcServerTcpConnection()
+{
+    logger.logMsg(LOG_INFO, "Connecting to OPC server at " + opcServerIpAddress + ":" + to_string(opcServerPortNumber) + "...");
+
+    opcServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (opcServerSocketFd == -1) {
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
+        return false;
+    }
+
+    opcServerSockaddr.sin_family = AF_INET;
+    opcServerSockaddr.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
+    opcServerSockaddr.sin_port = htons(opcServerPortNumber);
+
+    if (connect(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(opcServerSockaddr)) == -1) {
+        logger.logMsg(LOG_ERR, errno, "Unable to connect to opc-server.");
+        return false;
+    }
+
+    logger.logMsg(LOG_INFO, "Connected.");
+
+    return true;
+}
+
+
+bool closeOpcServerTcpConnection()
+{
+    logger.logMsg(LOG_INFO, "Disconnecting from OPC server...");
+    ///if (disconnectx(opcServerSocketFd, SAE_ASSOCID_ANY, SAE_CONNID_ANY) != 0) {
+    if (close(opcServerSocketFd) != 0) {
+        logger.logMsg(LOG_ERR, errno, "Unable to close connection to opc-server.");
+        return false;
+    }
+    return true;
+}
+
+
+bool openUdpPortForOpcServer()
+{
+    logger.logMsg(LOG_INFO, "Creating and binding socket for OPC server at " + opcServerIpAddress + ":" + to_string(opcServerPortNumber) + "...");
+
+    memset(&opcServerSockaddr, 0, sizeof(struct sockaddr_in));
+
+    opcServerSockaddr.sin_family = AF_INET;
+    opcServerSockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    opcServerSockaddr.sin_port = htons(0);
+
+    if ((opcServerSocketFd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+        logger.logMsg(LOG_ERR, errno, "Failed to create socket for OPC server.");
+        return false;
+    }
+
+    if (::bind(opcServerSocketFd, (struct sockaddr *) &opcServerSockaddr, sizeof(struct sockaddr_in)) == -1) {
+        logger.logMsg(LOG_ERR, errno, "bind failed for OPC server.");
+        return false;
+    }
+
+    logger.logMsg(LOG_INFO, "Setting address to " + opcServerIpAddress + ":" + to_string(opcServerPortNumber) + ".");
+
+    inet_pton(AF_INET, opcServerIpAddress.c_str(), &opcServerSockaddr.sin_addr.s_addr);
+    opcServerSockaddr.sin_port = htons(opcServerPortNumber);
+
+    return true;
+}
+
+
+bool closeUdpPortForOpcServer()
+{
+    // TODO 2/3/2018 ross:  make sure this implementation is correct
+    logger.logMsg(LOG_INFO, "Closing UDP port for OPC server...");
+    if (close(opcServerSocketFd) != 0) {
+        logger.logMsg(LOG_ERR, errno, "Unable to close UDP port for opc-server.");
+        return false;
+    }
+    return true;
+}
 
 
 void usage()
@@ -57,7 +140,7 @@ void usage()
 }
 
 
-static void getCommandLineOptions(int argc, char* argv[])
+static void getCommandLineOptions(int argc, char *argv[])
 {
     enum LongOnlyOption {
         unhandled = 0
@@ -144,10 +227,9 @@ int main(int argc, char **argv)
     string errMsgSuffix = " in " + configFileName + ".";
     unsigned int numberOfStrings;
     unsigned int numberOfPixelsPerString;
-    string opcServerIpAddress;
-    unsigned int opcServerPortNumber;
     if (!ConfigReader::getUnsignedIntValue(configObject, "numberOfStrings", numberOfStrings, errMsgSuffix)
         || !ConfigReader::getUnsignedIntValue(configObject, "numberOfPixelsPerString", numberOfPixelsPerString, errMsgSuffix)
+        || !ConfigReader::getBoolValue(configObject, "useTcpForOpcServer", useTcpForOpcServer, errMsgSuffix)
         || !ConfigReader::getStringValue(configObject, "opcServerIpAddress", opcServerIpAddress, errMsgSuffix)
         || !ConfigReader::getUnsignedIntValue(configObject, "opcServerPortNumber", opcServerPortNumber, errMsgSuffix, 1024, 65535))
     {
@@ -170,24 +252,44 @@ int main(int argc, char **argv)
         logger.logMsg(LOG_INFO, "Illuminating string %d with r=%d, g=%d, b=%d.", stringNum, testColor.r, testColor.g, testColor.b);
     }
 
+    // Open communications with OPC server.
+    if (useTcpForOpcServer) {
+        if (!openOpcServerTcpConnection()) {
+            return(EXIT_FAILURE);
+        }
+    }
+    else {
+        if (!openUdpPortForOpcServer()) {
+            return(EXIT_FAILURE);
+        }
+    }
+
+#ifdef NO_COMPILE
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in server;
     server.sin_addr.s_addr = inet_addr(opcServerIpAddress.c_str());
     server.sin_family = AF_INET;
     server.sin_port = htons(opcServerPortNumber);
-    if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
+    if (connect(sock, (struct sockaddr *) &server, sizeof(server)) < 0) {
         logger.logMsg(LOG_ERR, "Couldn't connect to OPC server at %s:%d", opcServerIpAddress.c_str(), opcServerPortNumber);
         return(EXIT_FAILURE);
     }
+#endif
 
-    uint8_t opcBuffer[numberOfStrings * numberOfPixelsPerString * 3 + 4];
-    uint8_t* opcData = &opcBuffer[4];    // points to the data portion of opcBuffer
+    ssize_t opcBufferSize = numberOfStrings * numberOfPixelsPerString * 3 + 4;
+    uint8_t *opcBuffer = new uint8_t[opcBufferSize];
+    if (opcBuffer == nullptr) {
+        logger.logMsg(LOG_ERR, "Unable to allocate an OPC buffer of size " + to_string(opcBufferSize));
+        return(EXIT_FAILURE);
+    }
 
     // Set up the OPC header.
     opcBuffer[0] = 0;
     opcBuffer[1] = 0;
     opcBuffer[2] = numberOfStrings * numberOfPixelsPerString * 3 / 256;
     opcBuffer[3] = numberOfStrings * numberOfPixelsPerString * 3 % 256;
+
+    uint8_t *opcData = &opcBuffer[4];    // points to the data portion of opcBuffer
 
     // Set the pixel data.
     for (unsigned int col = 0; col < numberOfStrings; col++) {
@@ -203,9 +305,41 @@ int main(int argc, char **argv)
 
     // Periodically send a message to the OPC server.
     while (1) {
-        send(sock, opcBuffer, sizeof(opcBuffer), 0);
+        if (useTcpForOpcServer) {
+            //logger.logMsg(LOG_DEBUG, "sending message to OPC server via TCP...");
+            if (send(opcServerSocketFd, opcBuffer, opcBufferSize, 0) == -1) {
+                logger.logMsg(LOG_ERR, errno, "Failed to send message to OPC server via TCP.");
+            }
+            //logger.logMsg(LOG_DEBUG, "sent message to OPC server via TCP.");
+        }
+        else {
+            //logger.logMsg(LOG_DEBUG, "sending message to OPC server via UDP...");
+            // TODO 2/3/2018 ross:  modify to not block if no message space is available to hold the message
+            ssize_t bytesSentCount = sendto(opcServerSocketFd,
+                                            opcBuffer,
+                                            opcBufferSize,
+                                            0,
+                                            (struct sockaddr *) &opcServerSockaddr,
+                                            sizeof(struct sockaddr_in));
+            if (bytesSentCount == -1) {
+                logger.logMsg(LOG_ERR, errno, "Failed to send message to OPC server via UDP.");
+            }
+            if (bytesSentCount != opcBufferSize) {
+                logger.logMsg(LOG_ERR,
+                       "UDP payload size is " + to_string(opcBufferSize)
+                       + ", but " + to_string(bytesSentCount) + " bytes were sent to OPC server.");
+            }
+            //logger.logMsg(LOG_DEBUG, "Sent " to_string(bytesSentCount) + " byte payload via UDP.");
+        }
         usleep(20000);
     }
+
+    // We never get here.
+
+    delete [] opcBuffer;
+    opcBuffer = nullptr;
+    opcBufferSize = 0;
+    opcData = nullptr;
 
     logger.stopLogging();
 }
