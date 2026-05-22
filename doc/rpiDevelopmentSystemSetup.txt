@@ -206,14 +206,11 @@ What you will need:
     cd ~/devl/Illumicone/src
     make
 
-=-=-=-=-= resume here.  resolve build errors.
-
 
 14. Set up the Illumicone simulation configuration.
 
-    cd ~/devl/Illumicone/config
-    ln -s $ILLUMICONE_CONFIG/network_localSimulator.json network_active.json
-    ln -s $ILLUMICONE_CONFIG/simulator.json activeConfig.json
+    setActiveConfig simulator
+    setNetworkConfig localSimulator
 
 
 15. Install openpixelcontrol, which provides the on-screen simulator display of
@@ -265,6 +262,7 @@ What you will need:
     X in the upper right-hand corner of the OPC window.
 
 
+=-=-=-=-= TODO:  resume updates and validation here
 17. Install the Arduino IDE.  Download from arduino.cc rather than installing
     via Add / Remove Software in order to get a current version.  Use the
     32-bit version because the 64-bit version does not work, even on the RPi 4
@@ -374,9 +372,6 @@ What you will need:
         $
 
 
-=-=-=-= resume here
-
-
 22. Set up I2C.
 
     sudo apt-get install python-smbus i2c-tools
@@ -393,5 +388,4 @@ What you will need:
 
     Check if I2C is working:
         i2cdetect -y 1
-
 
