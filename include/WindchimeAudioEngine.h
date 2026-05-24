@@ -29,12 +29,18 @@ struct WindchimeAudioEngineConfig
     float slowDecayDbPerSecond;
     float tailStartDb;
     float floorDb;
+    float secondaryResonanceGain;
+    float secondaryResonancePitchRatio;
+    float secondaryResonanceDecayDbPerSecond;
 
     WindchimeAudioEngineConfig()
         : fastDecayDbPerSecond(9.0f)
         , slowDecayDbPerSecond(5.0f)
         , tailStartDb(-34.0f)
         , floorDb(-120.0f)
+        , secondaryResonanceGain(0.18f)
+        , secondaryResonancePitchRatio(1.03f)
+        , secondaryResonanceDecayDbPerSecond(2.5f)
     {
     }
 };
@@ -83,14 +89,17 @@ class WindchimeAudioEngine
         // frequency, and pan gives each voice a fixed stereo position.
         struct VoiceState
         {
-            bool active;           // Whether the voice is still producing sound.
-            float pan;             // Fixed stereo position between left and right.
-            float gain;            // Mapped velocity, used to compute the initial level.
-            float envelope;        // Current linear amplitude multiplier for the oscillator.
-            float envelopeDb;      // Current envelope level in decibels.
-            float phase;           // Current oscillator phase in radians.
-            float phaseStep;       // Phase increment per sample.
-            float decayDbPerSample; // Per-sample envelope decay in decibels.
+            bool active;                     // Whether the voice is still producing sound.
+            float pan;                       // Fixed stereo position between left and right.
+            float gain;                      // Mapped velocity, used to compute the initial level.
+            float envelope;                  // Current linear amplitude multiplier for the oscillator.
+            float envelopeDb;                // Current envelope level in decibels.
+            float phase;                     // Current oscillator phase in radians.
+            float phaseStep;                 // Phase increment per sample for the primary oscillator.
+            float secondaryPhase;            // Current phase for the secondary resonance oscillator.
+            float secondaryPhaseStep;        // Phase increment per sample for the secondary oscillator.
+            float secondaryEnvelopeDb;       // Current secondary resonance level in decibels.
+            float decayDbPerSample;          // Per-sample primary envelope decay in decibels.
         };
 
         // Map a widget position sample into a musically useful frequency range.

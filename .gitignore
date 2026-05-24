@@ -1,10 +1,10 @@
-jsonTester
-logTest
-patternController
-stringTester
-unitTests
-widgetRcvr
-windchimeAudio
+#jsonTester
+#logTest
+src/patternController
+src/stringTester
+src/unitTests
+src/widgetRcvr
+src/windchimeAudio
 gl_server
 *.dSYM
 *.o

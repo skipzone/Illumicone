@@ -35,6 +35,7 @@
 #include <portaudio.h>
 
 #include "illumiconeWidgetTypes.h"
+#include "ConfigReader.h"
 #include "Log.h"
 #include "WindchimeAudioEngine.h"
 
@@ -192,18 +193,67 @@ static int paCallback(const void* inputBuffer,
 
 
 // Print the command-line usage information for the standalone audio program.
+static bool loadWindchimeAudioConfig(const string& configFilePath,
+                                      WindchimeAudioEngineConfig& audioConfig)
+{
+    ConfigReader configReader;
+    if (!configReader.loadConfiguration(configFilePath)) {
+        cerr << "Failed to load windchime audio config file: " << configFilePath << endl;
+        return false;
+    }
+
+    json11::Json windchimeConfigJson;
+    if (!ConfigReader::getJsonObject(configReader.getConfigObject(), "windchimeAudio", windchimeConfigJson)) {
+        cerr << "No windchimeAudio section found in config file: " << configFilePath << endl;
+        return true;
+    }
+
+    float value = 0.0f;
+    if (ConfigReader::getFloatValue(windchimeConfigJson, "fastDecayDbPerSecond", value)) {
+        audioConfig.fastDecayDbPerSecond = value;
+    }
+    if (ConfigReader::getFloatValue(windchimeConfigJson, "slowDecayDbPerSecond", value)) {
+        audioConfig.slowDecayDbPerSecond = value;
+    }
+    if (ConfigReader::getFloatValue(windchimeConfigJson, "tailStartDb", value)) {
+        audioConfig.tailStartDb = value;
+    }
+    if (ConfigReader::getFloatValue(windchimeConfigJson, "floorDb", value)) {
+        audioConfig.floorDb = value;
+    }
+    if (ConfigReader::getFloatValue(windchimeConfigJson, "secondaryResonanceGain", value)) {
+        audioConfig.secondaryResonanceGain = value;
+    }
+    if (ConfigReader::getFloatValue(windchimeConfigJson, "secondaryResonancePitchRatio", value)) {
+        audioConfig.secondaryResonancePitchRatio = value;
+    }
+    if (ConfigReader::getFloatValue(windchimeConfigJson, "secondaryResonanceDecayDbPerSecond", value)) {
+        audioConfig.secondaryResonanceDecayDbPerSecond = value;
+    }
+
+    return true;
+}
+
+
 static void usage(const char* programName)
 {
-    cerr << "Usage: " << programName << " [--widget-port-base <base>]"
+    cerr << "Usage: " << programName << " [--config <path>] [--widget-port-base <base>]"
          << " [--windchime-fast-decay-db-per-second <value>]"
          << " [--windchime-slow-decay-db-per-second <value>]"
          << " [--windchime-tail-start-db <value>]"
-         << " [--windchime-floor-db <value>]" << endl;
-    cerr << "  --widget-port-base <base>                         Base UDP port for widget packets." << endl;
-    cerr << "  --windchime-fast-decay-db-per-second <value>      Initial decay rate in dB/s." << endl;
-    cerr << "  --windchime-slow-decay-db-per-second <value>      Tail decay rate in dB/s." << endl;
-    cerr << "  --windchime-tail-start-db <value>                 Envelope dB at which the tail curve begins." << endl;
-    cerr << "  --windchime-floor-db <value>                      Minimum envelope dB before the note is silenced." << endl;
+         << " [--windchime-floor-db <value>]"
+         << " [--windchime-secondary-resonance-gain <value>]"
+         << " [--windchime-secondary-resonance-pitch-ratio <value>]"
+         << " [--windchime-secondary-resonance-decay-db-per-second <value>]" << endl;
+    cerr << "  --config <path>                                          Path to a JSON config file containing windchimeAudio settings." << endl;
+    cerr << "  --widget-port-base <base>                                  Base UDP port for widget packets." << endl;
+    cerr << "  --windchime-fast-decay-db-per-second <value>               Initial decay rate in dB/s." << endl;
+    cerr << "  --windchime-slow-decay-db-per-second <value>               Tail decay rate in dB/s." << endl;
+    cerr << "  --windchime-tail-start-db <value>                          Envelope dB at which the tail curve begins." << endl;
+    cerr << "  --windchime-floor-db <value>                               Minimum envelope dB before the note is silenced." << endl;
+    cerr << "  --windchime-secondary-resonance-gain <value>              Relative amplitude of the secondary resonance." << endl;
+    cerr << "  --windchime-secondary-resonance-pitch-ratio <value>        Detune ratio for the secondary resonance." << endl;
+    cerr << "  --windchime-secondary-resonance-decay-db-per-second <value> Decay rate of the secondary resonance tail." << endl;
 }
 
 
@@ -213,23 +263,52 @@ int main(int argc, char** argv)
     // base so the program can be pointed at a different UDP configuration.
     unsigned int widgetPortBase = 4200;
     WindchimeAudioEngineConfig audioConfig;
+    WindchimeAudioEngineConfig cliConfig;
+    string configFilePath;
+    bool fastDecaySet = false;
+    bool slowDecaySet = false;
+    bool tailStartSet = false;
+    bool floorSet = false;
+    bool secondaryGainSet = false;
+    bool secondaryPitchSet = false;
+    bool secondaryDecaySet = false;
 
+    // Parse CLI arguments into a base config and an optional config file path.
     for (int i = 1; i < argc; ++i) {
         string arg(argv[i]);
-        if (arg == "--widget-port-base" && i + 1 < argc) {
+        if (arg == "--config" && i + 1 < argc) {
+            configFilePath = argv[++i];
+        }
+        else if (arg == "--widget-port-base" && i + 1 < argc) {
             widgetPortBase = static_cast<unsigned int>(strtoul(argv[++i], NULL, 10));
         }
         else if (arg == "--windchime-fast-decay-db-per-second" && i + 1 < argc) {
-            audioConfig.fastDecayDbPerSecond = strtof(argv[++i], NULL);
+            cliConfig.fastDecayDbPerSecond = strtof(argv[++i], NULL);
+            fastDecaySet = true;
         }
         else if (arg == "--windchime-slow-decay-db-per-second" && i + 1 < argc) {
-            audioConfig.slowDecayDbPerSecond = strtof(argv[++i], NULL);
+            cliConfig.slowDecayDbPerSecond = strtof(argv[++i], NULL);
+            slowDecaySet = true;
         }
         else if (arg == "--windchime-tail-start-db" && i + 1 < argc) {
-            audioConfig.tailStartDb = strtof(argv[++i], NULL);
+            cliConfig.tailStartDb = strtof(argv[++i], NULL);
+            tailStartSet = true;
         }
         else if (arg == "--windchime-floor-db" && i + 1 < argc) {
-            audioConfig.floorDb = strtof(argv[++i], NULL);
+            cliConfig.floorDb = strtof(argv[++i], NULL);
+            floorSet = true;
+        }
+        else if (arg == "--windchime-secondary-resonance-gain" && i + 1 < argc) {
+            cliConfig.secondaryResonanceGain = strtof(argv[++i], NULL);
+            secondaryGainSet = true;
+        }
+        else if (arg == "--windchime-secondary-resonance-pitch-ratio" && i + 1 < argc) {
+            cliConfig.secondaryResonancePitchRatio = strtof(argv[++i], NULL);
+            secondaryPitchSet = true;
+        }
+        else if (arg == "--windchime-secondary-resonance-decay-db-per-second" && i + 1 < argc) {
+            cliConfig.secondaryResonanceDecayDbPerSecond = strtof(argv[++i], NULL);
+            secondaryDecaySet = true;
         }
         else if (arg == "-h" || arg == "--help") {
             usage(argv[0]);
@@ -242,10 +321,41 @@ int main(int argc, char** argv)
         }
     }
 
+    if (!configFilePath.empty() && !loadWindchimeAudioConfig(configFilePath, audioConfig)) {
+        return 1;
+    }
+
+    if (fastDecaySet) {
+        audioConfig.fastDecayDbPerSecond = cliConfig.fastDecayDbPerSecond;
+    }
+    if (slowDecaySet) {
+        audioConfig.slowDecayDbPerSecond = cliConfig.slowDecayDbPerSecond;
+    }
+    if (tailStartSet) {
+        audioConfig.tailStartDb = cliConfig.tailStartDb;
+    }
+    if (floorSet) {
+        audioConfig.floorDb = cliConfig.floorDb;
+    }
+    if (secondaryGainSet) {
+        audioConfig.secondaryResonanceGain = cliConfig.secondaryResonanceGain;
+    }
+    if (secondaryPitchSet) {
+        audioConfig.secondaryResonancePitchRatio = cliConfig.secondaryResonancePitchRatio;
+    }
+    if (secondaryDecaySet) {
+        audioConfig.secondaryResonanceDecayDbPerSecond = cliConfig.secondaryResonanceDecayDbPerSecond;
+    }
+
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
 
     logger.startLogging("windchimeAudio", Log::LogTo::console);
+    if (!configFilePath.empty()) {
+        logger.logMsg(LOG_INFO,
+                      "Loaded windchime audio config from %s.",
+                      configFilePath.c_str());
+    }
 
     PaError err = Pa_Initialize();
     if (err != paNoError) {

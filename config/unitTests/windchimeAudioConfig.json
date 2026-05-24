@@ -1,0 +1,11 @@
+{
+    "windchimeAudio" : {
+        "fastDecayDbPerSecond" : 11.5,
+        "slowDecayDbPerSecond" : 4.25,
+        "tailStartDb" : -28.5,
+        "floorDb" : -126.0,
+        "secondaryResonanceGain" : 0.22,
+        "secondaryResonancePitchRatio" : 1.07,
+        "secondaryResonanceDecayDbPerSecond" : 3.5
+    }
+}

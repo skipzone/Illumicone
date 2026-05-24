@@ -48,6 +48,9 @@ WindchimeAudioEngine::WindchimeAudioEngine(const WindchimeAudioEngineConfig& con
         voices[i].envelopeDb = config.floorDb;
         voices[i].phase = 0.0f;
         voices[i].phaseStep = 0.0f;
+        voices[i].secondaryPhase = 0.0f;
+        voices[i].secondaryPhaseStep = 0.0f;
+        voices[i].secondaryEnvelopeDb = config.floorDb;
         voices[i].decayDbPerSample = 0.0f;
     }
 }
@@ -75,11 +78,15 @@ void WindchimeAudioEngine::noteOn(unsigned int widgetId, unsigned int channel, i
     // Velocity controls how loud the attack is, while position selects the
     // pitched component. We keep the gain bounded so the output stays within the
     // float audio range even when the widget reports large values.
+    float primaryFrequency = mapPositionToFrequency(position);
     voice.gain = mapVelocityToGain(velocity);
     voice.envelope = std::max(0.05f, std::min(0.25f, voice.gain * 0.65f));
     voice.envelopeDb = 20.0f * std::log10(std::max(voice.envelope, 1e-6f));
     voice.phase = 0.0f;
-    voice.phaseStep = 2.0f * static_cast<float>(M_PI) * mapPositionToFrequency(position) / sampleRate;
+    voice.phaseStep = 2.0f * static_cast<float>(M_PI) * primaryFrequency / sampleRate;
+    voice.secondaryPhase = 0.0f;
+    voice.secondaryPhaseStep = 2.0f * static_cast<float>(M_PI) * primaryFrequency * config.secondaryResonancePitchRatio / sampleRate;
+    voice.secondaryEnvelopeDb = voice.envelopeDb;
     voice.decayDbPerSample = computeDecayDbPerSample(voice.envelopeDb);
     voice.active = true;
 
@@ -107,7 +114,9 @@ void WindchimeAudioEngine::render(float* output, unsigned long framesPerBuffer)
 
         for (unsigned long sampleIdx = 0; sampleIdx < framesPerBuffer; ++sampleIdx) {
             float sampleAmplitude = std::pow(10.0f, voice.envelopeDb / 20.0f);
-            float sample = std::sin(voice.phase) * sampleAmplitude;
+            float secondaryAmplitude = std::pow(10.0f, voice.secondaryEnvelopeDb / 20.0f) * config.secondaryResonanceGain;
+            float sample = (std::sin(voice.phase) * sampleAmplitude)
+                         + (std::sin(voice.secondaryPhase) * secondaryAmplitude);
             float left = sample * (1.0f - voice.pan) * 0.5f;
             float right = sample * (1.0f + voice.pan) * 0.5f;
 
@@ -115,11 +124,16 @@ void WindchimeAudioEngine::render(float* output, unsigned long framesPerBuffer)
             output[sampleIdx * 2] += clampSample(left);
             output[sampleIdx * 2 + 1] += clampSample(right);
 
-            // Advance the oscillator phase and decay the envelope for the next
+            // Advance the oscillator phases and decay the envelopes for the next
             // sample. The wraparound keeps phase math bounded and avoids drift.
             voice.phase += voice.phaseStep;
             if (voice.phase > 2.0f * static_cast<float>(M_PI)) {
                 voice.phase -= 2.0f * static_cast<float>(M_PI);
+            }
+
+            voice.secondaryPhase += voice.secondaryPhaseStep;
+            if (voice.secondaryPhase > 2.0f * static_cast<float>(M_PI)) {
+                voice.secondaryPhase -= 2.0f * static_cast<float>(M_PI);
             }
 
             // A two-stage decay gives the note a clear initial strike, then a
@@ -127,7 +141,12 @@ void WindchimeAudioEngine::render(float* output, unsigned long framesPerBuffer)
             voice.decayDbPerSample = computeDecayDbPerSample(voice.envelopeDb);
             voice.envelopeDb -= voice.decayDbPerSample;
             voice.envelope = std::pow(10.0f, voice.envelopeDb / 20.0f);
-            if (voice.envelopeDb <= config.floorDb) {
+            voice.secondaryEnvelopeDb -= config.secondaryResonanceDecayDbPerSecond / static_cast<float>(sampleRate);
+            if (voice.secondaryEnvelopeDb < config.floorDb) {
+                voice.secondaryEnvelopeDb = config.floorDb;
+            }
+
+            if (voice.envelopeDb <= config.floorDb && voice.secondaryEnvelopeDb <= config.floorDb) {
                 voice.active = false;
                 voice.envelope = 0.0f;
                 voice.envelopeDb = config.floorDb;

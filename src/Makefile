@@ -125,7 +125,7 @@ unitTests: unitTests.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePi
 
 widgetRcvr: widgetRcvr.o ConfigReader.o hsv2rgb.o illumiconeUtility.o illumiconePixelUtility.o json11.o Log.o WidgetId.o
 
-windchimeAudio: windchimeAudio.o WindchimeAudioEngine.o Log.o illumiconeUtility.o
+windchimeAudio: windchimeAudio.o WindchimeAudioEngine.o Log.o illumiconeUtility.o illumiconePixelUtility.o hsv2rgb.o ConfigReader.o json11.o
 
 .PHONY: install
 install:

@@ -406,36 +406,55 @@ void windchimeAudioConfigUnitTests()
 {
     cout << "----- WindchimeAudioConfig -----" << endl;
 
-    WindchimeAudioEngineConfig customConfig;
+    WindchimeAudioEngineConfig defaultConfig;
+    WindchimeAudioEngineConfig customConfig = defaultConfig;
     customConfig.fastDecayDbPerSecond = 80.0f;
     customConfig.slowDecayDbPerSecond = 6.0f;
     customConfig.tailStartDb = -30.0f;
     customConfig.floorDb = -120.0f;
 
-    WindchimeAudioEngine defaultEngine;
+    WindchimeAudioEngineConfig resonanceDisabledConfig = defaultConfig;
+    resonanceDisabledConfig.secondaryResonanceGain = 0.0f;
+    resonanceDisabledConfig.secondaryResonancePitchRatio = 1.0f;
+    resonanceDisabledConfig.secondaryResonanceDecayDbPerSecond = defaultConfig.secondaryResonanceDecayDbPerSecond;
+
+    WindchimeAudioEngine defaultEngine(defaultConfig);
     WindchimeAudioEngine configuredEngine(customConfig);
+    WindchimeAudioEngine resonanceDisabledEngine(resonanceDisabledConfig);
 
     vector<float> defaultOutput(512 * 2, 0.0f);
     vector<float> configuredOutput(512 * 2, 0.0f);
+    vector<float> resonanceDisabledOutput(512 * 2, 0.0f);
 
     defaultEngine.noteOn(1, 0, 0, 1000, true);
     configuredEngine.noteOn(1, 0, 0, 1000, true);
+    resonanceDisabledEngine.noteOn(1, 0, 0, 1000, true);
 
-    for (int i = 0; i < 100; ++i) {
-        defaultEngine.render(defaultOutput.data(), 512);
-        configuredEngine.render(configuredOutput.data(), 512);
-    }
+    defaultEngine.render(defaultOutput.data(), 512);
+    configuredEngine.render(configuredOutput.data(), 512);
+    resonanceDisabledEngine.render(resonanceDisabledOutput.data(), 512);
 
     float defaultPeak = 0.0f;
     float configuredPeak = 0.0f;
+    float resonanceDisabledPeak = 0.0f;
     for (float sample : defaultOutput) {
         defaultPeak = std::max(defaultPeak, fabs(sample));
     }
     for (float sample : configuredOutput) {
         configuredPeak = std::max(configuredPeak, fabs(sample));
     }
+    for (float sample : resonanceDisabledOutput) {
+        resonanceDisabledPeak = std::max(resonanceDisabledPeak, fabs(sample));
+    }
 
     assert(configuredPeak < defaultPeak);
+    assert(resonanceDisabledPeak < defaultPeak);
+
+    for (int i = 0; i < 100; ++i) {
+        defaultEngine.render(defaultOutput.data(), 512);
+        configuredEngine.render(configuredOutput.data(), 512);
+        resonanceDisabledEngine.render(resonanceDisabledOutput.data(), 512);
+    }
 
     cout << "    windchime audio config passed." << endl;
 }
