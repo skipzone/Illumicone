@@ -41,9 +41,9 @@ WindchimeAudioEngine::WindchimeAudioEngine()
         voices[i].phase = 0.0f;
         voices[i].phaseStep = 0.0f;
 
-        // A brisk decay gives each note a short windchime-like ring so
-        // overlapping widget events do not linger in the audio buffer.
-        voices[i].decayRate = 0.996f;
+        // A longer decay keeps the note audible for a few seconds so it feels
+        // like a lingering windchime strike.
+        voices[i].decayRate = 0.9999f;
     }
 }
 
@@ -74,7 +74,7 @@ void WindchimeAudioEngine::noteOn(unsigned int widgetId, unsigned int channel, i
     voice.envelope = std::max(0.05f, std::min(0.25f, voice.gain * 0.65f));
     voice.phase = 0.0f;
     voice.phaseStep = 2.0f * static_cast<float>(M_PI) * mapPositionToFrequency(position) / sampleRate;
-    voice.decayRate = 0.996f;
+    voice.decayRate = 0.9999f;
     voice.active = true;
 
     // The channel field is currently not used by the synthesis path, but it is

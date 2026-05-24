@@ -345,8 +345,8 @@ void windchimeAudioEngineUnitTests()
 
     // This test exercises the audio engine directly so we can confirm the
     // synthesis path works without requiring the live UDP receiver or a real
-    // PortAudio device. It verifies that a note produces samples and that its
-    // envelope decays back to silence.
+    // PortAudio device. It verifies that a note produces samples and that it
+    // remains audible for approximately three seconds after a single trigger.
     WindchimeAudioEngine engine;
     vector<float> output(2048 * 2, 0.0f);
 
@@ -363,8 +363,29 @@ void windchimeAudioEngineUnitTests()
 
     assert(anyNonZero);
 
-    vector<float> decayedOutput(16384 * 2, 0.0f);
-    engine.render(decayedOutput.data(), 16384);
+    const unsigned long framesPerBlock = 512;
+    const unsigned long threeSecondFrames = 48000 * 3;
+    const unsigned long fullDecayFrames = 15 * 48000;
+    vector<float> sustainedOutput(framesPerBlock * 2, 0.0f);
+
+    float maxAbsSampleDuringThreeSeconds = 0.0f;
+    for (unsigned long renderedFrames = 0; renderedFrames < threeSecondFrames; renderedFrames += framesPerBlock) {
+        engine.render(sustainedOutput.data(), framesPerBlock);
+        for (float sample : sustainedOutput) {
+            maxAbsSampleDuringThreeSeconds = std::max(maxAbsSampleDuringThreeSeconds, fabs(sample));
+        }
+    }
+
+    if (maxAbsSampleDuringThreeSeconds <= 1e-6f) {
+        cout << "    Sample " << maxAbsSampleDuringThreeSeconds << " faded out before three seconds." << endl;
+    }
+
+    assert(maxAbsSampleDuringThreeSeconds > 1e-6f);
+
+    vector<float> decayedOutput(framesPerBlock * 2, 0.0f);
+    for (unsigned long renderedFrames = 0; renderedFrames < fullDecayFrames; renderedFrames += framesPerBlock) {
+        engine.render(decayedOutput.data(), framesPerBlock);
+    }
 
     bool decayedToNearZero = true;
     for (float sample : decayedOutput) {
@@ -408,7 +429,8 @@ static int windchimeOutputDeviceCallback(const void* inputBuffer,
 
 void windchimeAudioOutputDeviceUnitTests()
 {
-    const unsigned long expectedCallbacks = 5;
+    const unsigned long expectedCallbacks = static_cast<unsigned long>(3.0 * 48000.0 / 512.0);
+    const chrono::seconds testDuration(3);
 
     cout << "----- WindchimeAudioOutputDevice -----" << endl;
 
@@ -422,7 +444,6 @@ void windchimeAudioOutputDeviceUnitTests()
     }
 
     WindchimeAudioEngine engine;
-    engine.noteOn(1, 0, 0, 1000, true);
 
     AudioOutputTestState state;
     state.engine = &engine;
@@ -443,11 +464,10 @@ void windchimeAudioOutputDeviceUnitTests()
     err = Pa_StartStream(stream);
     assert(err == paNoError);
 
-    auto deadline = chrono::steady_clock::now() + chrono::seconds(1);
+    engine.noteOn(1, 0, 0, 1000, true);
+
+    auto deadline = chrono::steady_clock::now() + testDuration;
     while (chrono::steady_clock::now() < deadline) {
-        if (state.callbackCount.load() >= expectedCallbacks) {
-            break;
-        }
         this_thread::sleep_for(chrono::milliseconds(10));
     }
 
