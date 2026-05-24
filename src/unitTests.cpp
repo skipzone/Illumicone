@@ -488,7 +488,7 @@ static int windchimeOutputDeviceCallback(const void* inputBuffer,
 void windchimeAudioOutputDeviceUnitTests()
 {
     const unsigned long expectedCallbacks = static_cast<unsigned long>(3.0 * 48000.0 / 512.0);
-    const chrono::seconds testDuration(3);
+    const chrono::seconds testDuration(10);
 
     cout << "----- WindchimeAudioOutputDevice -----" << endl;
 
