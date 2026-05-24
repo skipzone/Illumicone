@@ -38,12 +38,10 @@ WindchimeAudioEngine::WindchimeAudioEngine()
 
         voices[i].gain = 0.0f;
         voices[i].envelope = 0.0f;
+        voices[i].envelopeDb = -120.0f;
         voices[i].phase = 0.0f;
         voices[i].phaseStep = 0.0f;
-
-        // A longer decay keeps the note audible for a few seconds so it feels
-        // like a lingering windchime strike.
-        voices[i].decayRate = 0.9999f;
+        voices[i].decayDbPerSample = 0.0f;
     }
 }
 
@@ -72,9 +70,10 @@ void WindchimeAudioEngine::noteOn(unsigned int widgetId, unsigned int channel, i
     // float audio range even when the widget reports large values.
     voice.gain = mapVelocityToGain(velocity);
     voice.envelope = std::max(0.05f, std::min(0.25f, voice.gain * 0.65f));
+    voice.envelopeDb = 20.0f * std::log10(std::max(voice.envelope, 1e-6f));
     voice.phase = 0.0f;
     voice.phaseStep = 2.0f * static_cast<float>(M_PI) * mapPositionToFrequency(position) / sampleRate;
-    voice.decayRate = 0.9999f;
+    voice.decayDbPerSample = 30.0f / (static_cast<float>(sampleRate) * 3.0f);
     voice.active = true;
 
     // The channel field is currently not used by the synthesis path, but it is
@@ -100,7 +99,8 @@ void WindchimeAudioEngine::render(float* output, unsigned long framesPerBuffer)
         }
 
         for (unsigned long sampleIdx = 0; sampleIdx < framesPerBuffer; ++sampleIdx) {
-            float sample = std::sin(voice.phase) * voice.envelope;
+            float sampleAmplitude = std::pow(10.0f, voice.envelopeDb / 20.0f);
+            float sample = std::sin(voice.phase) * sampleAmplitude;
             float left = sample * (1.0f - voice.pan) * 0.5f;
             float right = sample * (1.0f + voice.pan) * 0.5f;
 
@@ -115,10 +115,12 @@ void WindchimeAudioEngine::render(float* output, unsigned long framesPerBuffer)
                 voice.phase -= 2.0f * static_cast<float>(M_PI);
             }
 
-            voice.envelope *= voice.decayRate;
-            if (voice.envelope < 1e-5f) {
+            voice.envelopeDb -= voice.decayDbPerSample;
+            voice.envelope = std::pow(10.0f, voice.envelopeDb / 20.0f);
+            if (voice.envelopeDb <= -120.0f) {
                 voice.active = false;
                 voice.envelope = 0.0f;
+                voice.envelopeDb = -120.0f;
                 break;
             }
         }

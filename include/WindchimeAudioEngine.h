@@ -54,17 +54,19 @@ class WindchimeAudioEngine
     private:
 
         // VoiceState represents the mutable state for one windchime voice.
-        // The envelope decays over time, the phase advances according to the
-        // mapped frequency, and pan gives each voice a fixed stereo position.
+        // The envelope decays in decibels so the tail follows a more natural
+        // hearing response, the phase advances according to the mapped
+        // frequency, and pan gives each voice a fixed stereo position.
         struct VoiceState
         {
-            bool active;      // Whether the voice is still producing sound.
-            float pan;        // Fixed stereo position between left and right.
-            float gain;       // Mapped velocity, used to compute the initial level.
-            float envelope;   // Current amplitude multiplier for the oscillator.
-            float phase;      // Current oscillator phase in radians.
-            float phaseStep;  // Phase increment per sample.
-            float decayRate;  // Per-sample envelope decay coefficient.
+            bool active;           // Whether the voice is still producing sound.
+            float pan;             // Fixed stereo position between left and right.
+            float gain;            // Mapped velocity, used to compute the initial level.
+            float envelope;        // Current linear amplitude multiplier for the oscillator.
+            float envelopeDb;      // Current envelope level in decibels.
+            float phase;           // Current oscillator phase in radians.
+            float phaseStep;       // Phase increment per sample.
+            float decayDbPerSample; // Per-sample envelope decay in decibels.
         };
 
         // Map a widget position sample into a musically useful frequency range.
