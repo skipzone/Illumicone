@@ -402,6 +402,45 @@ void windchimeAudioEngineUnitTests()
 }
 
 
+void windchimeAudioConfigUnitTests()
+{
+    cout << "----- WindchimeAudioConfig -----" << endl;
+
+    WindchimeAudioEngineConfig customConfig;
+    customConfig.fastDecayDbPerSecond = 80.0f;
+    customConfig.slowDecayDbPerSecond = 6.0f;
+    customConfig.tailStartDb = -30.0f;
+    customConfig.floorDb = -120.0f;
+
+    WindchimeAudioEngine defaultEngine;
+    WindchimeAudioEngine configuredEngine(customConfig);
+
+    vector<float> defaultOutput(512 * 2, 0.0f);
+    vector<float> configuredOutput(512 * 2, 0.0f);
+
+    defaultEngine.noteOn(1, 0, 0, 1000, true);
+    configuredEngine.noteOn(1, 0, 0, 1000, true);
+
+    for (int i = 0; i < 100; ++i) {
+        defaultEngine.render(defaultOutput.data(), 512);
+        configuredEngine.render(configuredOutput.data(), 512);
+    }
+
+    float defaultPeak = 0.0f;
+    float configuredPeak = 0.0f;
+    for (float sample : defaultOutput) {
+        defaultPeak = std::max(defaultPeak, fabs(sample));
+    }
+    for (float sample : configuredOutput) {
+        configuredPeak = std::max(configuredPeak, fabs(sample));
+    }
+
+    assert(configuredPeak < defaultPeak);
+
+    cout << "    windchime audio config passed." << endl;
+}
+
+
 struct AudioOutputTestState
 {
     WindchimeAudioEngine* engine;
@@ -521,6 +560,7 @@ int main(int argc, char **argv)
     configReaderMergeUnitTests();
     measurementMapperUnitTests();
     windchimeAudioEngineUnitTests();
+    windchimeAudioConfigUnitTests();
     if (!skipAudioOutputTest) {
         windchimeAudioOutputDeviceUnitTests();
     }

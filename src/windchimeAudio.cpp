@@ -194,7 +194,16 @@ static int paCallback(const void* inputBuffer,
 // Print the command-line usage information for the standalone audio program.
 static void usage(const char* programName)
 {
-    cerr << "Usage: " << programName << " [--widget-port-base <base>]" << endl;
+    cerr << "Usage: " << programName << " [--widget-port-base <base>]"
+         << " [--windchime-fast-decay-db-per-second <value>]"
+         << " [--windchime-slow-decay-db-per-second <value>]"
+         << " [--windchime-tail-start-db <value>]"
+         << " [--windchime-floor-db <value>]" << endl;
+    cerr << "  --widget-port-base <base>                         Base UDP port for widget packets." << endl;
+    cerr << "  --windchime-fast-decay-db-per-second <value>      Initial decay rate in dB/s." << endl;
+    cerr << "  --windchime-slow-decay-db-per-second <value>      Tail decay rate in dB/s." << endl;
+    cerr << "  --windchime-tail-start-db <value>                 Envelope dB at which the tail curve begins." << endl;
+    cerr << "  --windchime-floor-db <value>                      Minimum envelope dB before the note is silenced." << endl;
 }
 
 
@@ -203,11 +212,24 @@ int main(int argc, char** argv)
     // Default to the existing widget test port range. Users can override the
     // base so the program can be pointed at a different UDP configuration.
     unsigned int widgetPortBase = 4200;
+    WindchimeAudioEngineConfig audioConfig;
 
     for (int i = 1; i < argc; ++i) {
         string arg(argv[i]);
         if (arg == "--widget-port-base" && i + 1 < argc) {
             widgetPortBase = static_cast<unsigned int>(strtoul(argv[++i], NULL, 10));
+        }
+        else if (arg == "--windchime-fast-decay-db-per-second" && i + 1 < argc) {
+            audioConfig.fastDecayDbPerSecond = strtof(argv[++i], NULL);
+        }
+        else if (arg == "--windchime-slow-decay-db-per-second" && i + 1 < argc) {
+            audioConfig.slowDecayDbPerSecond = strtof(argv[++i], NULL);
+        }
+        else if (arg == "--windchime-tail-start-db" && i + 1 < argc) {
+            audioConfig.tailStartDb = strtof(argv[++i], NULL);
+        }
+        else if (arg == "--windchime-floor-db" && i + 1 < argc) {
+            audioConfig.floorDb = strtof(argv[++i], NULL);
         }
         else if (arg == "-h" || arg == "--help") {
             usage(argv[0]);
@@ -233,7 +255,7 @@ int main(int argc, char** argv)
 
     // The audio engine is shared between the UDP receiver and the PortAudio
     // callback, so it must outlive both the receiver and the stream.
-    WindchimeAudioEngine audioEngine;
+    WindchimeAudioEngine audioEngine(audioConfig);
     WidgetUdpReceiver receiver(widgetPortBase, audioEngine);
     if (!receiver.start()) {
         Pa_Terminate();

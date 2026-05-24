@@ -25,7 +25,14 @@
 // mirrors the number of widget IDs used by the UDP receiver and gives us a
 // stable mapping between incoming widget packets and synthesized output.
 WindchimeAudioEngine::WindchimeAudioEngine()
+    : WindchimeAudioEngine(WindchimeAudioEngineConfig())
+{
+}
+
+
+WindchimeAudioEngine::WindchimeAudioEngine(const WindchimeAudioEngineConfig& configIn)
     : sampleRate(48000)
+    , config(configIn)
 {
     voices.resize(32);
     for (unsigned int i = 0; i < voices.size(); ++i) {
@@ -38,7 +45,7 @@ WindchimeAudioEngine::WindchimeAudioEngine()
 
         voices[i].gain = 0.0f;
         voices[i].envelope = 0.0f;
-        voices[i].envelopeDb = -120.0f;
+        voices[i].envelopeDb = config.floorDb;
         voices[i].phase = 0.0f;
         voices[i].phaseStep = 0.0f;
         voices[i].decayDbPerSample = 0.0f;
@@ -73,7 +80,7 @@ void WindchimeAudioEngine::noteOn(unsigned int widgetId, unsigned int channel, i
     voice.envelopeDb = 20.0f * std::log10(std::max(voice.envelope, 1e-6f));
     voice.phase = 0.0f;
     voice.phaseStep = 2.0f * static_cast<float>(M_PI) * mapPositionToFrequency(position) / sampleRate;
-    voice.decayDbPerSample = 30.0f / (static_cast<float>(sampleRate) * 3.0f);
+    voice.decayDbPerSample = computeDecayDbPerSample(voice.envelopeDb);
     voice.active = true;
 
     // The channel field is currently not used by the synthesis path, but it is
@@ -115,12 +122,15 @@ void WindchimeAudioEngine::render(float* output, unsigned long framesPerBuffer)
                 voice.phase -= 2.0f * static_cast<float>(M_PI);
             }
 
+            // A two-stage decay gives the note a clear initial strike, then a
+            // longer, softer tail so it feels more like a real metal chime.
+            voice.decayDbPerSample = computeDecayDbPerSample(voice.envelopeDb);
             voice.envelopeDb -= voice.decayDbPerSample;
             voice.envelope = std::pow(10.0f, voice.envelopeDb / 20.0f);
-            if (voice.envelopeDb <= -120.0f) {
+            if (voice.envelopeDb <= config.floorDb) {
                 voice.active = false;
                 voice.envelope = 0.0f;
-                voice.envelopeDb = -120.0f;
+                voice.envelopeDb = config.floorDb;
                 break;
             }
         }
@@ -155,4 +165,14 @@ float WindchimeAudioEngine::mapVelocityToGain(int velocity) const
 float WindchimeAudioEngine::clampSample(float sample) const
 {
     return std::max(-1.0f, std::min(1.0f, sample));
+}
+
+
+float WindchimeAudioEngine::computeDecayDbPerSample(float envelopeDb) const
+{
+    if (envelopeDb > config.tailStartDb) {
+        return config.fastDecayDbPerSecond / static_cast<float>(sampleRate);
+    }
+
+    return config.slowDecayDbPerSecond / static_cast<float>(sampleRate);
 }

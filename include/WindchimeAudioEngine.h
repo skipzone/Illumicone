@@ -20,6 +20,25 @@
 #include <mutex>
 #include <vector>
 
+// Configurable synthesis characteristics for the windchime voice bank.
+// The defaults preserve the current tuned decay so existing behavior stays
+// unchanged unless the caller overrides the values at runtime.
+struct WindchimeAudioEngineConfig
+{
+    float fastDecayDbPerSecond;
+    float slowDecayDbPerSecond;
+    float tailStartDb;
+    float floorDb;
+
+    WindchimeAudioEngineConfig()
+        : fastDecayDbPerSecond(9.0f)
+        , slowDecayDbPerSecond(5.0f)
+        , tailStartDb(-34.0f)
+        , floorDb(-120.0f)
+    {
+    }
+};
+
 // WindchimeAudioEngine converts widget measurements into a simple real-time
 // synthesis voice bank. The engine is intentionally small and deterministic so
 // it can be used by the standalone audio program without pulling in the full
@@ -32,6 +51,11 @@ class WindchimeAudioEngine
         // matches the default PortAudio stream used by the standalone audio app,
         // which keeps the phase math simple and avoids resampling.
         WindchimeAudioEngine();
+
+        // Construct a new engine with explicit synthesis characteristics. This is
+        // useful for the standalone app and for unit tests that need to validate
+        // the decay path against alternate envelopes.
+        explicit WindchimeAudioEngine(const WindchimeAudioEngineConfig& config);
 
         // The engine owns a few per-voice fields and does not need custom cleanup.
         virtual ~WindchimeAudioEngine();
@@ -81,7 +105,11 @@ class WindchimeAudioEngine
         // Clamp an intermediate sample to the nominal float audio range.
         float clampSample(float sample) const;
 
-        std::vector<VoiceState> voices; // One fixed slot per widget ID.
-        std::mutex mutex;               // Protects concurrent UDP and audio access.
-        const unsigned int sampleRate;  // Output sample rate for the current engine.
+        // Select the active decay rate for a voice based on the current envelope.
+        float computeDecayDbPerSample(float envelopeDb) const;
+
+        std::vector<VoiceState> voices;        // One fixed slot per widget ID.
+        std::mutex mutex;                      // Protects concurrent UDP and audio access.
+        const unsigned int sampleRate;         // Output sample rate for the current engine.
+        WindchimeAudioEngineConfig config;    // Runtime-configurable synthesis params.
 };
