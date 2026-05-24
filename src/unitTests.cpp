@@ -17,10 +17,16 @@
 
 
 #include <assert.h>
+#include <atomic>
+#include <chrono>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <string>
+#include <thread>
 #include <vector>
+
+#include <portaudio.h>
 
 #include "ConfigReader.h"
 #include "Log.h"
@@ -375,8 +381,118 @@ void windchimeAudioEngineUnitTests()
 }
 
 
+struct AudioOutputTestState
+{
+    WindchimeAudioEngine* engine;
+    atomic<unsigned long> callbackCount;
+};
+
+
+static int windchimeOutputDeviceCallback(const void* inputBuffer,
+                                         void* outputBuffer,
+                                         unsigned long framesPerBuffer,
+                                         const PaStreamCallbackTimeInfo* timeInfo,
+                                         PaStreamCallbackFlags statusFlags,
+                                         void* userData)
+{
+    (void) inputBuffer;
+    (void) timeInfo;
+    (void) statusFlags;
+
+    AudioOutputTestState* state = static_cast<AudioOutputTestState*>(userData);
+    state->engine->render(static_cast<float*>(outputBuffer), framesPerBuffer);
+    ++state->callbackCount;
+    return paContinue;
+}
+
+
+void windchimeAudioOutputDeviceUnitTests()
+{
+    const unsigned long expectedCallbacks = 5;
+
+    cout << "----- WindchimeAudioOutputDevice -----" << endl;
+
+    PaError err = Pa_Initialize();
+    assert(err == paNoError);
+
+    if (Pa_GetDefaultOutputDevice() == paNoDevice) {
+        cout << "    no default output device available." << endl;
+        Pa_Terminate();
+        return;
+    }
+
+    WindchimeAudioEngine engine;
+    engine.noteOn(1, 0, 0, 1000, true);
+
+    AudioOutputTestState state;
+    state.engine = &engine;
+    state.callbackCount = 0;
+
+    PaStream* stream = nullptr;
+    err = Pa_OpenDefaultStream(&stream,
+                               0,
+                               2,
+                               paFloat32,
+                               48000,
+                               512,
+                               windchimeOutputDeviceCallback,
+                               &state);
+    assert(err == paNoError);
+    assert(stream != nullptr);
+
+    err = Pa_StartStream(stream);
+    assert(err == paNoError);
+
+    auto deadline = chrono::steady_clock::now() + chrono::seconds(1);
+    while (chrono::steady_clock::now() < deadline) {
+        if (state.callbackCount.load() >= expectedCallbacks) {
+            break;
+        }
+        this_thread::sleep_for(chrono::milliseconds(10));
+    }
+
+    cout << "    callback count: " << state.callbackCount.load() << " / " << expectedCallbacks << endl;
+    assert(state.callbackCount.load() >= expectedCallbacks);
+
+    err = Pa_StopStream(stream);
+    assert(err == paNoError);
+
+    err = Pa_CloseStream(stream);
+    assert(err == paNoError);
+
+    Pa_Terminate();
+
+    cout << "    windchime audio output device test passed." << endl;
+}
+
+
+static void printUnitTestUsage(const char* programName)
+{
+    cout << "Usage: " << programName << " [--skip-audio-output-test]" << endl;
+    cout << "  --skip-audio-output-test   Skip the PortAudio output-device test." << endl;
+}
+
+
 int main(int argc, char **argv)
 {
+    bool skipAudioOutputTest = false;
+
+    for (int i = 1; i < argc; ++i) {
+        string arg(argv[i]);
+        if (arg == "--skip-audio-output-test") {
+            skipAudioOutputTest = true;
+        }
+        else if (arg == "--help" || arg == "-h") {
+            printUnitTestUsage(argv[0]);
+            return 0;
+        }
+        else {
+            cerr << "Unknown option: " << arg << endl;
+            printUnitTestUsage(argv[0]);
+            return 1;
+        }
+    }
+
     cout << "Illumicone unit tests." << endl;
 
     logger.startLogging("unitTests", Log::LogTo::console);
@@ -385,6 +501,13 @@ int main(int argc, char **argv)
     configReaderMergeUnitTests();
     measurementMapperUnitTests();
     windchimeAudioEngineUnitTests();
+    if (!skipAudioOutputTest) {
+        windchimeAudioOutputDeviceUnitTests();
+    }
+    else {
+        cout << "----- WindchimeAudioOutputDevice -----" << endl;
+        cout << "    skipped by command-line option." << endl;
+    }
 
     logger.stopLogging();
 
