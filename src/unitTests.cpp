@@ -17,12 +17,15 @@
 
 
 #include <assert.h>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
 #include "ConfigReader.h"
 #include "Log.h"
 #include "MeasurementMapper.h"
+#include "WindchimeAudioEngine.h"
 
 using namespace std;
 
@@ -330,6 +333,48 @@ void measurementMapperUnitTests()
 }
 
 
+void windchimeAudioEngineUnitTests()
+{
+    cout << "----- WindchimeAudioEngine -----" << endl;
+
+    // This test exercises the audio engine directly so we can confirm the
+    // synthesis path works without requiring the live UDP receiver or a real
+    // PortAudio device. It verifies that a note produces samples and that its
+    // envelope decays back to silence.
+    WindchimeAudioEngine engine;
+    vector<float> output(2048 * 2, 0.0f);
+
+    engine.noteOn(1, 0, 0, 1000, true);
+    engine.render(output.data(), 2048);
+
+    bool anyNonZero = false;
+    for (float sample : output) {
+        if (fabs(sample) > 1e-6f) {
+            anyNonZero = true;
+            break;
+        }
+    }
+
+    assert(anyNonZero);
+
+    vector<float> decayedOutput(16384 * 2, 0.0f);
+    engine.render(decayedOutput.data(), 16384);
+
+    bool decayedToNearZero = true;
+    for (float sample : decayedOutput) {
+        if (fabs(sample) > 1e-4f) {
+            decayedToNearZero = false;
+            cout << "    Sample " << sample << " not decayed to near zero." << endl;
+            break;
+        }
+    }
+
+    assert(decayedToNearZero);
+
+    cout << "    windchime audio engine passed." << endl;
+}
+
+
 int main(int argc, char **argv)
 {
     cout << "Illumicone unit tests." << endl;
@@ -339,6 +384,7 @@ int main(int argc, char **argv)
     configReaderIncludeUnitTests();
     configReaderMergeUnitTests();
     measurementMapperUnitTests();
+    windchimeAudioEngineUnitTests();
 
     logger.stopLogging();
 

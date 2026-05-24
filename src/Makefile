@@ -19,18 +19,32 @@
 # Can build widgetRcvr only if we're on a system that supports the nRF24L01+ radio
 # module. Such a system might also want hardware-dependent stuff from sbin, too.
 ifneq (,$(wildcard /usr/local/include/RF24))
-  PROGS = jsonTester logTest patternController stringTester unitTests widgetRcvr
-  INSTALL_PROGS = patternController stringTester widgetRcvr
+  PROGS = jsonTester logTest patternController stringTester unitTests widgetRcvr windchimeAudio
+  INSTALL_PROGS = patternController stringTester widgetRcvr windchimeAudio
   LDLIBS = -L/usr/local/lib -lrf24
 else
-  PROGS = jsonTester logTest patternController stringTester unitTests
-  INSTALL_PROGS = patternController stringTester
+  PROGS = jsonTester logTest patternController stringTester unitTests windchimeAudio
+  INSTALL_PROGS = patternController stringTester windchimeAudio
 endif
 
 SRCS = $(wildcard *.cpp) 
 
 SBIN_PATH = ../sbin
 INCLUDE=../include
+
+# PortAudio is used by the standalone windchime program to write audio to the
+# default built-in output device. The Homebrew and system install locations are
+# both supported so the same build logic works on macOS and on other local
+# environments that keep the headers in /usr/local.
+PORTAUDIO_CFLAGS :=
+PORTAUDIO_LDLIBS :=
+ifneq (,$(wildcard /opt/homebrew/include/portaudio.h))
+  PORTAUDIO_CFLAGS = -I/opt/homebrew/include
+  PORTAUDIO_LDLIBS = -L/opt/homebrew/lib -lportaudio
+else ifneq (,$(wildcard /usr/local/include/portaudio.h))
+  PORTAUDIO_CFLAGS = -I/usr/local/include
+  PORTAUDIO_LDLIBS = -L/usr/local/lib -lportaudio
+endif
 
 # Usually, we install to ~/bin.
 ifeq (,$(DESTDIR))
@@ -46,10 +60,11 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 # using g++ for CC so that g++ will be used to link C++ programs.
 CC=g++
 CXX=g++
-CFLAGS=-Wall -Wno-unknown-warning-option -g -I$(INCLUDE)
-CXXFLAGS=-Wall -Wno-unknown-warning-option -g -std=c++11 -pthread -I$(INCLUDE)
+CFLAGS=-Wall -Wno-unknown-warning-option -g -I$(INCLUDE) $(PORTAUDIO_CFLAGS)
+CXXFLAGS=-Wall -Wno-unknown-warning-option -g -std=c++11 -pthread -I$(INCLUDE) $(PORTAUDIO_CFLAGS)
 
 LDFLAGS = -pthread
+LDLIBS += $(PORTAUDIO_LDLIBS)
 
 COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
@@ -106,9 +121,11 @@ patternController: patternController.o AnnoyingFlashingPattern.o BatRatWidget.o 
 
 stringTester: stringTester.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
 
-unitTests: unitTests.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o
+unitTests: unitTests.o hsv2rgb.o json11.o Log.o illumiconeUtility.o illumiconePixelUtility.o ConfigReader.o WindchimeAudioEngine.o
 
 widgetRcvr: widgetRcvr.o ConfigReader.o hsv2rgb.o illumiconeUtility.o illumiconePixelUtility.o json11.o Log.o WidgetId.o
+
+windchimeAudio: windchimeAudio.o WindchimeAudioEngine.o Log.o illumiconeUtility.o
 
 .PHONY: install
 install:

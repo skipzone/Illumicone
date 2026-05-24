@@ -4,6 +4,7 @@ patternController
 stringTester
 unitTests
 widgetRcvr
+windchimeAudio
 gl_server
 *.dSYM
 *.o
