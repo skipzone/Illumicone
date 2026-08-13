@@ -1,0 +1,8 @@
+#! /bin/bash
+
+    (find . -follow -type f -a -name "*\.c" -print ; \
+     find . -follow -type f -a -name "*\.cpp" -print ; \
+     find ../include -follow -type f -a -name "*\.h" -print ) \
+    > cscope.files
+
+cscope -b -q
