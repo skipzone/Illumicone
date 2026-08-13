@@ -24,4 +24,4 @@ network_active.json
 logs/*
 stuff/*
 src/.d/*
-.vscode
+# .vscode

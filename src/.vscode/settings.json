@@ -1,0 +1,7 @@
+{
+    "makefile.configureOnOpen": true,
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/../include"
+    ],
+}

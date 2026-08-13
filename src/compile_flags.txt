@@ -1,0 +1,4 @@
+        --header-insertion=never
+        -I../include
+        -std=c++11
+        -pthread
