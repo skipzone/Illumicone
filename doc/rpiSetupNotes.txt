@@ -2,6 +2,24 @@ Set up ic-widpatcon on a Raspberry Pi 3 B or 4 using Raspbian Buster Lite
 (updated 26 Nov. 2020)
 
 
+2026-08-13:  Buster is now legacy.
+
+Make the following change in /etc/apt/sources.list:
+
+# 2026-08-13:  buster is now legacy
+#deb http://raspbian.raspberrypi.org/raspbian/ buster main contrib non-free rpi
+deb https://legacy.raspbian.org/raspbian/ buster main contrib non-free rpi
+
+Make the following change in /etc/apt/sources.list.d/raspi.list:
+
+# 2026-08-13:  buster is now legacy.
+# /etc/apt/sources.list.d/raspi.list has the needed legacy URI.
+#deb http://archive.raspberrypi.org/debian/ buster main
+
+On 2026-08-13, the only thing updated was gh.  The previous update on ic-devl
+was probably done in July or November 2025, so not much changes anymore.
+
+
 -1.  Download Raspbian Buster Lite from here:
 
     https://downloads.raspberrypi.org/raspbian_lite_latest
