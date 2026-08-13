@@ -4,4 +4,7 @@
         "${workspaceFolder}",
         "${workspaceFolder}/../include"
     ],
+    "clangd.arguments": [
+        "--header-insertion=never"
+    ]
 }
