@@ -3,6 +3,8 @@
 Set up a development system using a Raspberry Pi 4 or Zero 2 W
 (updated 5 Nov. 2023)
 
+Can also be used as a guide for setting up a development environment on MacOS.
+
 You should be comfortable working in a terminal window.
 
 What you will need:
@@ -277,6 +279,10 @@ What you will need:
 
     For more information:  https://www.arduino.cc/en/Guide/Linux
 
+    Rosetta is required on Apple Silicon for some of the binaries in the
+    toolchain.
+        softwareupdate --install-rosetta --agree-to-license
+
 
 18. Install additional boards packages.
 
@@ -319,12 +325,19 @@ What you will need:
 
     I2Cdev and MPU6050 by jrowberg
         cd ~/devl
-        git clone http://github.com/jrowberg/i2cdevlib
+        git clone https://github.com/jrowberg/i2cdevlib
         cp -Rv i2cdevlib/Arduino/I2Cdev ~/Arduino/libraries/
         cp -Rv i2cdevlib/Arduino/MPU6050 ~/Arduino/libraries/
 
+        For Arduino IDE 2.3.x on MacOS:
+            cp -Rv i2cdevlib/Arduino/I2Cdev ~/Library/Arduino15/libraries
+            cp -Rv i2cdevlib/Arduino/MPU6050 ~/Library/Arduino15/libraries
+
     Illumicone
         ln -s ~/devl/Illumicone/Arduino/libraries/Illumicone/ ~/Arduino/libraries/Illumicone
+
+        For Arduino IDE 2.3.x on MacOS:
+            ln -s ~/devl/Illumicone/Arduino/libraries/Illumicone/ ~/Library/Arduino15/libraries/Illumicone
 
 
 20.  If using a Pololu USB AVR Programmer v2 (highly recommended over a simple
