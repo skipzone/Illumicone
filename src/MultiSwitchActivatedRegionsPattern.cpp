@@ -160,7 +160,7 @@ we can't hear it anymore.)
             ///logger.logMsg(LOG_DEBUG, "switchId=" + to_string(switchId) + " indicatorIdx=" + to_string(indicatorIdx));
             IndicatorRegion* indicatorRegion = indicatorRegions[indicatorIdx];
             ///logger.logMsg(LOG_DEBUG, "indicatorRegion switch id " + to_string(indicatorRegion->getSwitchId()));
-            if (indicatorRegion->getSwitchId() == switchId) {
+            if (indicatorRegion->getSwitchId() == static_cast<int>(switchId)) {
                 ///logger.logMsg(LOG_DEBUG, "found indicator region for switch");
                 if (switchStates[switchId].isActivated) {
                     ///logger.logMsg(LOG_DEBUG, "switchId " + to_string(switchId) + " is active");
