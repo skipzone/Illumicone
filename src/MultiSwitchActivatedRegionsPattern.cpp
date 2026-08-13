@@ -19,7 +19,6 @@
 
 #include <stdlib.h>
 
-#include "ConfigReader.h"
 #include "illumiconeUtility.h"
 #include "IndicatorRegion.h"
 #include "Log.h"
