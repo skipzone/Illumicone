@@ -17,7 +17,7 @@
 
 {   "name" : "scotchHop4Pride",
     "enabled" : true,
-    "priority" : 3,
+    "priority" : 1,
     "opacity" : 90,         // 0 = totaly transparent (invisible if blended), 100 = completely opaque
     "patternClassName" : "MultiSwitchActivatedRegionsPattern",
     "inputs" : [
