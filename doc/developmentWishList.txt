@@ -127,6 +127,8 @@ New patterns
 
 - wave reflections
 
+- falling streaks (like those holiday icicle lights)
+
 
 
 Widget firmware
