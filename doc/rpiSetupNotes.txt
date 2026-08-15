@@ -13,7 +13,7 @@ deb https://legacy.raspbian.org/raspbian/ buster main contrib non-free rpi
 Make the following change in /etc/apt/sources.list.d/raspi.list:
 
 # 2026-08-13:  buster is now legacy.
-# /etc/apt/sources.list.d/raspi.list has the needed legacy URI.
+# /etc/apt/sources.list has the needed legacy URL.
 #deb http://archive.raspberrypi.org/debian/ buster main
 
 On 2026-08-13, the only thing updated was gh.  The previous update on ic-devl
