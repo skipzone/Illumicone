@@ -1,0 +1,75 @@
+/*
+    This file is part of Illumicone.
+
+    Illumicone is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Illumicone is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Illumicone.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/*******************************************************************************
+Widget           Pattern
+---------------  -------------------------------------------------------------------
+Eye              eye flash
+
+Flower1          position of four vertical stripes
+Flower2          hue of four vertical stripes
+
+Flower3          spinner blocks
+
+Flower4          position of three horizontal rings
+Flower5          hue of three horizontal rings
+
+Flower6          traditional rings
+Flower7          traditional stripes
+
+BatRat1 (baton)  magenta sparkle
+BatRat2 (baton)  aqua sparkle
+BatRat3 (rattle) multicolor sparkle
+BatRat5 (GL's)   white/purple/aqua spray
+
+Rainstick        rain
+
+Schroeder's  60 keys
+
+FourPlay42       traditional stripes
+FourPlay43       traditional rings
+
+*******************************************************************************/
+
+{
+    "patterns" : [
+        { "_include_file_eyeFlash" : "patterns/eyeFlash.json" },
+
+        { "_include_file_stripes" : "patterns/stripes_Flower1_Flower2.json" },
+        { "_include_file_spring" : "patterns/spring_Flower3.json" },
+        { "_include_file_horizontalRings_flowers" : "patterns/rings_Flower4_Flower5.json" },
+        { "_include_file_magentaAquaSparkle" : "patterns/sparkleMagentaAqua_Flower6.json" },
+        { "_include_file_multicolorSparkle" : "patterns/multicolorSparkle_Flower7.json" },
+
+        { "_include_file_magentaSparkle_batrat" : "patterns/sparkleMagenta_BatRat1.json" },
+        { "_include_file_aquaSparkle_batrat" : "patterns/sparkleAqua_BatRat2.json" },
+        { "_include_file_multicolorSparkle_batrat" : "patterns/sparkleMulticolor_BatRat3.json" },
+
+        { "_include_file_sprayWhite_BatRat5" : "patterns/sprayWhite_BatRat5.json" },
+        { "_include_file_sprayPurple_BatRat5" : "patterns/sprayPurple_BatRat5.json" },
+        { "_include_file_sprayAqua_BatRat5" : "patterns/sprayAqua_BatRat5.json" },
+
+        { "_include_file_rain_Rainstick" : "patterns/rain_Rainstick.json" },
+
+        { "_include_file_schroedersPlaything_60keys_100x48" : "patterns/schroedersPlaything_60keys_100x48.json" },
+
+        { "_include_file_stripes_FourPlay42" : "patterns/stripes_traditional_FourPlay42.json" },
+        { "_include_file_rings_FourPlay43" : "patterns/rings_traditional_FourPlay43.json" },
+
+        { "_include_file_scotchHop4Pride" : "patterns/scotchHop8PrideFlashing.json" }
+    ]
+}
+
