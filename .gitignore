@@ -11,6 +11,7 @@ gl_server
 .*.swp
 *~
 *.DS_Store
+nohup.out
 cscope.files
 cscope.in.out
 cscope.out
