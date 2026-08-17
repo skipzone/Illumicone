@@ -26,10 +26,10 @@ BRC sunrise on 7 September 2026:               06:29 PDT / 07:29 MDT
 
 {
     "shutoffPeriods" : [
-        {   "description" : "daytime",
-            "startDateTime" : "07:00:00",   // 06:00 PDT
-            "endDateTime" : "20:00:00"      // 19:00 PDT
-        }
+//        {   "description" : "daytime",
+//            "startDateTime" : "07:00:00",   // 06:00 PDT
+//            "endDateTime" : "20:00:00"      // 19:00 PDT
+//        }
     ],
 
     "quiescentPeriods" : [
@@ -51,14 +51,6 @@ BRC sunrise on 7 September 2026:               06:29 PDT / 07:29 MDT
     ],
 
     "overridePeriods" : [
-        {   "description" : "development during build week - Monday",
-            "startDateTime" : "2026-08-19 00:00:00",
-            "endDateTime" : "2026-08-19 23:59:59"
-        },
-        {   "description" : "development during build week - Tuesday",
-            "startDateTime" : "2026-08-20 00:00:00",
-            "endDateTime" : "2026-08-20 23:59:59"
-        },
         {   "description" : "development during build week - Wednesday",
             "startDateTime" : "2026-08-26 00:00:00",
             "endDateTime" : "2026-08-26 23:59:59"
