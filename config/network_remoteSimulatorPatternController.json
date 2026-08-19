@@ -17,10 +17,10 @@
 
 {
     // ----- remote pattern generator (and probably display, too) -----
-    "patconIpAddress" : "192.168.76.36",
+    "patconIpAddress" : "192.168.76.28",
     // MeowStar "patconIpAddress" : "192.168.1.208",
     // meow "patconIpAddress" : "10.10.10.12",
-    "opcServerIpAddress": "192.168.76.36",
+    "opcServerIpAddress": "192.168.76.28",
     // MeowStar "opcServerIpAddress": "192.168.1.208",
     // meow "opcServerIpAddress": "10.10.10.12",
     "useTcpForOpcServer" : true,
