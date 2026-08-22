@@ -41,6 +41,10 @@ MultiSwitchActivatedRegionsPattern::MultiSwitchActivatedRegionsPattern(const std
 
 bool MultiSwitchActivatedRegionsPattern::initPattern(std::map<WidgetId, Widget*>& widgets)
 {
+    for (unsigned int switchId = 0; switchId < maxSwitches; switchId++) {
+        switchStates[switchId].isActivated = false;
+    }
+
     if (!IndicatorRegionsPattern::initPattern(widgets)) {
         return false;
     }
@@ -131,6 +135,7 @@ we can't hear it anymore.)
         if (switchId < maxSwitches) {
             switchStates[switchId].isActivated = switchIsActivated;
             if (switchIsActivated) {
+                ///logger.logMsg(LOG_DEBUG, "switch " + to_string(switchId) + " is activated");
                 isActive = true;
             }
         }
